@@ -8,11 +8,15 @@ Uso:
 import argparse
 import logging
 import sys
+import time
 
 from crypto_tracker import alerts, coingecko, database, telegram
 from crypto_tracker.config import Config, ConfigError, load_config
 
 logger = logging.getLogger("crypto_tracker")
+
+# Si el ciclo falla estas veces seguidas, algo va mal de verdad y paramos.
+MAX_FALLOS = 10
 
 
 def configurar_logs(verbose: bool = False) -> None:
@@ -55,6 +59,12 @@ def ejecutar_ciclo(config: Config, estado: dict[str, str]) -> dict[str, str]:
 
     avisos, estado_nuevo = alerts.revisar(precios, config.watchlist, estado)
 
+    # Guardamos la zona de cada cripto para no repetir el aviso al reiniciar.
+    try:
+        database.save_state(config.database_path, estado_nuevo)
+    except database.DatabaseError as e:
+        logger.error("No se pudo guardar el estado de las alertas: %s", e)
+
     if not avisos:
         logger.info("Ningun umbral cruzado")
         return estado_nuevo
@@ -72,6 +82,41 @@ def ejecutar_ciclo(config: Config, estado: dict[str, str]) -> dict[str, str]:
             logger.error("No se pudo avisar de %s", aviso.coin_id)
 
     return estado_nuevo
+
+
+def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:
+    """Repite el ciclo cada CHECK_INTERVAL segundos hasta que se corte.
+
+    Aguanta los fallos sueltos: si algo revienta de forma inesperada lo
+    registra y sigue. Solo se rinde si falla muchas veces seguidas.
+    """
+    logger.info(
+        "Modo bucle cada %ds. Ctrl+C para parar.",
+        config.check_interval,
+    )
+
+    fallos = 0
+
+    while True:
+        try:
+            estado = ejecutar_ciclo(config, estado)
+            fallos = 0
+        except KeyboardInterrupt:
+            raise
+        except Exception:
+            # Red a la que caen los errores que no previmos. Sin esto, un
+            # fallo raro a las 3 de la mañana mata el vigilante entero.
+            fallos += 1
+            logger.exception("Error inesperado en el ciclo (%d seguidos)", fallos)
+
+            if fallos >= MAX_FALLOS:
+                logger.error("Demasiados fallos seguidos, paro.")
+                return 1
+
+        try:
+            time.sleep(config.check_interval)
+        except KeyboardInterrupt:
+            raise
 
 
 def mensaje_de_prueba(config: Config) -> int:
@@ -95,6 +140,11 @@ def main() -> int:
     parser.add_argument(
         "--test", action="store_true", help="manda un mensaje de prueba y sale"
     )
+    parser.add_argument(
+        "--loop",
+        action="store_true",
+        help="vigila en bucle cada CHECK_INTERVAL segundos",
+    )
     parser.add_argument("-v", "--verbose", action="store_true", help="logs detallados")
     args = parser.parse_args()
 
@@ -115,10 +165,27 @@ def main() -> int:
         logger.error("%s", e)
         return 1
 
+    # Recuperamos en que zona quedo cada cripto la ultima vez, asi no
+    # repetimos avisos ya mandados aunque el programa se haya reiniciado.
+    try:
+        estado = database.load_state(config.database_path)
+    except database.DatabaseError as e:
+        logger.warning("No se pudo leer el estado anterior: %s", e)
+        estado = {}
+
     logger.info("Vigilando %d criptos en %s", len(config.watchlist), config.vs_currency)
-    ejecutar_ciclo(config, {})
+
+    if args.loop:
+        return ejecutar_bucle(config, estado)
+
+    ejecutar_ciclo(config, estado)
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except KeyboardInterrupt:
+        # Ctrl+C es una salida normal, no un error: nada de traceback.
+        logger.info("Parado por el usuario")
+        sys.exit(0)

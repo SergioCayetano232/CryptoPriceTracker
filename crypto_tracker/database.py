@@ -21,6 +21,14 @@ CREATE TABLE IF NOT EXISTS prices (
 
 CREATE INDEX IF NOT EXISTS idx_prices_coin_fecha
     ON prices (coin_id, created_at DESC);
+
+-- En que zona estaba cada cripto la ultima vez (bajo/normal/alto).
+-- Guardarlo aqui evita repetir el mismo aviso al reiniciar el programa.
+CREATE TABLE IF NOT EXISTS alert_state (
+    coin_id    TEXT PRIMARY KEY,
+    estado     TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
 """
 
 
@@ -94,6 +102,31 @@ def get_last_price(db_path: str, coin_id: str) -> float | None:
         ).fetchone()
 
     return fila["price"] if fila else None
+
+
+def load_state(db_path: str) -> dict[str, str]:
+    """Lee en que zona quedo cada cripto la ultima vez."""
+    with _connect(db_path) as conn:
+        filas = conn.execute("SELECT coin_id, estado FROM alert_state").fetchall()
+
+    return {fila["coin_id"]: fila["estado"] for fila in filas}
+
+
+def save_state(db_path: str, estado: dict[str, str]) -> None:
+    """Guarda la zona actual de cada cripto, pisando la anterior."""
+    if not estado:
+        return
+
+    ahora = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    filas = [(coin_id, zona, ahora) for coin_id, zona in estado.items()]
+
+    with _connect(db_path) as conn:
+        # REPLACE actualiza si el coin_id ya existe, inserta si no.
+        conn.executemany(
+            "INSERT OR REPLACE INTO alert_state (coin_id, estado, updated_at) "
+            "VALUES (?, ?, ?)",
+            filas,
+        )
 
 
 def get_history(db_path: str, coin_id: str, limit: int = 50) -> list[sqlite3.Row]:
