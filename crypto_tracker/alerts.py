@@ -1,6 +1,7 @@
 """Compara precios con los umbrales y decide si hay que avisar."""
 
 import logging
+import math
 from dataclasses import dataclass
 
 from .config import Watch
@@ -18,7 +19,7 @@ SIMBOLOS = {"eur": "€", "usd": "$", "gbp": "£"}
 
 @dataclass(frozen=True)
 class Alert:
-    """Un aviso que hay que mandar."""
+    """Un aviso que hay que mandar. threshold es el precio que se cruzo."""
 
     coin_id: str
     price: float
@@ -42,8 +43,8 @@ def revisar(
 ) -> tuple[list[Alert], dict[str, str]]:
     """Decide que alertas tocan y devuelve el estado nuevo.
 
-    Solo avisa cuando el precio CRUZA un umbral, no mientras siga fuera.
-    Si no, con un precio bajo tendrias un mensaje cada pocos minutos.
+    Nunca repite el mismo aviso: los umbrales fijos solo saltan al CRUZAR,
+    y los de variacion solo cuando el precio se mueve otro paso entero.
     """
     alertas = []
     estado_nuevo = dict(estado_previo)
@@ -55,23 +56,84 @@ def revisar(
             # Mantenemos el estado anterior para no avisar de mas luego.
             continue
 
-        antes = estado_previo.get(watch.coin_id)
-        ahora = clasificar(price, watch)
-        estado_nuevo[watch.coin_id] = ahora
+        if watch.step is not None:
+            aviso, referencia = _revisar_variacion(
+                price, watch, estado_previo.get(watch.coin_id)
+            )
+        else:
+            aviso, referencia = _revisar_umbral(
+                price, watch, estado_previo.get(watch.coin_id)
+            )
 
-        if ahora == NORMAL:
-            continue
-
-        # La primera vez no hay estado previo. Avisamos igual: si arrancas
-        # con el precio ya fuera de rango, quieres enterarte.
-        if antes == ahora:
-            logger.debug("%s sigue en '%s', no repetimos aviso", watch.coin_id, ahora)
-            continue
-
-        umbral = watch.min_price if ahora == BAJO else watch.max_price
-        alertas.append(Alert(watch.coin_id, price, umbral, ahora))
+        estado_nuevo[watch.coin_id] = referencia
+        if aviso is not None:
+            alertas.append(aviso)
 
     return alertas, estado_nuevo
+
+
+def _revisar_umbral(
+    price: float, watch: Watch, antes: str | None
+) -> tuple[Alert | None, str]:
+    """Avisa al cruzar un precio fijo. El estado es la zona: bajo/normal/alto."""
+    ahora = clasificar(price, watch)
+
+    if ahora == NORMAL:
+        return None, ahora
+
+    # La primera vez no hay estado previo. Avisamos igual: si arrancas
+    # con el precio ya fuera de rango, quieres enterarte.
+    if antes == ahora:
+        logger.debug("%s sigue en '%s', no repetimos aviso", watch.coin_id, ahora)
+        return None, ahora
+
+    umbral = watch.min_price if ahora == BAJO else watch.max_price
+    return Alert(watch.coin_id, price, umbral, ahora), ahora
+
+
+def _revisar_variacion(
+    price: float, watch: Watch, referencia: str | None
+) -> tuple[Alert | None, str]:
+    """Avisa cuando el precio cruza un multiplo del paso.
+
+    Con paso 1000 los niveles son 62000, 63000, 64000... Solo avisa al
+    pasar uno de esos, no por moverse 1000 desde donde estuviera.
+    """
+    # Guardamos el ultimo nivel del que avisamos, no el ultimo precio: asi
+    # sabemos si el precio ha llegado de verdad al siguiente multiplo.
+    ultimo_nivel = _a_float(referencia)
+
+    # El multiplo mas cercano por debajo del precio de ahora. Con paso 1000,
+    # 63568 -> 63000; 64000 clavado -> 64000.
+    nivel_actual = math.floor(price / watch.step) * watch.step
+
+    # Primera vez: anotamos donde esta y esperamos. Sin nivel anterior no
+    # hay forma de saber si acaba de cruzar algo.
+    if ultimo_nivel is None:
+        logger.debug("%s: nivel de partida %s", watch.coin_id, nivel_actual)
+        return None, str(nivel_actual)
+
+    if nivel_actual == ultimo_nivel:
+        return None, str(ultimo_nivel)
+
+    subiendo = nivel_actual > ultimo_nivel
+    estado = ALTO if subiendo else BAJO
+
+    # Bajando, el multiplo que cruza es el de abajo del nivel anterior:
+    # de 63000 a 62800 lo que cruza es el 63000, no el 62000.
+    nivel_cruzado = nivel_actual if subiendo else ultimo_nivel
+
+    return Alert(watch.coin_id, price, nivel_cruzado, estado), str(nivel_actual)
+
+
+def _a_float(valor: str | None) -> float | None:
+    """Lee el precio de referencia. Ignora los estados viejos (bajo/alto)."""
+    if valor is None:
+        return None
+    try:
+        return float(valor)
+    except ValueError:
+        return None
 
 
 def formatear(alerta: Alert, currency: str) -> str:
@@ -80,12 +142,12 @@ def formatear(alerta: Alert, currency: str) -> str:
     nombre = escape(alerta.coin_id.replace("-", " ").title())
 
     if alerta.estado == BAJO:
-        icono, verbo = "🔻", "ha bajado de"
+        icono, verbo = "🔻", "ha bajado"
     else:
-        icono, verbo = "🚀", "ha subido de"
+        icono, verbo = "🚀", "ha subido"
 
     return (
-        f"{icono} <b>{nombre}</b> {verbo} {simbolo}{_num(alerta.threshold)}\n"
+        f"{icono} <b>{nombre}</b> {verbo} de {simbolo}{_num(alerta.threshold)}\n"
         f"Precio actual: <b>{simbolo}{_num(alerta.price)}</b>"
     )
 

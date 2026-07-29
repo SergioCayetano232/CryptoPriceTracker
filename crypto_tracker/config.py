@@ -16,11 +16,16 @@ class ConfigError(Exception):
 
 @dataclass(frozen=True)
 class Watch:
-    """Una cripto vigilada y sus umbrales. None = ese lado no se vigila."""
+    """Una cripto vigilada. Cada tipo de aviso es opcional (None = no vigilar).
+
+    min_price/max_price avisan al cruzar un precio fijo.
+    step avisa al cruzar cualquier multiplo de ese valor.
+    """
 
     coin_id: str
-    min_price: float | None
-    max_price: float | None
+    min_price: float | None = None
+    max_price: float | None = None
+    step: float | None = None
 
 
 @dataclass(frozen=True)
@@ -57,7 +62,12 @@ def _parse_threshold(raw: str, coin_id: str, label: str) -> float | None:
 
 
 def _parse_watchlist(raw: str) -> list[Watch]:
-    """Convierte 'bitcoin:55000:75000,ethereum:2000:4000' en objetos Watch."""
+    """Convierte el texto de WATCHLIST en objetos Watch.
+
+    Admite dos formatos, mezclables en la misma lista:
+      bitcoin:1000              -> avisa al cruzar 62000, 63000, 64000...
+      bitcoin:55000:75000       -> avisa al cruzar esos precios
+    """
     watches = []
 
     for entry in raw.split(","):
@@ -66,15 +76,19 @@ def _parse_watchlist(raw: str) -> list[Watch]:
             continue
 
         parts = entry.split(":")
-        if len(parts) != 3:
+        if len(parts) not in (2, 3):
             raise ConfigError(
-                f"Formato malo en WATCHLIST: '{entry}'. "
-                "Se espera id:minimo:maximo (ej: bitcoin:55000:75000)."
+                f"Formato malo en WATCHLIST: '{entry}'. Se espera id:paso "
+                "(ej: bitcoin:1000) o id:minimo:maximo (ej: bitcoin:55000:75000)."
             )
 
         coin_id = parts[0].strip().lower()
         if not coin_id:
             raise ConfigError(f"Falta el id de la cripto en: '{entry}'")
+
+        if len(parts) == 2:
+            watches.append(Watch(coin_id, step=_parse_step(parts[1], coin_id)))
+            continue
 
         min_price = _parse_threshold(parts[1], coin_id, "minimo")
         max_price = _parse_threshold(parts[2], coin_id, "maximo")
@@ -97,6 +111,19 @@ def _parse_watchlist(raw: str) -> list[Watch]:
         raise ConfigError("WATCHLIST esta vacia, no hay nada que vigilar.")
 
     return watches
+
+
+def _parse_step(raw: str, coin_id: str) -> float:
+    """Lee el paso de variacion. Tiene que ser un numero mayor que cero."""
+    valor = _parse_threshold(raw, coin_id, "paso")
+
+    if valor is None:
+        raise ConfigError(f"Falta el paso de variacion de '{coin_id}'.")
+    if valor <= 0:
+        raise ConfigError(
+            f"El paso de '{coin_id}' tiene que ser mayor que 0, no {valor}."
+        )
+    return valor
 
 
 def _parse_positive_int(name: str, default: str) -> int:
