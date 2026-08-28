@@ -221,3 +221,7 @@ __marimo__/
 *.db
 *.sqlite
 *.sqlite3
+
+# Logs del vigilante en el servidor
+data/tracker.log
+data/tracker.log.old
