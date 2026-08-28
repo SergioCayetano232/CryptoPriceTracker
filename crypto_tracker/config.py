@@ -36,15 +36,14 @@ class Config:
     vs_currency: str
     check_interval: int
     database_path: str
+    history_days: int
 
 
 def _require(name: str) -> str:
     """Saca una variable obligatoria o revienta con un mensaje claro."""
     value = os.getenv(name, "").strip()
     if not value:
-        raise ConfigError(
-            f"Falta {name}. Copia .env.example a .env y rellenalo."
-        )
+        raise ConfigError(f"Falta {name}. Copia .env.example a .env y rellenalo.")
     return value
 
 
@@ -94,9 +93,7 @@ def _parse_watchlist(raw: str) -> list[Watch]:
         max_price = _parse_threshold(parts[2], coin_id, "maximo")
 
         if min_price is None and max_price is None:
-            raise ConfigError(
-                f"'{coin_id}' no tiene ningun umbral, nunca avisaria."
-            )
+            raise ConfigError(f"'{coin_id}' no tiene ningun umbral, nunca avisaria.")
 
         # Un minimo por encima del maximo dispararia las dos alertas a la vez.
         if min_price is not None and max_price is not None and min_price >= max_price:
@@ -139,6 +136,23 @@ def _parse_positive_int(name: str, default: str) -> int:
     return value
 
 
+def _parse_history_days() -> int:
+    """Dias de historico que se guardan. 0 desactiva la purga."""
+    raw = os.getenv("HISTORY_DAYS", "90").strip() or "90"
+    try:
+        value = int(raw)
+    except ValueError:
+        raise ConfigError(
+            f"HISTORY_DAYS tiene que ser un numero entero: '{raw}'"
+        ) from None
+
+    if value < 0:
+        raise ConfigError(
+            f"HISTORY_DAYS no puede ser negativo ({value}). Usa 0 para no purgar."
+        )
+    return value
+
+
 def load_config() -> Config:
     """Monta la configuracion. Lanza ConfigError si algo falta o esta mal."""
     return Config(
@@ -149,4 +163,5 @@ def load_config() -> Config:
         check_interval=_parse_positive_int("CHECK_INTERVAL", "300"),
         database_path=os.getenv("DATABASE_PATH", "data/prices.db").strip()
         or "data/prices.db",
+        history_days=_parse_history_days(),
     )

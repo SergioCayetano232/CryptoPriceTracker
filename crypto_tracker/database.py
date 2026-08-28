@@ -3,7 +3,7 @@
 import logging
 import sqlite3
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -90,6 +90,25 @@ def save_prices(db_path: str, prices: dict[str, float], currency: str) -> int:
 
     logger.debug("Guardados %d precios", len(filas))
     return len(filas)
+
+
+def purge_old_prices(db_path: str, dias: int) -> int:
+    """Borra los precios mas viejos que `dias`. Devuelve cuantos borro."""
+    if dias <= 0:
+        return 0
+
+    corte = (datetime.now(timezone.utc) - timedelta(days=dias)).isoformat(
+        timespec="seconds"
+    )
+
+    with _connect(db_path) as conn:
+        cursor = conn.execute("DELETE FROM prices WHERE created_at < ?", (corte,))
+        borradas = cursor.rowcount
+
+    if borradas > 0:
+        logger.info("Purgados %d precios de mas de %d dias", borradas, dias)
+
+    return borradas
 
 
 def get_last_price(db_path: str, coin_id: str) -> float | None:
