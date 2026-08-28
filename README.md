@@ -1,65 +1,210 @@
 # CryptoPriceTracker
 
-Te avisa por Telegram cuando una cripto cruza un precio. Los datos los saca de CoinGecko y guarda el histórico en SQLite.
+Te avisa por Telegram cuando el precio de una cripto sube o baja de cierto punto.
 
-## Instalar
+Consulta los precios cada pocos minutos, los va guardando y te manda un mensaje
+cuando pasa algo. Puedes dejarlo funcionando en un servidor y olvidarte.
 
-```bash
+---
+
+## Lo que necesitas
+
+- Un ordenador o servidor con **Python 3.10 o superior** ([descargar](https://www.python.org/downloads/))
+- Telegram
+
+---
+
+## Instalación
+
+**1. Descarga el proyecto y ábrelo en una terminal.**
+
+**2. Prepara el entorno:**
+
+Windows:
+```
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+Mac o Linux:
+```
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## El bot de Telegram
+---
 
-Habla con **@BotFather**, mándale `/newbot` y te da un token. Luego **@userinfobot** te dice tu chat_id.
+## Crear el bot de Telegram
 
-Importante: escríbele `/start` a tu bot o no podrá mandarte nada.
+Necesitas dos datos: el **token** del bot y tu **chat id**.
 
-## Configurar
+**El token:**
 
-```bash
-cp .env.example .env
+1. Abre Telegram y busca **@BotFather**
+2. Escríbele `/newbot`
+3. Te pide un nombre y un usuario para el bot
+4. Te da un texto largo tipo `123456789:AAxxxxxx...` — ese es el token
+
+**Tu chat id:**
+
+1. Busca **@userinfobot** en Telegram
+2. Escríbele cualquier cosa
+3. Te contesta con un número — ese es tu chat id
+
+**Importante:** busca el bot que acabas de crear y escríbele `/start`. Si no lo
+haces, Telegram no le deja mandarte mensajes.
+
+---
+
+## Configuración
+
+Copia el archivo de ejemplo:
+
+Windows: `copy .env.example .env`
+Mac/Linux: `cp .env.example .env`
+
+Abre el `.env` con cualquier editor de texto y rellena el token y el chat id.
+
+Luego elige qué criptos vigilar en la línea `WATCHLIST`. Hay dos formas:
+
+**Avisarte cada vez que pase un múltiplo:**
 ```
+WATCHLIST=bitcoin:1000
+```
+Te avisa cuando Bitcoin pase por 63.000, luego por 64.000, luego por 65.000...
 
-Rellena el token y el chat_id. La watchlist va así:
+**Avisarte al salir de un rango:**
+```
+WATCHLIST=bitcoin:55000:75000
+```
+Te avisa si baja de 55.000 o si sube de 75.000.
 
+**Puedes mezclar y poner varias separadas por comas:**
 ```
 WATCHLIST=bitcoin:1000,ethereum:100,solana:5
 ```
 
-Eso avisa cuando Bitcoin cruza un múltiplo de 1000 (63000, 64000...), Ethereum de 100 y Solana de 5. También se puede poner un rango fijo con `bitcoin:55000:75000`.
+Los nombres son los de CoinGecko: `bitcoin`, no `BTC`. Si no sabes cuál es,
+búscalo en [coingecko.com](https://www.coingecko.com) y mira la dirección de la
+página: `coingecko.com/en/coins/`**`bitcoin`**.
 
-Los ids son los de CoinGecko: `bitcoin`, no `BTC`.
+---
 
-## Usar
+## Probar que funciona
 
-```bash
-python main.py --test    
-python main.py           
-python main.py --loop    
+```
+python main.py --test
 ```
 
-La primera vez solo anota los precios, no avisa. Necesita una consulta previa para saber si algo ha cruzado.
+Si te llega un mensaje a Telegram, ya está todo bien. Si no, revisa el token, el
+chat id, y que le hayas escrito `/start` al bot.
 
-## Cómo está montado
+---
+
+## Usarlo
+
+**Mirar los precios una vez:**
+```
+python main.py
+```
+
+**Dejarlo vigilando:**
+```
+python main.py --loop
+```
+Se queda mirando los precios cada 5 minutos. Para pararlo, `Ctrl+C`.
+
+**Ver el histórico de una cripto:**
+```
+python main.py --history bitcoin
+```
+
+La primera vez que lo lanzas no te avisa de nada, solo apunta los precios.
+Necesita saber dónde estaban antes para saber si han cruzado algo.
+
+---
+
+## Dejarlo funcionando siempre en un servidor Windows
+
+En la carpeta `windows/` hay cuatro archivos:
+
+**1. Haz clic derecho en `instalar-tarea.bat` → Ejecutar como administrador.**
+
+Ya está. El bot arranca solo cada vez que se enciende el servidor, y si por lo
+que sea se cierra, vuelve a arrancar en menos de 15 minutos.
+
+**Para arrancarlo ahora mismo sin reiniciar**, abre una terminal como
+administrador y escribe:
+```
+schtasks /run /tn "CryptoPriceTracker"
+```
+
+**Los otros archivos:**
+
+- `estado.bat` — te dice si está funcionando y enseña lo último que hizo
+- `quitar-tarea.bat` — lo desinstala (ejecutar como administrador)
+- `iniciar.bat` — lo arranca a mano, no hace falta tocarlo
+
+Todo lo que va haciendo queda apuntado en `data/tracker.log`.
+
+---
+
+## Otras opciones del `.env`
+
+| Opción | Qué hace | Por defecto |
+|---|---|---|
+| `VS_CURRENCY` | Moneda de los precios (`usd`, `eur`, `gbp`) | `usd` |
+| `CHECK_INTERVAL` | Segundos entre consulta y consulta | `300` (5 min) |
+| `HISTORY_DAYS` | Días de histórico que se guardan | `90` |
+| `DATABASE_PATH` | Dónde se guardan los datos | `data/prices.db` |
+
+No bajes mucho `CHECK_INTERVAL`: CoinGecko es gratis pero corta si le pides
+demasiado seguido. Cinco minutos va bien.
+
+---
+
+## Si algo no va
+
+**No me llega ningún mensaje**
+Lanza `python main.py --test`. Si tampoco llega, es el token o el chat id. Y
+asegúrate de haberle escrito `/start` al bot.
+
+**Dice que no encuentra una cripto**
+El nombre no es el correcto. Búscalo en coingecko.com y usa el que aparece en la
+dirección de la página.
+
+**Sale un error 429**
+Le estás pidiendo precios demasiado rápido. Sube `CHECK_INTERVAL`.
+
+**Me avisa demasiado**
+El paso es muy pequeño. Con `bitcoin:100` te avisa continuamente; prueba con
+`bitcoin:1000` o más.
+
+---
+
+## Para desarrolladores
 
 ```
 crypto_tracker/
-  config.py      el .env
-  coingecko.py   la API
-  database.py    SQLite
-  telegram.py    los mensajes
-  alerts.py      cuándo avisar
-main.py
+  config.py      lee el .env
+  coingecko.py   consulta los precios
+  database.py    guarda el histórico
+  telegram.py    manda los mensajes
+  alerts.py      decide cuándo avisar
+main.py          junta todo
+tests/           los tests
+windows/         para dejarlo corriendo en un servidor
 ```
 
-Cada cosa en su archivo. `alerts.py` guarda el último nivel del que avisó, así no manda el mismo mensaje una y otra vez.
+Pasar los tests y el linter:
+```
+pip install -e ".[dev]"
+pytest
+ruff check .
+```
 
-Si se cae la API o no hay internet lo apunta en el log y sigue.
-
-## Hecho con
-
-Python 3, sqlite3, requests, python-dotenv, CoinGecko y la API de Telegram.
+Hecho con Python, SQLite, la API de CoinGecko y la de Telegram.
 
 MIT
