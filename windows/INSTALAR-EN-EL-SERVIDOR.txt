@@ -1,0 +1,139 @@
+===========================================================
+  DEJAR EL BOT FUNCIONANDO 24/7 EN EL SERVIDOR (WINDOWS)
+===========================================================
+
+Sigue los pasos en orden. No hace falta instalar nada mas.
+
+
+-----------------------------------------------------------
+PASO 1 - COPIAR LA CARPETA AL SERVIDOR
+-----------------------------------------------------------
+
+Copia toda la carpeta CryptoPriceTracker al servidor.
+Un buen sitio:   C:\CryptoPriceTracker
+
+  NO copies la carpeta .venv
+  Esta hecha para el otro ordenador y aqui no vale.
+  Si se ha copiado, borrala.
+
+  SI tienes que copiar el archivo .env
+  Es un archivo oculto y a veces no se copia solo.
+  Para verlo: en el Explorador, pestana Vista > marcar
+  "Elementos ocultos".
+  Si no lo tienes, copia .env.example, renombralo a .env
+  y rellena el token y el chat id.
+
+
+-----------------------------------------------------------
+PASO 2 - ABRIR UNA TERMINAL EN LA CARPETA
+-----------------------------------------------------------
+
+Abre la carpeta del proyecto en el Explorador.
+Haz clic en la barra de direcciones de arriba, borra lo que
+ponga, escribe:   cmd
+y pulsa Enter.
+
+Se abre una ventana negra ya situada en la carpeta.
+
+
+-----------------------------------------------------------
+PASO 3 - PREPARAR EL PROYECTO
+-----------------------------------------------------------
+
+Escribe esto en la ventana negra, linea a linea:
+
+    python -m venv .venv
+
+    .venv\Scripts\activate
+
+    pip install -r requirements.txt
+
+Tarda un minuto. Cuando acabe, veras (.venv) al principio
+de la linea.
+
+
+-----------------------------------------------------------
+PASO 4 - PROBAR QUE FUNCIONA
+-----------------------------------------------------------
+
+    python main.py --test
+
+Te tiene que llegar un mensaje a Telegram.
+
+  Si NO llega:
+  - Revisa el token y el chat id del archivo .env
+  - Busca tu bot en Telegram y escribele /start
+
+
+-----------------------------------------------------------
+PASO 5 - DEJARLO FUNCIONANDO PARA SIEMPRE
+-----------------------------------------------------------
+
+Entra en la carpeta  windows
+
+Haz CLIC DERECHO sobre  instalar-tarea.bat
+Elige  "Ejecutar como administrador"
+Si sale un aviso de Windows, dile que Si.
+
+Se abre una ventana, pone que la tarea se ha creado, y te
+pide pulsar una tecla para cerrar.
+
+YA ESTA. El bot arranca solo cada vez que se enciende el
+servidor, y si se cierra por lo que sea vuelve a arrancar
+en menos de 15 minutos.
+
+
+-----------------------------------------------------------
+PASO 6 - ARRANCARLO AHORA SIN REINICIAR
+-----------------------------------------------------------
+
+La tarea arranca al encender. Para no esperar, haz doble
+clic en:
+
+    windows\iniciar.bat
+
+Se abre una ventana que se queda ahi trabajando.
+Puedes minimizarla. Si la cierras, el vigia lo vuelve a
+arrancar en 15 minutos como mucho.
+
+
+===========================================================
+  COMPROBAR QUE SIGUE VIVO
+===========================================================
+
+Doble clic en:   windows\estado.bat
+
+Te dice si esta FUNCIONANDO o PARADO y ensena lo ultimo
+que ha hecho.
+
+Todo queda apuntado en:   data\tracker.log
+
+
+===========================================================
+  QUITARLO
+===========================================================
+
+Clic derecho en  windows\quitar-tarea.bat
+"Ejecutar como administrador"
+
+
+===========================================================
+  SI ALGO FALLA
+===========================================================
+
+"python no se reconoce como un comando"
+    Python no esta instalado o no esta en el PATH.
+    Reinstalalo desde python.org y MARCA la casilla
+    "Add Python to PATH" al principio del instalador.
+
+"No se encuentra el entorno virtual"
+    Falta el paso 3. Vuelve a hacerlo.
+
+El bot arranca y se cierra solo
+    Abre data\tracker.log y mira el error del final.
+    Casi siempre es el .env mal puesto.
+
+No me llega ningun aviso
+    Normal al principio: la primera consulta solo apunta
+    los precios. Necesita una segunda para comparar.
+    Con CHECK_INTERVAL=300 eso son 5 minutos.
