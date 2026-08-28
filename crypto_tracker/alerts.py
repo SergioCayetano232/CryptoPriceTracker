@@ -10,9 +10,9 @@ from .telegram import escape
 logger = logging.getLogger(__name__)
 
 # Estados en los que puede estar una cripto respecto a sus umbrales.
-BAJO = "bajo"      # por debajo del minimo
+BAJO = "bajo"  # por debajo del minimo
 NORMAL = "normal"  # entre los dos umbrales
-ALTO = "alto"      # por encima del maximo
+ALTO = "alto"  # por encima del maximo
 
 SIMBOLOS = {"eur": "€", "usd": "$", "gbp": "£"}
 
