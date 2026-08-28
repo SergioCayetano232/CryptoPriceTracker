@@ -1,8 +1,10 @@
 """Punto de entrada: consulta precios, los guarda, compara y avisa.
 
 Uso:
-    python main.py           una consulta y sale
-    python main.py --test    manda un mensaje de prueba a Telegram
+    python main.py                    una consulta y sale
+    python main.py --loop             vigila en bucle
+    python main.py --test             manda un mensaje de prueba a Telegram
+    python main.py --history bitcoin  muestra el historico guardado
 """
 
 import argparse
@@ -56,6 +58,13 @@ def ejecutar_ciclo(config: Config, estado: dict[str, str]) -> dict[str, str]:
         database.save_prices(config.database_path, precios, config.vs_currency)
     except database.DatabaseError as e:
         logger.error("No se pudo guardar en la base de datos: %s", e)
+
+    # Si falla la purga da igual, seguimos avisando.
+    if config.history_days > 0:
+        try:
+            database.purge_old_prices(config.database_path, config.history_days)
+        except database.DatabaseError as e:
+            logger.error("No se pudo purgar el historico: %s", e)
 
     avisos, estado_nuevo = alerts.revisar(precios, config.watchlist, estado)
 
@@ -135,6 +144,40 @@ def mensaje_de_prueba(config: Config) -> int:
     return 1
 
 
+def mostrar_historico(config: Config, coin_id: str, limite: int = 20) -> int:
+    """Imprime los ultimos precios guardados de una cripto."""
+    coin_id = coin_id.strip().lower()
+
+    try:
+        filas = database.get_history(config.database_path, coin_id, limite)
+    except database.DatabaseError as e:
+        logger.error("No se pudo leer el historico: %s", e)
+        return 1
+
+    if not filas:
+        logger.warning(
+            "No hay precios guardados de '%s'. Ejecuta el programa al menos "
+            "una vez, y revisa que el id sea el de CoinGecko (bitcoin, no BTC).",
+            coin_id,
+        )
+        return 1
+
+    print(f"\nUltimos {len(filas)} precios de {coin_id}:\n")
+    for fila in filas:
+        # de 2026-08-28T10:30:00+00:00 a algo legible
+        fecha = fila["created_at"].replace("T", " ")[:19]
+        print(f"  {fecha}  {fila['price']:>14,.4f} {fila['currency'].upper()}")
+
+    # solo comparamos precios de la misma moneda, si no sale un % falso
+    misma = [f for f in filas if f["currency"] == config.vs_currency]
+    if len(misma) >= 2 and misma[-1]["price"]:
+        variacion = (misma[0]["price"] - misma[-1]["price"]) / misma[-1]["price"] * 100
+        print(f"\n  Variacion en el tramo mostrado: {variacion:+.2f}%")
+
+    print()
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Notificador de precios de cripto")
     parser.add_argument(
@@ -144,6 +187,11 @@ def main() -> int:
         "--loop",
         action="store_true",
         help="vigila en bucle cada CHECK_INTERVAL segundos",
+    )
+    parser.add_argument(
+        "--history",
+        metavar="CRIPTO",
+        help="muestra el historico guardado de una cripto y sale",
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="logs detallados")
     args = parser.parse_args()
@@ -164,6 +212,9 @@ def main() -> int:
     except database.DatabaseError as e:
         logger.error("%s", e)
         return 1
+
+    if args.history:
+        return mostrar_historico(config, args.history)
 
     # Recuperamos en que zona quedo cada cripto la ultima vez, asi no
     # repetimos avisos ya mandados aunque el programa se haya reiniciado.
