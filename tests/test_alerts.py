@@ -8,6 +8,7 @@ from crypto_tracker.alerts import (
     NORMAL,
     clasificar,
     formatear,
+    formatear_resumen,
     revisar,
 )
 from crypto_tracker.config import Watch
@@ -179,6 +180,48 @@ def test_formatear_escapa_html():
 
     alerta = Alert("<b>hack</b>", 100, 90, ALTO)
     texto = formatear(alerta, "eur")
+
+    assert "<b>hack</b>" not in texto
+    assert "&lt;" in texto
+
+
+# --- resumen ---
+
+
+def test_resumen_con_variacion():
+    texto = formatear_resumen([("bitcoin", 63000.0, 5.0)], "eur")
+
+    assert "Bitcoin" in texto
+    assert "63.000,00" in texto
+    assert "+5.00%" in texto
+    assert "🔺" in texto
+
+
+def test_resumen_con_bajada():
+    texto = formatear_resumen([("bitcoin", 57000.0, -4.25)], "eur")
+
+    assert "-4.25%" in texto
+    assert "🔻" in texto
+
+
+def test_resumen_sin_historico():
+    texto = formatear_resumen([("bitcoin", 63000.0, None)], "eur")
+
+    assert "sin histórico" in texto
+    assert "%" not in texto
+
+
+def test_resumen_varias_criptos():
+    texto = formatear_resumen(
+        [("bitcoin", 63000.0, 5.0), ("ethereum", 3200.0, -2.0)], "eur"
+    )
+
+    assert len(texto.splitlines()) == 4  # titulo, blanco y dos criptos
+    assert "Ethereum" in texto
+
+
+def test_resumen_escapa_html():
+    texto = formatear_resumen([("<b>hack</b>", 100.0, 1.0)], "eur")
 
     assert "<b>hack</b>" not in texto
     assert "&lt;" in texto

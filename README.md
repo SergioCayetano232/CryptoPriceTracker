@@ -116,6 +116,14 @@ python main.py --loop
 ```
 Se queda mirando los precios cada 5 minutos. Para pararlo, `Ctrl+C`.
 
+**Ver cómo van ahora mismo:**
+```
+python main.py --status
+```
+Te manda a Telegram un resumen con el precio de todo lo que vigilas y cuánto ha
+cambiado en las últimas 24 horas. Si acabas de instalarlo no hay con qué
+comparar, así que pone "sin histórico" hasta que lleve un día funcionando.
+
 **Ver el histórico de una cripto:**
 ```
 python main.py --history bitcoin

@@ -4,6 +4,7 @@ Uso:
     python main.py                    una consulta y sale
     python main.py --loop             vigila en bucle
     python main.py --test             manda un mensaje de prueba a Telegram
+    python main.py --status           manda un resumen de como van los precios
     python main.py --history bitcoin  muestra el historico guardado
 """
 
@@ -19,6 +20,9 @@ logger = logging.getLogger("crypto_tracker")
 
 # Si el ciclo falla estas veces seguidas, algo va mal de verdad y paramos.
 MAX_FALLOS = 10
+
+# Con cuanto tiempo atras se compara el precio en el resumen.
+HORAS_RESUMEN = 24
 
 
 def configurar_logs(verbose: bool = False) -> None:
@@ -144,6 +148,58 @@ def mensaje_de_prueba(config: Config) -> int:
     return 1
 
 
+def enviar_resumen(config: Config) -> int:
+    """Consulta los precios de ahora y manda un resumen por Telegram."""
+    coin_ids = [w.coin_id for w in config.watchlist]
+
+    try:
+        precios = coingecko.get_prices(coin_ids, config.vs_currency)
+    except coingecko.CoinGeckoError as e:
+        logger.error("No se pudieron consultar los precios: %s", e)
+        return 1
+
+    if not precios:
+        logger.error("La consulta no devolvio ningun precio")
+        return 1
+
+    # Aprovechamos la consulta para guardarla, asi el resumen tambien
+    # alimenta el historico con el que se compara la proxima vez.
+    try:
+        database.save_prices(config.database_path, precios, config.vs_currency)
+    except database.DatabaseError as e:
+        logger.error("No se pudo guardar en la base de datos: %s", e)
+
+    lineas = []
+    for coin_id in coin_ids:
+        precio = precios.get(coin_id)
+        if precio is None:
+            continue
+        lineas.append((coin_id, precio, _variacion(config, coin_id, precio)))
+
+    texto = alerts.formatear_resumen(lineas, config.vs_currency)
+
+    if telegram.send_message(config.telegram_token, config.telegram_chat_id, texto):
+        logger.info("Resumen enviado con %d criptos", len(lineas))
+        return 0
+
+    logger.error("No se pudo enviar el resumen")
+    return 1
+
+
+def _variacion(config: Config, coin_id: str, precio: float) -> float | None:
+    """Cuanto ha variado en porcentaje desde hace HORAS_RESUMEN horas."""
+    try:
+        antes = database.get_price_at(config.database_path, coin_id, HORAS_RESUMEN)
+    except database.DatabaseError as e:
+        logger.warning("No se pudo leer el historico de %s: %s", coin_id, e)
+        return None
+
+    if not antes:
+        return None
+
+    return (precio - antes) / antes * 100
+
+
 def mostrar_historico(config: Config, coin_id: str, limite: int = 20) -> int:
     """Imprime los ultimos precios guardados de una cripto."""
     coin_id = coin_id.strip().lower()
@@ -189,6 +245,11 @@ def main() -> int:
         help="vigila en bucle cada CHECK_INTERVAL segundos",
     )
     parser.add_argument(
+        "--status",
+        action="store_true",
+        help="manda un resumen de como van los precios y sale",
+    )
+    parser.add_argument(
         "--history",
         metavar="CRIPTO",
         help="muestra el historico guardado de una cripto y sale",
@@ -215,6 +276,9 @@ def main() -> int:
 
     if args.history:
         return mostrar_historico(config, args.history)
+
+    if args.status:
+        return enviar_resumen(config)
 
     # Recuperamos en que zona quedo cada cripto la ultima vez, asi no
     # repetimos avisos ya mandados aunque el programa se haya reiniciado.

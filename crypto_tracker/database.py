@@ -123,6 +123,30 @@ def get_last_price(db_path: str, coin_id: str) -> float | None:
     return fila["price"] if fila else None
 
 
+def get_price_at(
+    db_path: str, coin_id: str, horas: int, margen: int = 12
+) -> float | None:
+    """Precio guardado mas cercano a hace `horas`, mirando solo hacia atras.
+
+    Solo vale si es de esa franja: `margen` horas antes como mucho. Si el
+    bot ha estado parado una semana, lo mas reciente es de hace siete dias
+    y llamar a eso "variacion en 24h" seria mentira. Mejor no decir nada.
+    """
+    ahora = datetime.now(timezone.utc)
+    corte = (ahora - timedelta(hours=horas)).isoformat(timespec="seconds")
+    limite = (ahora - timedelta(hours=horas + margen)).isoformat(timespec="seconds")
+
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT price FROM prices WHERE coin_id = ? "
+            "AND created_at <= ? AND created_at >= ? "
+            "ORDER BY created_at DESC, id DESC LIMIT 1",
+            (coin_id, corte, limite),
+        ).fetchone()
+
+    return fila["price"] if fila else None
+
+
 def load_state(db_path: str) -> dict[str, str]:
     """Lee en que zona quedo cada cripto la ultima vez."""
     with _connect(db_path) as conn:

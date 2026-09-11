@@ -152,6 +152,30 @@ def formatear(alerta: Alert, currency: str) -> str:
     )
 
 
+def formatear_resumen(
+    lineas: list[tuple[str, float, float | None]], currency: str
+) -> str:
+    """Monta el mensaje de --status. Cada linea es (cripto, precio, variacion)."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["📊 <b>Cómo van tus criptos</b>", ""]
+
+    for coin_id, precio, variacion in lineas:
+        nombre = escape(coin_id.replace("-", " ").title())
+        linea = f"<b>{nombre}</b>  {simbolo}{_num(precio)}"
+
+        if variacion is None:
+            # Recien instalado no hay con que comparar; mejor decirlo que
+            # enseñar un 0,00% que parece que no se ha movido.
+            linea += "  <i>(sin histórico)</i>"
+        else:
+            flecha = "🔺" if variacion > 0 else "🔻" if variacion < 0 else "➖"
+            linea += f"  {flecha} {variacion:+.2f}%"
+
+        texto.append(linea)
+
+    return "\n".join(texto)
+
+
 def _num(valor: float) -> str:
     """Formatea el numero segun su tamaño: 55.500 pero 0,3421."""
     if valor >= 1:

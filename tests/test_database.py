@@ -110,3 +110,61 @@ def test_purga_con_cero_no_borra(db):
 def test_error_si_la_ruta_es_imposible():
     with pytest.raises(database.DatabaseError):
         database.init_db("/ruta/que/no/existe/y/no/se/puede/crear/x.db")
+
+
+def _insertar_con_fecha(db, coin_id, precio, horas_atras):
+    """Mete un precio fechado en el pasado, que save_prices siempre usa ahora."""
+    import sqlite3
+    from datetime import datetime, timedelta, timezone
+
+    cuando = (datetime.now(timezone.utc) - timedelta(hours=horas_atras)).isoformat(
+        timespec="seconds"
+    )
+    conn = sqlite3.connect(db)
+    conn.execute(
+        "INSERT INTO prices (coin_id, price, currency, created_at) VALUES (?,?,?,?)",
+        (coin_id, precio, "eur", cuando),
+    )
+    conn.commit()
+    conn.close()
+
+
+def test_precio_de_hace_24h(db):
+    _insertar_con_fecha(db, "bitcoin", 60000.0, 30)
+    database.save_prices(db, {"bitcoin": 63000.0}, "eur")
+
+    assert database.get_price_at(db, "bitcoin", 24) == 60000.0
+
+
+def test_precio_de_hace_24h_coge_el_mas_cercano(db):
+    _insertar_con_fecha(db, "bitcoin", 50000.0, 80)
+    _insertar_con_fecha(db, "bitcoin", 60000.0, 26)
+    database.save_prices(db, {"bitcoin": 63000.0}, "eur")
+
+    assert database.get_price_at(db, "bitcoin", 24) == 60000.0
+
+
+def test_precio_de_hace_24h_sin_historico(db):
+    database.save_prices(db, {"bitcoin": 63000.0}, "eur")
+
+    # solo hay un precio de ahora mismo, nada de hace 24h
+    assert database.get_price_at(db, "bitcoin", 24) is None
+
+
+def test_precio_de_hace_24h_de_otra_cripto(db):
+    _insertar_con_fecha(db, "ethereum", 3000.0, 30)
+
+    assert database.get_price_at(db, "bitcoin", 24) is None
+
+
+def test_precio_de_hace_24h_ignora_lo_demasiado_viejo(db):
+    # el bot estuvo parado una semana: eso no es "variacion en 24h"
+    _insertar_con_fecha(db, "bitcoin", 40000.0, 24 * 7)
+
+    assert database.get_price_at(db, "bitcoin", 24) is None
+
+
+def test_precio_de_hace_24h_acepta_dentro_del_margen(db):
+    _insertar_con_fecha(db, "bitcoin", 60000.0, 34)
+
+    assert database.get_price_at(db, "bitcoin", 24) == 60000.0
