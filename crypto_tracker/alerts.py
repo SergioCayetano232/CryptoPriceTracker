@@ -16,6 +16,9 @@ ALTO = "alto"  # por encima del maximo
 
 SIMBOLOS = {"eur": "€", "usd": "$", "gbp": "£"}
 
+# De menos a mas alto, para dibujar el historico en una linea.
+BARRAS = "▁▂▃▄▅▆▇█"
+
 
 @dataclass(frozen=True)
 class Alert:
@@ -201,6 +204,25 @@ def formatear(alerta: Alert, currency: str) -> str:
     return (
         f"{icono} <b>{nombre}</b> {verbo} de {simbolo}{_num(alerta.threshold)}\n"
         f"Precio actual: <b>{simbolo}{_num(alerta.price)}</b>"
+    )
+
+
+def sparkline(precios: list[float]) -> str:
+    """Dibuja los precios como una linea de barritas, del mas viejo al mas nuevo."""
+    if len(precios) < 2:
+        return ""
+
+    suelo, techo = min(precios), max(precios)
+    rango = techo - suelo
+
+    # Todo al mismo precio: una linea plana a media altura, que dividir
+    # por un rango de cero reventaria.
+    if rango == 0:
+        return BARRAS[len(BARRAS) // 2] * len(precios)
+
+    return "".join(
+        BARRAS[min(int((p - suelo) / rango * len(BARRAS)), len(BARRAS) - 1)]
+        for p in precios
     )
 
 

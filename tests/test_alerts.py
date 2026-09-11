@@ -351,3 +351,50 @@ def test_varios_no_pasan_del_limite_de_telegram():
     muchos = [Alert(f"cripto-{i}", 1234.56, 1200.0, ALTO) for i in range(40)]
 
     assert len(formatear_varios(muchos, "eur")) < MAX_LENGTH
+
+
+# --- sparkline ---
+
+
+def test_sparkline_sube():
+    from crypto_tracker.alerts import sparkline
+
+    linea = sparkline([1, 2, 3, 4, 5])
+
+    assert linea[0] == "▁"
+    assert linea[-1] == "█"
+    assert len(linea) == 5
+
+
+def test_sparkline_baja():
+    from crypto_tracker.alerts import sparkline
+
+    linea = sparkline([5, 4, 3, 2, 1])
+
+    assert linea[0] == "█"
+    assert linea[-1] == "▁"
+
+
+def test_sparkline_todo_igual():
+    from crypto_tracker.alerts import sparkline
+
+    # sin rango no se puede escalar, sale plano y no revienta
+    assert sparkline([100, 100, 100]) == "▅▅▅"
+
+
+def test_sparkline_pocos_datos():
+    from crypto_tracker.alerts import sparkline
+
+    assert sparkline([]) == ""
+    assert sparkline([100]) == ""
+
+
+def test_sparkline_respeta_las_proporciones():
+    from crypto_tracker.alerts import sparkline
+
+    # el del medio esta justo a medio camino
+    linea = sparkline([0, 50, 100])
+
+    assert linea[0] == "▁"
+    assert linea[1] == "▅"
+    assert linea[2] == "█"

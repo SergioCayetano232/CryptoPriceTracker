@@ -138,8 +138,8 @@ comparar, así que pone "sin histórico" hasta que lleve un día funcionando.
 ```
 python main.py --history bitcoin
 ```
-Lista los últimos precios guardados y, debajo, el máximo, el mínimo, la media y
-cuánto ha variado en ese tramo.
+Lista los últimos precios guardados y, debajo, un gráfico de una línea con la
+forma que ha tenido, más el máximo, el mínimo, la media y cuánto ha variado.
 
 La primera vez que lo lanzas no te avisa de nada, solo apunta los precios.
 Necesita saber dónde estaban antes para saber si han cruzado algo.
@@ -196,7 +196,9 @@ El nombre no es el correcto. Búscalo en coingecko.com y usa el que aparece en l
 dirección de la página.
 
 **Sale un error 429**
-Le estás pidiendo precios demasiado rápido. Sube `CHECK_INTERVAL`.
+Le estás pidiendo precios demasiado rápido. Lo reintenta solo un par de veces,
+así que si aparece de vez en cuando puedes ignorarlo. Si sale continuamente,
+sube `CHECK_INTERVAL`.
 
 **Me avisa demasiado**
 El paso es muy pequeño. Con `bitcoin:100` te avisa continuamente; prueba con

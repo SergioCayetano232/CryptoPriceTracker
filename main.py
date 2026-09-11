@@ -239,6 +239,9 @@ def _imprimir_resumen(precios: list[float], currency: str) -> None:
 
     moneda = currency.upper()
     print()
+    # al reves: el grafico se lee de izquierda a derecha, del mas viejo al de ahora
+    print(f"  {alerts.sparkline(list(reversed(precios)))}")
+    print()
     print(f"  Maximo  {max(precios):>14,.4f} {moneda}")
     print(f"  Minimo  {min(precios):>14,.4f} {moneda}")
     print(f"  Media   {sum(precios) / len(precios):>14,.4f} {moneda}")
