@@ -6,6 +6,12 @@ import requests
 from crypto_tracker import coingecko
 
 
+@pytest.fixture(autouse=True)
+def sin_esperas(monkeypatch):
+    """Los reintentos esperan segundos de verdad y aqui no hace falta."""
+    monkeypatch.setattr(coingecko.time, "sleep", lambda s: None)
+
+
 class RespuestaFalsa:
     def __init__(self, data=None, status=200):
         self.status_code = status
@@ -106,3 +112,60 @@ def test_respuesta_que_no_es_json(monkeypatch):
 
     with pytest.raises(coingecko.CoinGeckoError):
         coingecko.get_prices(["bitcoin"], "eur")
+
+
+def test_reintenta_y_acaba_bien(monkeypatch):
+    intentos = []
+
+    def a_la_tercera(*a, **k):
+        intentos.append(1)
+        if len(intentos) < 3:
+            raise requests.ConnectionError()
+        return RespuestaFalsa({"bitcoin": {"eur": 63000.0}})
+
+    monkeypatch.setattr(requests, "get", a_la_tercera)
+
+    assert coingecko.get_prices(["bitcoin"], "eur") == {"bitcoin": 63000.0}
+    assert len(intentos) == 3
+
+
+def test_reintenta_el_429(monkeypatch):
+    intentos = []
+
+    def limitado(*a, **k):
+        intentos.append(1)
+        return RespuestaFalsa({}, 429)
+
+    monkeypatch.setattr(requests, "get", limitado)
+
+    with pytest.raises(coingecko.CoinGeckoError, match="429"):
+        coingecko.get_prices(["bitcoin"], "eur")
+
+    assert len(intentos) == coingecko.INTENTOS
+
+
+def test_el_404_no_se_reintenta(monkeypatch):
+    intentos = []
+
+    def no_encontrado(*a, **k):
+        intentos.append(1)
+        return RespuestaFalsa({}, 404)
+
+    monkeypatch.setattr(requests, "get", no_encontrado)
+
+    with pytest.raises(coingecko.CoinGeckoError):
+        coingecko.get_prices(["bitcoin"], "eur")
+
+    assert len(intentos) == 1
+
+
+def test_la_espera_se_dobla(monkeypatch):
+    esperas = []
+
+    monkeypatch.setattr(requests, "get", lambda *a, **k: RespuestaFalsa({}, 503))
+    monkeypatch.setattr(coingecko.time, "sleep", esperas.append)  # pisa el fixture
+
+    with pytest.raises(coingecko.CoinGeckoError):
+        coingecko.get_prices(["bitcoin"], "eur")
+
+    assert esperas == [2, 4]
