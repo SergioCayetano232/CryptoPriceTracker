@@ -224,14 +224,30 @@ def mostrar_historico(config: Config, coin_id: str, limite: int = 20) -> int:
         fecha = fila["created_at"].replace("T", " ")[:19]
         print(f"  {fecha}  {fila['price']:>14,.4f} {fila['currency'].upper()}")
 
-    # solo comparamos precios de la misma moneda, si no sale un % falso
-    misma = [f for f in filas if f["currency"] == config.vs_currency]
-    if len(misma) >= 2 and misma[-1]["price"]:
-        variacion = (misma[0]["price"] - misma[-1]["price"]) / misma[-1]["price"] * 100
-        print(f"\n  Variacion en el tramo mostrado: {variacion:+.2f}%")
+    # solo mezclamos precios de la misma moneda, si no salen cuentas falsas
+    misma = [f["price"] for f in filas if f["currency"] == config.vs_currency]
+    _imprimir_resumen(misma, config.vs_currency)
 
     print()
     return 0
+
+
+def _imprimir_resumen(precios: list[float], currency: str) -> None:
+    """Maximo, minimo, media y variacion del tramo que se acaba de listar."""
+    if len(precios) < 2:
+        return
+
+    moneda = currency.upper()
+    print()
+    print(f"  Maximo  {max(precios):>14,.4f} {moneda}")
+    print(f"  Minimo  {min(precios):>14,.4f} {moneda}")
+    print(f"  Media   {sum(precios) / len(precios):>14,.4f} {moneda}")
+
+    # las filas vienen de la mas nueva a la mas vieja
+    primero, ultimo = precios[-1], precios[0]
+    if primero:
+        variacion = (ultimo - primero) / primero * 100
+        print(f"  Variacion en el tramo mostrado: {variacion:+.2f}%")
 
 
 def main() -> int:

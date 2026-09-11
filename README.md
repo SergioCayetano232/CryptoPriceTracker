@@ -138,6 +138,8 @@ comparar, así que pone "sin histórico" hasta que lleve un día funcionando.
 ```
 python main.py --history bitcoin
 ```
+Lista los últimos precios guardados y, debajo, el máximo, el mínimo, la media y
+cuánto ha variado en ese tramo.
 
 La primera vez que lo lanzas no te avisa de nada, solo apunta los precios.
 Necesita saber dónde estaban antes para saber si han cruzado algo.
