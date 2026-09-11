@@ -225,3 +225,94 @@ def test_resumen_escapa_html():
 
     assert "<b>hack</b>" not in texto
     assert "&lt;" in texto
+
+
+# --- porcentaje ---
+
+
+def test_porcentaje_primera_vez_no_avisa():
+    watch = Watch("bitcoin", percent=5)
+
+    avisos, estado = revisar({"bitcoin": 60000}, [watch], {})
+
+    assert avisos == []
+    assert estado["bitcoin"] == "%60000"
+
+
+def test_porcentaje_avisa_al_subir():
+    watch = Watch("bitcoin", percent=5)
+
+    avisos, estado = revisar({"bitcoin": 63000}, [watch], {"bitcoin": "%60000"})
+
+    assert len(avisos) == 1
+    assert avisos[0].estado == ALTO
+    assert avisos[0].percent == pytest.approx(5.0)
+    assert avisos[0].threshold == 60000
+    assert estado["bitcoin"] == "%63000"
+
+
+def test_porcentaje_avisa_al_bajar():
+    watch = Watch("bitcoin", percent=5)
+
+    avisos, _ = revisar({"bitcoin": 56000}, [watch], {"bitcoin": "%60000"})
+
+    assert avisos[0].estado == BAJO
+    assert avisos[0].percent == pytest.approx(-6.6667, abs=0.001)
+
+
+def test_porcentaje_no_avisa_si_se_queda_corto():
+    watch = Watch("bitcoin", percent=5)
+
+    avisos, estado = revisar({"bitcoin": 62000}, [watch], {"bitcoin": "%60000"})
+
+    assert avisos == []
+    # la referencia no se mueve: si no, nunca acumularia hasta el 5%
+    assert estado["bitcoin"] == "%60000"
+
+
+def test_porcentaje_acumula_hasta_saltar():
+    watch = Watch("bitcoin", percent=5)
+    estado = {"bitcoin": "%60000"}
+
+    for precio in (61000, 62000, 62500):
+        avisos, estado = revisar({"bitcoin": precio}, [watch], estado)
+        assert avisos == []
+
+    avisos, estado = revisar({"bitcoin": 63500}, [watch], estado)
+
+    assert len(avisos) == 1
+    assert estado["bitcoin"] == "%63500"
+
+
+def test_porcentaje_la_referencia_se_mueve_con_cada_aviso():
+    # una subida larga avisa por tramos, no una sola vez
+    watch = Watch("bitcoin", percent=5)
+    estado = {"bitcoin": "%60000"}
+
+    avisos, estado = revisar({"bitcoin": 63000}, [watch], estado)
+    assert len(avisos) == 1
+
+    avisos, estado = revisar({"bitcoin": 66200}, [watch], estado)
+    assert len(avisos) == 1
+    assert avisos[0].threshold == 63000
+
+
+def test_porcentaje_ignora_un_estado_de_otro_formato():
+    # si antes era bitcoin:1000 el estado guardado es "63000", sin el %
+    watch = Watch("bitcoin", percent=5)
+
+    avisos, estado = revisar({"bitcoin": 63000}, [watch], {"bitcoin": "63000"})
+
+    assert avisos == []
+    assert estado["bitcoin"] == "%63000"
+
+
+def test_formatear_porcentaje():
+    from crypto_tracker.alerts import Alert
+
+    alerta = Alert("bitcoin", 63000.0, 60000.0, ALTO, percent=5.0)
+    texto = formatear(alerta, "eur")
+
+    assert "5.00%" in texto
+    assert "63.000,00" in texto
+    assert "60.000,00" in texto

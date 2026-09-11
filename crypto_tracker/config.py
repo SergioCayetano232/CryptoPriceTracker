@@ -20,12 +20,14 @@ class Watch:
 
     min_price/max_price avisan al cruzar un precio fijo.
     step avisa al cruzar cualquier multiplo de ese valor.
+    percent avisa cuando el precio se mueve ese porcentaje.
     """
 
     coin_id: str
     min_price: float | None = None
     max_price: float | None = None
     step: float | None = None
+    percent: float | None = None
 
 
 @dataclass(frozen=True)
@@ -63,8 +65,9 @@ def _parse_threshold(raw: str, coin_id: str, label: str) -> float | None:
 def _parse_watchlist(raw: str) -> list[Watch]:
     """Convierte el texto de WATCHLIST en objetos Watch.
 
-    Admite dos formatos, mezclables en la misma lista:
+    Admite tres formatos, mezclables en la misma lista:
       bitcoin:1000              -> avisa al cruzar 62000, 63000, 64000...
+      bitcoin:%5                -> avisa cuando se mueve un 5%
       bitcoin:55000:75000       -> avisa al cruzar esos precios
     """
     watches = []
@@ -86,7 +89,13 @@ def _parse_watchlist(raw: str) -> list[Watch]:
             raise ConfigError(f"Falta el id de la cripto en: '{entry}'")
 
         if len(parts) == 2:
-            watches.append(Watch(coin_id, step=_parse_step(parts[1], coin_id)))
+            valor = parts[1].strip()
+            if valor.startswith("%"):
+                watches.append(
+                    Watch(coin_id, percent=_parse_percent(valor[1:], coin_id))
+                )
+            else:
+                watches.append(Watch(coin_id, step=_parse_step(valor, coin_id)))
             continue
 
         min_price = _parse_threshold(parts[1], coin_id, "minimo")
@@ -119,6 +128,25 @@ def _parse_step(raw: str, coin_id: str) -> float:
     if valor <= 0:
         raise ConfigError(
             f"El paso de '{coin_id}' tiene que ser mayor que 0, no {valor}."
+        )
+    return valor
+
+
+def _parse_percent(raw: str, coin_id: str) -> float:
+    """Lee el porcentaje de variacion. Mayor que cero y menor que cien."""
+    valor = _parse_threshold(raw, coin_id, "porcentaje")
+
+    if valor is None:
+        raise ConfigError(f"Falta el porcentaje de '{coin_id}' (ej: {coin_id}:%5).")
+    if valor <= 0:
+        raise ConfigError(
+            f"El porcentaje de '{coin_id}' tiene que ser mayor que 0, no {valor}."
+        )
+    # Un 100% pide que doble o se vaya a cero: casi seguro es un dedazo.
+    if valor >= 100:
+        raise ConfigError(
+            f"El porcentaje de '{coin_id}' ({valor}%) es demasiado grande, "
+            "no avisaria casi nunca."
         )
     return valor
 

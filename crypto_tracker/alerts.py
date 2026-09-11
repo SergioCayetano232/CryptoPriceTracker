@@ -25,6 +25,7 @@ class Alert:
     price: float
     threshold: float
     estado: str  # BAJO o ALTO
+    percent: float | None = None  # variacion, solo en las alertas de %
 
 
 def clasificar(price: float, watch: Watch) -> str:
@@ -56,7 +57,11 @@ def revisar(
             # Mantenemos el estado anterior para no avisar de mas luego.
             continue
 
-        if watch.step is not None:
+        if watch.percent is not None:
+            aviso, referencia = _revisar_porcentaje(
+                price, watch, estado_previo.get(watch.coin_id)
+            )
+        elif watch.step is not None:
             aviso, referencia = _revisar_variacion(
                 price, watch, estado_previo.get(watch.coin_id)
             )
@@ -126,6 +131,45 @@ def _revisar_variacion(
     return Alert(watch.coin_id, price, nivel_cruzado, estado), str(nivel_actual)
 
 
+def _revisar_porcentaje(
+    price: float, watch: Watch, referencia: str | None
+) -> tuple[Alert | None, str]:
+    """Avisa cuando el precio se aleja un % del ultimo del que avisamos.
+
+    La referencia se mueve con cada aviso, asi que una subida larga avisa
+    por tramos (5%, otro 5%...) en vez de una sola vez.
+    """
+    # El prefijo distingue esta referencia del nivel que guarda el paso fijo:
+    # si alguien cambia el formato en el .env, el estado viejo no cuela.
+    anterior = _a_float(referencia[1:]) if _es_ref_pct(referencia) else None
+
+    # Primera vez (o formato cambiado): anotamos el precio y esperamos.
+    if anterior is None or anterior <= 0:
+        logger.debug("%s: precio de partida %s", watch.coin_id, price)
+        return None, _ref_pct(price)
+
+    variacion = (price - anterior) / anterior * 100
+
+    if abs(variacion) < watch.percent:
+        # Devolvemos la referencia tal cual entro, sin pasarla por float:
+        # asi no se reescribe sola en la base de datos cada ciclo.
+        return None, referencia
+
+    estado = ALTO if variacion > 0 else BAJO
+    return (
+        Alert(watch.coin_id, price, anterior, estado, percent=variacion),
+        _ref_pct(price),
+    )
+
+
+def _ref_pct(price: float) -> str:
+    return f"%{price}"
+
+
+def _es_ref_pct(valor: str | None) -> bool:
+    return bool(valor) and valor.startswith("%")
+
+
 def _a_float(valor: str | None) -> float | None:
     """Lee el precio de referencia. Ignora los estados viejos (bajo/alto)."""
     if valor is None:
@@ -145,6 +189,14 @@ def formatear(alerta: Alert, currency: str) -> str:
         icono, verbo = "🔻", "ha bajado"
     else:
         icono, verbo = "🚀", "ha subido"
+
+    if alerta.percent is not None:
+        return (
+            f"{icono} <b>{nombre}</b> {verbo} un "
+            f"<b>{abs(alerta.percent):.2f}%</b>\n"
+            f"De {simbolo}{_num(alerta.threshold)} a "
+            f"<b>{simbolo}{_num(alerta.price)}</b>"
+        )
 
     return (
         f"{icono} <b>{nombre}</b> {verbo} de {simbolo}{_num(alerta.threshold)}\n"

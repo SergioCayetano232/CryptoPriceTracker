@@ -67,13 +67,23 @@ Mac/Linux: `cp .env.example .env`
 
 Abre el `.env` con cualquier editor de texto y rellena el token y el chat id.
 
-Luego elige qué criptos vigilar en la línea `WATCHLIST`. Hay dos formas:
+Luego elige qué criptos vigilar en la línea `WATCHLIST`. Hay tres formas:
 
 **Avisarte cada vez que pase un múltiplo:**
 ```
 WATCHLIST=bitcoin:1000
 ```
 Te avisa cuando Bitcoin pase por 63.000, luego por 64.000, luego por 65.000...
+
+**Avisarte cuando se mueva un porcentaje:**
+```
+WATCHLIST=bitcoin:%5
+```
+Te avisa cada vez que suba o baje un 5% desde el último aviso. Va por tramos: si
+sube un 12% de golpe te avisa una vez, y vuelve a avisarte al siguiente 5%.
+
+Suele ser la más útil: un paso de 1.000 € no significa lo mismo con Bitcoin a
+30.000 que a 120.000, y un porcentaje sí.
 
 **Avisarte al salir de un rango:**
 ```
@@ -83,7 +93,7 @@ Te avisa si baja de 55.000 o si sube de 75.000.
 
 **Puedes mezclar y poner varias separadas por comas:**
 ```
-WATCHLIST=bitcoin:1000,ethereum:100,solana:5
+WATCHLIST=bitcoin:%5,ethereum:100,solana:5
 ```
 
 Los nombres son los de CoinGecko: `bitcoin`, no `BTC`. Si no sabes cuál es,
@@ -188,7 +198,7 @@ Le estás pidiendo precios demasiado rápido. Sube `CHECK_INTERVAL`.
 
 **Me avisa demasiado**
 El paso es muy pequeño. Con `bitcoin:100` te avisa continuamente; prueba con
-`bitcoin:1000` o más.
+`bitcoin:1000` o más. Con porcentajes, sube del `%2` al `%5`.
 
 ---
 

@@ -68,3 +68,41 @@ def test_comas_sobrantes():
 def test_entradas_invalidas(entrada):
     with pytest.raises(ConfigError):
         _parse_watchlist(entrada)
+
+
+# --- porcentaje ---
+
+
+def test_formato_porcentaje():
+    watches = _parse_watchlist("bitcoin:%5")
+
+    assert watches[0].percent == 5
+    assert watches[0].step is None
+    assert watches[0].min_price is None
+
+
+def test_porcentaje_con_decimales():
+    assert _parse_watchlist("bitcoin:%2.5")[0].percent == 2.5
+
+
+def test_porcentaje_mezclado_con_los_demas():
+    watches = _parse_watchlist("bitcoin:%5,ethereum:100,solana:20:200")
+
+    assert watches[0].percent == 5
+    assert watches[1].step == 100
+    assert watches[2].max_price == 200
+
+
+@pytest.mark.parametrize(
+    "entrada",
+    [
+        "bitcoin:%",  # sin numero
+        "bitcoin:%0",  # cero
+        "bitcoin:%-5",  # negativo
+        "bitcoin:%100",  # tendria que doblar
+        "bitcoin:%hola",  # no es un numero
+    ],
+)
+def test_porcentajes_invalidos(entrada):
+    with pytest.raises(ConfigError):
+        _parse_watchlist(entrada)
