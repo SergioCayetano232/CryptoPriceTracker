@@ -19,6 +19,8 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+# Para poder lanzar pytest tras clonar, sin instalar el paquete antes.
+pythonpath = ["."]
 
 [tool.ruff]
 line-length = 88

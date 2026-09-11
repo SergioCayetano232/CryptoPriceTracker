@@ -218,7 +218,7 @@ windows/         para dejarlo corriendo en un servidor
 
 Pasar los tests y el linter:
 ```
-pip install -e ".[dev]"
+pip install pytest ruff
 pytest
 ruff check .
 ```
