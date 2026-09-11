@@ -204,6 +204,15 @@ def formatear(alerta: Alert, currency: str) -> str:
     )
 
 
+def formatear_varios(alertas: list[Alert], currency: str) -> str:
+    """Junta varios avisos en un mensaje. Uno solo se manda tal cual."""
+    if len(alertas) == 1:
+        return formatear(alertas[0], currency)
+
+    cuerpo = "\n\n".join(formatear(a, currency) for a in alertas)
+    return f"<b>{len(alertas)} avisos</b>\n\n{cuerpo}"
+
+
 def formatear_resumen(
     lineas: list[tuple[str, float, float | None]], currency: str
 ) -> str:

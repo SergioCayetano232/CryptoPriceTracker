@@ -316,3 +316,38 @@ def test_formatear_porcentaje():
     assert "5.00%" in texto
     assert "63.000,00" in texto
     assert "60.000,00" in texto
+
+
+# --- varios avisos juntos ---
+
+
+def test_varios_uno_solo_va_tal_cual():
+    from crypto_tracker.alerts import Alert, formatear_varios
+
+    alerta = Alert("bitcoin", 63000.0, 60000.0, ALTO)
+
+    assert formatear_varios([alerta], "eur") == formatear(alerta, "eur")
+
+
+def test_varios_se_juntan_con_cabecera():
+    from crypto_tracker.alerts import Alert, formatear_varios
+
+    alertas = [
+        Alert("bitcoin", 63000.0, 60000.0, ALTO),
+        Alert("ethereum", 2800.0, 3000.0, BAJO),
+    ]
+
+    texto = formatear_varios(alertas, "eur")
+
+    assert texto.startswith("<b>2 avisos</b>")
+    assert "Bitcoin" in texto
+    assert "Ethereum" in texto
+
+
+def test_varios_no_pasan_del_limite_de_telegram():
+    from crypto_tracker.alerts import Alert, formatear_varios
+    from crypto_tracker.telegram import MAX_LENGTH
+
+    muchos = [Alert(f"cripto-{i}", 1234.56, 1200.0, ALTO) for i in range(40)]
+
+    assert len(formatear_varios(muchos, "eur")) < MAX_LENGTH

@@ -82,17 +82,17 @@ def ejecutar_ciclo(config: Config, estado: dict[str, str]) -> dict[str, str]:
         logger.info("Ningun umbral cruzado")
         return estado_nuevo
 
-    for aviso in avisos:
-        texto = alerts.formatear(aviso, config.vs_currency)
-        enviado = telegram.send_message(
-            config.telegram_token, config.telegram_chat_id, texto
-        )
-        if enviado:
-            logger.info("Aviso enviado: %s %s", aviso.coin_id, aviso.estado)
-        else:
-            # El aviso se perdio, pero el estado ya cambio. No insistimos:
-            # el siguiente cruce volvera a avisar.
-            logger.error("No se pudo avisar de %s", aviso.coin_id)
+    # Todo en un mensaje: si cruzan tres a la vez, tres notificaciones
+    # seguidas molestan y encima Telegram empieza a cortar el ritmo.
+    texto = alerts.formatear_varios(avisos, config.vs_currency)
+    cruzadas = ", ".join(f"{a.coin_id} {a.estado}" for a in avisos)
+
+    if telegram.send_message(config.telegram_token, config.telegram_chat_id, texto):
+        logger.info("Aviso enviado (%d): %s", len(avisos), cruzadas)
+    else:
+        # El aviso se perdio, pero el estado ya cambio. No insistimos:
+        # el siguiente cruce volvera a avisar.
+        logger.error("No se pudo avisar de: %s", cruzadas)
 
     return estado_nuevo
 
