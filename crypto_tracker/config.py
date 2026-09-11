@@ -181,6 +181,33 @@ def _parse_history_days() -> int:
     return value
 
 
+def parse_duracion(raw: str) -> int:
+    """Convierte '30m', '2h' o '1d' en minutos. Sin letra se entienden horas."""
+    raw = raw.strip().lower()
+    if not raw:
+        raise ConfigError("Falta el tiempo. Ejemplos: 30m, 2h, 1d.")
+
+    unidades = {"m": 1, "h": 60, "d": 1440}
+    factor = unidades.get(raw[-1])
+    numero = raw[:-1] if factor else raw
+
+    try:
+        cantidad = float(numero)
+    except ValueError:
+        raise ConfigError(
+            f"No entiendo '{raw}'. Usa algo como 30m, 2h o 1d."
+        ) from None
+
+    if cantidad <= 0:
+        raise ConfigError(f"El tiempo tiene que ser mayor que 0, no '{raw}'.")
+
+    minutos = int(cantidad * (factor or 60))
+    if minutos < 1:
+        raise ConfigError(f"'{raw}' es menos de un minuto.")
+
+    return minutos
+
+
 def load_config() -> Config:
     """Monta la configuracion. Lanza ConfigError si algo falta o esta mal."""
     return Config(

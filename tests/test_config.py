@@ -106,3 +106,25 @@ def test_porcentaje_mezclado_con_los_demas():
 def test_porcentajes_invalidos(entrada):
     with pytest.raises(ConfigError):
         _parse_watchlist(entrada)
+
+
+# --- duraciones ---
+
+
+def test_duraciones():
+    from crypto_tracker.config import parse_duracion
+
+    assert parse_duracion("30m") == 30
+    assert parse_duracion("2h") == 120
+    assert parse_duracion("1d") == 1440
+    assert parse_duracion("1.5h") == 90
+    # sin letra se entienden horas
+    assert parse_duracion("3") == 180
+
+
+@pytest.mark.parametrize("entrada", ["", "0h", "-2h", "hola", "2x", "0.001m"])
+def test_duraciones_invalidas(entrada):
+    from crypto_tracker.config import parse_duracion
+
+    with pytest.raises(ConfigError):
+        parse_duracion(entrada)

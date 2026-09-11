@@ -134,6 +134,22 @@ Te manda a Telegram un resumen con el precio de todo lo que vigilas y cuánto ha
 cambiado en las últimas 24 horas. Si acabas de instalarlo no hay con qué
 comparar, así que pone "sin histórico" hasta que lleve un día funcionando.
 
+**Callar los avisos un rato:**
+```
+python main.py --mute 2h
+```
+No te avisa durante dos horas. Vale `30m`, `2h` o `1d`; sin letra se entienden
+horas. Sigue mirando y guardando precios, solo se calla.
+
+Para volver antes de tiempo:
+```
+python main.py --unmute
+```
+
+El silencio se guarda, así que aguanta aunque reinicies o se apague el servidor.
+Y `--status` te sigue funcionando: lo que se calla son los avisos automáticos, no
+lo que pidas tú.
+
 **Ver el histórico de una cripto:**
 ```
 python main.py --history bitcoin

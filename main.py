@@ -5,6 +5,8 @@ Uso:
     python main.py --loop             vigila en bucle
     python main.py --test             manda un mensaje de prueba a Telegram
     python main.py --status           manda un resumen de como van los precios
+    python main.py --mute 2h          calla los avisos durante dos horas
+    python main.py --unmute           vuelve a avisar
     python main.py --history bitcoin  muestra el historico guardado
 """
 
@@ -12,9 +14,15 @@ import argparse
 import logging
 import sys
 import time
+from datetime import datetime, timedelta, timezone
 
 from crypto_tracker import alerts, coingecko, database, telegram
-from crypto_tracker.config import Config, ConfigError, load_config
+from crypto_tracker.config import (
+    Config,
+    ConfigError,
+    load_config,
+    parse_duracion,
+)
 
 logger = logging.getLogger("crypto_tracker")
 
@@ -82,6 +90,17 @@ def ejecutar_ciclo(config: Config, estado: dict[str, str]) -> dict[str, str]:
         logger.info("Ningun umbral cruzado")
         return estado_nuevo
 
+    # Silenciado: el estado ya se guardo, asi que al volver no llega de golpe
+    # todo lo que paso mientras, solo lo que este cruzado en ese momento.
+    callado = _silenciado(config)
+    if callado:
+        logger.info(
+            "Silenciado hasta las %s, no aviso de: %s",
+            callado.astimezone().strftime("%H:%M"),
+            ", ".join(a.coin_id for a in avisos),
+        )
+        return estado_nuevo
+
     # Todo en un mensaje: si cruzan tres a la vez, tres notificaciones
     # seguidas molestan y encima Telegram empieza a cortar el ritmo.
     texto = alerts.formatear_varios(avisos, config.vs_currency)
@@ -146,6 +165,55 @@ def mensaje_de_prueba(config: Config) -> int:
 
     logger.error("No se pudo enviar. Revisa el token y el chat_id del .env")
     return 1
+
+
+def _silenciado(config: Config) -> datetime | None:
+    """Hasta cuando estan callados los avisos, si es que lo estan."""
+    try:
+        return database.silenciado_hasta(config.database_path)
+    except database.DatabaseError as e:
+        # Si no podemos leerlo, mejor avisar de mas que quedarnos mudos.
+        logger.warning("No se pudo leer el silencio: %s", e)
+        return None
+
+
+def silenciar(config: Config, duracion: str) -> int:
+    """Calla los avisos durante el tiempo que se pida."""
+    try:
+        minutos = parse_duracion(duracion)
+    except ConfigError as e:
+        logger.error("%s", e)
+        return 1
+
+    hasta = datetime.now(timezone.utc) + timedelta(minutes=minutos)
+
+    try:
+        database.silenciar_hasta(config.database_path, hasta)
+    except database.DatabaseError as e:
+        logger.error("No se pudo guardar el silencio: %s", e)
+        return 1
+
+    logger.info(
+        "Callado hasta las %s. Para volver antes: --unmute",
+        hasta.astimezone().strftime("%H:%M del %d/%m"),
+    )
+    return 0
+
+
+def quitar_silencio(config: Config) -> int:
+    """Vuelve a avisar."""
+    try:
+        estaba = database.silenciado_hasta(config.database_path)
+        database.silenciar_hasta(config.database_path, None)
+    except database.DatabaseError as e:
+        logger.error("No se pudo quitar el silencio: %s", e)
+        return 1
+
+    if estaba:
+        logger.info("Vuelvo a avisar")
+    else:
+        logger.info("No estaba silenciado")
+    return 0
 
 
 def enviar_resumen(config: Config) -> int:
@@ -269,6 +337,14 @@ def main() -> int:
         help="manda un resumen de como van los precios y sale",
     )
     parser.add_argument(
+        "--mute",
+        metavar="TIEMPO",
+        help="calla los avisos un rato (30m, 2h, 1d) y sale",
+    )
+    parser.add_argument(
+        "--unmute", action="store_true", help="vuelve a avisar y sale"
+    )
+    parser.add_argument(
         "--history",
         metavar="CRIPTO",
         help="muestra el historico guardado de una cripto y sale",
@@ -295,6 +371,12 @@ def main() -> int:
 
     if args.history:
         return mostrar_historico(config, args.history)
+
+    if args.mute:
+        return silenciar(config, args.mute)
+
+    if args.unmute:
+        return quitar_silencio(config)
 
     if args.status:
         return enviar_resumen(config)

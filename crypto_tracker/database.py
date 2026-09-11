@@ -29,7 +29,17 @@ CREATE TABLE IF NOT EXISTS alert_state (
     estado     TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
+
+-- Ajustes sueltos, de momento solo hasta cuando estan silenciados los avisos.
+-- Una tabla de clave/valor evita tener que migrar cada vez que anada algo.
+CREATE TABLE IF NOT EXISTS ajustes (
+    clave TEXT PRIMARY KEY,
+    valor TEXT NOT NULL
+);
 """
+
+# Clave donde se guarda hasta cuando callamos, en ISO y UTC.
+SILENCIO = "silenciado_hasta"
 
 
 class DatabaseError(Exception):
@@ -170,6 +180,42 @@ def save_state(db_path: str, estado: dict[str, str]) -> None:
             "VALUES (?, ?, ?)",
             filas,
         )
+
+
+def silenciar_hasta(db_path: str, cuando: datetime | None) -> None:
+    """Guarda hasta cuando no se avisa. None quita el silencio."""
+    with _connect(db_path) as conn:
+        if cuando is None:
+            conn.execute("DELETE FROM ajustes WHERE clave = ?", (SILENCIO,))
+            return
+
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (SILENCIO, cuando.isoformat(timespec="seconds")),
+        )
+
+
+def silenciado_hasta(db_path: str) -> datetime | None:
+    """Hasta cuando estan callados los avisos, o None si no lo estan."""
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT valor FROM ajustes WHERE clave = ?", (SILENCIO,)
+        ).fetchone()
+
+    if not fila:
+        return None
+
+    try:
+        cuando = datetime.fromisoformat(fila["valor"])
+    except ValueError:
+        logger.warning("El silencio guardado no se entiende: %r", fila["valor"])
+        return None
+
+    # Ya paso la hora: se acabo el silencio.
+    if cuando <= datetime.now(timezone.utc):
+        return None
+
+    return cuando
 
 
 def get_history(db_path: str, coin_id: str, limit: int = 50) -> list[sqlite3.Row]:

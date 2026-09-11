@@ -168,3 +168,65 @@ def test_precio_de_hace_24h_acepta_dentro_del_margen(db):
     _insertar_con_fecha(db, "bitcoin", 60000.0, 34)
 
     assert database.get_price_at(db, "bitcoin", 24) == 60000.0
+
+
+# --- silencio ---
+
+
+def test_sin_silencio_de_entrada(db):
+    assert database.silenciado_hasta(db) is None
+
+
+def test_silenciar_y_leerlo(db):
+    from datetime import datetime, timedelta, timezone
+
+    hasta = datetime.now(timezone.utc) + timedelta(hours=2)
+    database.silenciar_hasta(db, hasta)
+
+    guardado = database.silenciado_hasta(db)
+
+    assert guardado is not None
+    assert abs((guardado - hasta).total_seconds()) < 2
+
+
+def test_el_silencio_caduca_solo(db):
+    from datetime import datetime, timedelta, timezone
+
+    database.silenciar_hasta(db, datetime.now(timezone.utc) - timedelta(minutes=1))
+
+    assert database.silenciado_hasta(db) is None
+
+
+def test_quitar_el_silencio(db):
+    from datetime import datetime, timedelta, timezone
+
+    database.silenciar_hasta(db, datetime.now(timezone.utc) + timedelta(hours=2))
+    database.silenciar_hasta(db, None)
+
+    assert database.silenciado_hasta(db) is None
+
+
+def test_silenciar_pisa_lo_anterior(db):
+    from datetime import datetime, timedelta, timezone
+
+    ahora = datetime.now(timezone.utc)
+    database.silenciar_hasta(db, ahora + timedelta(hours=5))
+    database.silenciar_hasta(db, ahora + timedelta(hours=1))
+
+    guardado = database.silenciado_hasta(db)
+
+    assert (guardado - ahora).total_seconds() < 3700
+
+
+def test_un_silencio_ilegible_no_revienta(db):
+    import sqlite3
+
+    conn = sqlite3.connect(db)
+    conn.execute(
+        "INSERT INTO ajustes (clave, valor) VALUES (?, ?)",
+        (database.SILENCIO, "esto no es una fecha"),
+    )
+    conn.commit()
+    conn.close()
+
+    assert database.silenciado_hasta(db) is None
