@@ -19,6 +19,9 @@ SIMBOLOS = {"eur": "€", "usd": "$", "gbp": "£"}
 # De menos a mas alto, para dibujar el historico en una linea.
 BARRAS = "▁▂▃▄▅▆▇█"
 
+# Mas barritas que esto y en el movil la linea salta a la siguiente.
+BARRAS_MOVIL = 24
+
 
 @dataclass(frozen=True)
 class Alert:
@@ -251,12 +254,43 @@ def formatear_resumen(
             # enseñar un 0,00% que parece que no se ha movido.
             linea += "  <i>(sin histórico)</i>"
         else:
-            flecha = "🔺" if variacion > 0 else "🔻" if variacion < 0 else "➖"
-            linea += f"  {flecha} {variacion:+.2f}%"
+            linea += f"  {_flecha(variacion)} {variacion:+.2f}%"
 
         texto.append(linea)
 
     return "\n".join(texto)
+
+
+def formatear_historico(
+    coin_id: str, precios: list[float], currency: str, horas: int
+) -> str:
+    """Mensaje de /historico. Los precios van del mas viejo al mas nuevo."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(coin_id.replace("-", " ").title())
+    ahora = precios[-1]
+    variacion = (ahora - precios[0]) / precios[0] * 100 if precios[0] else 0.0
+    linea = sparkline(muestrear(precios, BARRAS_MOVIL))
+
+    return (
+        f"📈 <b>{nombre}</b>, últimas {horas} h\n"
+        f"<code>{linea}</code>\n\n"
+        f"Ahora <b>{simbolo}{_num(ahora)}</b>  {_flecha(variacion)} {variacion:+.2f}%\n"
+        f"Máximo {simbolo}{_num(max(precios))}\n"
+        f"Mínimo {simbolo}{_num(min(precios))}"
+    )
+
+
+def muestrear(precios: list[float], n: int) -> list[float]:
+    """Se queda con n puntos repartidos, siempre con el primero y el ultimo."""
+    if len(precios) <= n:
+        return list(precios)
+
+    paso = (len(precios) - 1) / (n - 1)
+    return [precios[round(i * paso)] for i in range(n)]
+
+
+def _flecha(variacion: float) -> str:
+    return "🔺" if variacion > 0 else "🔻" if variacion < 0 else "➖"
 
 
 def _num(valor: float) -> str:

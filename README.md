@@ -129,6 +129,21 @@ Se queda mirando los precios cada 5 minutos. Para pararlo, `Ctrl+C`.
 Si pasa media hora sin poder consultar los precios, te avisa por Telegram, y
 otra vez cuando vuelve a funcionar. Si se para por errores, también te lo dice.
 
+**Manejarlo desde Telegram:**
+
+Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
+
+| Comando | Qué hace |
+|---|---|
+| `/status` | Cómo van tus criptos ahora |
+| `/historico bitcoin` | Gráfica y máximo/mínimo de las últimas 24 h |
+| `/mute 2h` | Calla los avisos un rato |
+| `/unmute` | Vuelve a avisar |
+| `/ayuda` | La lista de comandos |
+
+Al escribir `/` en el chat te salen solos. Solo contesta a tu chat id, y si
+estaba apagado, al volver ignora lo que le escribiste hace más de 10 minutos.
+
 **Ver cómo van ahora mismo:**
 ```
 python main.py --status

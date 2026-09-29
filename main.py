@@ -16,7 +16,7 @@ import sys
 import time
 from datetime import datetime, timedelta, timezone
 
-from crypto_tracker import alerts, coingecko, database, salud, telegram
+from crypto_tracker import alerts, coingecko, comandos, database, salud, telegram
 from crypto_tracker.config import (
     Config,
     ConfigError,
@@ -31,6 +31,13 @@ MAX_FALLOS = 10
 
 # Con cuanto tiempo atras se compara el precio en el resumen.
 HORAS_RESUMEN = 24
+
+# Segundos que Telegram aguanta la conexion abierta esperando un mensaje.
+ESPERA_TELEGRAM = 30
+
+# Lo que escribiste con el bot apagado no se contesta: un /mute de anoche
+# no pinta nada esta mañana.
+ANTIGUEDAD_MAXIMA = 10 * 60
 
 
 def configurar_logs(verbose: bool = False) -> None:
@@ -131,6 +138,10 @@ def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:
 
     fallos = 0
     pulso = salud.Pulso()
+    offset = None
+
+    if not telegram.set_commands(config.telegram_token, comandos.COMANDOS):
+        logger.warning("No se pudo poner el menu de comandos en Telegram")
 
     while True:
         try:
@@ -154,10 +165,116 @@ def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:
         if texto:
             _avisar_salud(config, texto)
 
+        offset = esperar_escuchando(config, config.check_interval, offset)
+
+
+def esperar_escuchando(config: Config, segundos: int, offset: int | None) -> int | None:
+    """Espera al siguiente ciclo contestando lo que llegue por Telegram."""
+    fin = time.monotonic() + segundos
+
+    while (queda := fin - time.monotonic()) > 0:
+        espera = max(1, int(min(queda, ESPERA_TELEGRAM)))
         try:
-            time.sleep(config.check_interval)
-        except KeyboardInterrupt:
-            raise
+            mensajes = telegram.get_updates(config.telegram_token, offset, espera)
+        except telegram.TelegramError as e:
+            logger.warning("%s", e)
+            # Sin esto, sin red se pondria a preguntar sin parar.
+            time.sleep(min(queda, ESPERA_TELEGRAM))
+            continue
+
+        for update in mensajes:
+            # Se mueve antes de contestar: si un mensaje revienta, no queremos
+            # que vuelva a llegar una y otra vez.
+            offset = update["update_id"] + 1
+            try:
+                atender(config, update.get("message") or {})
+            except Exception:
+                logger.exception("Error contestando un comando")
+
+    return offset
+
+
+def atender(config: Config, mensaje: dict) -> None:
+    """Contesta un mensaje de Telegram, si viene de tu chat."""
+    chat = str(mensaje.get("chat", {}).get("id", ""))
+    if chat != config.telegram_chat_id:
+        # Cualquiera puede dar con el bot y escribirle; solo te hace caso a ti.
+        logger.warning("Mensaje de un chat que no es el tuyo (%s), lo ignoro", chat)
+        return
+
+    texto = mensaje.get("text") or ""
+    if time.time() - mensaje.get("date", 0) > ANTIGUEDAD_MAXIMA:
+        logger.info("Comando antiguo, no lo contesto: %s", texto)
+        return
+
+    logger.info("Comando recibido: %s", texto)
+    orden = comandos.interpretar(texto)
+
+    try:
+        respuesta = responder(config, *orden) if orden else comandos.NO_ENTIENDO
+    except database.DatabaseError as e:
+        logger.error("Error de la base de datos contestando '%s': %s", texto, e)
+        respuesta = "⚠️ Algo ha fallado con la base de datos. Mira el log."
+
+    telegram.send_message(config.telegram_token, config.telegram_chat_id, respuesta)
+
+
+def responder(config: Config, nombre: str, argumento: str) -> str:
+    """El texto con el que se contesta a cada comando."""
+    if nombre == "ayuda":
+        return comandos.AYUDA
+
+    if nombre == "status":
+        texto = montar_resumen(config)
+        return texto or "No he podido consultar los precios. Prueba en un rato."
+
+    if nombre == "mute":
+        try:
+            minutos = parse_duracion(argumento)
+        except ConfigError as e:
+            return str(e)
+        hasta = datetime.now(timezone.utc) + timedelta(minutes=minutos)
+        database.silenciar_hasta(config.database_path, hasta)
+        return (
+            f"🔕 Callado hasta las {hasta.astimezone():%H:%M del %d/%m}.\n"
+            "Para volver antes: /unmute"
+        )
+
+    if nombre == "unmute":
+        estaba = database.silenciado_hasta(config.database_path)
+        database.silenciar_hasta(config.database_path, None)
+        return "🔔 Vuelvo a avisar." if estaba else "No estaba callado."
+
+    if nombre == "historico":
+        return _historico(config, argumento.strip().lower())
+
+    return comandos.NO_ENTIENDO
+
+
+def _historico(config: Config, coin_id: str) -> str:
+    if not coin_id:
+        return "¿De cuál? Por ejemplo: /historico bitcoin"
+
+    precios = database.get_prices_since(
+        config.database_path, coin_id, HORAS_RESUMEN, config.vs_currency
+    )
+    vigiladas = {w.coin_id for w in config.watchlist}
+    if len(precios) < 2 and coin_id in vigiladas:
+        # Recien instalado: el id esta bien, lo que falta es tiempo.
+        return (
+            f"Aún tengo pocos precios de <b>{telegram.escape(coin_id)}</b>. "
+            "Vuelve a preguntar dentro de un rato."
+        )
+    if len(precios) < 2:
+        return (
+            f"No tengo precios de <b>{telegram.escape(coin_id)}</b> de las "
+            f"últimas {HORAS_RESUMEN} h. Tiene que ser el id de CoinGecko "
+            "(bitcoin, no BTC)."
+        )
+
+    return alerts.formatear_historico(
+        coin_id, precios, config.vs_currency, HORAS_RESUMEN
+    )
 
 
 def _avisar_salud(config: Config, texto: str) -> None:
@@ -235,17 +352,31 @@ def quitar_silencio(config: Config) -> int:
 
 def enviar_resumen(config: Config) -> int:
     """Consulta los precios de ahora y manda un resumen por Telegram."""
+    texto = montar_resumen(config)
+    if texto is None:
+        return 1
+
+    if telegram.send_message(config.telegram_token, config.telegram_chat_id, texto):
+        logger.info("Resumen enviado")
+        return 0
+
+    logger.error("No se pudo enviar el resumen")
+    return 1
+
+
+def montar_resumen(config: Config) -> str | None:
+    """El texto del resumen con los precios de ahora. None si no hay precios."""
     coin_ids = [w.coin_id for w in config.watchlist]
 
     try:
         precios = coingecko.get_prices(coin_ids, config.vs_currency)
     except coingecko.CoinGeckoError as e:
         logger.error("No se pudieron consultar los precios: %s", e)
-        return 1
+        return None
 
     if not precios:
         logger.error("La consulta no devolvio ningun precio")
-        return 1
+        return None
 
     # Aprovechamos la consulta para guardarla, asi el resumen tambien
     # alimenta el historico con el que se compara la proxima vez.
@@ -261,14 +392,7 @@ def enviar_resumen(config: Config) -> int:
             continue
         lineas.append((coin_id, precio, _variacion(config, coin_id, precio)))
 
-    texto = alerts.formatear_resumen(lineas, config.vs_currency)
-
-    if telegram.send_message(config.telegram_token, config.telegram_chat_id, texto):
-        logger.info("Resumen enviado con %d criptos", len(lineas))
-        return 0
-
-    logger.error("No se pudo enviar el resumen")
-    return 1
+    return alerts.formatear_resumen(lineas, config.vs_currency)
 
 
 def _variacion(config: Config, coin_id: str, precio: float) -> float | None:

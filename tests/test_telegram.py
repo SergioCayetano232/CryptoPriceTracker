@@ -1,5 +1,6 @@
 """Tests del envio a Telegram, sin llamar a la API de verdad."""
 
+import pytest
 import requests
 
 from crypto_tracker import telegram
@@ -69,3 +70,65 @@ def test_mensaje_largo_se_corta(monkeypatch):
 
 def test_escape():
     assert telegram.escape("<b>hola</b>") == "&lt;b&gt;hola&lt;/b&gt;"
+
+
+# --- leer mensajes ---
+
+
+def test_leer_mensajes(monkeypatch):
+    mensajes = [{"update_id": 7, "message": {"text": "/status"}}]
+    pedido = {}
+
+    def get(url, params=None, timeout=None):
+        pedido.update(params)
+        return RespuestaFalsa(data={"ok": True, "result": mensajes})
+
+    monkeypatch.setattr(requests, "get", get)
+
+    assert telegram.get_updates("token", 5, 30) == mensajes
+    assert pedido["offset"] == 5
+    assert pedido["timeout"] == 30
+
+
+def test_leer_mensajes_la_primera_vez_sin_offset(monkeypatch):
+    pedido = {}
+
+    def get(url, params=None, timeout=None):
+        pedido.update(params)
+        return RespuestaFalsa(data={"ok": True, "result": []})
+
+    monkeypatch.setattr(requests, "get", get)
+    telegram.get_updates("token", None, 30)
+
+    assert "offset" not in pedido
+
+
+def test_leer_mensajes_sin_conexion(monkeypatch):
+    def falla(*a, **k):
+        raise requests.ConnectionError()
+
+    monkeypatch.setattr(requests, "get", falla)
+
+    with pytest.raises(telegram.TelegramError):
+        telegram.get_updates("token", None, 30)
+
+
+def test_otro_programa_leyendo_lo_dice_claro(monkeypatch):
+    respuesta = RespuestaFalsa(409, {"ok": False, "description": "Conflict"})
+    monkeypatch.setattr(requests, "get", lambda *a, **k: respuesta)
+
+    with pytest.raises(telegram.TelegramError, match="otro programa"):
+        telegram.get_updates("token", None, 30)
+
+
+def test_menu_de_comandos(monkeypatch):
+    enviado = {}
+
+    def capturar(url, json=None, timeout=None):
+        enviado.update(json)
+        return RespuestaFalsa()
+
+    monkeypatch.setattr(requests, "post", capturar)
+
+    assert telegram.set_commands("token", {"status": "Como van"}) is True
+    assert enviado["commands"] == [{"command": "status", "description": "Como van"}]

@@ -8,6 +8,8 @@ import requests
 logger = logging.getLogger(__name__)
 
 API_URL = "https://api.telegram.org/bot{token}/sendMessage"
+UPDATES_URL = "https://api.telegram.org/bot{token}/getUpdates"
+COMMANDS_URL = "https://api.telegram.org/bot{token}/setMyCommands"
 
 TIMEOUT = 15
 
@@ -85,7 +87,51 @@ def _explain(status: int, data: dict) -> str:
         return f"{descripcion}. Has bloqueado al bot o nunca le escribiste."
     if status == 429:
         return f"{descripcion}. Demasiados mensajes seguidos."
+    if status == 409:
+        return f"{descripcion}. Hay otro programa leyendo los mensajes de este bot."
     return f"HTTP {status}: {descripcion}"
+
+
+def get_updates(token: str, offset: int | None, espera: int) -> list[dict]:
+    """Recoge los mensajes nuevos. Si no hay, espera hasta `espera` segundos.
+
+    Pedir con offset le dice a Telegram que los anteriores ya los tenemos.
+    """
+    params = {"timeout": espera, "allowed_updates": '["message"]'}
+    if offset is not None:
+        params["offset"] = offset
+
+    try:
+        response = requests.get(
+            UPDATES_URL.format(token=token), params=params, timeout=TIMEOUT + espera
+        )
+        data = response.json()
+    except requests.RequestException as e:
+        raise TelegramError(f"No se pudieron leer los mensajes: {e}") from e
+    except ValueError as e:
+        raise TelegramError("Telegram devolvio algo que no es JSON") from e
+
+    if not data.get("ok"):
+        raise TelegramError(_explain(response.status_code, data))
+
+    return data.get("result", [])
+
+
+def set_commands(token: str, comandos: dict[str, str]) -> bool:
+    """Rellena el menu que sale al escribir "/" en el chat."""
+    payload = {
+        "commands": [
+            {"command": nombre, "description": texto}
+            for nombre, texto in comandos.items()
+        ]
+    }
+    try:
+        response = requests.post(
+            COMMANDS_URL.format(token=token), json=payload, timeout=TIMEOUT
+        )
+        return bool(response.json().get("ok"))
+    except (requests.RequestException, ValueError):
+        return False
 
 
 def escape(text: str) -> str:

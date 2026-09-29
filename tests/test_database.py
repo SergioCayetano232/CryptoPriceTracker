@@ -230,3 +230,23 @@ def test_un_silencio_ilegible_no_revienta(db):
     conn.close()
 
     assert database.silenciado_hasta(db) is None
+
+
+# --- ultimas horas ---
+
+
+def test_precios_de_las_ultimas_horas(db):
+    _insertar_con_fecha(db, "bitcoin", 50000.0, 30)  # fuera
+    _insertar_con_fecha(db, "bitcoin", 60000.0, 20)
+    _insertar_con_fecha(db, "bitcoin", 61000.0, 10)
+    _insertar_con_fecha(db, "ethereum", 3000.0, 5)  # otra cripto
+
+    # del mas viejo al mas nuevo, que es como se dibuja
+    assert database.get_prices_since(db, "bitcoin", 24, "eur") == [60000.0, 61000.0]
+
+
+def test_precios_de_las_ultimas_horas_solo_de_esa_moneda(db):
+    _insertar_con_fecha(db, "bitcoin", 60000.0, 5)
+    database.save_prices(db, {"bitcoin": 68000.0}, "usd")
+
+    assert database.get_prices_since(db, "bitcoin", 24, "eur") == [60000.0]

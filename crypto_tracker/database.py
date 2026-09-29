@@ -157,6 +157,24 @@ def get_price_at(
     return fila["price"] if fila else None
 
 
+def get_prices_since(
+    db_path: str, coin_id: str, horas: int, currency: str
+) -> list[float]:
+    """Precios de las ultimas `horas`, del mas viejo al mas nuevo."""
+    desde = (datetime.now(timezone.utc) - timedelta(hours=horas)).isoformat(
+        timespec="seconds"
+    )
+
+    with _connect(db_path) as conn:
+        filas = conn.execute(
+            "SELECT price FROM prices WHERE coin_id = ? AND currency = ? "
+            "AND created_at >= ? ORDER BY created_at, id",
+            (coin_id, currency, desde),
+        ).fetchall()
+
+    return [fila["price"] for fila in filas]
+
+
 def load_state(db_path: str) -> dict[str, str]:
     """Lee en que zona quedo cada cripto la ultima vez."""
     with _connect(db_path) as conn:

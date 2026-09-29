@@ -398,3 +398,54 @@ def test_sparkline_respeta_las_proporciones():
     assert linea[0] == "▁"
     assert linea[1] == "▅"
     assert linea[2] == "█"
+
+
+# --- historico por telegram ---
+
+
+def test_historico_con_datos():
+    from crypto_tracker.alerts import formatear_historico
+
+    texto = formatear_historico("bitcoin", [60000.0, 58000.0, 63000.0], "eur", 24)
+
+    assert "Bitcoin" in texto
+    assert "24 h" in texto
+    assert "63.000,00" in texto  # ahora
+    assert "58.000,00" in texto  # minimo
+    assert "+5.00%" in texto
+    assert "<code>" in texto
+
+
+def test_historico_largo_cabe_en_el_movil():
+    from crypto_tracker.alerts import BARRAS_MOVIL, formatear_historico
+
+    # un dia entero cada 5 minutos
+    precios = [60000.0 + i for i in range(288)]
+    texto = formatear_historico("bitcoin", precios, "eur", 24)
+    linea = texto.split("<code>")[1].split("</code>")[0]
+
+    assert len(linea) == BARRAS_MOVIL
+
+
+def test_historico_escapa_html():
+    from crypto_tracker.alerts import formatear_historico
+
+    texto = formatear_historico("<b>hack</b>", [1.0, 2.0], "eur", 24)
+
+    assert "<b>hack</b>" not in texto
+
+
+def test_muestrear_guarda_primero_y_ultimo():
+    from crypto_tracker.alerts import muestrear
+
+    puntos = muestrear(list(range(100)), 5)
+
+    assert len(puntos) == 5
+    assert puntos[0] == 0
+    assert puntos[-1] == 99
+
+
+def test_muestrear_pocos_datos_los_deja_igual():
+    from crypto_tracker.alerts import muestrear
+
+    assert muestrear([1, 2, 3], 24) == [1, 2, 3]
