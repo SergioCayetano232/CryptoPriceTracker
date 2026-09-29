@@ -3,7 +3,7 @@ REM Dice si el bot esta funcionando y ensena las ultimas lineas del log.
 
 cd /d "%~dp0.."
 
-powershell -NoProfile -Command "if (Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" | Where-Object { $_.CommandLine -like '*main.py*' }) { exit 0 } else { exit 1 }"
+powershell -NoProfile -Command "if (Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" | Where-Object { $_.CommandLine -like '*main.py --loop*' }) { exit 0 } else { exit 1 }"
 if %errorlevel% equ 0 (
     echo   El bot esta FUNCIONANDO.
 ) else (

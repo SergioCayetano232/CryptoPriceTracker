@@ -4,25 +4,29 @@ REM Arranca el vigilante. Esto es lo que lanza la tarea programada.
 
 cd /d "%~dp0.."
 
+if not exist "data" mkdir data
+
+REM Sin sesion iniciada no hay nadie para pulsar una tecla: un pause se
+REM quedaria colgado para siempre. timeout ahi se salta solo.
 if not exist ".venv\Scripts\python.exe" (
     echo No se encuentra el entorno virtual.
     echo Ejecuta primero:  python -m venv .venv
     echo Y despues:        .venv\Scripts\activate  y  pip install -r requirements.txt
-    pause
+    echo [%date% %time%] No arranco: falta el entorno virtual .venv >> "data\tracker.log"
+    timeout /t 30 >nul
     exit /b 1
 )
 
 if not exist ".env" (
     echo No se encuentra el archivo .env con el token de Telegram.
     echo Copia .env.example a .env y rellenalo.
-    pause
+    echo [%date% %time%] No arranco: falta el archivo .env >> "data\tracker.log"
+    timeout /t 30 >nul
     exit /b 1
 )
 
-if not exist "data" mkdir data
-
 REM Si ya hay uno corriendo no arrancamos otro, avisaria por duplicado.
-powershell -NoProfile -Command "if (Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" | Where-Object { $_.CommandLine -like '*main.py*' }) { exit 0 } else { exit 1 }"
+powershell -NoProfile -Command "if (Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" | Where-Object { $_.CommandLine -like '*main.py --loop*' }) { exit 0 } else { exit 1 }"
 if %errorlevel% equ 0 (
     echo El bot ya esta funcionando. No arranco otro.
     timeout /t 5 >nul

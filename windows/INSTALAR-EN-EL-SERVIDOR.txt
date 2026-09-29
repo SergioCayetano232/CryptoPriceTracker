@@ -75,8 +75,14 @@ Haz CLIC DERECHO sobre  instalar-tarea.bat
 Elige  "Ejecutar como administrador"
 Si sale un aviso de Windows, dile que Si.
 
-Se abre una ventana, pone que la tarea se ha creado, y te
-pide pulsar una tecla para cerrar.
+Se abre una ventana y te pide tu contrasena de Windows dos
+veces (no se ve al escribirla, es normal). Hace falta para
+que el bot arranque aunque nadie inicie sesion en el
+servidor. Luego pone que la tarea se ha creado y te pide
+pulsar una tecla para cerrar.
+
+  Si cambias la contrasena de Windows, vuelve a ejecutar
+  instalar-tarea.bat. Con la vieja la tarea ya no arranca.
 
 YA ESTA. El bot arranca solo cada vez que se enciende el
 servidor, y si se cierra por lo que sea vuelve a arrancar
@@ -132,6 +138,11 @@ Clic derecho en  windows\quitar-tarea.bat
 El bot arranca y se cierra solo
     Abre data\tracker.log y mira el error del final.
     Casi siempre es el .env mal puesto.
+
+"Fallo al crear la tarea"
+    Ejecutalo como administrador y pon bien la contrasena.
+    Si tu usuario no tiene contrasena, ponle una: sin ella
+    Windows no deja que la tarea corra sin iniciar sesion.
 
 No me llega ningun aviso
     Normal al principio: la primera consulta solo apunta

@@ -4,15 +4,19 @@ REM Ejecutar como administrador (boton derecho > Ejecutar como administrador).
 
 cd /d "%~dp0"
 
-REM Arranca al encender el equipo. Si el bot se cierra, la tarea vuelve
-REM a lanzarlo a los 5 minutos porque se repite cada hora y solo corre
-REM si no hay ya una instancia en marcha.
+echo.
+echo Te va a pedir tu contrasena de Windows dos veces, una por tarea.
+echo Hace falta para que el bot arranque aunque nadie inicie sesion.
+echo.
+
+REM Arranca al encender el equipo, un minuto despues para que haya red.
 schtasks /create ^
     /tn "CryptoPriceTracker" ^
     /tr "\"%~dp0iniciar.bat\"" ^
     /sc onstart ^
     /delay 0001:00 ^
-    /ru "%USERNAME%" ^
+    /ru "%USERDOMAIN%\%USERNAME%" ^
+    /rp * ^
     /rl highest ^
     /f
 
@@ -24,7 +28,8 @@ schtasks /create ^
     /tr "\"%~dp0revisar.bat\"" ^
     /sc minute ^
     /mo 15 ^
-    /ru "%USERNAME%" ^
+    /ru "%USERDOMAIN%\%USERNAME%" ^
+    /rp * ^
     /rl highest ^
     /f
 
@@ -41,6 +46,7 @@ exit /b 0
 
 :error
 echo.
-echo Fallo al crear la tarea. Ejecuta este archivo como administrador.
+echo Fallo al crear la tarea. Revisa que lo ejecutas como administrador
+echo y que la contrasena es la de tu usuario de Windows.
 pause
 exit /b 1
