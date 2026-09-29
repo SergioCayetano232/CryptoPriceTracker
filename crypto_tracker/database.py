@@ -3,7 +3,7 @@
 import logging
 import sqlite3
 from contextlib import contextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -40,6 +40,9 @@ CREATE TABLE IF NOT EXISTS ajustes (
 
 # Clave donde se guarda hasta cuando callamos, en ISO y UTC.
 SILENCIO = "silenciado_hasta"
+
+# Dia del ultimo resumen diario, para no mandarlo dos veces si se reinicia.
+ULTIMO_RESUMEN = "ultimo_resumen"
 
 
 class DatabaseError(Exception):
@@ -234,6 +237,30 @@ def silenciado_hasta(db_path: str) -> datetime | None:
         return None
 
     return cuando
+
+
+def ultimo_resumen(db_path: str) -> date | None:
+    """Dia en que se mando el ultimo resumen diario."""
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT valor FROM ajustes WHERE clave = ?", (ULTIMO_RESUMEN,)
+        ).fetchone()
+
+    if not fila:
+        return None
+
+    try:
+        return date.fromisoformat(fila["valor"])
+    except ValueError:
+        return None
+
+
+def guardar_resumen(db_path: str, dia: date) -> None:
+    with _connect(db_path) as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (ULTIMO_RESUMEN, dia.isoformat()),
+        )
 
 
 def get_history(db_path: str, coin_id: str, limit: int = 50) -> list[sqlite3.Row]:

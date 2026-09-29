@@ -2,6 +2,7 @@
 
 import os
 from dataclasses import dataclass
+from datetime import time
 
 from dotenv import load_dotenv
 
@@ -39,6 +40,8 @@ class Config:
     check_interval: int
     database_path: str
     history_days: int
+    # None = sin resumen diario
+    resumen_diario: time | None = None
 
 
 def _require(name: str) -> str:
@@ -208,6 +211,21 @@ def parse_duracion(raw: str) -> int:
     return minutos
 
 
+def parse_hora(raw: str) -> time | None:
+    """Convierte '09:00' o '9' en una hora. Vacio es None, sin resumen."""
+    raw = raw.strip()
+    if not raw:
+        return None
+
+    horas, _, minutos = raw.partition(":")
+    try:
+        return time(int(horas), int(minutos or 0))
+    except ValueError:
+        raise ConfigError(
+            f"RESUMEN_DIARIO tiene que ser una hora tipo 09:00, no '{raw}'"
+        ) from None
+
+
 def load_config() -> Config:
     """Monta la configuracion. Lanza ConfigError si algo falta o esta mal."""
     return Config(
@@ -219,4 +237,5 @@ def load_config() -> Config:
         database_path=os.getenv("DATABASE_PATH", "data/prices.db").strip()
         or "data/prices.db",
         history_days=_parse_history_days(),
+        resumen_diario=parse_hora(os.getenv("RESUMEN_DIARIO", "")),
     )

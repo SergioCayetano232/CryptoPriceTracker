@@ -28,7 +28,7 @@ def config(tmp_path):
 def enviados(monkeypatch):
     lista = []
     monkeypatch.setattr(
-        telegram, "send_message", lambda token, chat, texto: lista.append(texto)
+        telegram, "send_message", lambda token, chat, texto: lista.append(texto) or True
     )
     return lista
 
@@ -176,3 +176,85 @@ def test_historico_recien_instalado_no_culpa_al_id(config, enviados):
 
     assert "pocos precios" in enviados[0]
     assert "BTC" not in enviados[0]
+
+
+# --- resumen diario ---
+
+
+@pytest.fixture
+def con_resumen(config, monkeypatch):
+    from dataclasses import replace
+    from datetime import time as hora
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 63000.0})
+    return replace(config, resumen_diario=hora(9, 0))
+
+
+def _dia(h, m=0, dia=29):
+    from datetime import datetime
+
+    return datetime(2026, 9, dia, h, m).astimezone()
+
+
+def test_resumen_diario_a_su_hora(con_resumen, enviados):
+    main.resumen_diario(con_resumen, _dia(8, 55))
+    assert enviados == []
+
+    main.resumen_diario(con_resumen, _dia(9, 0))
+    assert len(enviados) == 1
+    assert "resumen del día" in enviados[0]
+    assert "63.000,00" in enviados[0]
+
+
+def test_resumen_diario_una_vez_al_dia(con_resumen, enviados):
+    for minuto in (0, 5, 10, 15):
+        main.resumen_diario(con_resumen, _dia(9, minuto))
+
+    assert len(enviados) == 1
+
+    main.resumen_diario(con_resumen, _dia(9, 0, dia=30))
+    assert len(enviados) == 2
+
+
+def test_resumen_diario_desactivado(config, enviados):
+    # sin RESUMEN_DIARIO en el .env, como hasta ahora
+    main.resumen_diario(config, _dia(9, 0))
+
+    assert enviados == []
+
+
+def test_resumen_diario_callado(con_resumen, enviados):
+    main.atender(con_resumen, _mensaje("/mute 1h"))
+    enviados.clear()
+
+    main.resumen_diario(con_resumen, _dia(9, 0))
+
+    assert enviados == []
+
+
+def test_resumen_diario_reintenta_si_coingecko_falla(
+    con_resumen, enviados, monkeypatch
+):
+    def falla(ids, cur):
+        raise coingecko.CoinGeckoError("Sin conexion")
+
+    monkeypatch.setattr(coingecko, "get_prices", falla)
+    main.resumen_diario(con_resumen, _dia(9, 0))
+    assert enviados == []
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 1.0})
+    main.resumen_diario(con_resumen, _dia(9, 5))
+    assert len(enviados) == 1
+
+
+def test_resumen_diario_reintenta_si_telegram_falla(con_resumen, monkeypatch):
+    intentos = []
+    monkeypatch.setattr(
+        telegram, "send_message", lambda *a: intentos.append(1) or len(intentos) > 1
+    )
+
+    main.resumen_diario(con_resumen, _dia(9, 0))
+    main.resumen_diario(con_resumen, _dia(9, 5))
+    main.resumen_diario(con_resumen, _dia(9, 10))
+
+    assert len(intentos) == 2  # fallo, acierto, y ya no mas

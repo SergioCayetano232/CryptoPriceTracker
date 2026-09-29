@@ -168,6 +168,16 @@ El silencio se guarda, así que aguanta aunque reinicies o se apague el servidor
 Y `--status` te sigue funcionando: lo que se calla son los avisos automáticos, no
 lo que pidas tú.
 
+**Recibir un resumen cada mañana:**
+
+Pon la hora en el `.env`:
+```
+RESUMEN_DIARIO=09:00
+```
+Mientras esté en modo `--loop`, te manda cada día a esa hora lo mismo que
+`--status`. Si a esa hora estaba apagado, te lo manda al volver, pero solo hasta
+dos horas tarde. Con `--mute` tampoco llega.
+
 **Ver el histórico de una cripto:**
 ```
 python main.py --history bitcoin
@@ -213,6 +223,7 @@ Todo lo que va haciendo queda apuntado en `data/tracker.log`.
 | `CHECK_INTERVAL` | Segundos entre consulta y consulta | `300` (5 min) |
 | `HISTORY_DAYS` | Días de histórico que se guardan | `90` |
 | `DATABASE_PATH` | Dónde se guardan los datos | `data/prices.db` |
+| `RESUMEN_DIARIO` | Hora del resumen de cada día (`09:00`). Vacío, sin resumen | vacío |
 
 No bajes mucho `CHECK_INTERVAL`: CoinGecko es gratis pero corta si le pides
 demasiado seguido. Cinco minutos va bien.

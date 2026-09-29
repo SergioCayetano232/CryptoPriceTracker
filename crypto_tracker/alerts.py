@@ -239,11 +239,13 @@ def formatear_varios(alertas: list[Alert], currency: str) -> str:
 
 
 def formatear_resumen(
-    lineas: list[tuple[str, float, float | None]], currency: str
+    lineas: list[tuple[str, float, float | None]],
+    currency: str,
+    titulo: str = "📊 <b>Cómo van tus criptos</b>",
 ) -> str:
     """Monta el mensaje de --status. Cada linea es (cripto, precio, variacion)."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
-    texto = ["📊 <b>Cómo van tus criptos</b>", ""]
+    texto = [titulo, ""]
 
     for coin_id, precio, variacion in lineas:
         nombre = escape(coin_id.replace("-", " ").title())

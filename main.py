@@ -16,7 +16,15 @@ import sys
 import time
 from datetime import datetime, timedelta, timezone
 
-from crypto_tracker import alerts, coingecko, comandos, database, salud, telegram
+from crypto_tracker import (
+    alerts,
+    coingecko,
+    comandos,
+    database,
+    diario,
+    salud,
+    telegram,
+)
 from crypto_tracker.config import (
     Config,
     ConfigError,
@@ -147,6 +155,7 @@ def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:
         try:
             estado, problema = ejecutar_ciclo(config, estado)
             fallos = 0
+            resumen_diario(config)
         except KeyboardInterrupt:
             raise
         except Exception as e:
@@ -277,6 +286,41 @@ def _historico(config: Config, coin_id: str) -> str:
     )
 
 
+def resumen_diario(config: Config, ahora: datetime | None = None) -> None:
+    """Manda el resumen del dia si toca. Si falla, lo reintenta el siguiente ciclo."""
+    if config.resumen_diario is None:
+        return
+
+    ahora = ahora or datetime.now().astimezone()
+    try:
+        ultimo = database.ultimo_resumen(config.database_path)
+    except database.DatabaseError as e:
+        # Sin saber si ya se mando, mejor no arriesgarse a mandarlo cada ciclo.
+        logger.error("No se pudo leer el ultimo resumen: %s", e)
+        return
+
+    if not diario.toca_resumen(ahora, config.resumen_diario, ultimo):
+        return
+
+    if _silenciado(config):
+        logger.info("Toca el resumen diario, pero esta silenciado")
+        return
+
+    texto = montar_resumen(config, titulo="☀️ <b>Tu resumen del día</b>")
+    if texto is None:
+        return
+
+    if not telegram.send_message(config.telegram_token, config.telegram_chat_id, texto):
+        logger.error("No se pudo enviar el resumen diario, lo reintento luego")
+        return
+
+    logger.info("Resumen diario enviado")
+    try:
+        database.guardar_resumen(config.database_path, ahora.date())
+    except database.DatabaseError as e:
+        logger.error("No se pudo apuntar el resumen, puede que llegue repetido: %s", e)
+
+
 def _avisar_salud(config: Config, texto: str) -> None:
     """Manda los avisos de caida y vuelta. No se callan con --mute."""
     if telegram.send_message(config.telegram_token, config.telegram_chat_id, texto):
@@ -364,7 +408,7 @@ def enviar_resumen(config: Config) -> int:
     return 1
 
 
-def montar_resumen(config: Config) -> str | None:
+def montar_resumen(config: Config, titulo: str | None = None) -> str | None:
     """El texto del resumen con los precios de ahora. None si no hay precios."""
     coin_ids = [w.coin_id for w in config.watchlist]
 
@@ -392,6 +436,8 @@ def montar_resumen(config: Config) -> str | None:
             continue
         lineas.append((coin_id, precio, _variacion(config, coin_id, precio)))
 
+    if titulo:
+        return alerts.formatear_resumen(lineas, config.vs_currency, titulo)
     return alerts.formatear_resumen(lineas, config.vs_currency)
 
 

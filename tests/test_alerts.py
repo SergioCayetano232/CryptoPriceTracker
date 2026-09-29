@@ -449,3 +449,9 @@ def test_muestrear_pocos_datos_los_deja_igual():
     from crypto_tracker.alerts import muestrear
 
     assert muestrear([1, 2, 3], 24) == [1, 2, 3]
+
+
+def test_resumen_con_otro_titulo():
+    texto = formatear_resumen([("bitcoin", 63000.0, 1.0)], "eur", titulo="Hola")
+
+    assert texto.startswith("Hola\n")

@@ -250,3 +250,28 @@ def test_precios_de_las_ultimas_horas_solo_de_esa_moneda(db):
     database.save_prices(db, {"bitcoin": 68000.0}, "usd")
 
     assert database.get_prices_since(db, "bitcoin", 24, "eur") == [60000.0]
+
+
+# --- ultimo resumen ---
+
+
+def test_sin_resumen_de_entrada(db):
+    assert database.ultimo_resumen(db) is None
+
+
+def test_guardar_el_ultimo_resumen(db):
+    from datetime import date
+
+    database.guardar_resumen(db, date(2026, 9, 28))
+    database.guardar_resumen(db, date(2026, 9, 29))
+
+    assert database.ultimo_resumen(db) == date(2026, 9, 29)
+
+
+def test_el_resumen_no_pisa_el_silencio(db):
+    from datetime import date, datetime, timedelta, timezone
+
+    database.silenciar_hasta(db, datetime.now(timezone.utc) + timedelta(hours=1))
+    database.guardar_resumen(db, date(2026, 9, 29))
+
+    assert database.silenciado_hasta(db) is not None

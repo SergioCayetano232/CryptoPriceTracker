@@ -128,3 +128,26 @@ def test_duraciones_invalidas(entrada):
 
     with pytest.raises(ConfigError):
         parse_duracion(entrada)
+
+
+# --- resumen diario ---
+
+
+def test_horas():
+    from datetime import time
+
+    from crypto_tracker.config import parse_hora
+
+    assert parse_hora("09:00") == time(9, 0)
+    assert parse_hora("9:30") == time(9, 30)
+    assert parse_hora("21") == time(21, 0)
+    assert parse_hora("") is None  # sin resumen
+    assert parse_hora("  ") is None
+
+
+@pytest.mark.parametrize("entrada", ["25:00", "9:60", "hola", "9:xx", "-1"])
+def test_horas_invalidas(entrada):
+    from crypto_tracker.config import parse_hora
+
+    with pytest.raises(ConfigError):
+        parse_hora(entrada)
