@@ -58,6 +58,18 @@ haces, Telegram no le deja mandarte mensajes.
 
 ---
 
+## La clave de CoinGecko
+
+Es gratis y evita que CoinGecko te bloquee las consultas de precios, cosa que
+sin clave pasa con bastantes conexiones.
+
+1. Entra en [coingecko.com/en/api/pricing](https://www.coingecko.com/en/api/pricing)
+   y elige el plan **Demo** (gratis)
+2. Regístrate y, en tu panel, crea una clave. Empieza por `CG-`
+3. Luego la pegas en `COINGECKO_API_KEY` del `.env`
+
+---
+
 ## Configuración
 
 Copia el archivo de ejemplo:
@@ -253,6 +265,7 @@ Todo lo que va haciendo queda apuntado en `data/tracker.log`.
 
 | Opción | Qué hace | Por defecto |
 |---|---|---|
+| `COINGECKO_API_KEY` | Clave gratuita de CoinGecko (ver arriba) | vacío |
 | `VS_CURRENCY` | Moneda de los precios (`usd`, `eur`, `gbp`) | `eur` |
 | `CHECK_INTERVAL` | Segundos entre consulta y consulta | `300` (5 min) |
 | `HISTORY_DAYS` | Días de histórico que se guardan | `90` |
@@ -281,10 +294,14 @@ usa el id que te da.
 Falta matplotlib. Si has actualizado el bot, vuelve a ejecutar
 `pip install -r requirements.txt` con el entorno activado.
 
+**Sale un error 403**
+CoinGecko está bloqueando las consultas sin clave desde tu conexión. Pon una
+`COINGECKO_API_KEY` gratuita (ver "La clave de CoinGecko").
+
 **Sale un error 429**
 Le estás pidiendo precios demasiado rápido. Lo reintenta solo un par de veces,
 así que si aparece de vez en cuando puedes ignorarlo. Si sale continuamente,
-sube `CHECK_INTERVAL`.
+pon una `COINGECKO_API_KEY` o sube `CHECK_INTERVAL`.
 
 **Me avisa demasiado**
 El paso es muy pequeño. Con `bitcoin:100` te avisa continuamente; prueba con

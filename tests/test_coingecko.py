@@ -197,7 +197,7 @@ BUSQUEDA_BTC = {
 def test_buscar_pone_primero_la_buena(monkeypatch):
     pedido = {}
 
-    def get(url, params=None, timeout=None):
+    def get(url, params=None, headers=None, timeout=None):
         pedido.update(params)
         return RespuestaFalsa(BUSQUEDA_BTC)
 
@@ -257,3 +257,49 @@ def test_buscar_reintenta_como_los_precios(monkeypatch):
 
     assert coingecko.buscar("btc")[0]["id"] == "bitcoin"
     assert len(intentos) == 2
+
+
+# --- clave de la API ---
+
+
+def test_sin_clave_no_manda_cabecera(monkeypatch):
+    monkeypatch.delenv("COINGECKO_API_KEY", raising=False)
+    cabeceras = {}
+
+    def get(url, params=None, headers=None, timeout=None):
+        cabeceras.update(headers or {})
+        return RespuestaFalsa({"bitcoin": {"eur": 1.0}})
+
+    monkeypatch.setattr(requests, "get", get)
+    coingecko.get_prices(["bitcoin"], "eur")
+
+    assert cabeceras == {}
+
+
+def test_con_clave_la_manda(monkeypatch):
+    monkeypatch.setenv("COINGECKO_API_KEY", "  CG-abc123  ")
+    cabeceras = {}
+
+    def get(url, params=None, headers=None, timeout=None):
+        cabeceras.update(headers or {})
+        return RespuestaFalsa({"coins": []})
+
+    monkeypatch.setattr(requests, "get", get)
+    coingecko.buscar("btc")  # tambien la busqueda
+
+    assert cabeceras == {"x-cg-demo-api-key": "CG-abc123"}
+
+
+def test_el_403_dice_como_arreglarlo(monkeypatch):
+    intentos = []
+
+    def bloqueado(*a, **k):
+        intentos.append(1)
+        return RespuestaFalsa({}, 403)
+
+    monkeypatch.setattr(requests, "get", bloqueado)
+
+    with pytest.raises(coingecko.CoinGeckoError, match="COINGECKO_API_KEY"):
+        coingecko.get_prices(["bitcoin"], "eur")
+
+    assert len(intentos) == 1  # reintentar no lo arregla

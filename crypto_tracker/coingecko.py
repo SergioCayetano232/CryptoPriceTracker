@@ -1,6 +1,7 @@
-"""Cliente de la API publica de CoinGecko (no hace falta API key)."""
+"""Cliente de la API publica de CoinGecko."""
 
 import logging
+import os
 import time
 
 import requests
@@ -102,7 +103,9 @@ def _pedir_precios(coin_ids: list[str], vs_currency: str) -> dict[str, float]:
 def _pedir(url: str, params: dict):
     """GET a CoinGecko traduciendo cada fallo a un CoinGeckoError."""
     try:
-        response = requests.get(url, params=params, timeout=TIMEOUT)
+        response = requests.get(
+            url, params=params, headers=_cabeceras(), timeout=TIMEOUT
+        )
         response.raise_for_status()
         data = response.json()
     except requests.Timeout as e:
@@ -117,8 +120,14 @@ def _pedir(url: str, params: dict):
         # asi que conviene distinguirlo de un error de verdad.
         if status == 429:
             raise CoinGeckoError(
-                "CoinGecko esta limitando las peticiones (429), sube CHECK_INTERVAL",
+                "CoinGecko esta limitando las peticiones (429). Sube CHECK_INTERVAL "
+                "o pon una COINGECKO_API_KEY en el .env",
                 reintentable=True,
+            ) from e
+        if status == 403:
+            raise CoinGeckoError(
+                "CoinGecko ha bloqueado la peticion (403). Consigue una clave Demo "
+                "gratis en coingecko.com y ponla en COINGECKO_API_KEY del .env"
             ) from e
         # Los 5xx son cosa suya y suelen pasarse solos; los 4xx los tenemos
         # mal nosotros y reintentar no arregla nada.
@@ -133,6 +142,13 @@ def _pedir(url: str, params: dict):
         raise CoinGeckoError("CoinGecko devolvio algo que no es JSON") from e
 
     return data
+
+
+def _cabeceras() -> dict[str, str]:
+    # Se lee en cada peticion y no al importar: asi vale tambien para
+    # --buscar, que corre antes de cargar el resto de la configuracion.
+    clave = os.getenv("COINGECKO_API_KEY", "").strip()
+    return {"x-cg-demo-api-key": clave} if clave else {}
 
 
 def _extract_prices(
