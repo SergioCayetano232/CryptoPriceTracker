@@ -22,7 +22,8 @@ CREATE TABLE IF NOT EXISTS prices (
 CREATE INDEX IF NOT EXISTS idx_prices_coin_fecha
     ON prices (coin_id, created_at DESC);
 
--- En que zona estaba cada cripto la ultima vez (bajo/normal/alto).
+-- Por donde iba cada cripto la ultima vez: la zona (bajo/normal/alto) si
+-- vigila un rango, el ultimo nivel si va por pasos, o "%precio" si va por %.
 -- Guardarlo aqui evita repetir el mismo aviso al reiniciar el programa.
 CREATE TABLE IF NOT EXISTS alert_state (
     coin_id    TEXT PRIMARY KEY,
@@ -201,7 +202,7 @@ def get_prices_desde(
 
 
 def load_state(db_path: str) -> dict[str, str]:
-    """Lee en que zona quedo cada cripto la ultima vez."""
+    """Lee por donde quedo cada cripto la ultima vez."""
     with _connect(db_path) as conn:
         filas = conn.execute("SELECT coin_id, estado FROM alert_state").fetchall()
 
@@ -209,7 +210,7 @@ def load_state(db_path: str) -> dict[str, str]:
 
 
 def save_state(db_path: str, estado: dict[str, str]) -> None:
-    """Guarda la zona actual de cada cripto, pisando la anterior."""
+    """Guarda por donde va cada cripto, pisando lo anterior."""
     if not estado:
         return
 
