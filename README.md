@@ -275,8 +275,10 @@ Todo lo que va haciendo queda apuntado en `data/tracker.log`.
 | `HORAS_TRANQUILAS` | Tramo en que los avisos llegan sin sonar (`23-8`) | vacío |
 | `PORTFOLIO` | Lo que tienes, para ver cuánto vale (`bitcoin:0.016:1000`) | vacío |
 
-No bajes mucho `CHECK_INTERVAL`: CoinGecko es gratis pero corta si le pides
-demasiado seguido. Cinco minutos va bien.
+No bajes mucho `CHECK_INTERVAL`. La clave gratuita de CoinGecko da 10.000
+consultas al mes y cada ciclo gasta una: con `330` (cinco minutos y medio) te
+quedan unas 2.000 de margen para `/status`, el resumen y las búsquedas. Con
+`300` vas muy justo.
 
 ---
 
@@ -331,5 +333,7 @@ ruff check .
 ```
 
 Hecho con Python, SQLite, matplotlib, la API de CoinGecko y la de Telegram.
+
+Price data by [CoinGecko](https://www.coingecko.com).
 
 MIT

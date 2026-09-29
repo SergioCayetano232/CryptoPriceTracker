@@ -504,3 +504,38 @@ def test_buscar_con_coingecko_caido(config, enviados, monkeypatch):
     main.atender(config, _mensaje("/buscar btc"))
 
     assert "No he podido buscar" in enviados[0]
+
+
+# --- cita a coingecko ---
+
+
+def test_los_mensajes_con_precios_citan_a_coingecko(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 90000.0})
+    monkeypatch.setattr(
+        coingecko, "buscar", lambda t: [{"id": "bitcoin", "name": "Bitcoin"}]
+    )
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%60000.0"})  # un aviso
+    main.atender(config, _mensaje("/status"))
+    main.atender(config, _mensaje("/buscar btc"))
+
+    assert len(enviados) == 3
+    for texto in enviados:
+        assert 'href="https://www.coingecko.com"' in texto
+        assert "Price data by" in texto
+
+
+def test_el_historico_cita_a_coingecko(config, sin_fotos_de_verdad):
+    for precio in (60000.0, 61000.0):
+        database.save_prices(config.database_path, {"bitcoin": precio}, "eur")
+
+    main.atender(config, _mensaje("/historico bitcoin"))
+
+    _, pie = sin_fotos_de_verdad[0]
+    assert "coingecko.com" in pie
+
+
+def test_ayuda_y_estado_no_llevan_la_cita(config, enviados):
+    main.atender(config, _mensaje("/ayuda"))
+
+    assert "coingecko.com" not in enviados[0]

@@ -17,6 +17,10 @@ ALTO = "alto"  # por encima del maximo
 
 SIMBOLOS = {"eur": "€", "usd": "$", "gbp": "£"}
 
+# El plan gratis de CoinGecko pide citarles, con enlace, junto a los datos.
+# La frase tiene que ser una de las suyas, por eso va en ingles.
+FUENTE = '<i>Price data by <a href="https://www.coingecko.com">CoinGecko</a></i>'
+
 # De menos a mas alto, para dibujar el historico en una linea.
 BARRAS = "▁▂▃▄▅▆▇█"
 
@@ -238,6 +242,10 @@ def sparkline(precios: list[float]) -> str:
         BARRAS[min(int((p - suelo) / rango * len(BARRAS)), len(BARRAS) - 1)]
         for p in precios
     )
+
+
+def con_fuente(texto: str) -> str:
+    return f"{texto}\n\n{FUENTE}"
 
 
 def formatear_varios(alertas: list[Alert], currency: str) -> str:

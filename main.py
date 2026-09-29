@@ -124,7 +124,7 @@ def ejecutar_ciclo(
 
     # Todo en un mensaje: si cruzan tres a la vez, tres notificaciones
     # seguidas molestan y encima Telegram empieza a cortar el ritmo.
-    texto = alerts.formatear_varios(avisos, config.vs_currency)
+    texto = alerts.con_fuente(alerts.formatear_varios(avisos, config.vs_currency))
     cruzadas = ", ".join(f"{a.coin_id} {a.estado}" for a in avisos)
 
     if telegram.send_message(
@@ -322,7 +322,9 @@ def responder(config: Config, nombre: str, argumento: str) -> str | comandos.Fot
             resultados = coingecko.buscar(argumento)
         except coingecko.CoinGeckoError as e:
             return f"No he podido buscar ahora mismo: {telegram.escape(str(e))}"
-        return alerts.formatear_busqueda(argumento, resultados)
+        if not resultados:
+            return alerts.formatear_busqueda(argumento, resultados)
+        return alerts.con_fuente(alerts.formatear_busqueda(argumento, resultados))
 
     return comandos.NO_ENTIENDO
 
@@ -349,8 +351,8 @@ def _historico(config: Config, coin_id: str) -> str | comandos.Foto:
             "(bitcoin, no BTC)."
         )
 
-    texto = alerts.formatear_historico(
-        coin_id, precios, config.vs_currency, HORAS_RESUMEN
+    texto = alerts.con_fuente(
+        alerts.formatear_historico(coin_id, precios, config.vs_currency, HORAS_RESUMEN)
     )
 
     try:
@@ -360,8 +362,10 @@ def _historico(config: Config, coin_id: str) -> str | comandos.Foto:
         logger.warning("Mando /historico sin imagen: %s", e)
         return texto
 
-    pie = alerts.formatear_historico(
-        coin_id, precios, config.vs_currency, HORAS_RESUMEN, con_linea=False
+    pie = alerts.con_fuente(
+        alerts.formatear_historico(
+            coin_id, precios, config.vs_currency, HORAS_RESUMEN, con_linea=False
+        )
     )
     return comandos.Foto(png, pie, texto)
 
@@ -550,7 +554,7 @@ def montar_resumen(config: Config, titulo: str | None = None) -> str | None:
         )
         texto += "\n\n" + bloque
 
-    return texto
+    return alerts.con_fuente(texto)
 
 
 def _variacion(config: Config, coin_id: str, precio: float) -> float | None:
