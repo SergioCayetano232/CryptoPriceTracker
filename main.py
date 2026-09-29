@@ -307,6 +307,15 @@ def responder(config: Config, nombre: str, argumento: str) -> str:
     if nombre == "historico":
         return _historico(config, argumento.strip().lower())
 
+    if nombre == "buscar":
+        if not argumento:
+            return "¿Qué busco? Por ejemplo: /buscar btc"
+        try:
+            resultados = coingecko.buscar(argumento)
+        except coingecko.CoinGeckoError as e:
+            return f"No he podido buscar ahora mismo: {telegram.escape(str(e))}"
+        return alerts.formatear_busqueda(argumento, resultados)
+
     return comandos.NO_ENTIENDO
 
 
@@ -590,6 +599,28 @@ def _imprimir_resumen(precios: list[float], currency: str) -> None:
         print(f"  Variacion en el tramo mostrado: {variacion:+.2f}%")
 
 
+def buscar_id(texto: str) -> int:
+    """Imprime los ids de CoinGecko que encajan con lo que buscas."""
+    try:
+        resultados = coingecko.buscar(texto)
+    except coingecko.CoinGeckoError as e:
+        logger.error("No se pudo buscar: %s", e)
+        return 1
+
+    if not resultados:
+        print(f"\nNo encuentro nada con '{texto}' en CoinGecko.\n")
+        return 1
+
+    print(f"\nResultados para '{texto}':\n")
+    for m in resultados:
+        rango = f"#{m['market_cap_rank']}" if m.get("market_cap_rank") else ""
+        nombre = f"{m.get('name', '')} ({str(m.get('symbol', '')).upper()})"
+        print(f"  {m['id']:<28} {nombre:<32} {rango}")
+
+    print(f"\nEn WATCHLIST va el id, por ejemplo: {resultados[0]['id']}:%5\n")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Notificador de precios de cripto")
     parser.add_argument(
@@ -616,10 +647,19 @@ def main() -> int:
         metavar="CRIPTO",
         help="muestra el historico guardado de una cripto y sale",
     )
+    parser.add_argument(
+        "--buscar",
+        metavar="TEXTO",
+        help="busca el id de CoinGecko de una cripto (ej: btc) y sale",
+    )
     parser.add_argument("-v", "--verbose", action="store_true", help="logs detallados")
     args = parser.parse_args()
 
     configurar_logs(args.verbose)
+
+    # Antes de leer el .env: sirve justo para rellenarlo la primera vez.
+    if args.buscar:
+        return buscar_id(args.buscar)
 
     try:
         config = load_config()

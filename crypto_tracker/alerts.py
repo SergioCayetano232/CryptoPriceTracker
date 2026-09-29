@@ -324,6 +324,26 @@ def formatear_cartera(
     return "\n".join(texto)
 
 
+def formatear_busqueda(texto: str, resultados: list[dict]) -> str:
+    """Respuesta de /buscar: los ids candidatos, el mas probable primero."""
+    if not resultados:
+        return f"No encuentro nada con <b>{escape(texto)}</b> en CoinGecko."
+
+    lineas = [f"🔎 <b>{escape(texto)}</b>"]
+    for m in resultados:
+        rango = f" #{m['market_cap_rank']}" if m.get("market_cap_rank") else ""
+        lineas.append(
+            f"<code>{escape(m['id'])}</code> — {escape(m.get('name', ''))} "
+            f"({escape(str(m.get('symbol', '')).upper())}){rango}"
+        )
+
+    lineas.append(
+        f"\nEn WATCHLIST va el id, por ejemplo: "
+        f"<code>{escape(resultados[0]['id'])}:%5</code>"
+    )
+    return "\n".join(lineas)
+
+
 def muestrear(precios: list[float], n: int) -> list[float]:
     """Se queda con n puntos repartidos, siempre con el primero y el ultimo."""
     if len(precios) <= n:

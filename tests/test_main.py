@@ -424,3 +424,45 @@ def test_resumen_sin_cartera_como_antes(config, monkeypatch):
     monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 1.0})
 
     assert "cartera" not in main.montar_resumen(config)
+
+
+# --- buscar ---
+
+
+def test_buscar_por_telegram(config, enviados, monkeypatch):
+    resultados = [
+        {"id": "bitcoin", "name": "Bitcoin", "symbol": "btc", "market_cap_rank": 1}
+    ]
+    monkeypatch.setattr(coingecko, "buscar", lambda texto: resultados)
+
+    main.atender(config, _mensaje("/buscar btc"))
+
+    assert "<code>bitcoin</code>" in enviados[0]
+    assert "BTC" in enviados[0]
+    assert "bitcoin:%5" in enviados[0]
+
+
+def test_buscar_sin_texto(config, enviados):
+    main.atender(config, _mensaje("/buscar"))
+
+    assert "¿Qué busco?" in enviados[0]
+
+
+def test_buscar_sin_resultados(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "buscar", lambda texto: [])
+
+    main.atender(config, _mensaje("/buscar <zzz>"))
+
+    assert "No encuentro" in enviados[0]
+    assert "<zzz>" not in enviados[0]  # escapado
+
+
+def test_buscar_con_coingecko_caido(config, enviados, monkeypatch):
+    def falla(texto):
+        raise coingecko.CoinGeckoError("Sin conexion con CoinGecko")
+
+    monkeypatch.setattr(coingecko, "buscar", falla)
+
+    main.atender(config, _mensaje("/buscar btc"))
+
+    assert "No he podido buscar" in enviados[0]

@@ -8,6 +8,7 @@ import requests
 logger = logging.getLogger(__name__)
 
 API_URL = "https://api.coingecko.com/api/v3/simple/price"
+SEARCH_URL = "https://api.coingecko.com/api/v3/search"
 
 # Si la API tarda mas que esto, cortamos. Sin timeout una peticion puede
 # quedarse colgada para siempre y congelar el bucle entero.
@@ -37,11 +38,45 @@ def get_prices(coin_ids: list[str], vs_currency: str = "eur") -> dict[str, float
     if not coin_ids:
         return {}
 
+    return _con_reintentos(lambda: _pedir_precios(coin_ids, vs_currency))
+
+
+def buscar(texto: str, maximo: int = 5) -> list[dict]:
+    """Busca criptos por nombre o simbolo, las mas probables primero."""
+    texto = texto.strip()
+    if not texto:
+        return []
+
+    data = _con_reintentos(lambda: _pedir(SEARCH_URL, {"query": texto}))
+    monedas = data.get("coins", []) if isinstance(data, dict) else []
+    return mejores(monedas, texto, maximo)
+
+
+def mejores(monedas: list, texto: str, maximo: int = 5) -> list[dict]:
+    """Primero lo que coincide tal cual, luego por tamaño de mercado."""
+    buscado = texto.strip().lower()
+
+    def orden(m: dict):
+        # Con "btc" salen montones de wrapped y copias; la de verdad es la
+        # que tiene ese simbolo exacto y mas capitalizacion.
+        exacta = buscado in (
+            str(m.get("symbol", "")).lower(),
+            str(m.get("name", "")).lower(),
+            str(m.get("id", "")).lower(),
+        )
+        return (not exacta, m.get("market_cap_rank") or float("inf"))
+
+    validas = [m for m in monedas if isinstance(m, dict) and m.get("id")]
+    return sorted(validas, key=orden)[:maximo]
+
+
+def _con_reintentos(pedir):
+    """Repite la peticion si el fallo es pasajero, esperando el doble cada vez."""
     espera = ESPERA_INICIAL
 
     for intento in range(1, INTENTOS + 1):
         try:
-            return _pedir_precios(coin_ids, vs_currency)
+            return pedir()
         except CoinGeckoError as e:
             if not e.reintentable or intento == INTENTOS:
                 raise
@@ -61,9 +96,13 @@ def _pedir_precios(coin_ids: list[str], vs_currency: str) -> dict[str, float]:
         "ids": ",".join(coin_ids),
         "vs_currencies": vs_currency,
     }
+    return _extract_prices(_pedir(API_URL, params), coin_ids, vs_currency)
 
+
+def _pedir(url: str, params: dict):
+    """GET a CoinGecko traduciendo cada fallo a un CoinGeckoError."""
     try:
-        response = requests.get(API_URL, params=params, timeout=TIMEOUT)
+        response = requests.get(url, params=params, timeout=TIMEOUT)
         response.raise_for_status()
         data = response.json()
     except requests.Timeout as e:
@@ -93,7 +132,7 @@ def _pedir_precios(coin_ids: list[str], vs_currency: str) -> dict[str, float]:
     except ValueError as e:
         raise CoinGeckoError("CoinGecko devolvio algo que no es JSON") from e
 
-    return _extract_prices(data, coin_ids, vs_currency)
+    return data
 
 
 def _extract_prices(

@@ -4,13 +4,19 @@
 COMANDOS = {
     "status": "Cómo van tus criptos ahora",
     "historico": "Cómo ha ido una cripto en 24 h (ej: /historico bitcoin)",
+    "buscar": "Encuentra el id de una cripto (ej: /buscar btc)",
     "mute": "Callar los avisos un rato (ej: /mute 2h)",
     "unmute": "Volver a avisar",
     "ayuda": "Lo que sé hacer",
 }
 
 # /start lo manda Telegram solo la primera vez que abres el chat.
-ALIAS = {"start": "ayuda", "help": "ayuda", "history": "historico"}
+ALIAS = {
+    "start": "ayuda",
+    "help": "ayuda",
+    "history": "historico",
+    "search": "buscar",
+}
 
 AYUDA = "🤖 <b>Esto es lo que sé hacer</b>\n\n" + "\n".join(
     f"/{nombre} — {texto}" for nombre, texto in COMANDOS.items()

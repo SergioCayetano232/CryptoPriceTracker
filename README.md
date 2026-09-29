@@ -97,8 +97,12 @@ WATCHLIST=bitcoin:%5,ethereum:100,solana:5
 ```
 
 Los nombres son los de CoinGecko: `bitcoin`, no `BTC`. Si no sabes cuál es,
-búscalo en [coingecko.com](https://www.coingecko.com) y mira la dirección de la
-página: `coingecko.com/en/coins/`**`bitcoin`**.
+búscalo:
+```
+python main.py --buscar btc
+```
+Te saca los candidatos con el más probable primero. Funciona aunque todavía no
+hayas rellenado el `.env`.
 
 ---
 
@@ -137,6 +141,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 |---|---|
 | `/status` | Cómo van tus criptos ahora |
 | `/historico bitcoin` | Gráfica y máximo/mínimo de las últimas 24 h |
+| `/buscar btc` | Encuentra el id de CoinGecko de una cripto |
 | `/mute 2h` | Calla los avisos un rato |
 | `/unmute` | Vuelve a avisar |
 | `/ayuda` | La lista de comandos |
@@ -269,8 +274,8 @@ Lanza `python main.py --test`. Si tampoco llega, es el token o el chat id. Y
 asegúrate de haberle escrito `/start` al bot.
 
 **Dice que no encuentra una cripto**
-El nombre no es el correcto. Búscalo en coingecko.com y usa el que aparece en la
-dirección de la página.
+El nombre no es el correcto. Búscalo con `python main.py --buscar <nombre>` y
+usa el id que te da.
 
 **Sale un error 429**
 Le estás pidiendo precios demasiado rápido. Lo reintenta solo un par de veces,

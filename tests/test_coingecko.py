@@ -169,3 +169,91 @@ def test_la_espera_se_dobla(monkeypatch):
         coingecko.get_prices(["bitcoin"], "eur")
 
     assert esperas == [2, 4]
+
+
+# --- buscar ---
+
+# Recortado de lo que devuelve /search?query=btc
+BUSQUEDA_BTC = {
+    "coins": [
+        {
+            "id": "wrapped-bitcoin",
+            "name": "Wrapped Bitcoin",
+            "symbol": "WBTC",
+            "market_cap_rank": 16,
+        },
+        {
+            "id": "bitcoin-avalanche-bridged-btc-b",
+            "name": "Bitcoin Avalanche",
+            "symbol": "BTC.B",
+            "market_cap_rank": None,
+        },
+        {"id": "bitcoin", "name": "Bitcoin", "symbol": "BTC", "market_cap_rank": 1},
+        {"id": "copia-btc", "name": "Copia", "symbol": "BTC", "market_cap_rank": None},
+    ]
+}
+
+
+def test_buscar_pone_primero_la_buena(monkeypatch):
+    pedido = {}
+
+    def get(url, params=None, timeout=None):
+        pedido.update(params)
+        return RespuestaFalsa(BUSQUEDA_BTC)
+
+    monkeypatch.setattr(requests, "get", get)
+
+    resultados = coingecko.buscar("  btc ")
+
+    assert pedido["query"] == "btc"
+    assert [m["id"] for m in resultados][:3] == [
+        "bitcoin",  # simbolo exacto y la mas grande
+        "copia-btc",  # simbolo exacto pero sin rango
+        "wrapped-bitcoin",  # no es exacta, pero es grande
+    ]
+
+
+def test_buscar_por_nombre():
+    resultados = coingecko.mejores(BUSQUEDA_BTC["coins"], "Bitcoin")
+
+    assert resultados[0]["id"] == "bitcoin"
+
+
+def test_buscar_limita_los_resultados():
+    assert len(coingecko.mejores(BUSQUEDA_BTC["coins"], "btc", maximo=2)) == 2
+
+
+def test_buscar_vacio_no_llama(monkeypatch):
+    def no_llamar(*a, **k):
+        raise AssertionError("no deberia llamar a la API")
+
+    monkeypatch.setattr(requests, "get", no_llamar)
+
+    assert coingecko.buscar("  ") == []
+
+
+def test_buscar_sin_resultados(monkeypatch):
+    monkeypatch.setattr(requests, "get", lambda *a, **k: RespuestaFalsa({"coins": []}))
+
+    assert coingecko.buscar("zzzz") == []
+
+
+def test_buscar_ignora_basura():
+    raras = [{"name": "sin id"}, "texto", {"id": "bitcoin", "symbol": "btc"}]
+
+    assert [m["id"] for m in coingecko.mejores(raras, "btc")] == ["bitcoin"]
+
+
+def test_buscar_reintenta_como_los_precios(monkeypatch):
+    intentos = []
+
+    def a_la_segunda(*a, **k):
+        intentos.append(1)
+        if len(intentos) < 2:
+            raise requests.ConnectionError()
+        return RespuestaFalsa(BUSQUEDA_BTC)
+
+    monkeypatch.setattr(requests, "get", a_la_segunda)
+
+    assert coingecko.buscar("btc")[0]["id"] == "bitcoin"
+    assert len(intentos) == 2
