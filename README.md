@@ -196,8 +196,10 @@ En la carpeta `windows/` hay cuatro archivos:
 
 **1. Haz clic derecho en `instalar-tarea.bat` → Ejecutar como administrador.**
 
-Ya está. El bot arranca solo cada vez que se enciende el servidor, y si por lo
-que sea se cierra, vuelve a arrancar en menos de 15 minutos.
+Te pide tu contraseña de Windows dos veces, para poder arrancar aunque nadie
+inicie sesión. Ya está: el bot arranca solo cada vez que se enciende el
+servidor, y si por lo que sea se cierra, vuelve a arrancar en menos de 15
+minutos. Si cambias la contraseña, vuelve a ejecutarlo.
 
 **Para arrancarlo ahora mismo sin reiniciar**, abre una terminal como
 administrador y escribe:
@@ -219,7 +221,7 @@ Todo lo que va haciendo queda apuntado en `data/tracker.log`.
 
 | Opción | Qué hace | Por defecto |
 |---|---|---|
-| `VS_CURRENCY` | Moneda de los precios (`usd`, `eur`, `gbp`) | `usd` |
+| `VS_CURRENCY` | Moneda de los precios (`usd`, `eur`, `gbp`) | `eur` |
 | `CHECK_INTERVAL` | Segundos entre consulta y consulta | `300` (5 min) |
 | `HISTORY_DAYS` | Días de histórico que se guardan | `90` |
 | `DATABASE_PATH` | Dónde se guardan los datos | `data/prices.db` |
