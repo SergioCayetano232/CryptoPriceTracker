@@ -126,6 +126,9 @@ python main.py --loop
 ```
 Se queda mirando los precios cada 5 minutos. Para pararlo, `Ctrl+C`.
 
+Si pasa media hora sin poder consultar los precios, te avisa por Telegram, y
+otra vez cuando vuelve a funcionar. Si se para por errores, también te lo dice.
+
 **Ver cómo van ahora mismo:**
 ```
 python main.py --status

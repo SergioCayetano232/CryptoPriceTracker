@@ -16,7 +16,7 @@ import sys
 import time
 from datetime import datetime, timedelta, timezone
 
-from crypto_tracker import alerts, coingecko, database, telegram
+from crypto_tracker import alerts, coingecko, database, salud, telegram
 from crypto_tracker.config import (
     Config,
     ConfigError,
@@ -42,11 +42,13 @@ def configurar_logs(verbose: bool = False) -> None:
     )
 
 
-def ejecutar_ciclo(config: Config, estado: dict[str, str]) -> dict[str, str]:
+def ejecutar_ciclo(
+    config: Config, estado: dict[str, str]
+) -> tuple[dict[str, str], str | None]:
     """Un ciclo completo: consultar, guardar, comparar y avisar.
 
-    Devuelve el estado actualizado de las criptos. Si algo falla, lo
-    registra y devuelve el estado sin tocar, para poder reintentar luego.
+    Devuelve el estado actualizado y, si no hubo precios, el porque. Si algo
+    falla, lo registra y devuelve el estado sin tocar para reintentar luego.
     """
     coin_ids = [w.coin_id for w in config.watchlist]
 
@@ -54,11 +56,11 @@ def ejecutar_ciclo(config: Config, estado: dict[str, str]) -> dict[str, str]:
         precios = coingecko.get_prices(coin_ids, config.vs_currency)
     except coingecko.CoinGeckoError as e:
         logger.error("No se pudieron consultar los precios: %s", e)
-        return estado
+        return estado, str(e)
 
     if not precios:
         logger.warning("La consulta no devolvio ningun precio")
-        return estado
+        return estado, "La consulta no devolvio ningun precio"
 
     logger.info(
         "Precios: %s",
@@ -88,7 +90,7 @@ def ejecutar_ciclo(config: Config, estado: dict[str, str]) -> dict[str, str]:
 
     if not avisos:
         logger.info("Ningun umbral cruzado")
-        return estado_nuevo
+        return estado_nuevo, None
 
     # Silenciado: el estado ya se guardo, asi que al volver no llega de golpe
     # todo lo que paso mientras, solo lo que este cruzado en ese momento.
@@ -99,7 +101,7 @@ def ejecutar_ciclo(config: Config, estado: dict[str, str]) -> dict[str, str]:
             callado.astimezone().strftime("%H:%M"),
             ", ".join(a.coin_id for a in avisos),
         )
-        return estado_nuevo
+        return estado_nuevo, None
 
     # Todo en un mensaje: si cruzan tres a la vez, tres notificaciones
     # seguidas molestan y encima Telegram empieza a cortar el ritmo.
@@ -113,7 +115,7 @@ def ejecutar_ciclo(config: Config, estado: dict[str, str]) -> dict[str, str]:
         # el siguiente cruce volvera a avisar.
         logger.error("No se pudo avisar de: %s", cruzadas)
 
-    return estado_nuevo
+    return estado_nuevo, None
 
 
 def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:
@@ -128,27 +130,42 @@ def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:
     )
 
     fallos = 0
+    pulso = salud.Pulso()
 
     while True:
         try:
-            estado = ejecutar_ciclo(config, estado)
+            estado, problema = ejecutar_ciclo(config, estado)
             fallos = 0
         except KeyboardInterrupt:
             raise
-        except Exception:
+        except Exception as e:
             # Red a la que caen los errores que no previmos. Sin esto, un
             # fallo raro a las 3 de la mañana mata el vigilante entero.
             fallos += 1
+            problema = f"{type(e).__name__}: {e}"
             logger.exception("Error inesperado en el ciclo (%d seguidos)", fallos)
 
             if fallos >= MAX_FALLOS:
                 logger.error("Demasiados fallos seguidos, paro.")
+                _avisar_salud(config, salud.mensaje_parado(fallos, problema))
                 return 1
+
+        texto = pulso.fallo(problema) if problema else pulso.exito()
+        if texto:
+            _avisar_salud(config, texto)
 
         try:
             time.sleep(config.check_interval)
         except KeyboardInterrupt:
             raise
+
+
+def _avisar_salud(config: Config, texto: str) -> None:
+    """Manda los avisos de caida y vuelta. No se callan con --mute."""
+    if telegram.send_message(config.telegram_token, config.telegram_chat_id, texto):
+        logger.info("Aviso de estado enviado")
+    else:
+        logger.error("No se pudo mandar el aviso de estado")
 
 
 def mensaje_de_prueba(config: Config) -> int:
