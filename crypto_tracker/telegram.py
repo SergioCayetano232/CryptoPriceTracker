@@ -10,6 +10,10 @@ logger = logging.getLogger(__name__)
 API_URL = "https://api.telegram.org/bot{token}/sendMessage"
 UPDATES_URL = "https://api.telegram.org/bot{token}/getUpdates"
 COMMANDS_URL = "https://api.telegram.org/bot{token}/setMyCommands"
+PHOTO_URL = "https://api.telegram.org/bot{token}/sendPhoto"
+
+# El pie de una foto admite mucho menos que un mensaje.
+MAX_CAPTION = 1024
 
 TIMEOUT = 15
 
@@ -92,6 +96,34 @@ def _explain(status: int, data: dict) -> str:
     if status == 409:
         return f"{descripcion}. Hay otro programa leyendo los mensajes de este bot."
     return f"HTTP {status}: {descripcion}"
+
+
+def send_photo(token: str, chat_id: str, png: bytes, caption: str = "") -> bool:
+    """Manda una imagen con su pie. Como send_message, no lanza excepciones."""
+    if len(caption) > MAX_CAPTION:
+        caption = caption[: MAX_CAPTION - 20] + "\n[...cortado]"
+
+    try:
+        response = requests.post(
+            PHOTO_URL.format(token=token),
+            data={"chat_id": chat_id, "caption": caption, "parse_mode": "HTML"},
+            files={"photo": ("grafica.png", png, "image/png")},
+            timeout=TIMEOUT,
+        )
+        data = response.json()
+    except requests.RequestException as e:
+        logger.error("Fallo el envio de la imagen a Telegram: %s", e)
+        return False
+    except ValueError:
+        logger.error("Telegram devolvio algo que no es JSON")
+        return False
+
+    if not data.get("ok"):
+        logger.error(
+            "Telegram rechazo la imagen: %s", _explain(response.status_code, data)
+        )
+        return False
+    return True
 
 
 def get_updates(token: str, offset: int | None, espera: int) -> list[dict]:

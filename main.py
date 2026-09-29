@@ -24,6 +24,7 @@ from crypto_tracker import (
     comandos,
     database,
     diario,
+    grafica,
     salud,
     telegram,
 )
@@ -275,10 +276,17 @@ def atender(config: Config, mensaje: dict) -> None:
         logger.error("Error de la base de datos contestando '%s': %s", texto, e)
         respuesta = "⚠️ Algo ha fallado con la base de datos. Mira el log."
 
+    if isinstance(respuesta, comandos.Foto):
+        if telegram.send_photo(
+            config.telegram_token, config.telegram_chat_id, respuesta.png, respuesta.pie
+        ):
+            return
+        respuesta = respuesta.texto
+
     telegram.send_message(config.telegram_token, config.telegram_chat_id, respuesta)
 
 
-def responder(config: Config, nombre: str, argumento: str) -> str:
+def responder(config: Config, nombre: str, argumento: str) -> str | comandos.Foto:
     """El texto con el que se contesta a cada comando."""
     if nombre == "ayuda":
         return comandos.AYUDA
@@ -319,13 +327,14 @@ def responder(config: Config, nombre: str, argumento: str) -> str:
     return comandos.NO_ENTIENDO
 
 
-def _historico(config: Config, coin_id: str) -> str:
+def _historico(config: Config, coin_id: str) -> str | comandos.Foto:
     if not coin_id:
         return "¿De cuál? Por ejemplo: /historico bitcoin"
 
-    precios = database.get_prices_since(
+    serie = database.get_serie(
         config.database_path, coin_id, HORAS_RESUMEN, config.vs_currency
     )
+    precios = [precio for _, precio in serie]
     vigiladas = {w.coin_id for w in config.watchlist}
     if len(precios) < 2 and coin_id in vigiladas:
         # Recien instalado: el id esta bien, lo que falta es tiempo.
@@ -340,9 +349,21 @@ def _historico(config: Config, coin_id: str) -> str:
             "(bitcoin, no BTC)."
         )
 
-    return alerts.formatear_historico(
+    texto = alerts.formatear_historico(
         coin_id, precios, config.vs_currency, HORAS_RESUMEN
     )
+
+    try:
+        png = grafica.dibujar(coin_id, serie, config.vs_currency, HORAS_RESUMEN)
+    except Exception as e:
+        # Sin imagen no pasa nada: el texto ya lleva lo importante.
+        logger.warning("Mando /historico sin imagen: %s", e)
+        return texto
+
+    pie = alerts.formatear_historico(
+        coin_id, precios, config.vs_currency, HORAS_RESUMEN, con_linea=False
+    )
+    return comandos.Foto(png, pie, texto)
 
 
 def resumen_diario(config: Config, ahora: datetime | None = None) -> None:

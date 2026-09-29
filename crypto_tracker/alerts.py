@@ -275,18 +275,26 @@ def formatear_resumen(
 
 
 def formatear_historico(
-    coin_id: str, precios: list[float], currency: str, horas: int
+    coin_id: str,
+    precios: list[float],
+    currency: str,
+    horas: int,
+    con_linea: bool = True,
 ) -> str:
     """Mensaje de /historico. Los precios van del mas viejo al mas nuevo."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
     nombre = escape(coin_id.replace("-", " ").title())
     ahora = precios[-1]
     variacion = (ahora - precios[0]) / precios[0] * 100 if precios[0] else 0.0
-    linea = sparkline(muestrear(precios, BARRAS_MOVIL))
+
+    # Con la imagen al lado, las barritas sobran.
+    linea = ""
+    if con_linea:
+        linea = f"<code>{sparkline(muestrear(precios, BARRAS_MOVIL))}</code>\n"
 
     return (
         f"📈 <b>{nombre}</b>, últimas {horas} h\n"
-        f"<code>{linea}</code>\n\n"
+        f"{linea}\n"
         f"Ahora <b>{simbolo}{_num(ahora)}</b>  {_flecha(variacion)} {variacion:+.2f}%\n"
         f"Máximo {simbolo}{_num(max(precios))}\n"
         f"Mínimo {simbolo}{_num(min(precios))}"

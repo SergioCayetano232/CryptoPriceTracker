@@ -5,7 +5,7 @@ import time
 import pytest
 
 import main
-from crypto_tracker import coingecko, database, telegram
+from crypto_tracker import coingecko, database, grafica, telegram
 from crypto_tracker.config import Config, Watch
 
 
@@ -33,6 +33,18 @@ def enviados(monkeypatch):
         lambda token, chat, texto, **kw: lista.append(texto) or True,
     )
     return lista
+
+
+@pytest.fixture(autouse=True)
+def sin_fotos_de_verdad(monkeypatch):
+    """Las imagenes que se mandarian, sin tocar la API de Telegram."""
+    fotos = []
+    monkeypatch.setattr(
+        telegram,
+        "send_photo",
+        lambda token, chat, png, pie="": fotos.append((png, pie)) or True,
+    )
+    return fotos
 
 
 def _mensaje(texto, chat=123, hace=0):
@@ -115,14 +127,40 @@ def test_status_sin_coingecko(config, enviados, monkeypatch):
     assert "No he podido" in enviados[0]
 
 
-def test_historico(config, enviados):
+def test_historico(config, enviados, sin_fotos_de_verdad):
     for precio in (60000.0, 61000.0, 62000.0):
         database.save_prices(config.database_path, {"bitcoin": precio}, "eur")
 
     main.atender(config, _mensaje("/historico Bitcoin"))
 
-    assert "62.000,00" in enviados[0]
-    assert "<code>" in enviados[0]
+    png, pie = sin_fotos_de_verdad[0]
+    assert png.startswith(b"\x89PNG")
+    assert "62.000,00" in pie
+    assert "<code>" not in pie  # con la imagen, las barritas sobran
+    assert enviados == []
+
+
+def test_historico_sin_matplotlib_manda_texto(config, enviados, monkeypatch):
+    def falla(*a):
+        raise grafica.GraficaError("Falta matplotlib")
+
+    monkeypatch.setattr(grafica, "dibujar", falla)
+    for precio in (60000.0, 61000.0):
+        database.save_prices(config.database_path, {"bitcoin": precio}, "eur")
+
+    main.atender(config, _mensaje("/historico bitcoin"))
+
+    assert "<code>" in enviados[0]  # el de siempre, con barritas
+
+
+def test_historico_si_la_foto_no_pasa_manda_texto(config, enviados, monkeypatch):
+    monkeypatch.setattr(telegram, "send_photo", lambda *a, **k: False)
+    for precio in (60000.0, 61000.0):
+        database.save_prices(config.database_path, {"bitcoin": precio}, "eur")
+
+    main.atender(config, _mensaje("/historico bitcoin"))
+
+    assert "61.000,00" in enviados[0]
 
 
 def test_historico_sin_datos(config, enviados):

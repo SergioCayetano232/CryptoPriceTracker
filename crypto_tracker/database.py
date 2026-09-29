@@ -168,6 +168,24 @@ def get_prices_since(
     return get_prices_desde(db_path, coin_id, desde, currency)
 
 
+def get_serie(
+    db_path: str, coin_id: str, horas: int, currency: str
+) -> list[tuple[datetime, float]]:
+    """Como get_prices_since, pero con la hora de cada precio, para dibujarlo."""
+    desde = (datetime.now(timezone.utc) - timedelta(hours=horas)).isoformat(
+        timespec="seconds"
+    )
+
+    with _connect(db_path) as conn:
+        filas = conn.execute(
+            "SELECT created_at, price FROM prices WHERE coin_id = ? AND currency = ? "
+            "AND created_at >= ? ORDER BY created_at, id",
+            (coin_id, currency, desde),
+        ).fetchall()
+
+    return [(datetime.fromisoformat(f["created_at"]), f["price"]) for f in filas]
+
+
 def get_prices_desde(
     db_path: str, coin_id: str, desde: datetime, currency: str
 ) -> list[float]:

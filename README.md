@@ -140,7 +140,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | Comando | Qué hace |
 |---|---|
 | `/status` | Cómo van tus criptos ahora |
-| `/historico bitcoin` | Gráfica y máximo/mínimo de las últimas 24 h |
+| `/historico bitcoin` | Imagen con la gráfica de las últimas 24 h, máximo y mínimo |
 | `/buscar btc` | Encuentra el id de CoinGecko de una cripto |
 | `/mute 2h` | Calla los avisos un rato |
 | `/unmute` | Vuelve a avisar |
@@ -277,6 +277,10 @@ asegúrate de haberle escrito `/start` al bot.
 El nombre no es el correcto. Búscalo con `python main.py --buscar <nombre>` y
 usa el id que te da.
 
+**`/historico` manda texto en vez de imagen**
+Falta matplotlib. Si has actualizado el bot, vuelve a ejecutar
+`pip install -r requirements.txt` con el entorno activado.
+
 **Sale un error 429**
 Le estás pidiendo precios demasiado rápido. Lo reintenta solo un par de veces,
 así que si aparece de vez en cuando puedes ignorarlo. Si sale continuamente,
@@ -309,6 +313,6 @@ pytest
 ruff check .
 ```
 
-Hecho con Python, SQLite, la API de CoinGecko y la de Telegram.
+Hecho con Python, SQLite, matplotlib, la API de CoinGecko y la de Telegram.
 
 MIT

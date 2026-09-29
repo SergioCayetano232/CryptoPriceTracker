@@ -148,3 +148,41 @@ def test_sin_sonido(monkeypatch):
 
     telegram.send_message("token", "123", "hola", sin_sonido=True)
     assert enviado["disable_notification"] is True
+
+
+# --- imagenes ---
+
+
+def test_mandar_imagen(monkeypatch):
+    enviado = {}
+
+    def capturar(url, data=None, files=None, timeout=None):
+        enviado.update(url=url, data=data, files=files)
+        return RespuestaFalsa()
+
+    monkeypatch.setattr(requests, "post", capturar)
+
+    assert telegram.send_photo("token", "123", b"\x89PNG...", "pie") is True
+    assert enviado["url"].endswith("/sendPhoto")
+    assert enviado["data"]["caption"] == "pie"
+    assert enviado["files"]["photo"][1] == b"\x89PNG..."
+
+
+def test_imagen_rechazada(monkeypatch):
+    respuesta = RespuestaFalsa(400, {"ok": False, "description": "bad photo"})
+    monkeypatch.setattr(requests, "post", lambda *a, **k: respuesta)
+
+    assert telegram.send_photo("token", "123", b"x") is False
+
+
+def test_pie_largo_se_corta(monkeypatch):
+    enviado = {}
+
+    def capturar(url, data=None, files=None, timeout=None):
+        enviado.update(data)
+        return RespuestaFalsa()
+
+    monkeypatch.setattr(requests, "post", capturar)
+    telegram.send_photo("token", "123", b"x", "y" * 3000)
+
+    assert len(enviado["caption"]) <= telegram.MAX_CAPTION

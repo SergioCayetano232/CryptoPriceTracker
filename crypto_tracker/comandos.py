@@ -1,5 +1,7 @@
 """Entiende los comandos que le escribes al bot por Telegram."""
 
+from dataclasses import dataclass
+
 # Lo que sale en el menu de Telegram al escribir "/".
 COMANDOS = {
     "status": "Cómo van tus criptos ahora",
@@ -23,6 +25,15 @@ AYUDA = "🤖 <b>Esto es lo que sé hacer</b>\n\n" + "\n".join(
 )
 
 NO_ENTIENDO = "No te entiendo. Escribe /ayuda para ver lo que sé hacer."
+
+
+@dataclass(frozen=True)
+class Foto:
+    """Una respuesta con imagen. texto es lo que se manda si la imagen no pasa."""
+
+    png: bytes
+    pie: str
+    texto: str
 
 
 def interpretar(texto: str) -> tuple[str, str] | None:
