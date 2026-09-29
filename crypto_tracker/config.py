@@ -32,6 +32,15 @@ class Watch:
 
 
 @dataclass(frozen=True)
+class Posicion:
+    """Lo que tienes de una cripto. invertido es opcional, lo que te costo."""
+
+    coin_id: str
+    cantidad: float
+    invertido: float | None = None
+
+
+@dataclass(frozen=True)
 class Config:
     telegram_token: str
     telegram_chat_id: str
@@ -47,6 +56,7 @@ class Config:
     brusco_minutos: int = 60
     # (inicio, fin), o None si no hay horas tranquilas
     horas_tranquilas: tuple[time, time] | None = None
+    cartera: tuple[Posicion, ...] = ()
 
 
 def _require(name: str) -> str:
@@ -256,6 +266,43 @@ def parse_tramo(raw: str) -> tuple[time, time] | None:
     return tramo
 
 
+def parse_cartera(raw: str) -> tuple[Posicion, ...]:
+    """'bitcoin:0.016:1000,ethereum:0.4' -> posiciones. Vacio, sin cartera."""
+    posiciones = []
+
+    for entry in raw.split(","):
+        entry = entry.strip()
+        if not entry:
+            continue
+
+        parts = [x.strip() for x in entry.split(":")]
+        if len(parts) not in (2, 3) or not parts[0]:
+            raise ConfigError(
+                f"Formato malo en PORTFOLIO: '{entry}'. Se espera "
+                "cripto:cantidad o cripto:cantidad:invertido (ej: bitcoin:0.016:1000)."
+            )
+
+        coin_id = parts[0].lower()
+        if coin_id in {p.coin_id for p in posiciones}:
+            raise ConfigError(f"'{coin_id}' esta dos veces en PORTFOLIO.")
+
+        cantidad = _parse_threshold(parts[1], coin_id, "cantidad")
+        if cantidad is None or cantidad <= 0:
+            raise ConfigError(f"La cantidad de '{coin_id}' tiene que ser mayor que 0.")
+
+        invertido = (
+            _parse_threshold(parts[2], coin_id, "invertido")
+            if len(parts) == 3
+            else None
+        )
+        if invertido is not None and invertido < 0:
+            raise ConfigError(f"Lo invertido en '{coin_id}' no puede ser negativo.")
+
+        posiciones.append(Posicion(coin_id, cantidad, invertido))
+
+    return tuple(posiciones)
+
+
 def parse_brusco(raw: str) -> tuple[float, int] | None:
     """'8%/1h' -> (8.0, 60). Sin tiempo es una hora. Vacio es None."""
     raw = raw.strip()
@@ -306,4 +353,5 @@ def load_config() -> Config:
         brusco_porcentaje=brusco[0] if brusco else None,
         brusco_minutos=brusco[1] if brusco else 60,
         horas_tranquilas=parse_tramo(os.getenv("HORAS_TRANQUILAS", "")),
+        cartera=parse_cartera(os.getenv("PORTFOLIO", "")),
     )

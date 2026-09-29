@@ -4,6 +4,7 @@ import logging
 import math
 from dataclasses import dataclass
 
+from .cartera import Valor
 from .config import Watch
 from .telegram import escape
 
@@ -290,6 +291,37 @@ def formatear_historico(
         f"Máximo {simbolo}{_num(max(precios))}\n"
         f"Mínimo {simbolo}{_num(min(precios))}"
     )
+
+
+def formatear_cartera(
+    valores: list[Valor], total: Valor, faltan: list[str], currency: str
+) -> str:
+    """Bloque de la cartera para el resumen: cada cripto y el total."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["💼 <b>Tu cartera</b>"]
+
+    for v in valores:
+        nombre = escape(v.coin_id.replace("-", " ").title())
+        linea = f"<b>{nombre}</b>  {simbolo}{_num(v.valor)}"
+        if v.porcentaje is not None:
+            linea += f"  {_flecha(v.porcentaje)} {v.porcentaje:+.2f}%"
+        texto.append(linea)
+
+    linea = f"\nTotal <b>{simbolo}{_num(total.valor)}</b>"
+    if total.porcentaje is not None:
+        signo = "+" if total.ganancia >= 0 else "-"
+        linea += (
+            f"  {_flecha(total.porcentaje)} {total.porcentaje:+.2f}% "
+            f"({signo}{simbolo}{_num(abs(total.ganancia))})"
+        )
+    texto.append(linea)
+
+    if faltan:
+        # Mejor decir que el total esta cojo que dar uno que parezca completo.
+        nombres = ", ".join(escape(c) for c in faltan)
+        texto.append(f"<i>Sin precio ahora de: {nombres}. El total no las cuenta.</i>")
+
+    return "\n".join(texto)
 
 
 def muestrear(precios: list[float], n: int) -> list[float]:

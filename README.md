@@ -152,6 +152,15 @@ Te manda a Telegram un resumen con el precio de todo lo que vigilas y cuánto ha
 cambiado en las últimas 24 horas. Si acabas de instalarlo no hay con qué
 comparar, así que pone "sin histórico" hasta que lleve un día funcionando.
 
+**Ver cuánto vale lo que tienes:**
+```
+PORTFOLIO=bitcoin:0.016:1000,ethereum:0.4:1000
+```
+Cada una es `cripto:cantidad:lo que te costó`. La cantidad es la que te sale en
+el exchange; lo que te costó es opcional, pero sin eso no sabe si ganas o
+pierdes. El resumen (`--status`, `/status` y el diario) añade al final lo que
+vale cada una, el total y cuánto llevas ganado o perdido.
+
 **Callar los avisos un rato:**
 ```
 python main.py --mute 2h
@@ -246,6 +255,7 @@ Todo lo que va haciendo queda apuntado en `data/tracker.log`.
 | `RESUMEN_DIARIO` | Hora del resumen de cada día (`09:00`). Vacío, sin resumen | vacío |
 | `MOVIMIENTO_BRUSCO` | Aviso si se mueve mucho en poco tiempo (`8%/1h`). Vacío, sin aviso | vacío |
 | `HORAS_TRANQUILAS` | Tramo en que los avisos llegan sin sonar (`23-8`) | vacío |
+| `PORTFOLIO` | Lo que tienes, para ver cuánto vale (`bitcoin:0.016:1000`) | vacío |
 
 No bajes mucho `CHECK_INTERVAL`: CoinGecko es gratis pero corta si le pides
 demasiado seguido. Cinco minutos va bien.

@@ -389,3 +389,38 @@ def test_las_respuestas_a_comandos_siempre_suenan(ahora_tranquilo, sonidos):
     main.atender(ahora_tranquilo, _mensaje("/ayuda"))
 
     assert sonidos == [False]
+
+
+# --- cartera ---
+
+
+def test_resumen_con_cartera(config, monkeypatch):
+    from dataclasses import replace
+
+    from crypto_tracker.config import parse_cartera
+
+    pedidas = []
+
+    def precios(ids, cur):
+        pedidas.extend(ids)
+        return {"bitcoin": 70000.0, "solana": 150.0}
+
+    monkeypatch.setattr(coingecko, "get_prices", precios)
+    # solana no esta en la watchlist, solo en la cartera
+    con_cartera = replace(
+        config, cartera=parse_cartera("bitcoin:0.016:1000,solana:7:1000")
+    )
+
+    texto = main.montar_resumen(con_cartera)
+
+    assert pedidas == ["bitcoin", "solana"]
+    assert "Tu cartera" in texto
+    assert "1.120,00" in texto  # bitcoin: 0.016 * 70000
+    assert "1.050,00" in texto  # solana: 7 * 150
+    assert "2.170,00" in texto  # total
+
+
+def test_resumen_sin_cartera_como_antes(config, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 1.0})
+
+    assert "cartera" not in main.montar_resumen(config)

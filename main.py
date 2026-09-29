@@ -19,6 +19,7 @@ from datetime import datetime, timedelta, timezone
 from crypto_tracker import (
     alerts,
     brusco,
+    cartera,
     coingecko,
     comandos,
     database,
@@ -479,9 +480,12 @@ def enviar_resumen(config: Config) -> int:
 def montar_resumen(config: Config, titulo: str | None = None) -> str | None:
     """El texto del resumen con los precios de ahora. None si no hay precios."""
     coin_ids = [w.coin_id for w in config.watchlist]
+    # Lo de la cartera puede no estar en la lista de vigiladas, pero tambien
+    # necesita precio. Una sola consulta para todo.
+    extra = [p.coin_id for p in config.cartera if p.coin_id not in coin_ids]
 
     try:
-        precios = coingecko.get_prices(coin_ids, config.vs_currency)
+        precios = coingecko.get_prices(coin_ids + extra, config.vs_currency)
     except coingecko.CoinGeckoError as e:
         logger.error("No se pudieron consultar los precios: %s", e)
         return None
@@ -505,8 +509,18 @@ def montar_resumen(config: Config, titulo: str | None = None) -> str | None:
         lineas.append((coin_id, precio, _variacion(config, coin_id, precio)))
 
     if titulo:
-        return alerts.formatear_resumen(lineas, config.vs_currency, titulo)
-    return alerts.formatear_resumen(lineas, config.vs_currency)
+        texto = alerts.formatear_resumen(lineas, config.vs_currency, titulo)
+    else:
+        texto = alerts.formatear_resumen(lineas, config.vs_currency)
+
+    if config.cartera:
+        valores, faltan = cartera.valorar(list(config.cartera), precios)
+        bloque = alerts.formatear_cartera(
+            valores, cartera.total(valores), faltan, config.vs_currency
+        )
+        texto += "\n\n" + bloque
+
+    return texto
 
 
 def _variacion(config: Config, coin_id: str, precio: float) -> float | None:
