@@ -35,9 +35,7 @@ def send_message(token: str, chat_id: str, text: str, sin_sonido: bool = False) 
         logger.warning("Mensaje vacio, no se envia nada")
         return False
 
-    if len(text) > MAX_LENGTH:
-        # Cortamos dejando sitio para el aviso, mejor eso que un 400.
-        text = text[: MAX_LENGTH - 20] + "\n[...cortado]"
+    text = _recortar(text, MAX_LENGTH)
 
     payload = {
         "chat_id": chat_id,
@@ -78,6 +76,21 @@ def send_message(token: str, chat_id: str, text: str, sin_sonido: bool = False) 
     return True
 
 
+def _recortar(text: str, limite: int) -> str:
+    """Deja el texto por debajo del limite de Telegram sin partir etiquetas."""
+    if len(text) <= limite:
+        return text
+
+    aviso = "\n[...cortado]"
+    # Cortando en un salto de linea nunca queda un <b> a medias: nuestros
+    # mensajes abren y cierran cada etiqueta en la misma linea.
+    corte = text.rfind("\n", 0, limite - len(aviso))
+    if corte <= 0:
+        # Una sola linea enorme: mejor que llegue algo que un rechazo seguro.
+        corte = limite - len(aviso)
+    return text[:corte] + aviso
+
+
 def _explain(status: int, data: dict) -> str:
     """Traduce los errores tipicos de Telegram a algo accionable."""
     descripcion = data.get("description", "sin detalle")
@@ -100,8 +113,7 @@ def _explain(status: int, data: dict) -> str:
 
 def send_photo(token: str, chat_id: str, png: bytes, caption: str = "") -> bool:
     """Manda una imagen con su pie. Como send_message, no lanza excepciones."""
-    if len(caption) > MAX_CAPTION:
-        caption = caption[: MAX_CAPTION - 20] + "\n[...cortado]"
+    caption = _recortar(caption, MAX_CAPTION)
 
     try:
         response = requests.post(

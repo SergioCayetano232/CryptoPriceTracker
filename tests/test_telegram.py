@@ -186,3 +186,55 @@ def test_pie_largo_se_corta(monkeypatch):
     telegram.send_photo("token", "123", b"x", "y" * 3000)
 
     assert len(enviado["caption"]) <= telegram.MAX_CAPTION
+
+
+# --- cortar sin romper el html ---
+
+
+def _etiquetas_cerradas(texto):
+    return all(
+        texto.count(f"<{t}>") + texto.count(f"<{t} ") == texto.count(f"</{t}>")
+        for t in ("b", "i", "code", "a")
+    )
+
+
+def test_corte_no_deja_etiquetas_abiertas(monkeypatch):
+    from crypto_tracker.alerts import Alert, con_fuente, formatear_varios
+
+    enviado = {}
+
+    def capturar(url, json=None, timeout=None):
+        enviado.update(json)
+        return RespuestaFalsa()
+
+    monkeypatch.setattr(requests, "post", capturar)
+    # un mensaje de avisos de verdad, pero enorme
+    muchos = [Alert(f"cripto-{i}", 1234.56, 1200.0, "alto") for i in range(200)]
+    texto = con_fuente(formatear_varios(muchos, "eur"))
+    assert len(texto) > telegram.MAX_LENGTH
+
+    telegram.send_message("token", "123", texto)
+
+    assert len(enviado["text"]) <= telegram.MAX_LENGTH
+    assert enviado["text"].endswith("[...cortado]")
+    assert _etiquetas_cerradas(enviado["text"])
+
+
+def test_corte_del_pie_de_foto(monkeypatch):
+    enviado = {}
+
+    def capturar(url, data=None, files=None, timeout=None):
+        enviado.update(data)
+        return RespuestaFalsa()
+
+    monkeypatch.setattr(requests, "post", capturar)
+    pie = "\n".join(f"<b>Linea {i}</b> con algo de texto" for i in range(100))
+
+    telegram.send_photo("token", "123", b"x", pie)
+
+    assert len(enviado["caption"]) <= telegram.MAX_CAPTION
+    assert _etiquetas_cerradas(enviado["caption"])
+
+
+def test_lo_corto_no_se_toca():
+    assert telegram._recortar("<b>hola</b>\nadios", 100) == "<b>hola</b>\nadios"
