@@ -91,6 +91,14 @@ def _parse_watchlist(raw: str) -> list[Watch]:
         if not coin_id:
             raise ConfigError(f"Falta el id de la cripto en: '{entry}'")
 
+        # El estado se guarda por cripto: con dos entradas se pisarian una a
+        # otra y ninguna avisaria bien.
+        if coin_id in {w.coin_id for w in watches}:
+            raise ConfigError(
+                f"'{coin_id}' esta dos veces en WATCHLIST. Deja solo una forma "
+                "de vigilarla."
+            )
+
         if len(parts) == 2:
             valor = parts[1].strip()
             if valor.startswith("%"):

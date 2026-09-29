@@ -63,6 +63,8 @@ def test_comas_sobrantes():
         "bitcoin:-100",  # paso negativo
         "bitcoin:75000:55000",  # minimo por encima del maximo
         "bitcoin:60000:60000",  # minimo igual al maximo
+        "bitcoin:%5,bitcoin:1000",  # repetida con otro formato
+        "bitcoin:1000,ethereum:100,BITCOIN:2000",  # repetida en mayusculas
     ],
 )
 def test_entradas_invalidas(entrada):
