@@ -5,6 +5,7 @@ from dataclasses import dataclass
 # Lo que sale en el menu de Telegram al escribir "/".
 COMANDOS = {
     "status": "Cómo van tus criptos ahora",
+    "cartera": "Cuánto vale lo que tienes y cuánto ganas",
     "historico": "Cómo ha ido una cripto en 24 h (ej: /historico bitcoin)",
     "buscar": "Encuentra el id de una cripto (ej: /buscar btc)",
     "mute": "Callar los avisos un rato (ej: /mute 2h)",
@@ -18,6 +19,7 @@ ALIAS = {
     "help": "ayuda",
     "history": "historico",
     "search": "buscar",
+    "portfolio": "cartera",
 }
 
 AYUDA = "🤖 <b>Esto es lo que sé hacer</b>\n\n" + "\n".join(

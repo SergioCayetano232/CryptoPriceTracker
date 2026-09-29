@@ -152,6 +152,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | Comando | Qué hace |
 |---|---|
 | `/status` | Cómo van tus criptos ahora |
+| `/cartera` | Solo tu cartera: cuánto vale y cuánto ganas o pierdes |
 | `/historico bitcoin` | Imagen con la gráfica de las últimas 24 h, máximo y mínimo |
 | `/buscar btc` | Encuentra el id de CoinGecko de una cripto |
 | `/mute 2h` | Calla los avisos un rato |
@@ -176,7 +177,8 @@ PORTFOLIO=bitcoin:0.016:1000,ethereum:0.4:1000
 Cada una es `cripto:cantidad:lo que te costó`. La cantidad es la que te sale en
 el exchange; lo que te costó es opcional, pero sin eso no sabe si ganas o
 pierdes. El resumen (`--status`, `/status` y el diario) añade al final lo que
-vale cada una, el total y cuánto llevas ganado o perdido.
+vale cada una, el total y cuánto llevas ganado o perdido. Si solo quieres eso, escríbele
+`/cartera`.
 
 **Callar los avisos un rato:**
 ```

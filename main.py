@@ -312,6 +312,15 @@ def responder(config: Config, nombre: str, argumento: str) -> str | comandos.Fot
         database.silenciar_hasta(config.database_path, None)
         return "🔔 Vuelvo a avisar." if estaba else "No estaba callado."
 
+    if nombre == "cartera":
+        if not config.cartera:
+            return (
+                "No tienes cartera puesta. Añade al .env algo como:\n"
+                "<code>PORTFOLIO=bitcoin:0.016:1000</code>"
+            )
+        texto = montar_cartera(config)
+        return texto or "No he podido consultar los precios. Prueba en un rato."
+
     if nombre == "historico":
         return _historico(config, argumento.strip().lower())
 
@@ -518,8 +527,47 @@ def montar_resumen(config: Config, titulo: str | None = None) -> str | None:
     # necesita precio. Una sola consulta para todo.
     extra = [p.coin_id for p in config.cartera if p.coin_id not in coin_ids]
 
+    precios = _consultar(config, coin_ids + extra)
+    if precios is None:
+        return None
+
+    lineas = []
+    for coin_id in coin_ids:
+        precio = precios.get(coin_id)
+        if precio is None:
+            continue
+        lineas.append((coin_id, precio, _variacion(config, coin_id, precio)))
+
+    if titulo:
+        texto = alerts.formatear_resumen(lineas, config.vs_currency, titulo)
+    else:
+        texto = alerts.formatear_resumen(lineas, config.vs_currency)
+
+    if config.cartera:
+        texto += "\n\n" + _bloque_cartera(config, precios)
+
+    return alerts.con_fuente(texto)
+
+
+def montar_cartera(config: Config) -> str | None:
+    """Solo la cartera, sin el resto del resumen. None si no hay precios."""
+    precios = _consultar(config, [p.coin_id for p in config.cartera])
+    if precios is None:
+        return None
+    return alerts.con_fuente(_bloque_cartera(config, precios))
+
+
+def _bloque_cartera(config: Config, precios: dict[str, float]) -> str:
+    valores, faltan = cartera.valorar(list(config.cartera), precios)
+    return alerts.formatear_cartera(
+        valores, cartera.total(valores), faltan, config.vs_currency
+    )
+
+
+def _consultar(config: Config, coin_ids: list[str]) -> dict[str, float] | None:
+    """Pide los precios y los guarda. None si no hay ninguno."""
     try:
-        precios = coingecko.get_prices(coin_ids + extra, config.vs_currency)
+        precios = coingecko.get_prices(coin_ids, config.vs_currency)
     except coingecko.CoinGeckoError as e:
         logger.error("No se pudieron consultar los precios: %s", e)
         return None
@@ -535,26 +583,7 @@ def montar_resumen(config: Config, titulo: str | None = None) -> str | None:
     except database.DatabaseError as e:
         logger.error("No se pudo guardar en la base de datos: %s", e)
 
-    lineas = []
-    for coin_id in coin_ids:
-        precio = precios.get(coin_id)
-        if precio is None:
-            continue
-        lineas.append((coin_id, precio, _variacion(config, coin_id, precio)))
-
-    if titulo:
-        texto = alerts.formatear_resumen(lineas, config.vs_currency, titulo)
-    else:
-        texto = alerts.formatear_resumen(lineas, config.vs_currency)
-
-    if config.cartera:
-        valores, faltan = cartera.valorar(list(config.cartera), precios)
-        bloque = alerts.formatear_cartera(
-            valores, cartera.total(valores), faltan, config.vs_currency
-        )
-        texto += "\n\n" + bloque
-
-    return alerts.con_fuente(texto)
+    return precios
 
 
 def _variacion(config: Config, coin_id: str, precio: float) -> float | None:

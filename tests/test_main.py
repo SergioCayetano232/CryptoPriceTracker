@@ -539,3 +539,63 @@ def test_ayuda_y_estado_no_llevan_la_cita(config, enviados):
     main.atender(config, _mensaje("/ayuda"))
 
     assert "coingecko.com" not in enviados[0]
+
+
+# --- /cartera ---
+
+
+@pytest.fixture
+def con_cartera(config):
+    from dataclasses import replace
+
+    from crypto_tracker.config import parse_cartera
+
+    return replace(config, cartera=parse_cartera("bitcoin:0.016:1000,solana:7:1000"))
+
+
+def test_cartera_sola(con_cartera, enviados, monkeypatch):
+    pedidas = []
+
+    def precios(ids, cur):
+        pedidas.extend(ids)
+        return {"bitcoin": 70000.0, "solana": 150.0}
+
+    monkeypatch.setattr(coingecko, "get_prices", precios)
+
+    main.atender(con_cartera, _mensaje("/cartera"))
+
+    assert pedidas == ["bitcoin", "solana"]  # solo lo de la cartera
+    assert "Tu cartera" in enviados[0]
+    assert "2.170,00" in enviados[0]
+    assert "Cómo van tus criptos" not in enviados[0]  # sin el resto del resumen
+    assert "coingecko.com" in enviados[0]
+
+
+def test_cartera_guarda_los_precios(con_cartera, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"solana": 150.0})
+
+    main.atender(con_cartera, _mensaje("/portfolio"))  # el alias en ingles
+
+    assert database.get_last_price(con_cartera.database_path, "solana") == 150.0
+
+
+def test_cartera_sin_configurar(config, enviados, monkeypatch):
+    def no_llamar(*a):
+        raise AssertionError("no deberia consultar precios")
+
+    monkeypatch.setattr(coingecko, "get_prices", no_llamar)
+
+    main.atender(config, _mensaje("/cartera"))
+
+    assert "PORTFOLIO" in enviados[0]
+
+
+def test_cartera_con_coingecko_caido(con_cartera, enviados, monkeypatch):
+    def falla(ids, cur):
+        raise coingecko.CoinGeckoError("Sin conexion")
+
+    monkeypatch.setattr(coingecko, "get_prices", falla)
+
+    main.atender(con_cartera, _mensaje("/cartera"))
+
+    assert "No he podido" in enviados[0]
