@@ -18,6 +18,7 @@ from datetime import datetime, timedelta, timezone
 
 from crypto_tracker import (
     alerts,
+    brusco,
     coingecko,
     comandos,
     database,
@@ -96,6 +97,7 @@ def ejecutar_ciclo(
             logger.error("No se pudo purgar el historico: %s", e)
 
     avisos, estado_nuevo = alerts.revisar(precios, config.watchlist, estado)
+    avisos += revisar_bruscos(config, precios)
 
     # Guardamos la zona de cada cripto para no repetir el aviso al reiniciar.
     try:
@@ -131,6 +133,48 @@ def ejecutar_ciclo(
         logger.error("No se pudo avisar de: %s", cruzadas)
 
     return estado_nuevo, None
+
+
+def revisar_bruscos(config: Config, precios: dict[str, float]) -> list[alerts.Alert]:
+    """Busca subidas o caidas fuertes dentro de la ventana de MOVIMIENTO_BRUSCO."""
+    if config.brusco_porcentaje is None:
+        return []
+
+    ahora = datetime.now(timezone.utc)
+    avisos = []
+
+    for coin_id, precio in precios.items():
+        desde = ahora - timedelta(minutes=config.brusco_minutos)
+        try:
+            # Tras un aviso solo cuenta lo que pase despues. Si no, una caida
+            # del 8% avisaria en cada ciclo durante toda la hora siguiente.
+            ultimo = database.ultimo_brusco(config.database_path, coin_id)
+            if ultimo and ultimo > desde:
+                desde = ultimo
+            ventana = database.get_prices_desde(
+                config.database_path, coin_id, desde, config.vs_currency
+            )
+        except database.DatabaseError as e:
+            logger.error("No se pudo mirar el movimiento de %s: %s", coin_id, e)
+            continue
+
+        # El de ahora va aparte por si no se pudo guardar.
+        aviso = brusco.revisar(
+            coin_id,
+            ventana + [precio],
+            config.brusco_porcentaje,
+            config.brusco_minutos,
+        )
+        if aviso is None:
+            continue
+
+        avisos.append(aviso)
+        try:
+            database.guardar_brusco(config.database_path, coin_id, ahora)
+        except database.DatabaseError as e:
+            logger.error("No se pudo apuntar el aviso brusco de %s: %s", coin_id, e)
+
+    return avisos
 
 
 def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:

@@ -164,15 +164,19 @@ def get_prices_since(
     db_path: str, coin_id: str, horas: int, currency: str
 ) -> list[float]:
     """Precios de las ultimas `horas`, del mas viejo al mas nuevo."""
-    desde = (datetime.now(timezone.utc) - timedelta(hours=horas)).isoformat(
-        timespec="seconds"
-    )
+    desde = datetime.now(timezone.utc) - timedelta(hours=horas)
+    return get_prices_desde(db_path, coin_id, desde, currency)
 
+
+def get_prices_desde(
+    db_path: str, coin_id: str, desde: datetime, currency: str
+) -> list[float]:
+    """Precios guardados a partir de `desde`, del mas viejo al mas nuevo."""
     with _connect(db_path) as conn:
         filas = conn.execute(
             "SELECT price FROM prices WHERE coin_id = ? AND currency = ? "
             "AND created_at >= ? ORDER BY created_at, id",
-            (coin_id, currency, desde),
+            (coin_id, currency, desde.isoformat(timespec="seconds")),
         ).fetchall()
 
     return [fila["price"] for fila in filas]
@@ -260,6 +264,30 @@ def guardar_resumen(db_path: str, dia: date) -> None:
         conn.execute(
             "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
             (ULTIMO_RESUMEN, dia.isoformat()),
+        )
+
+
+def ultimo_brusco(db_path: str, coin_id: str) -> datetime | None:
+    """Cuando se aviso del ultimo movimiento brusco de esta cripto."""
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT valor FROM ajustes WHERE clave = ?", (f"brusco:{coin_id}",)
+        ).fetchone()
+
+    if not fila:
+        return None
+
+    try:
+        return datetime.fromisoformat(fila["valor"])
+    except ValueError:
+        return None
+
+
+def guardar_brusco(db_path: str, coin_id: str, cuando: datetime) -> None:
+    with _connect(db_path) as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (f"brusco:{coin_id}", cuando.isoformat(timespec="seconds")),
         )
 
 

@@ -258,3 +258,67 @@ def test_resumen_diario_reintenta_si_telegram_falla(con_resumen, monkeypatch):
     main.resumen_diario(con_resumen, _dia(9, 10))
 
     assert len(intentos) == 2  # fallo, acierto, y ya no mas
+
+
+# --- movimiento brusco ---
+
+
+@pytest.fixture
+def con_brusco(config):
+    from dataclasses import replace
+
+    return replace(config, brusco_porcentaje=8.0, brusco_minutos=60)
+
+
+def _precio_hace(config, precio, minutos):
+    import sqlite3
+    from datetime import datetime, timedelta, timezone
+
+    cuando = datetime.now(timezone.utc) - timedelta(minutes=minutos)
+    conn = sqlite3.connect(config.database_path)
+    conn.execute(
+        "INSERT INTO prices (coin_id, price, currency, created_at) VALUES (?,?,?,?)",
+        ("bitcoin", precio, "eur", cuando.isoformat(timespec="seconds")),
+    )
+    conn.commit()
+    conn.close()
+
+
+def test_brusco_avisa_de_una_caida(con_brusco):
+    _precio_hace(con_brusco, 60000.0, 40)
+
+    avisos = main.revisar_bruscos(con_brusco, {"bitcoin": 55000.0})
+
+    assert len(avisos) == 1
+    assert avisos[0].minutos == 60
+
+
+def test_brusco_ignora_lo_de_fuera_de_la_ventana(con_brusco):
+    _precio_hace(con_brusco, 60000.0, 90)
+
+    assert main.revisar_bruscos(con_brusco, {"bitcoin": 55000.0}) == []
+
+
+def test_brusco_no_repite_el_aviso(con_brusco):
+    _precio_hace(con_brusco, 60000.0, 40)
+    main.revisar_bruscos(con_brusco, {"bitcoin": 55000.0})
+    database.save_prices(con_brusco.database_path, {"bitcoin": 55000.0}, "eur")
+
+    # sigue abajo, pero ya se aviso: el 60000 de antes ya no cuenta
+    assert main.revisar_bruscos(con_brusco, {"bitcoin": 54500.0}) == []
+
+
+def test_brusco_desactivado(config):
+    _precio_hace(config, 60000.0, 40)
+
+    assert main.revisar_bruscos(config, {"bitcoin": 30000.0}) == []
+
+
+def test_brusco_llega_por_telegram(con_brusco, enviados, monkeypatch):
+    _precio_hace(con_brusco, 60000.0, 40)
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 55000.0})
+
+    main.ejecutar_ciclo(con_brusco, {"bitcoin": "%55000.0"})
+
+    assert len(enviados) == 1
+    assert "⚡" in enviados[0]

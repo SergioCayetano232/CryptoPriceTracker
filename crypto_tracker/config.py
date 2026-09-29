@@ -42,6 +42,9 @@ class Config:
     history_days: int
     # None = sin resumen diario
     resumen_diario: time | None = None
+    # None = sin aviso de movimientos bruscos
+    brusco_porcentaje: float | None = None
+    brusco_minutos: int = 60
 
 
 def _require(name: str) -> str:
@@ -234,16 +237,53 @@ def parse_hora(raw: str) -> time | None:
         ) from None
 
 
+def parse_brusco(raw: str) -> tuple[float, int] | None:
+    """'8%/1h' -> (8.0, 60). Sin tiempo es una hora. Vacio es None."""
+    raw = raw.strip()
+    if not raw:
+        return None
+
+    texto_pct, _, tiempo = raw.partition("/")
+    try:
+        porcentaje = float(texto_pct.strip().strip("%"))
+    except ValueError:
+        raise ConfigError(
+            f"MOVIMIENTO_BRUSCO tiene que ser algo como 8%/1h, no '{raw}'"
+        ) from None
+
+    if not 0 < porcentaje < 100:
+        raise ConfigError(
+            f"El porcentaje de MOVIMIENTO_BRUSCO tiene que estar entre 0 y 100, "
+            f"no {porcentaje}."
+        )
+
+    minutos = parse_duracion(tiempo) if tiempo.strip() else 60
+    return porcentaje, minutos
+
+
 def load_config() -> Config:
     """Monta la configuracion. Lanza ConfigError si algo falta o esta mal."""
+    check_interval = _parse_positive_int("CHECK_INTERVAL", "300")
+    brusco = parse_brusco(os.getenv("MOVIMIENTO_BRUSCO", ""))
+
+    # Con una ventana mas corta que el intervalo nunca habria dos precios
+    # que comparar y el aviso no saltaria jamas.
+    if brusco and brusco[1] * 60 <= check_interval:
+        raise ConfigError(
+            f"La ventana de MOVIMIENTO_BRUSCO ({brusco[1]} min) tiene que ser "
+            f"mas larga que CHECK_INTERVAL ({check_interval} s)."
+        )
+
     return Config(
         telegram_token=_require("TELEGRAM_BOT_TOKEN"),
         telegram_chat_id=_require("TELEGRAM_CHAT_ID"),
         watchlist=_parse_watchlist(_require("WATCHLIST")),
         vs_currency=os.getenv("VS_CURRENCY", "eur").strip().lower() or "eur",
-        check_interval=_parse_positive_int("CHECK_INTERVAL", "300"),
+        check_interval=check_interval,
         database_path=os.getenv("DATABASE_PATH", "data/prices.db").strip()
         or "data/prices.db",
         history_days=_parse_history_days(),
         resumen_diario=parse_hora(os.getenv("RESUMEN_DIARIO", "")),
+        brusco_porcentaje=brusco[0] if brusco else None,
+        brusco_minutos=brusco[1] if brusco else 60,
     )

@@ -153,3 +153,37 @@ def test_horas_invalidas(entrada):
 
     with pytest.raises(ConfigError):
         parse_hora(entrada)
+
+
+# --- movimiento brusco ---
+
+
+def test_brusco():
+    from crypto_tracker.config import parse_brusco
+
+    assert parse_brusco("8%/1h") == (8.0, 60)
+    assert parse_brusco("5/30m") == (5.0, 30)
+    assert parse_brusco("2.5%/2h") == (2.5, 120)
+    assert parse_brusco("10%") == (10.0, 60)  # sin tiempo, una hora
+    assert parse_brusco("") is None
+
+
+@pytest.mark.parametrize("entrada", ["hola", "%/1h", "0%/1h", "100%/1h", "8%/xx"])
+def test_brusco_invalido(entrada):
+    from crypto_tracker.config import parse_brusco
+
+    with pytest.raises(ConfigError):
+        parse_brusco(entrada)
+
+
+def test_brusco_con_ventana_mas_corta_que_el_intervalo(monkeypatch):
+    from crypto_tracker.config import load_config
+
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "x")
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "1")
+    monkeypatch.setenv("WATCHLIST", "bitcoin:%5")
+    monkeypatch.setenv("CHECK_INTERVAL", "600")
+    monkeypatch.setenv("MOVIMIENTO_BRUSCO", "8%/5m")
+
+    with pytest.raises(ConfigError, match="CHECK_INTERVAL"):
+        load_config()

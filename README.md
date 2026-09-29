@@ -168,6 +168,16 @@ El silencio se guarda, así que aguanta aunque reinicies o se apague el servidor
 Y `--status` te sigue funcionando: lo que se calla son los avisos automáticos, no
 lo que pidas tú.
 
+**Enterarte de los desplomes:**
+
+```
+MOVIMIENTO_BRUSCO=8%/1h
+```
+Te avisa si cualquiera de tus criptos sube o baja un 8% en menos de una hora,
+aunque no cruce ninguno de sus niveles. Cuenta desde el punto más alto o más
+bajo de esa hora, así que también pilla un "sube un 10% y lo devuelve todo".
+Tras un aviso, solo vuelve a avisar si se mueve otro 8% desde ahí.
+
 **Recibir un resumen cada mañana:**
 
 Pon la hora en el `.env`:
@@ -226,6 +236,7 @@ Todo lo que va haciendo queda apuntado en `data/tracker.log`.
 | `HISTORY_DAYS` | Días de histórico que se guardan | `90` |
 | `DATABASE_PATH` | Dónde se guardan los datos | `data/prices.db` |
 | `RESUMEN_DIARIO` | Hora del resumen de cada día (`09:00`). Vacío, sin resumen | vacío |
+| `MOVIMIENTO_BRUSCO` | Aviso si se mueve mucho en poco tiempo (`8%/1h`). Vacío, sin aviso | vacío |
 
 No bajes mucho `CHECK_INTERVAL`: CoinGecko es gratis pero corta si le pides
 demasiado seguido. Cinco minutos va bien.

@@ -275,3 +275,27 @@ def test_el_resumen_no_pisa_el_silencio(db):
     database.guardar_resumen(db, date(2026, 9, 29))
 
     assert database.silenciado_hasta(db) is not None
+
+
+# --- movimiento brusco ---
+
+
+def test_precios_desde_una_fecha(db):
+    from datetime import datetime, timedelta, timezone
+
+    _insertar_con_fecha(db, "bitcoin", 60000.0, 2)
+    _insertar_con_fecha(db, "bitcoin", 61000.0, 0.5)
+
+    desde = datetime.now(timezone.utc) - timedelta(hours=1)
+
+    assert database.get_prices_desde(db, "bitcoin", desde, "eur") == [61000.0]
+
+
+def test_ultimo_brusco_por_cripto(db):
+    from datetime import datetime, timezone
+
+    cuando = datetime(2026, 9, 29, 12, 0, tzinfo=timezone.utc)
+    database.guardar_brusco(db, "bitcoin", cuando)
+
+    assert database.ultimo_brusco(db, "bitcoin") == cuando
+    assert database.ultimo_brusco(db, "ethereum") is None

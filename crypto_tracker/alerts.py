@@ -32,6 +32,7 @@ class Alert:
     threshold: float
     estado: str  # BAJO o ALTO
     percent: float | None = None  # variacion, solo en las alertas de %
+    minutos: int | None = None  # solo en los movimientos bruscos
 
 
 def clasificar(price: float, watch: Watch) -> str:
@@ -196,6 +197,15 @@ def formatear(alerta: Alert, currency: str) -> str:
     else:
         icono, verbo = "🚀", "ha subido"
 
+    if alerta.minutos is not None:
+        verbo = "ha caído" if alerta.estado == BAJO else "ha subido"
+        return (
+            f"⚡ <b>{nombre}</b> {verbo} un <b>{abs(alerta.percent):.2f}%</b> "
+            f"en menos de {_minutos(alerta.minutos)}\n"
+            f"De {simbolo}{_num(alerta.threshold)} a "
+            f"<b>{simbolo}{_num(alerta.price)}</b>"
+        )
+
     if alerta.percent is not None:
         return (
             f"{icono} <b>{nombre}</b> {verbo} un "
@@ -289,6 +299,10 @@ def muestrear(precios: list[float], n: int) -> list[float]:
 
     paso = (len(precios) - 1) / (n - 1)
     return [precios[round(i * paso)] for i in range(n)]
+
+
+def _minutos(minutos: int) -> str:
+    return f"{minutos // 60} h" if minutos % 60 == 0 else f"{minutos} min"
 
 
 def _flecha(variacion: float) -> str:
