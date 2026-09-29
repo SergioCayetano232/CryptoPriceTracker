@@ -188,6 +188,14 @@ Mientras esté en modo `--loop`, te manda cada día a esa hora lo mismo que
 `--status`. Si a esa hora estaba apagado, te lo manda al volver, pero solo hasta
 dos horas tarde. Con `--mute` tampoco llega.
 
+**Que no te despierte:**
+```
+HORAS_TRANQUILAS=23-8
+```
+De 11 de la noche a 8 de la mañana los avisos llegan sin sonar ni vibrar. No
+se pierde ninguno: por la mañana los tienes todos. Lo que le preguntes por
+Telegram sí suena, que si escribes es que estás despierto.
+
 **Ver el histórico de una cripto:**
 ```
 python main.py --history bitcoin
@@ -237,6 +245,7 @@ Todo lo que va haciendo queda apuntado en `data/tracker.log`.
 | `DATABASE_PATH` | Dónde se guardan los datos | `data/prices.db` |
 | `RESUMEN_DIARIO` | Hora del resumen de cada día (`09:00`). Vacío, sin resumen | vacío |
 | `MOVIMIENTO_BRUSCO` | Aviso si se mueve mucho en poco tiempo (`8%/1h`). Vacío, sin aviso | vacío |
+| `HORAS_TRANQUILAS` | Tramo en que los avisos llegan sin sonar (`23-8`) | vacío |
 
 No bajes mucho `CHECK_INTERVAL`: CoinGecko es gratis pero corta si le pides
 demasiado seguido. Cinco minutos va bien.

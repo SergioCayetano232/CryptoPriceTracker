@@ -28,7 +28,9 @@ def config(tmp_path):
 def enviados(monkeypatch):
     lista = []
     monkeypatch.setattr(
-        telegram, "send_message", lambda token, chat, texto: lista.append(texto) or True
+        telegram,
+        "send_message",
+        lambda token, chat, texto, **kw: lista.append(texto) or True,
     )
     return lista
 
@@ -250,7 +252,9 @@ def test_resumen_diario_reintenta_si_coingecko_falla(
 def test_resumen_diario_reintenta_si_telegram_falla(con_resumen, monkeypatch):
     intentos = []
     monkeypatch.setattr(
-        telegram, "send_message", lambda *a: intentos.append(1) or len(intentos) > 1
+        telegram,
+        "send_message",
+        lambda *a, **kw: intentos.append(1) or len(intentos) > 1,
     )
 
     main.resumen_diario(con_resumen, _dia(9, 0))
@@ -322,3 +326,66 @@ def test_brusco_llega_por_telegram(con_brusco, enviados, monkeypatch):
 
     assert len(enviados) == 1
     assert "⚡" in enviados[0]
+
+
+# --- horas tranquilas ---
+
+
+@pytest.fixture
+def ahora_tranquilo(config):
+    """Un tramo tranquilo que empieza hace una hora y acaba dentro de una."""
+    from dataclasses import replace
+    from datetime import datetime, timedelta
+
+    ahora = datetime.now()
+    tramo = (
+        (ahora - timedelta(hours=1)).time().replace(second=0, microsecond=0),
+        (ahora + timedelta(hours=1)).time().replace(second=0, microsecond=0),
+    )
+    return replace(config, horas_tranquilas=tramo)
+
+
+@pytest.fixture
+def sonidos(monkeypatch):
+    lista = []
+    monkeypatch.setattr(
+        telegram,
+        "send_message",
+        lambda token, chat, texto, sin_sonido=False: lista.append(sin_sonido) or True,
+    )
+    return lista
+
+
+def test_sin_sonido_segun_la_hora(config):
+    from dataclasses import replace
+    from datetime import datetime, time
+
+    noche = replace(config, horas_tranquilas=(time(23), time(8)))
+
+    assert main._sin_sonido(noche, datetime(2026, 9, 29, 3, 0)) is True
+    assert main._sin_sonido(noche, datetime(2026, 9, 29, 15, 0)) is False
+    # sin HORAS_TRANQUILAS, siempre suena
+    assert main._sin_sonido(config, datetime(2026, 9, 29, 3, 0)) is False
+
+
+def test_avisos_sin_sonido_en_horas_tranquilas(ahora_tranquilo, sonidos, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 90000.0})
+
+    main.ejecutar_ciclo(ahora_tranquilo, {"bitcoin": "%60000.0"})
+
+    assert sonidos == [True]
+
+
+def test_avisos_con_sonido_fuera_de_horas(config, sonidos, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 90000.0})
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%60000.0"})
+
+    assert sonidos == [False]
+
+
+def test_las_respuestas_a_comandos_siempre_suenan(ahora_tranquilo, sonidos):
+    # si le escribes es que estas despierto
+    main.atender(ahora_tranquilo, _mensaje("/ayuda"))
+
+    assert sonidos == [False]

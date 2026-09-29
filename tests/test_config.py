@@ -187,3 +187,24 @@ def test_brusco_con_ventana_mas_corta_que_el_intervalo(monkeypatch):
 
     with pytest.raises(ConfigError, match="CHECK_INTERVAL"):
         load_config()
+
+
+# --- horas tranquilas ---
+
+
+def test_tramos():
+    from datetime import time
+
+    from crypto_tracker.config import parse_tramo
+
+    assert parse_tramo("23-8") == (time(23), time(8))
+    assert parse_tramo("23:30 - 7:15") == (time(23, 30), time(7, 15))
+    assert parse_tramo("") is None
+
+
+@pytest.mark.parametrize("entrada", ["23", "23-", "-8", "23-25", "8-8", "noche"])
+def test_tramos_invalidos(entrada):
+    from crypto_tracker.config import parse_tramo
+
+    with pytest.raises(ConfigError):
+        parse_tramo(entrada)

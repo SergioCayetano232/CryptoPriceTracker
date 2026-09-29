@@ -1,4 +1,4 @@
-"""Decide cuando toca mandar el resumen del dia."""
+"""Lo que depende de la hora del dia: el resumen y las horas tranquilas."""
 
 from datetime import date, datetime, time, timedelta
 
@@ -14,3 +14,11 @@ def toca_resumen(ahora: datetime, hora: time, ultimo: date | None) -> bool:
 
     programado = datetime.combine(ahora.date(), hora, tzinfo=ahora.tzinfo)
     return programado <= ahora <= programado + RETRASO_MAXIMO
+
+
+def es_hora_tranquila(ahora: time, inicio: time, fin: time) -> bool:
+    """True si `ahora` cae dentro del tramo, aunque cruce la medianoche."""
+    if inicio < fin:
+        return inicio <= ahora < fin
+    # De 23 a 8: o ya es tarde, o todavia es temprano.
+    return ahora >= inicio or ahora < fin

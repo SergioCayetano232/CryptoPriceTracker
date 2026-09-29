@@ -4,7 +4,7 @@ from datetime import date, datetime, time
 
 import pytest
 
-from crypto_tracker.diario import toca_resumen
+from crypto_tracker.diario import es_hora_tranquila, toca_resumen
 
 NUEVE = time(9, 0)
 HOY = date(2026, 9, 29)
@@ -38,3 +38,35 @@ def test_al_dia_siguiente_vuelve():
     ayer = date(2026, 9, 28)
 
     assert toca_resumen(_a_las(9, 0), NUEVE, ayer) is True
+
+
+# --- horas tranquilas ---
+
+
+@pytest.mark.parametrize(
+    "ahora,tranquila",
+    [
+        (time(22, 59), False),
+        (time(23, 0), True),
+        (time(3, 0), True),  # cruza la medianoche
+        (time(7, 59), True),
+        (time(8, 0), False),
+        (time(15, 0), False),
+    ],
+)
+def test_tramo_de_noche(ahora, tranquila):
+    assert es_hora_tranquila(ahora, time(23, 0), time(8, 0)) is tranquila
+
+
+@pytest.mark.parametrize(
+    "ahora,tranquila",
+    [
+        (time(13, 59), False),
+        (time(14, 0), True),
+        (time(15, 59), True),
+        (time(16), False),
+    ],
+)
+def test_tramo_de_dia(ahora, tranquila):
+    # la siesta: sin cruzar la medianoche
+    assert es_hora_tranquila(ahora, time(14, 0), time(16, 0)) is tranquila

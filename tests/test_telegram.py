@@ -132,3 +132,19 @@ def test_menu_de_comandos(monkeypatch):
 
     assert telegram.set_commands("token", {"status": "Como van"}) is True
     assert enviado["commands"] == [{"command": "status", "description": "Como van"}]
+
+
+def test_sin_sonido(monkeypatch):
+    enviado = {}
+
+    def capturar(url, json=None, timeout=None):
+        enviado.update(json)
+        return RespuestaFalsa()
+
+    monkeypatch.setattr(requests, "post", capturar)
+
+    telegram.send_message("token", "123", "hola")
+    assert enviado["disable_notification"] is False
+
+    telegram.send_message("token", "123", "hola", sin_sonido=True)
+    assert enviado["disable_notification"] is True

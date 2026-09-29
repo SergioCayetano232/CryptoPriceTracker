@@ -21,7 +21,7 @@ class TelegramError(Exception):
     """No se pudo enviar el mensaje."""
 
 
-def send_message(token: str, chat_id: str, text: str) -> bool:
+def send_message(token: str, chat_id: str, text: str, sin_sonido: bool = False) -> bool:
     """Manda un mensaje al chat. Devuelve True si se envio.
 
     No lanza excepcion: un fallo de Telegram no deberia tumbar el
@@ -41,6 +41,8 @@ def send_message(token: str, chat_id: str, text: str) -> bool:
         "parse_mode": "HTML",
         # Sin previsualizaciones de enlaces, ensucian el aviso.
         "disable_web_page_preview": True,
+        # Llega igual, pero sin sonar ni vibrar.
+        "disable_notification": sin_sonido,
     }
 
     try:

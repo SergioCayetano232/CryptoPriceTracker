@@ -125,7 +125,12 @@ def ejecutar_ciclo(
     texto = alerts.formatear_varios(avisos, config.vs_currency)
     cruzadas = ", ".join(f"{a.coin_id} {a.estado}" for a in avisos)
 
-    if telegram.send_message(config.telegram_token, config.telegram_chat_id, texto):
+    if telegram.send_message(
+        config.telegram_token,
+        config.telegram_chat_id,
+        texto,
+        sin_sonido=_sin_sonido(config),
+    ):
         logger.info("Aviso enviado (%d): %s", len(avisos), cruzadas)
     else:
         # El aviso se perdio, pero el estado ya cambio. No insistimos:
@@ -354,7 +359,12 @@ def resumen_diario(config: Config, ahora: datetime | None = None) -> None:
     if texto is None:
         return
 
-    if not telegram.send_message(config.telegram_token, config.telegram_chat_id, texto):
+    if not telegram.send_message(
+        config.telegram_token,
+        config.telegram_chat_id,
+        texto,
+        sin_sonido=_sin_sonido(config),
+    ):
         logger.error("No se pudo enviar el resumen diario, lo reintento luego")
         return
 
@@ -367,7 +377,12 @@ def resumen_diario(config: Config, ahora: datetime | None = None) -> None:
 
 def _avisar_salud(config: Config, texto: str) -> None:
     """Manda los avisos de caida y vuelta. No se callan con --mute."""
-    if telegram.send_message(config.telegram_token, config.telegram_chat_id, texto):
+    if telegram.send_message(
+        config.telegram_token,
+        config.telegram_chat_id,
+        texto,
+        sin_sonido=_sin_sonido(config),
+    ):
         logger.info("Aviso de estado enviado")
     else:
         logger.error("No se pudo mandar el aviso de estado")
@@ -397,6 +412,15 @@ def _silenciado(config: Config) -> datetime | None:
         # Si no podemos leerlo, mejor avisar de mas que quedarnos mudos.
         logger.warning("No se pudo leer el silencio: %s", e)
         return None
+
+
+def _sin_sonido(config: Config, ahora: datetime | None = None) -> bool:
+    """True si estamos en HORAS_TRANQUILAS: los avisos llegan, pero sin sonar."""
+    if config.horas_tranquilas is None:
+        return False
+
+    ahora = ahora or datetime.now().astimezone()
+    return diario.es_hora_tranquila(ahora.time(), *config.horas_tranquilas)
 
 
 def silenciar(config: Config, duracion: str) -> int:
@@ -572,9 +596,7 @@ def main() -> int:
         metavar="TIEMPO",
         help="calla los avisos un rato (30m, 2h, 1d) y sale",
     )
-    parser.add_argument(
-        "--unmute", action="store_true", help="vuelve a avisar y sale"
-    )
+    parser.add_argument("--unmute", action="store_true", help="vuelve a avisar y sale")
     parser.add_argument(
         "--history",
         metavar="CRIPTO",

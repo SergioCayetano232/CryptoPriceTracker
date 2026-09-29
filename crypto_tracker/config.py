@@ -45,6 +45,8 @@ class Config:
     # None = sin aviso de movimientos bruscos
     brusco_porcentaje: float | None = None
     brusco_minutos: int = 60
+    # (inicio, fin), o None si no hay horas tranquilas
+    horas_tranquilas: tuple[time, time] | None = None
 
 
 def _require(name: str) -> str:
@@ -208,9 +210,7 @@ def parse_duracion(raw: str) -> int:
     try:
         cantidad = float(numero)
     except ValueError:
-        raise ConfigError(
-            f"No entiendo '{raw}'. Usa algo como 30m, 2h o 1d."
-        ) from None
+        raise ConfigError(f"No entiendo '{raw}'. Usa algo como 30m, 2h o 1d.") from None
 
     if cantidad <= 0:
         raise ConfigError(f"El tiempo tiene que ser mayor que 0, no '{raw}'.")
@@ -222,7 +222,7 @@ def parse_duracion(raw: str) -> int:
     return minutos
 
 
-def parse_hora(raw: str) -> time | None:
+def parse_hora(raw: str, nombre: str = "RESUMEN_DIARIO") -> time | None:
     """Convierte '09:00' o '9' en una hora. Vacio es None, sin resumen."""
     raw = raw.strip()
     if not raw:
@@ -233,8 +233,27 @@ def parse_hora(raw: str) -> time | None:
         return time(int(horas), int(minutos or 0))
     except ValueError:
         raise ConfigError(
-            f"RESUMEN_DIARIO tiene que ser una hora tipo 09:00, no '{raw}'"
+            f"{nombre} tiene que ser una hora tipo 09:00, no '{raw}'"
         ) from None
+
+
+def parse_tramo(raw: str) -> tuple[time, time] | None:
+    """'23-8' o '23:30-7:00' -> (inicio, fin). Vacio es None."""
+    raw = raw.strip()
+    if not raw:
+        return None
+
+    inicio, guion, fin = raw.partition("-")
+    if not guion or not inicio.strip() or not fin.strip():
+        raise ConfigError(f"HORAS_TRANQUILAS tiene que ser algo como 23-8, no '{raw}'")
+
+    tramo = (
+        parse_hora(inicio, "HORAS_TRANQUILAS"),
+        parse_hora(fin, "HORAS_TRANQUILAS"),
+    )
+    if tramo[0] == tramo[1]:
+        raise ConfigError("HORAS_TRANQUILAS empieza y acaba a la misma hora.")
+    return tramo
 
 
 def parse_brusco(raw: str) -> tuple[float, int] | None:
@@ -286,4 +305,5 @@ def load_config() -> Config:
         resumen_diario=parse_hora(os.getenv("RESUMEN_DIARIO", "")),
         brusco_porcentaje=brusco[0] if brusco else None,
         brusco_minutos=brusco[1] if brusco else 60,
+        horas_tranquilas=parse_tramo(os.getenv("HORAS_TRANQUILAS", "")),
     )
