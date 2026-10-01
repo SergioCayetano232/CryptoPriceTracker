@@ -425,6 +425,36 @@ def tomar_de_cero(db_path: str) -> set[str]:
     return {f["coin_id"] for f in filas}
 
 
+def sumar_consultas(db_path: str, mes: str, cuantas: int) -> int:
+    """Suma consultas a las del mes y devuelve el total."""
+    clave = f"consultas:{mes}"
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT valor FROM ajustes WHERE clave = ?", (clave,)
+        ).fetchone()
+        total = _entero(fila["valor"] if fila else None) + cuantas
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (clave, str(total)),
+        )
+    return total
+
+
+def get_consultas(db_path: str, mes: str) -> int:
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT valor FROM ajustes WHERE clave = ?", (f"consultas:{mes}",)
+        ).fetchone()
+    return _entero(fila["valor"] if fila else None)
+
+
+def _entero(valor: str | None) -> int:
+    try:
+        return int(valor) if valor else 0
+    except ValueError:
+        return 0
+
+
 def get_history(db_path: str, coin_id: str, limit: int = 50) -> list[sqlite3.Row]:
     """Historico de una cripto, del mas reciente al mas antiguo."""
     with _connect(db_path) as conn:

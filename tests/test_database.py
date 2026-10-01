@@ -418,3 +418,18 @@ def test_series_solo_de_esa_moneda(db):
 
 def test_series_sin_criptos(db):
     assert database.get_series(db, [], 24, "eur") == []
+
+
+# --- consultas del mes ---
+
+
+def test_consultas_se_suman(db):
+    assert database.sumar_consultas(db, "2026-10", 3) == 3
+    assert database.sumar_consultas(db, "2026-10", 2) == 5
+    assert database.get_consultas(db, "2026-10") == 5
+
+
+def test_consultas_cada_mes_aparte(db):
+    database.sumar_consultas(db, "2026-09", 9000)
+
+    assert database.get_consultas(db, "2026-10") == 0

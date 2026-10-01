@@ -20,6 +20,10 @@ TIMEOUT = 15
 INTENTOS = 3
 ESPERA_INICIAL = 2
 
+# Peticiones hechas desde la ultima vez que se apuntaron. Aqui no hay base de
+# datos, asi que solo se cuentan; main las va guardando.
+_hechas = 0
+
 
 class CoinGeckoError(Exception):
     """No se pudieron obtener los precios."""
@@ -71,6 +75,13 @@ def mejores(monedas: list, texto: str, maximo: int = 5) -> list[dict]:
     return sorted(validas, key=orden)[:maximo]
 
 
+def tomar_consultas() -> int:
+    """Las peticiones hechas desde la ultima llamada, y pone la cuenta a cero."""
+    global _hechas
+    hechas, _hechas = _hechas, 0
+    return hechas
+
+
 def _con_reintentos(pedir):
     """Repite la peticion si el fallo es pasajero, esperando el doble cada vez."""
     espera = ESPERA_INICIAL
@@ -102,10 +113,13 @@ def _pedir_precios(coin_ids: list[str], vs_currency: str) -> dict[str, float]:
 
 def _pedir(url: str, params: dict):
     """GET a CoinGecko traduciendo cada fallo a un CoinGeckoError."""
+    global _hechas
     try:
         response = requests.get(
             url, params=params, headers=_cabeceras(), timeout=TIMEOUT
         )
+        # Si ha contestado, aunque sea un 429, la cuenta del mes ya ha subido.
+        _hechas += 1
         response.raise_for_status()
         data = response.json()
     except requests.Timeout as e:

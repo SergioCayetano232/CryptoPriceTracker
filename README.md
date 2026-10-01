@@ -168,6 +168,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/historico bitcoin` | Imagen con la gráfica de las últimas 24 h, máximo y mínimo |
 | `/historico bitcoin 7d` | Lo mismo, del tramo que digas (`12h`, `7d`, `30d`...) |
 | `/buscar btc` | Encuentra el id de CoinGecko de una cripto |
+| `/consultas` | Cuántas consultas a CoinGecko llevas este mes |
 | `/mute 2h` | Calla los avisos un rato |
 | `/unmute` | Vuelve a avisar |
 | `/ayuda` | La lista de comandos |
@@ -323,6 +324,10 @@ consultas al mes y cada ciclo gasta una: con `330` (cinco minutos y medio) te
 quedan unas 2.000 de margen para `/status`, el resumen y las búsquedas. Con
 `300` vas muy justo.
 
+Por si acaso, lleva la cuenta: al pasar del 80 % del mes te avisa, con cómo
+acabarías a ese ritmo, y otra vez si llegas al 100 %. Cuenta por mes natural en
+UTC, y `/consultas` te dice cómo vas.
+
 ---
 
 ## Si algo no va
@@ -362,7 +367,18 @@ crypto_tracker/
   coingecko.py   consulta los precios
   database.py    guarda el histórico
   telegram.py    manda los mensajes
-  alerts.py      decide cuándo avisar
+  alerts.py      decide cuándo avisar y escribe los avisos
+  brusco.py      los movimientos bruscos
+  puntuales.py   las alertas de /alerta
+  vigiladas.py   lo que cambias con /vigilar
+  proximo.py     a qué precio salta el siguiente aviso
+  cartera.py     cuánto vale lo que tienes
+  grafica.py     las imágenes de /historico y /cartera
+  periodo.py     lee tramos como 7d
+  diario.py      el resumen diario y las horas tranquilas
+  salud.py       avisa si el bot deja de funcionar
+  cuota.py       cuenta las consultas a CoinGecko
+  comandos.py    entiende lo que le escribes
 main.py          junta todo
 tests/           los tests
 windows/         para dejarlo corriendo en un servidor

@@ -23,6 +23,7 @@ from crypto_tracker import (
     cartera,
     coingecko,
     comandos,
+    cuota,
     database,
     diario,
     grafica,
@@ -324,7 +325,29 @@ def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:
         if texto:
             _avisar_salud(config, texto)
 
+        # Aqui entran tambien las de los comandos de la espera anterior.
+        apuntar_consultas(config)
         offset = esperar_escuchando(config, config.check_interval, offset)
+
+
+def apuntar_consultas(config: Config, ahora: datetime | None = None) -> None:
+    """Guarda las consultas hechas a CoinGecko y avisa si se acaba la cuota."""
+    hechas = coingecko.tomar_consultas()
+    if not hechas:
+        return
+
+    ahora = ahora or datetime.now(timezone.utc)
+    try:
+        total = database.sumar_consultas(config.database_path, cuota.mes(ahora), hechas)
+    except database.DatabaseError as e:
+        # Se pierden estas pocas; es un contador, no la contabilidad.
+        logger.warning("No se pudieron apuntar las consultas: %s", e)
+        return
+
+    umbral = cuota.umbral_cruzado(total - hechas, total)
+    if umbral:
+        logger.warning("Llevamos %d consultas a CoinGecko este mes", total)
+        _avisar_salud(config, cuota.mensaje_aviso(total, umbral, ahora))
 
 
 def esperar_escuchando(config: Config, segundos: int, offset: int | None) -> int | None:
@@ -443,6 +466,12 @@ def responder(config: Config, nombre: str, argumento: str) -> str | comandos.Fot
         if database.borrar_puntual(config.database_path, alerta_id):
             return "🗑 Alerta quitada."
         return f"No tengo ninguna alerta con el número {alerta_id}. Mira /alertas"
+
+    if nombre == "consultas":
+        apuntar_consultas(config)
+        ahora = datetime.now(timezone.utc)
+        total = database.get_consultas(config.database_path, cuota.mes(ahora))
+        return cuota.mensaje_estado(total, ahora)
 
     if nombre == "buscar":
         if not argumento:
@@ -1024,7 +1053,9 @@ def main() -> int:
         return quitar_silencio(config)
 
     if args.status:
-        return enviar_resumen(config)
+        resultado = enviar_resumen(config)
+        apuntar_consultas(config)
+        return resultado
 
     # Recuperamos en que zona quedo cada cripto la ultima vez, asi no
     # repetimos avisos ya mandados aunque el programa se haya reiniciado.
@@ -1044,6 +1075,7 @@ def main() -> int:
         return ejecutar_bucle(config, estado)
 
     ejecutar_ciclo(config, estado)
+    apuntar_consultas(config)
     return 0
 
 

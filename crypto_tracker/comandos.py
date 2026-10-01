@@ -13,6 +13,7 @@ COMANDOS = {
     "vigilar": "Ver o cambiar lo que vigilo (ej: /vigilar solana %5)",
     "dejar": "Dejar de vigilar una cripto (ej: /dejar solana)",
     "buscar": "Encuentra el id de una cripto (ej: /buscar btc)",
+    "consultas": "Cuántas consultas a CoinGecko llevas este mes",
     "mute": "Callar los avisos un rato (ej: /mute 2h)",
     "unmute": "Volver a avisar",
     "ayuda": "Lo que sé hacer",

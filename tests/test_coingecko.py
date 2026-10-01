@@ -303,3 +303,42 @@ def test_el_403_dice_como_arreglarlo(monkeypatch):
         coingecko.get_prices(["bitcoin"], "eur")
 
     assert len(intentos) == 1  # reintentar no lo arregla
+
+
+# --- contar las consultas ---
+
+
+def test_cuenta_cada_peticion(monkeypatch):
+    datos = {"bitcoin": {"eur": 63000.0}}
+    monkeypatch.setattr(requests, "get", lambda *a, **k: RespuestaFalsa(datos))
+    coingecko.tomar_consultas()
+
+    coingecko.get_prices(["bitcoin"], "eur")
+    coingecko.buscar("btc")
+
+    assert coingecko.tomar_consultas() == 2
+    assert coingecko.tomar_consultas() == 0  # tomarlas las pone a cero
+
+
+def test_los_reintentos_tambien_cuentan(monkeypatch):
+    # un 429 tambien gasta del mes
+    monkeypatch.setattr(requests, "get", lambda *a, **k: RespuestaFalsa(status=429))
+    coingecko.tomar_consultas()
+
+    with pytest.raises(coingecko.CoinGeckoError):
+        coingecko.get_prices(["bitcoin"], "eur")
+
+    assert coingecko.tomar_consultas() == coingecko.INTENTOS
+
+
+def test_sin_conexion_no_cuenta(monkeypatch):
+    def sin_red(*a, **k):
+        raise requests.ConnectionError("sin red")
+
+    monkeypatch.setattr(requests, "get", sin_red)
+    coingecko.tomar_consultas()
+
+    with pytest.raises(coingecko.CoinGeckoError):
+        coingecko.get_prices(["bitcoin"], "eur")
+
+    assert coingecko.tomar_consultas() == 0

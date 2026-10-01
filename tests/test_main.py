@@ -1133,3 +1133,96 @@ def test_el_ciclo_guarda_los_precios_de_la_cartera(con_cartera, monkeypatch):
 
     assert set(pedidas[0]) >= {p.coin_id for p in con_cartera.cartera}
     assert len(pedidas) == 1  # en la misma consulta
+
+
+# --- consultas a coingecko ---
+
+
+@pytest.fixture
+def sin_cuenta_previa():
+    coingecko.tomar_consultas()  # que no se cuelen las de otros tests
+
+
+def _hacer(n):
+    coingecko._hechas += n
+
+
+def test_apuntar_consultas(config, sin_cuenta_previa):
+    from datetime import datetime, timezone
+
+    ahora = datetime(2026, 10, 10, tzinfo=timezone.utc)
+    _hacer(3)
+    main.apuntar_consultas(config, ahora)
+    _hacer(2)
+    main.apuntar_consultas(config, ahora)
+
+    assert database.get_consultas(config.database_path, "2026-10") == 5
+
+
+def test_avisa_al_pasar_del_80(config, enviados, sin_cuenta_previa):
+    from datetime import datetime, timezone
+
+    ahora = datetime(2026, 10, 20, tzinfo=timezone.utc)
+    database.sumar_consultas(config.database_path, "2026-10", 7999)
+
+    _hacer(1)
+    main.apuntar_consultas(config, ahora)
+    _hacer(1)
+    main.apuntar_consultas(config, ahora)
+
+    assert len(enviados) == 1
+    assert "Llevas 8.000 de las 10.000" in enviados[0]
+
+
+def test_el_aviso_de_cuota_no_se_calla_con_mute(config, enviados, sin_cuenta_previa):
+    from datetime import datetime, timedelta, timezone
+
+    hasta = datetime.now(timezone.utc) + timedelta(hours=1)
+    database.silenciar_hasta(config.database_path, hasta)
+    database.sumar_consultas(config.database_path, "2026-10", 9999)
+
+    _hacer(1)
+    main.apuntar_consultas(config, datetime(2026, 10, 25, tzinfo=timezone.utc))
+
+    assert "hasta el día 1" in enviados[0]
+
+
+def test_sin_consultas_no_toca_nada(config, enviados, sin_cuenta_previa):
+    main.apuntar_consultas(config)
+
+    assert enviados == []
+
+
+def test_comando_consultas(config, enviados, sin_cuenta_previa):
+    from datetime import datetime, timezone
+
+    mes = datetime.now(timezone.utc).strftime("%Y-%m")
+    database.sumar_consultas(config.database_path, mes, 1200)
+    _hacer(34)  # las de esta sesion tambien salen
+
+    main.atender(config, _mensaje("/consultas"))
+
+    assert "Llevas 1.234 de las 10.000" in enviados[0]
+
+
+def test_el_ciclo_cuenta_de_verdad(config, enviados, sin_cuenta_previa, monkeypatch):
+    import requests
+
+    class Respuesta:
+        status_code = 200
+
+        def json(self):
+            return {"bitcoin": {"eur": 63000.0}}
+
+        def raise_for_status(self):
+            pass
+
+    monkeypatch.setattr(requests, "get", lambda *a, **k: Respuesta())
+
+    main.ejecutar_ciclo(config, {})
+    main.apuntar_consultas(config)
+
+    from datetime import datetime, timezone
+
+    mes = datetime.now(timezone.utc).strftime("%Y-%m")
+    assert database.get_consultas(config.database_path, mes) == 1
