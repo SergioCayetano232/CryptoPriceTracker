@@ -473,3 +473,50 @@ def test_historico_sin_desde_no_dice_nada():
     from crypto_tracker.alerts import formatear_historico
 
     assert "Solo tengo" not in formatear_historico("bitcoin", [1.0, 2.0], "eur", 24)
+
+
+# --- siguiente aviso en el resumen ---
+
+
+def test_resumen_con_el_siguiente_aviso():
+    from crypto_tracker.alerts import formatear_resumen
+
+    texto = formatear_resumen(
+        [("bitcoin", 63000.0, 1.0)], "eur", proximos={"bitcoin": (64000.0, 63000.0)}
+    )
+
+    assert "<i>↑ €64.000,00 (+1.59%) · ↓ €63.000,00 (+0.00%)</i>" in texto
+
+
+def test_resumen_con_un_solo_lado():
+    from crypto_tracker.alerts import formatear_resumen
+
+    texto = formatear_resumen(
+        [("ethereum", 2500.0, None)], "eur", proximos={"ethereum": (4000.0, None)}
+    )
+
+    assert "<i>↑ €4.000,00 (+60.00%)</i>" in texto
+    assert "↓" not in texto
+
+
+def test_resumen_sin_proximos_como_antes():
+    from crypto_tracker.alerts import formatear_resumen
+
+    lineas = [("bitcoin", 63000.0, 1.0)]
+
+    assert formatear_resumen(lineas, "eur") == formatear_resumen(
+        lineas, "eur", proximos={"bitcoin": (None, None)}
+    )
+    assert "<i>" not in formatear_resumen(lineas, "eur")
+
+
+@pytest.mark.parametrize("proximo", [(0.1030, 0.0970), (0.30, 0.25)])
+def test_resumen_si_ya_paso_el_objetivo(proximo):
+    from crypto_tracker.alerts import formatear_resumen
+
+    texto = formatear_resumen(
+        [("cardano", 0.2173, None)], "eur", proximos={"cardano": proximo}
+    )
+
+    assert "te llega en el próximo ciclo" in texto
+    assert "↑" not in texto

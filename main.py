@@ -27,6 +27,7 @@ from crypto_tracker import (
     diario,
     grafica,
     periodo,
+    proximo,
     puntuales,
     salud,
     telegram,
@@ -752,15 +753,36 @@ def montar_resumen(config: Config, titulo: str | None = None) -> str | None:
             continue
         lineas.append((coin_id, precio, _variacion(config, coin_id, precio)))
 
+    proximos = _proximos(config, precios)
     if titulo:
-        texto = alerts.formatear_resumen(lineas, config.vs_currency, titulo)
+        texto = alerts.formatear_resumen(
+            lineas, config.vs_currency, titulo, proximos=proximos
+        )
     else:
-        texto = alerts.formatear_resumen(lineas, config.vs_currency)
+        texto = alerts.formatear_resumen(lineas, config.vs_currency, proximos=proximos)
 
     if config.cartera:
         texto += "\n\n" + _bloque_cartera(config, precios)
 
     return alerts.con_fuente(texto)
+
+
+def _proximos(
+    config: Config, precios: dict[str, float]
+) -> dict[str, tuple[float | None, float | None]]:
+    """Donde saltaria el siguiente aviso de cada una, segun el estado guardado."""
+    try:
+        estado = database.load_state(config.database_path)
+    except database.DatabaseError as e:
+        # Sin esto el resumen sigue valiendo, solo sin la linea de debajo.
+        logger.warning("No se pudo leer el estado para el resumen: %s", e)
+        return {}
+
+    return {
+        w.coin_id: proximo.objetivos(w, estado.get(w.coin_id), precios[w.coin_id])
+        for w in config.watchlist
+        if w.coin_id in precios
+    }
 
 
 def montar_cartera(config: Config) -> str | None:

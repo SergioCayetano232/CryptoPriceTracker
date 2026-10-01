@@ -268,8 +268,12 @@ def formatear_resumen(
     lineas: list[tuple[str, float, float | None]],
     currency: str,
     titulo: str = "📊 <b>Cómo van tus criptos</b>",
+    proximos: dict[str, tuple[float | None, float | None]] | None = None,
 ) -> str:
-    """Monta el mensaje de --status. Cada linea es (cripto, precio, variacion)."""
+    """Monta el mensaje de --status. Cada linea es (cripto, precio, variacion).
+
+    proximos son los precios (arriba, abajo) del siguiente aviso de cada una.
+    """
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
     texto = [titulo, ""]
 
@@ -285,6 +289,11 @@ def formatear_resumen(
             linea += f"  {_flecha(variacion)} {variacion:+.2f}%"
 
         texto.append(linea)
+        siguiente = _siguiente(
+            precio, *(proximos or {}).get(coin_id, (None, None)), simbolo
+        )
+        if siguiente:
+            texto.append(f"   <i>{siguiente}</i>")
 
     return "\n".join(texto)
 
@@ -444,6 +453,25 @@ def muestrear(precios: list[float], n: int) -> list[float]:
 
     paso = (len(precios) - 1) / (n - 1)
     return [precios[round(i * paso)] for i in range(n)]
+
+
+def _siguiente(
+    precio: float, arriba: float | None, abajo: float | None, simbolo: str
+) -> str:
+    """'↑ €64.000,00 (+1.59%) · ↓ €63.000,00 (-0.90%)'. Vacio si no hay nada."""
+    # Entre ciclo y ciclo puede haberlo pasado ya; un "-52%" ahi no se entiende.
+    if (arriba is not None and precio >= arriba) or (
+        abajo is not None and precio < abajo
+    ):
+        return "Ya ha pasado su aviso, te llega en el próximo ciclo"
+
+    lados = []
+    for flecha, objetivo in (("↑", arriba), ("↓", abajo)):
+        if objetivo is None or not precio:
+            continue
+        falta = (objetivo - precio) / precio * 100
+        lados.append(f"{flecha} {simbolo}{_num(objetivo)} ({falta:+.2f}%)")
+    return " · ".join(lados)
 
 
 def _minutos(minutos: int) -> str:

@@ -1003,3 +1003,42 @@ def test_historico_sin_datos_dice_el_tramo(config, enviados):
 
     assert "últimos 7 días" in enviados[0]
     assert "bitcoin, no BTC" in enviados[0]
+
+
+# --- siguiente aviso en /status ---
+
+
+def test_status_dice_donde_salta_el_siguiente_aviso(config, enviados, monkeypatch):
+    database.save_state(config.database_path, {"bitcoin": "%60000.0"})
+    _precio(monkeypatch, {"bitcoin": 61000.0})
+
+    main.atender(config, _mensaje("/status"))
+
+    assert "↑ €63.000,00 (+3.28%) · ↓ €57.000,00 (-6.56%)" in enviados[0]
+
+
+def test_status_recien_instalado_no_inventa(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 61000.0})
+
+    main.atender(config, _mensaje("/status"))
+
+    assert "↑" not in enviados[0]
+    assert "€61.000,00" in enviados[0]
+
+
+def test_status_tras_un_ciclo_ya_lo_dice(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 61000.0})
+
+    main.ejecutar_ciclo(config, {})
+    main.atender(config, _mensaje("/status"))
+
+    assert "↑ €64.050,00 (+5.00%)" in enviados[0]
+
+
+def test_el_resumen_diario_tambien_lo_lleva(con_resumen, enviados):
+    database.save_state(con_resumen.database_path, {"bitcoin": "%61000.0"})
+
+    main.resumen_diario(con_resumen, _dia(9, 0))
+
+    assert "Tu resumen del día" in enviados[0]
+    assert "↑ €64.050,00" in enviados[0]

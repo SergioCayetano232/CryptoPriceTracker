@@ -198,6 +198,10 @@ Te manda a Telegram un resumen con el precio de todo lo que vigilas y cuánto ha
 cambiado en las últimas 24 horas. Si acabas de instalarlo no hay con qué
 comparar, así que pone "sin histórico" hasta que lleve un día funcionando.
 
+Debajo de cada una te dice a qué precio saltaría el siguiente aviso y cuánto le
+falta, por ejemplo `↑ €64.000,00 (+1.59%) · ↓ €63.000,00 (-0.90%)`. Así sabes si
+está a punto de avisarte o le queda mucho.
+
 **Ver cuánto vale lo que tienes:**
 ```
 PORTFOLIO=bitcoin:0.016:1000,ethereum:0.4:1000
