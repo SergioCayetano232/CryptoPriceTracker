@@ -1079,3 +1079,57 @@ def test_varios_avisos_cada_uno_con_lo_suyo(config, enviados, monkeypatch):
 
     assert "2 avisos" in enviados[0]
     assert enviados[0].count("En 24 h") == 1
+
+
+# --- grafica de la cartera ---
+
+
+def _cartera_con_fecha(config, coin_id, precio, horas_atras):
+    import sqlite3
+    from datetime import datetime, timedelta, timezone
+
+    cuando = datetime.now(timezone.utc) - timedelta(hours=horas_atras)
+    conn = sqlite3.connect(config.database_path)
+    conn.execute(
+        "INSERT INTO prices (coin_id, price, currency, created_at) VALUES (?,?,?,?)",
+        (coin_id, precio, "eur", cuando.isoformat(timespec="seconds")),
+    )
+    conn.commit()
+    conn.close()
+
+
+def test_cartera_con_grafica(con_cartera, enviados, sin_fotos_de_verdad, monkeypatch):
+    for horas, precio in ((100, 50000.0), (50, 55000.0)):
+        for coin_id in [p.coin_id for p in con_cartera.cartera]:
+            _cartera_con_fecha(con_cartera, coin_id, precio / 20, horas)
+    _precio(monkeypatch, {p.coin_id: 3000.0 for p in con_cartera.cartera})
+
+    main.atender(con_cartera, _mensaje("/cartera"))
+
+    png, pie = sin_fotos_de_verdad[0]
+    assert png.startswith(b"\x89PNG")
+    assert "Tu cartera" in pie
+    assert enviados == []
+
+
+def test_cartera_sin_historico_solo_texto(con_cartera, enviados, monkeypatch):
+    _precio(monkeypatch, {p.coin_id: 3000.0 for p in con_cartera.cartera})
+
+    main.atender(con_cartera, _mensaje("/cartera"))
+
+    assert "Tu cartera" in enviados[0]
+
+
+def test_cartera_tramo_mal_escrito(con_cartera, enviados):
+    main.atender(con_cartera, _mensaje("/cartera siempre"))
+
+    assert "30m, 2h o 1d" in enviados[0]
+
+
+def test_el_ciclo_guarda_los_precios_de_la_cartera(con_cartera, monkeypatch):
+    pedidas = _precio(monkeypatch, {"bitcoin": 63000.0, "solana": 150.0})
+
+    main.ejecutar_ciclo(con_cartera, {})
+
+    assert set(pedidas[0]) >= {p.coin_id for p in con_cartera.cartera}
+    assert len(pedidas) == 1  # en la misma consulta

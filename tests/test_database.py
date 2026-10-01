@@ -389,3 +389,32 @@ def test_volver_a_cambiar_vuelve_a_empezar_de_cero(db):
     database.guardar_cambio(db, "solana", "solana:10.0")
 
     assert database.tomar_de_cero(db) == {"solana"}
+
+
+# --- varias series a la vez ---
+
+
+def test_series_de_varias_criptos(db):
+    _insertar_con_fecha(db, "bitcoin", 60000.0, 2)
+    _insertar_con_fecha(db, "ethereum", 2000.0, 2)
+    _insertar_con_fecha(db, "solana", 150.0, 2)  # no la pedimos
+    _insertar_con_fecha(db, "bitcoin", 50000.0, 30)  # fuera del tramo
+    database.save_prices(db, {"bitcoin": 61000.0}, "eur")
+
+    filas = database.get_series(db, ["bitcoin", "ethereum"], 24, "eur")
+
+    assert [(c, p) for _, c, p in filas] == [
+        ("bitcoin", 60000.0),
+        ("ethereum", 2000.0),
+        ("bitcoin", 61000.0),
+    ]
+
+
+def test_series_solo_de_esa_moneda(db):
+    database.save_prices(db, {"bitcoin": 61000.0}, "usd")
+
+    assert database.get_series(db, ["bitcoin"], 24, "eur") == []
+
+
+def test_series_sin_criptos(db):
+    assert database.get_series(db, [], 24, "eur") == []

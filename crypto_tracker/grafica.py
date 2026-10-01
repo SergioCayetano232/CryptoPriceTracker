@@ -19,9 +19,17 @@ class GraficaError(Exception):
 
 
 def dibujar(
-    coin_id: str, serie: list[tuple[datetime, float]], currency: str, horas: float
+    coin_id: str,
+    serie: list[tuple[datetime, float]],
+    currency: str,
+    horas: float,
+    titulo: str | None = None,
+    invertido: float | None = None,
 ) -> bytes:
-    """Devuelve el PNG de la serie, que va del precio mas viejo al de ahora."""
+    """Devuelve el PNG de la serie, que va del precio mas viejo al de ahora.
+
+    invertido dibuja una linea discontinua con lo que te costo, para la cartera.
+    """
     # Import aqui dentro: si el servidor aun no tiene matplotlib, el bot sigue
     # funcionando y /historico manda texto como antes.
     try:
@@ -42,22 +50,45 @@ def dibujar(
     techo, suelo = max(precios), min(precios)
     variacion = (ahora - primero) / primero * 100 if primero else 0.0
     color = VERDE if ahora >= primero else ROJO
+    detalle = f"{variacion:+.2f}%"
+    # En la cartera importa si ganas o pierdes, no cuanto subio en el tramo:
+    # un +50% en verde estando por debajo de lo invertido engaña.
+    if invertido:
+        variacion = (ahora - invertido) / invertido * 100
+        color = VERDE if ahora >= invertido else ROJO
+        detalle = f"{variacion:+.2f}% sobre lo invertido"
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
 
     fig = Figure(figsize=(8, 4.5), dpi=150, facecolor=FONDO)
     ax = fig.add_axes((0.08, 0.1, 0.86, 0.67))
     ax.set_facecolor(FONDO)
 
+    # Lo invertido tiene que verse aunque quede lejos: es justo lo que interesa.
+    alto = max(techo, invertido) if invertido else techo
+    bajo = min(suelo, invertido) if invertido else suelo
+
     # Aire arriba y abajo para que las etiquetas del maximo y minimo quepan.
-    margen = (techo - suelo) * 0.18 or abs(techo) * 0.01 or 1
-    ax.set_ylim(suelo - margen, techo + margen)
+    margen = (alto - bajo) * 0.18 or abs(alto) * 0.01 or 1
+    ax.set_ylim(bajo - margen, alto + margen)
 
     # Con miles de puntos una linea gruesa se emborrona.
     grosor = 2.2 if horas <= 48 else 1.4
     ax.plot(fechas, precios, color=color, linewidth=grosor, solid_capstyle="round")
     ax.fill_between(
-        fechas, precios, suelo - margen, color=color, alpha=0.10, linewidth=0
+        fechas, precios, bajo - margen, color=color, alpha=0.10, linewidth=0
     )
+
+    if invertido:
+        ax.axhline(invertido, color=SUAVE, linewidth=1, linestyle=(0, (4, 3)))
+        ax.annotate(
+            f"Invertido {simbolo}{_num(invertido)}",
+            (0, invertido),
+            xycoords=("axes fraction", "data"),
+            xytext=(4, 4),
+            textcoords="offset points",
+            fontsize=8,
+            color=SUAVE,
+        )
 
     if techo != suelo:
         for precio, arriba in ((techo, True), (suelo, False)):
@@ -92,7 +123,7 @@ def dibujar(
     )
     ax.margins(x=0.01)
 
-    nombre = coin_id.replace("-", " ").title()
+    nombre = titulo or coin_id.replace("-", " ").title()
     fig.text(0.08, 0.89, nombre, fontsize=16, weight="bold", color=TEXTO)
     periodo = nombre_periodo(horas)
     fig.text(0.08, 0.83, periodo[0].upper() + periodo[1:], fontsize=9, color=SUAVE)
@@ -108,7 +139,7 @@ def dibujar(
     fig.text(
         0.94,
         0.83,
-        f"{variacion:+.2f}%",
+        detalle,
         fontsize=10,
         weight="bold",
         color=color,

@@ -67,3 +67,17 @@ def test_sale_un_png_de_una_semana():
 )
 def test_el_eje_pone_fechas_en_tramos_largos(horas, formato):
     assert _formato_eje(horas) == formato
+
+
+def test_sale_un_png_de_la_cartera_con_lo_invertido():
+    serie = _serie([1800.0, 2100.0, 1950.0])
+
+    png = dibujar("cartera", serie, "eur", 168, titulo="Tu cartera", invertido=2000)
+
+    assert png.startswith(b"\x89PNG")
+
+
+def test_lo_invertido_lejos_de_la_serie_no_peta():
+    assert dibujar("cartera", _serie([1.0, 2.0]), "eur", 24, invertido=1000).startswith(
+        b"\x89PNG"
+    )

@@ -209,6 +209,31 @@ def get_serie(
     return [(datetime.fromisoformat(f["created_at"]), f["price"]) for f in filas]
 
 
+def get_series(
+    db_path: str, coin_ids: list[str], horas: float, currency: str
+) -> list[tuple[datetime, str, float]]:
+    """(cuando, cripto, precio) de varias criptos a la vez, por orden de fecha."""
+    if not coin_ids:
+        return []
+
+    desde = (datetime.now(timezone.utc) - timedelta(hours=horas)).isoformat(
+        timespec="seconds"
+    )
+    huecos = ", ".join("?" * len(coin_ids))
+    with _connect(db_path) as conn:
+        filas = conn.execute(
+            f"SELECT created_at, coin_id, price FROM prices "
+            f"WHERE coin_id IN ({huecos}) AND currency = ? AND created_at >= ? "
+            "ORDER BY created_at, id",
+            (*coin_ids, currency, desde),
+        ).fetchall()
+
+    return [
+        (datetime.fromisoformat(f["created_at"]), f["coin_id"], f["price"])
+        for f in filas
+    ]
+
+
 def get_prices_desde(
     db_path: str, coin_id: str, desde: datetime, currency: str
 ) -> list[float]:

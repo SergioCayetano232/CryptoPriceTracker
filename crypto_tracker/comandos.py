@@ -5,7 +5,7 @@ from dataclasses import dataclass
 # Lo que sale en el menu de Telegram al escribir "/".
 COMANDOS = {
     "status": "Cómo van tus criptos ahora",
-    "cartera": "Cuánto vale lo que tienes y cuánto ganas",
+    "cartera": "Cuánto vale lo que tienes, con gráfica (ej: /cartera 30d)",
     "alerta": "Avísame una vez al llegar a un precio (ej: /alerta bitcoin 70000)",
     "alertas": "Las alertas que tienes puestas",
     "quitar": "Quitar una alerta (ej: /quitar 3)",

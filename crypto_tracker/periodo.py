@@ -25,15 +25,19 @@ def interpretar(argumento: str) -> tuple[str, float]:
     coin_id = partes[0].lower()
     if len(partes) == 1:
         return coin_id, POR_DEFECTO
+    return coin_id, leer(partes[1])
 
+
+def leer(texto: str) -> float:
+    """'7d' -> 168 horas. Lo mismo que vale en /mute."""
     try:
-        horas = parse_duracion(partes[1]) / 60
+        horas = parse_duracion(texto) / 60
     except ConfigError as e:
         raise PeriodoError(str(e)) from None
 
     if horas > MAXIMO:
-        raise PeriodoError("Como mucho un año: /historico bitcoin 365d")
-    return coin_id, horas
+        raise PeriodoError("Como mucho un año, por ejemplo 365d")
+    return horas
 
 
 def nombre(horas: float) -> str:

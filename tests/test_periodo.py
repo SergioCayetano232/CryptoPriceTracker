@@ -84,3 +84,11 @@ def test_en_tramos_largos_el_margen_crece():
 
     assert falta_principio(primero, AHORA, 720) is False
     assert falta_principio(AHORA - timedelta(days=20), AHORA, 720) is True
+
+
+def test_leer_un_tramo_suelto():
+    from crypto_tracker.periodo import leer
+
+    assert leer("7d") == 168
+    with pytest.raises(PeriodoError):
+        leer("mucho")

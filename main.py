@@ -48,6 +48,9 @@ MAX_FALLOS = 10
 # Con cuanto tiempo atras se compara el precio en el resumen.
 HORAS_RESUMEN = 24
 
+# Una cartera se mira a mas largo plazo que un precio suelto.
+HORAS_CARTERA = 7 * 24
+
 # Segundos que Telegram aguanta la conexion abierta esperando un mensaje.
 ESPERA_TELEGRAM = 30
 
@@ -77,8 +80,10 @@ def ejecutar_ciclo(
     config = _con_cambios(config)
     coin_ids = [w.coin_id for w in config.watchlist]
     pendientes = _puntuales(config)
-    # Las de /alerta pueden ser de criptos que no vigilas. Todo en una consulta.
-    extra = [p.coin_id for p in pendientes if p.coin_id not in coin_ids]
+    # Las de /alerta y la cartera pueden ser de criptos que no vigilas. Van en
+    # la misma consulta, y asi la cartera tiene historico para su grafica.
+    extra = [p.coin_id for p in (*pendientes, *config.cartera)]
+    extra = [c for c in extra if c not in coin_ids]
 
     try:
         precios = coingecko.get_prices(
@@ -412,8 +417,7 @@ def responder(config: Config, nombre: str, argumento: str) -> str | comandos.Fot
                 "No tienes cartera puesta. Añade al .env algo como:\n"
                 "<code>PORTFOLIO=bitcoin:0.016:1000</code>"
             )
-        texto = montar_cartera(config)
-        return texto or "No he podido consultar los precios. Prueba en un rato."
+        return _cartera(config, argumento)
 
     if nombre == "historico":
         return _historico(config, argumento)
@@ -787,6 +791,46 @@ def _proximos(
         for w in config.watchlist
         if w.coin_id in precios
     }
+
+
+def _cartera(config: Config, argumento: str) -> str | comandos.Foto:
+    """/cartera con la grafica de lo que ha valido. Sin datos, solo el texto."""
+    try:
+        horas = periodo.leer(argumento) if argumento else HORAS_CARTERA
+    except periodo.PeriodoError as e:
+        return telegram.escape(str(e))
+
+    texto = montar_cartera(config)
+    if texto is None:
+        return "No he podido consultar los precios. Prueba en un rato."
+
+    filas = database.get_series(
+        config.database_path,
+        [p.coin_id for p in config.cartera],
+        horas,
+        config.vs_currency,
+    )
+    serie = cartera.serie_valor(list(config.cartera), filas)
+    if len(serie) < 2:
+        return texto
+
+    # Si de alguna no sabes lo que costo, la linea mentiria: mejor sin ella.
+    invertidos = [p.invertido for p in config.cartera]
+    invertido = None if None in invertidos else sum(invertidos)
+    try:
+        png = grafica.dibujar(
+            "cartera",
+            serie,
+            config.vs_currency,
+            horas,
+            titulo="Tu cartera",
+            invertido=invertido,
+        )
+    except Exception as e:
+        logger.warning("Mando /cartera sin imagen: %s", e)
+        return texto
+
+    return comandos.Foto(png, texto, texto)
 
 
 def montar_cartera(config: Config) -> str | None:

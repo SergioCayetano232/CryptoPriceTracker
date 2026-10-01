@@ -1,8 +1,14 @@
 """Cuanto vale lo que tienes y cuanto llevas ganado o perdido."""
 
 from dataclasses import dataclass
+from datetime import datetime, timedelta
+from itertools import groupby
 
 from .config import Posicion
+
+# Si de una cripto no hay precio en este rato, ese punto no se dibuja: tirar de
+# un precio de hace dias pintaria un valor que nunca tuviste.
+HUECO_MAXIMO = timedelta(hours=1)
 
 
 @dataclass(frozen=True)
@@ -44,3 +50,32 @@ def total(valores: list[Valor]) -> Valor:
     if valores and all(v.invertido is not None for v in valores):
         invertido = sum(v.invertido for v in valores)
     return Valor("total", sum(v.valor for v in valores), invertido)
+
+
+def serie_valor(
+    posiciones: list[Posicion], filas: list[tuple[datetime, str, float]]
+) -> list[tuple[datetime, float]]:
+    """Lo que habria valido lo que tienes ahora en cada momento guardado.
+
+    filas son (cuando, cripto, precio) ordenadas por fecha. Las de una misma
+    consulta comparten hora, asi que se juntan por hora.
+    """
+    cantidades = {p.coin_id: p.cantidad for p in posiciones}
+    if not cantidades:
+        return []
+
+    ultimo: dict[str, tuple[datetime, float]] = {}
+    serie = []
+    for cuando, grupo in groupby(filas, key=lambda f: f[0]):
+        for _, coin_id, precio in grupo:
+            if coin_id in cantidades:
+                ultimo[coin_id] = (cuando, precio)
+
+        al_dia = all(
+            c in ultimo and cuando - ultimo[c][0] <= HUECO_MAXIMO for c in cantidades
+        )
+        if al_dia:
+            valor = sum(cantidades[c] * ultimo[c][1] for c in cantidades)
+            serie.append((cuando, valor))
+
+    return serie

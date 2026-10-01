@@ -157,7 +157,8 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | Comando | Qué hace |
 |---|---|
 | `/status` | Cómo van tus criptos ahora |
-| `/cartera` | Solo tu cartera: cuánto vale y cuánto ganas o pierdes |
+| `/cartera` | Tu cartera: cuánto vale, cuánto ganas o pierdes y la gráfica de 7 días |
+| `/cartera 30d` | Lo mismo, con la gráfica del tramo que digas |
 | `/alerta bitcoin 70000` | Te avisa una vez cuando llegue a ese precio |
 | `/alertas` | Las alertas que tienes puestas |
 | `/quitar 3` | Quita la alerta número 3 |
@@ -214,6 +215,11 @@ el exchange; lo que te costó es opcional, pero sin eso no sabe si ganas o
 pierdes. El resumen (`--status`, `/status` y el diario) añade al final lo que
 vale cada una, el total y cuánto llevas ganado o perdido. Si solo quieres eso, escríbele
 `/cartera`.
+
+`/cartera` además te manda una gráfica de lo que ha valido, con una línea
+discontinua en lo que invertiste. Ojo: usa las cantidades de ahora, así que es
+lo que habría valido lo que tienes hoy, no tu historial de compras. Empieza a
+tener datos en cuanto el bot lleva un rato en `--loop`.
 
 **Callar los avisos un rato:**
 ```
