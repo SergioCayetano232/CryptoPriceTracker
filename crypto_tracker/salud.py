@@ -61,6 +61,30 @@ def mensaje_parado(fallos: int, error: str) -> str:
     )
 
 
+def sin_precio(
+    pedidas: list[str], precios: dict[str, float], avisadas: set[str]
+) -> list[str]:
+    """Las que CoinGecko no conoce y de las que aun no hemos dicho nada."""
+    return [c for c in pedidas if c not in precios and c not in avisadas]
+
+
+def mensaje_sin_precio(coin_ids: list[str], todas: bool = False) -> str:
+    """Aviso de ids que no devuelven precio. Casi siempre es un dedazo."""
+    nombres = ", ".join(f"<b>{escape(c)}</b>" for c in coin_ids)
+    esa = "esas" if len(coin_ids) > 1 else "esa"
+    texto = (
+        "⚠️ <b>CryptoPriceTracker</b>\n"
+        f"CoinGecko no me da precio de {nombres}, así que de {esa} no te "
+        "voy a avisar.\n"
+        f"Suele ser el id mal escrito. Búscalo con /buscar {escape(coin_ids[0])} "
+        "y corrígelo en WATCHLIST."
+    )
+    # Si no viene ninguna, lo raro es que esten todas mal: suele ser la moneda.
+    if todas:
+        texto += "\nComo no me llega ninguna, revisa también VS_CURRENCY."
+    return texto
+
+
 def _duracion(tiempo: timedelta) -> str:
     minutos = int(tiempo.total_seconds() // 60)
     if minutos < 60:

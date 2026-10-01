@@ -61,12 +61,13 @@ def configurar_logs(verbose: bool = False) -> None:
 
 
 def ejecutar_ciclo(
-    config: Config, estado: dict[str, str]
+    config: Config, estado: dict[str, str], sin_precio: set[str] | None = None
 ) -> tuple[dict[str, str], str | None]:
     """Un ciclo completo: consultar, guardar, comparar y avisar.
 
     Devuelve el estado actualizado y, si no hubo precios, el porque. Si algo
     falla, lo registra y devuelve el estado sin tocar para reintentar luego.
+    sin_precio son los ids de los que ya se aviso que no existen.
     """
     coin_ids = [w.coin_id for w in config.watchlist]
 
@@ -75,6 +76,10 @@ def ejecutar_ciclo(
     except coingecko.CoinGeckoError as e:
         logger.error("No se pudieron consultar los precios: %s", e)
         return estado, str(e)
+
+    avisar_sin_precio(
+        config, coin_ids, precios, set() if sin_precio is None else sin_precio
+    )
 
     if not precios:
         logger.warning("La consulta no devolvio ningun precio")
@@ -142,6 +147,20 @@ def ejecutar_ciclo(
     return estado_nuevo, None
 
 
+def avisar_sin_precio(
+    config: Config, coin_ids: list[str], precios: dict[str, float], avisadas: set[str]
+) -> None:
+    """Avisa una vez de los ids que CoinGecko no conoce. Si no, nunca te enteras."""
+    nuevas = salud.sin_precio(coin_ids, precios, avisadas)
+    if not nuevas:
+        return
+
+    texto = salud.mensaje_sin_precio(nuevas, todas=not precios)
+    # Si no llega, no se apuntan: se reintenta en el siguiente ciclo.
+    if _avisar_salud(config, texto):
+        avisadas.update(nuevas)
+
+
 def revisar_bruscos(config: Config, precios: dict[str, float]) -> list[alerts.Alert]:
     """Busca subidas o caidas fuertes dentro de la ventana de MOVIMIENTO_BRUSCO."""
     if config.brusco_porcentaje is None:
@@ -197,6 +216,7 @@ def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:
 
     fallos = 0
     pulso = salud.Pulso()
+    sin_precio: set[str] = set()
     offset = None
 
     if not telegram.set_commands(config.telegram_token, comandos.COMANDOS):
@@ -204,7 +224,7 @@ def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:
 
     while True:
         try:
-            estado, problema = ejecutar_ciclo(config, estado)
+            estado, problema = ejecutar_ciclo(config, estado, sin_precio)
             fallos = 0
             resumen_diario(config)
         except KeyboardInterrupt:
@@ -419,7 +439,7 @@ def resumen_diario(config: Config, ahora: datetime | None = None) -> None:
         logger.error("No se pudo apuntar el resumen, puede que llegue repetido: %s", e)
 
 
-def _avisar_salud(config: Config, texto: str) -> None:
+def _avisar_salud(config: Config, texto: str) -> bool:
     """Manda los avisos de caida y vuelta. No se callan con --mute."""
     if telegram.send_message(
         config.telegram_token,
@@ -428,8 +448,10 @@ def _avisar_salud(config: Config, texto: str) -> None:
         sin_sonido=_sin_sonido(config),
     ):
         logger.info("Aviso de estado enviado")
-    else:
-        logger.error("No se pudo mandar el aviso de estado")
+        return True
+
+    logger.error("No se pudo mandar el aviso de estado")
+    return False
 
 
 def mensaje_de_prueba(config: Config) -> int:

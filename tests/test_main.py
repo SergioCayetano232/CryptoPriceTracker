@@ -599,3 +599,74 @@ def test_cartera_con_coingecko_caido(con_cartera, enviados, monkeypatch):
     main.atender(con_cartera, _mensaje("/cartera"))
 
     assert "No he podido" in enviados[0]
+
+
+# --- ids que coingecko no conoce ---
+
+
+@pytest.fixture
+def con_dedazo(config):
+    from dataclasses import replace
+
+    return replace(
+        config, watchlist=[Watch("bitcoin", percent=5), Watch("bitcion", step=1000)]
+    )
+
+
+def test_avisa_de_un_id_que_no_existe(con_dedazo, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 63000.0})
+
+    main.ejecutar_ciclo(con_dedazo, {})
+
+    assert len(enviados) == 1
+    assert "<b>bitcion</b>" in enviados[0]
+    assert "/buscar bitcion" in enviados[0]
+
+
+def test_el_id_que_no_existe_se_avisa_una_vez(con_dedazo, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 63000.0})
+    avisadas = set()
+
+    for _ in range(3):
+        main.ejecutar_ciclo(con_dedazo, {}, avisadas)
+
+    assert len(enviados) == 1
+    assert avisadas == {"bitcion"}
+
+
+def test_el_id_que_no_existe_se_reintenta_si_telegram_falla(con_dedazo, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 63000.0})
+    monkeypatch.setattr(telegram, "send_message", lambda *a, **kw: False)
+    avisadas = set()
+
+    main.ejecutar_ciclo(con_dedazo, {}, avisadas)
+
+    assert avisadas == set()
+
+
+def test_si_no_llega_ninguna_sugiere_la_moneda(con_dedazo, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {})
+
+    _, problema = main.ejecutar_ciclo(con_dedazo, {})
+
+    assert "VS_CURRENCY" in enviados[0]
+    assert problema is not None  # sigue contando como ciclo sin precios
+
+
+def test_sin_dedazos_no_avisa_de_nada(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 63000.0})
+
+    main.ejecutar_ciclo(config, {})
+
+    assert enviados == []
+
+
+def test_si_coingecko_falla_no_culpa_a_los_ids(con_dedazo, enviados, monkeypatch):
+    def falla(ids, cur):
+        raise coingecko.CoinGeckoError("Sin conexion")
+
+    monkeypatch.setattr(coingecko, "get_prices", falla)
+
+    main.ejecutar_ciclo(con_dedazo, {})
+
+    assert enviados == []

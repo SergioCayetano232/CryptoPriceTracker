@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta, timezone
 
-from crypto_tracker.salud import Pulso, mensaje_parado
+from crypto_tracker.salud import Pulso, mensaje_parado, mensaje_sin_precio, sin_precio
 
 INICIO = datetime(2026, 9, 29, 12, 0, tzinfo=timezone.utc)
 
@@ -93,3 +93,46 @@ def test_mensaje_parado():
 
     assert "10 errores" in texto
     assert "&lt;mal&gt;" in texto
+
+
+def test_sin_precio_saca_las_que_faltan():
+    faltan = sin_precio(["bitcoin", "bitcion"], {"bitcoin": 63000.0}, set())
+
+    assert faltan == ["bitcion"]
+
+
+def test_sin_precio_no_repite_las_ya_avisadas():
+    faltan = sin_precio(["bitcion", "etherum"], {}, {"bitcion"})
+
+    assert faltan == ["etherum"]
+
+
+def test_sin_precio_con_todo_bien():
+    assert sin_precio(["bitcoin"], {"bitcoin": 63000.0}, set()) == []
+
+
+def test_mensaje_sin_precio_sugiere_buscar():
+    texto = mensaje_sin_precio(["bitcion"])
+
+    assert "<b>bitcion</b>" in texto
+    assert "/buscar bitcion" in texto
+    assert "de esa no" in texto
+    assert "VS_CURRENCY" not in texto
+
+
+def test_mensaje_sin_precio_varias():
+    texto = mensaje_sin_precio(["bitcion", "etherum"])
+
+    assert "<b>bitcion</b>, <b>etherum</b>" in texto
+    assert "de esas no" in texto
+
+
+def test_mensaje_sin_precio_si_fallan_todas_mira_la_moneda():
+    assert "VS_CURRENCY" in mensaje_sin_precio(["bitcoin"], todas=True)
+
+
+def test_mensaje_sin_precio_escapa_el_id():
+    texto = mensaje_sin_precio(["<raro>"])
+
+    assert "<raro>" not in texto
+    assert "&lt;raro&gt;" in texto
