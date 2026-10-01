@@ -155,6 +155,9 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 |---|---|
 | `/status` | Cómo van tus criptos ahora |
 | `/cartera` | Solo tu cartera: cuánto vale y cuánto ganas o pierdes |
+| `/alerta bitcoin 70000` | Te avisa una vez cuando llegue a ese precio |
+| `/alertas` | Las alertas que tienes puestas |
+| `/quitar 3` | Quita la alerta número 3 |
 | `/historico bitcoin` | Imagen con la gráfica de las últimas 24 h, máximo y mínimo |
 | `/buscar btc` | Encuentra el id de CoinGecko de una cripto |
 | `/mute 2h` | Calla los avisos un rato |
@@ -163,6 +166,14 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 
 Al escribir `/` en el chat te salen solos. Solo contesta a tu chat id, y si
 estaba apagado, al volver ignora lo que le escribiste hace más de 10 minutos.
+
+**Alertas de una sola vez:**
+
+Escríbele `/alerta bitcoin 70000` y te avisa cuando llegue a 70.000, suba o
+baje, según dónde esté ahora. Avisa una vez y se borra sola, sin tocar el `.env`
+ni reiniciar. Vale cualquier cripto, aunque no esté en `WATCHLIST`, y puedes
+escribir el precio como `70.000` o `0,35`. Si estás en `/mute`, no se pierde: te
+avisa al volver si sigue en ese precio.
 
 **Ver cómo van ahora mismo:**
 ```

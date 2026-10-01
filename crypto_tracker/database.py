@@ -6,6 +6,8 @@ from contextlib import contextmanager
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
+from .puntuales import Puntual
+
 logger = logging.getLogger(__name__)
 
 # Guardamos la hora en UTC para que el historico no de saltos raros
@@ -36,6 +38,16 @@ CREATE TABLE IF NOT EXISTS alert_state (
 CREATE TABLE IF NOT EXISTS ajustes (
     clave TEXT PRIMARY KEY,
     valor TEXT NOT NULL
+);
+
+-- Las de /alerta: avisan una vez y se borran. sube = 1 si espera a que suba.
+CREATE TABLE IF NOT EXISTS alertas_puntuales (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    coin_id    TEXT    NOT NULL,
+    objetivo   REAL    NOT NULL,
+    sube       INTEGER NOT NULL,
+    currency   TEXT    NOT NULL,
+    created_at TEXT    NOT NULL
 );
 """
 
@@ -308,6 +320,42 @@ def guardar_brusco(db_path: str, coin_id: str, cuando: datetime) -> None:
             "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
             (f"brusco:{coin_id}", cuando.isoformat(timespec="seconds")),
         )
+
+
+def crear_puntual(
+    db_path: str, coin_id: str, objetivo: float, sube: bool, currency: str
+) -> Puntual:
+    ahora = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    with _connect(db_path) as conn:
+        cursor = conn.execute(
+            "INSERT INTO alertas_puntuales "
+            "(coin_id, objetivo, sube, currency, created_at) VALUES (?, ?, ?, ?, ?)",
+            (coin_id, objetivo, int(sube), currency, ahora),
+        )
+    return Puntual(cursor.lastrowid, coin_id, objetivo, sube)
+
+
+def get_puntuales(db_path: str, currency: str) -> list[Puntual]:
+    """Las alertas pendientes. Las de otra moneda no cuentan, saltarian mal."""
+    with _connect(db_path) as conn:
+        filas = conn.execute(
+            "SELECT id, coin_id, objetivo, sube FROM alertas_puntuales "
+            "WHERE currency = ? ORDER BY id",
+            (currency,),
+        ).fetchall()
+
+    return [
+        Puntual(f["id"], f["coin_id"], f["objetivo"], bool(f["sube"])) for f in filas
+    ]
+
+
+def borrar_puntual(db_path: str, alerta_id: int) -> bool:
+    """Quita una alerta. False si no existia."""
+    with _connect(db_path) as conn:
+        cursor = conn.execute(
+            "DELETE FROM alertas_puntuales WHERE id = ?", (alerta_id,)
+        )
+        return cursor.rowcount > 0
 
 
 def get_history(db_path: str, coin_id: str, limit: int = 50) -> list[sqlite3.Row]:

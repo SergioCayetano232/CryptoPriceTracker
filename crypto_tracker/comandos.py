@@ -6,6 +6,9 @@ from dataclasses import dataclass
 COMANDOS = {
     "status": "Cómo van tus criptos ahora",
     "cartera": "Cuánto vale lo que tienes y cuánto ganas",
+    "alerta": "Avísame una vez al llegar a un precio (ej: /alerta bitcoin 70000)",
+    "alertas": "Las alertas que tienes puestas",
+    "quitar": "Quitar una alerta (ej: /quitar 3)",
     "historico": "Cómo ha ido una cripto en 24 h (ej: /historico bitcoin)",
     "buscar": "Encuentra el id de una cripto (ej: /buscar btc)",
     "mute": "Callar los avisos un rato (ej: /mute 2h)",
@@ -20,6 +23,8 @@ ALIAS = {
     "history": "historico",
     "search": "buscar",
     "portfolio": "cartera",
+    "alert": "alerta",
+    "alerts": "alertas",
 }
 
 AYUDA = "🤖 <b>Esto es lo que sé hacer</b>\n\n" + "\n".join(

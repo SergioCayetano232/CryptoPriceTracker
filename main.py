@@ -25,6 +25,7 @@ from crypto_tracker import (
     database,
     diario,
     grafica,
+    puntuales,
     salud,
     telegram,
 )
@@ -70,9 +71,14 @@ def ejecutar_ciclo(
     sin_precio son los ids de los que ya se aviso que no existen.
     """
     coin_ids = [w.coin_id for w in config.watchlist]
+    pendientes = _puntuales(config)
+    # Las de /alerta pueden ser de criptos que no vigilas. Todo en una consulta.
+    extra = [p.coin_id for p in pendientes if p.coin_id not in coin_ids]
 
     try:
-        precios = coingecko.get_prices(coin_ids, config.vs_currency)
+        precios = coingecko.get_prices(
+            coin_ids + list(dict.fromkeys(extra)), config.vs_currency
+        )
     except coingecko.CoinGeckoError as e:
         logger.error("No se pudieron consultar los precios: %s", e)
         return estado, str(e)
@@ -104,7 +110,20 @@ def ejecutar_ciclo(
             logger.error("No se pudo purgar el historico: %s", e)
 
     avisos, estado_nuevo = alerts.revisar(precios, config.watchlist, estado)
-    avisos += revisar_bruscos(config, precios)
+    vigiladas = {c: p for c, p in precios.items() if c in coin_ids}
+    avisos += revisar_bruscos(config, vigiladas)
+
+    hechas = puntuales.cumplidas(pendientes, precios)
+    avisos += [
+        alerts.Alert(
+            p.coin_id,
+            precios[p.coin_id],
+            p.objetivo,
+            alerts.ALTO if p.sube else alerts.BAJO,
+            puntual=True,
+        )
+        for p in hechas
+    ]
 
     # Guardamos la zona de cada cripto para no repetir el aviso al reiniciar.
     try:
@@ -118,6 +137,7 @@ def ejecutar_ciclo(
 
     # Silenciado: el estado ya se guardo, asi que al volver no llega de golpe
     # todo lo que paso mientras, solo lo que este cruzado en ese momento.
+    # Las de /alerta no se borran, saltan al volver si siguen cumplidas.
     callado = _silenciado(config)
     if callado:
         logger.info(
@@ -139,12 +159,30 @@ def ejecutar_ciclo(
         sin_sonido=_sin_sonido(config),
     ):
         logger.info("Aviso enviado (%d): %s", len(avisos), cruzadas)
+        _borrar_puntuales(config, hechas)
     else:
         # El aviso se perdio, pero el estado ya cambio. No insistimos:
-        # el siguiente cruce volvera a avisar.
+        # el siguiente cruce volvera a avisar. Las de /alerta siguen ahi.
         logger.error("No se pudo avisar de: %s", cruzadas)
 
     return estado_nuevo, None
+
+
+def _puntuales(config: Config) -> list[puntuales.Puntual]:
+    try:
+        return database.get_puntuales(config.database_path, config.vs_currency)
+    except database.DatabaseError as e:
+        logger.error("No se pudieron leer las alertas de /alerta: %s", e)
+        return []
+
+
+def _borrar_puntuales(config: Config, hechas: list[puntuales.Puntual]) -> None:
+    for p in hechas:
+        try:
+            database.borrar_puntual(config.database_path, p.id)
+        except database.DatabaseError as e:
+            # Volvera a avisar el siguiente ciclo. Mejor repetido que perdido.
+            logger.error("No se pudo borrar la alerta %d: %s", p.id, e)
 
 
 def avisar_sin_precio(
@@ -344,6 +382,22 @@ def responder(config: Config, nombre: str, argumento: str) -> str | comandos.Fot
     if nombre == "historico":
         return _historico(config, argumento.strip().lower())
 
+    if nombre == "alerta":
+        return _crear_alerta(config, argumento)
+
+    if nombre == "alertas":
+        pendientes = database.get_puntuales(config.database_path, config.vs_currency)
+        return alerts.formatear_puntuales(pendientes, config.vs_currency)
+
+    if nombre == "quitar":
+        try:
+            alerta_id = int(argumento.lstrip("#"))
+        except ValueError:
+            return "¿Cuál? Mira el número con /alertas y luego, por ejemplo, /quitar 3"
+        if database.borrar_puntual(config.database_path, alerta_id):
+            return "🗑 Alerta quitada."
+        return f"No tengo ninguna alerta con el número {alerta_id}. Mira /alertas"
+
     if nombre == "buscar":
         if not argumento:
             return "¿Qué busco? Por ejemplo: /buscar btc"
@@ -356,6 +410,39 @@ def responder(config: Config, nombre: str, argumento: str) -> str | comandos.Fot
         return alerts.con_fuente(alerts.formatear_busqueda(argumento, resultados))
 
     return comandos.NO_ENTIENDO
+
+
+def _crear_alerta(config: Config, argumento: str) -> str:
+    try:
+        coin_id, objetivo = puntuales.interpretar(argumento)
+    except puntuales.PuntualError as e:
+        return telegram.escape(str(e))
+
+    # Hace falta el precio de ahora para saber si esperar a que suba o a que
+    # baje. Y de paso se comprueba que el id existe.
+    try:
+        precio = coingecko.get_prices([coin_id], config.vs_currency).get(coin_id)
+    except coingecko.CoinGeckoError as e:
+        return f"No he podido mirar el precio ahora mismo: {telegram.escape(str(e))}"
+
+    if precio is None:
+        return (
+            f"No encuentro <b>{telegram.escape(coin_id)}</b> en CoinGecko. "
+            f"Prueba con /buscar {telegram.escape(coin_id)}"
+        )
+
+    try:
+        sube = puntuales.sube(objetivo, precio)
+    except puntuales.PuntualError as e:
+        return telegram.escape(str(e))
+
+    alerta = database.crear_puntual(
+        config.database_path, coin_id, objetivo, sube, config.vs_currency
+    )
+    logger.info("Alerta %d creada: %s a %s", alerta.id, coin_id, objetivo)
+    return alerts.con_fuente(
+        alerts.formatear_puntual(alerta, precio, config.vs_currency)
+    )
 
 
 def _historico(config: Config, coin_id: str) -> str | comandos.Foto:

@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from .cartera import Valor
 from .config import Watch
+from .puntuales import Puntual
 from .telegram import escape
 
 logger = logging.getLogger(__name__)
@@ -38,6 +39,7 @@ class Alert:
     estado: str  # BAJO o ALTO
     percent: float | None = None  # variacion, solo en las alertas de %
     minutos: int | None = None  # solo en los movimientos bruscos
+    puntual: bool = False  # de /alerta, se borra al avisar
 
 
 def clasificar(price: float, watch: Watch) -> str:
@@ -219,10 +221,13 @@ def formatear(alerta: Alert, currency: str) -> str:
             f"<b>{simbolo}{_num(alerta.price)}</b>"
         )
 
-    return (
+    texto = (
         f"{icono} <b>{nombre}</b> {verbo} de {simbolo}{_num(alerta.threshold)}\n"
         f"Precio actual: <b>{simbolo}{_num(alerta.price)}</b>"
     )
+    if alerta.puntual:
+        texto += "\n<i>Era tu /alerta, ya la he quitado.</i>"
+    return texto
 
 
 def sparkline(precios: list[float]) -> str:
@@ -357,6 +362,35 @@ def formatear_busqueda(texto: str, resultados: list[dict]) -> str:
         f"\nEn WATCHLIST va el id, por ejemplo: "
         f"<code>{escape(resultados[0]['id'])}:%5</code>"
     )
+    return "\n".join(lineas)
+
+
+def formatear_puntual(alerta: Puntual, precio: float, currency: str) -> str:
+    """Respuesta al crear una /alerta."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(alerta.coin_id.replace("-", " ").title())
+    verbo = "suba" if alerta.sube else "baje"
+    return (
+        f"🎯 Te aviso cuando <b>{nombre}</b> {verbo} a "
+        f"<b>{simbolo}{_num(alerta.objetivo)}</b>.\n"
+        f"Ahora está a {simbolo}{_num(precio)}. Solo te aviso una vez."
+    )
+
+
+def formatear_puntuales(alertas: list[Puntual], currency: str) -> str:
+    """Respuesta de /alertas."""
+    if not alertas:
+        return "No tienes alertas puestas. Crea una con /alerta bitcoin 70000"
+
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    lineas = ["🎯 <b>Tus alertas</b>", ""]
+    for a in alertas:
+        nombre = escape(a.coin_id.replace("-", " ").title())
+        flecha = "🔺" if a.sube else "🔻"
+        lineas.append(
+            f"<code>{a.id}</code>  <b>{nombre}</b> {flecha} {simbolo}{_num(a.objetivo)}"
+        )
+    lineas.append(f"\nPara quitar una: /quitar {alertas[0].id}")
     return "\n".join(lineas)
 
 

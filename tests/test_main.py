@@ -670,3 +670,143 @@ def test_si_coingecko_falla_no_culpa_a_los_ids(con_dedazo, enviados, monkeypatch
     main.ejecutar_ciclo(con_dedazo, {})
 
     assert enviados == []
+
+
+# --- /alerta ---
+
+
+def _precio(monkeypatch, precios):
+    pedidas = []
+
+    def get_prices(ids, cur):
+        pedidas.append(list(ids))
+        return {c: p for c, p in precios.items() if c in ids}
+
+    monkeypatch.setattr(coingecko, "get_prices", get_prices)
+    return pedidas
+
+
+def test_crear_alerta(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 63000.0})
+
+    main.atender(config, _mensaje("/alerta bitcoin 70.000"))
+
+    assert "suba a <b>€70.000,00</b>" in enviados[0]
+    [alerta] = database.get_puntuales(config.database_path, "eur")
+    assert (alerta.coin_id, alerta.objetivo, alerta.sube) == ("bitcoin", 70000, True)
+
+
+def test_crear_alerta_hacia_abajo(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 63000.0})
+
+    main.atender(config, _mensaje("/alerta bitcoin 55000"))
+
+    assert "baje a" in enviados[0]
+    assert database.get_puntuales(config.database_path, "eur")[0].sube is False
+
+
+def test_crear_alerta_de_un_id_que_no_existe(config, enviados, monkeypatch):
+    _precio(monkeypatch, {})
+
+    main.atender(config, _mensaje("/alerta bitcion 70000"))
+
+    assert "/buscar bitcion" in enviados[0]
+    assert database.get_puntuales(config.database_path, "eur") == []
+
+
+def test_crear_alerta_mal_escrita(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 63000.0})
+
+    main.atender(config, _mensaje("/alerta bitcoin <mucho>"))
+
+    assert "&lt;mucho&gt;" in enviados[0]
+    assert database.get_puntuales(config.database_path, "eur") == []
+
+
+def test_crear_alerta_con_coingecko_caido(config, enviados, monkeypatch):
+    def falla(ids, cur):
+        raise coingecko.CoinGeckoError("Sin conexion")
+
+    monkeypatch.setattr(coingecko, "get_prices", falla)
+
+    main.atender(config, _mensaje("/alerta bitcoin 70000"))
+
+    assert "No he podido" in enviados[0]
+    assert database.get_puntuales(config.database_path, "eur") == []
+
+
+def test_listar_y_quitar_alertas(config, enviados):
+    a = database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
+
+    main.atender(config, _mensaje("/alertas"))
+    main.atender(config, _mensaje(f"/quitar {a.id}"))
+    main.atender(config, _mensaje("/alertas"))
+
+    assert "€70.000,00" in enviados[0]
+    assert "quitada" in enviados[1]
+    assert "No tienes alertas" in enviados[2]
+
+
+def test_quitar_una_que_no_existe(config, enviados):
+    main.atender(config, _mensaje("/quitar 42"))
+    main.atender(config, _mensaje("/quitar"))
+
+    assert "ninguna alerta con el número 42" in enviados[0]
+    assert "/alertas" in enviados[1]
+
+
+def test_la_alerta_salta_una_vez_y_se_borra(config, enviados, monkeypatch):
+    database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
+    estado = {"bitcoin": "%69000.0"}  # que el aviso de % no salte
+    _precio(monkeypatch, {"bitcoin": 70500.0})
+
+    estado, _ = main.ejecutar_ciclo(config, estado)
+    main.ejecutar_ciclo(config, estado)
+
+    assert len(enviados) == 1
+    assert "Era tu /alerta" in enviados[0]
+    assert database.get_puntuales(config.database_path, "eur") == []
+
+
+def test_la_alerta_no_salta_antes_de_tiempo(config, enviados, monkeypatch):
+    database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
+    _precio(monkeypatch, {"bitcoin": 69000.0})
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%69000.0"})
+
+    assert enviados == []
+    assert len(database.get_puntuales(config.database_path, "eur")) == 1
+
+
+def test_la_alerta_de_una_cripto_no_vigilada(config, enviados, monkeypatch):
+    database.crear_puntual(config.database_path, "solana", 200, True, "eur")
+    pedidas = _precio(monkeypatch, {"bitcoin": 63000.0, "solana": 210.0})
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%63000.0"})
+
+    assert pedidas == [["bitcoin", "solana"]]  # en la misma consulta
+    assert "Solana" in enviados[0]
+
+
+def test_la_alerta_aguanta_el_mute(config, enviados, monkeypatch):
+    from datetime import datetime, timedelta, timezone
+
+    database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
+    hasta = datetime.now(timezone.utc) + timedelta(hours=1)
+    database.silenciar_hasta(config.database_path, hasta)
+    _precio(monkeypatch, {"bitcoin": 70500.0})
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%70000.0"})
+
+    assert enviados == []
+    assert len(database.get_puntuales(config.database_path, "eur")) == 1
+
+
+def test_la_alerta_aguanta_si_telegram_falla(config, monkeypatch):
+    database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
+    monkeypatch.setattr(telegram, "send_message", lambda *a, **kw: False)
+    _precio(monkeypatch, {"bitcoin": 70500.0})
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%70000.0"})
+
+    assert len(database.get_puntuales(config.database_path, "eur")) == 1

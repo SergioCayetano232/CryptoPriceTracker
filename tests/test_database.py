@@ -299,3 +299,55 @@ def test_ultimo_brusco_por_cripto(db):
 
     assert database.ultimo_brusco(db, "bitcoin") == cuando
     assert database.ultimo_brusco(db, "ethereum") is None
+
+
+# --- alertas de /alerta ---
+
+
+def test_puntual_va_y_vuelve(db):
+    creada = database.crear_puntual(db, "bitcoin", 70000.0, True, "eur")
+
+    assert database.get_puntuales(db, "eur") == [creada]
+    assert creada.sube is True
+
+
+def test_puntuales_en_orden_de_creacion(db):
+    a = database.crear_puntual(db, "bitcoin", 70000.0, True, "eur")
+    b = database.crear_puntual(db, "ethereum", 2000.0, False, "eur")
+
+    assert database.get_puntuales(db, "eur") == [a, b]
+
+
+def test_puntuales_de_otra_moneda_no_cuentan(db):
+    database.crear_puntual(db, "bitcoin", 70000.0, True, "usd")
+
+    assert database.get_puntuales(db, "eur") == []
+
+
+def test_borrar_puntual(db):
+    a = database.crear_puntual(db, "bitcoin", 70000.0, True, "eur")
+    b = database.crear_puntual(db, "bitcoin", 55000.0, False, "eur")
+
+    assert database.borrar_puntual(db, a.id) is True
+    assert database.get_puntuales(db, "eur") == [b]
+
+
+def test_borrar_puntual_que_no_existe(db):
+    assert database.borrar_puntual(db, 99) is False
+
+
+def test_una_base_vieja_gana_la_tabla_al_arrancar(tmp_path):
+    # como el prices.db de antes de las alertas: sin la tabla nueva
+    import sqlite3
+
+    ruta = str(tmp_path / "vieja.db")
+    conn = sqlite3.connect(ruta)
+    conn.execute("CREATE TABLE ajustes (clave TEXT PRIMARY KEY, valor TEXT NOT NULL)")
+    conn.execute("INSERT INTO ajustes VALUES ('ultimo_resumen', '2026-09-30')")
+    conn.commit()
+    conn.close()
+
+    database.init_db(ruta)
+
+    assert database.get_puntuales(ruta, "eur") == []
+    assert str(database.ultimo_resumen(ruta)) == "2026-09-30"
