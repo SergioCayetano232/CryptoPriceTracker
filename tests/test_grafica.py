@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from crypto_tracker.grafica import GraficaError, _eje, dibujar
+from crypto_tracker.grafica import GraficaError, _eje, _formato_eje, dibujar
 
 AHORA = datetime(2026, 9, 29, 12, 0, tzinfo=timezone.utc)
 
@@ -54,3 +54,16 @@ def test_sin_matplotlib_avisa_claro(monkeypatch):
 def test_numeros_del_eje():
     assert _eje(63000) == "63.000"
     assert _eje(0.3421) == "0,3421"
+
+
+def test_sale_un_png_de_una_semana():
+    serie = [(AHORA - timedelta(hours=h), 60000.0 + h) for h in range(168, -1, -1)]
+
+    assert dibujar("bitcoin", serie, "eur", 168).startswith(b"\x89PNG")
+
+
+@pytest.mark.parametrize(
+    "horas, formato", [(24, "%H:%M"), (12, "%H:%M"), (48, "%d/%m %Hh"), (168, "%d/%m")]
+)
+def test_el_eje_pone_fechas_en_tramos_largos(horas, formato):
+    assert _formato_eje(horas) == formato

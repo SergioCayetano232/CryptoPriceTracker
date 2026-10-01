@@ -9,7 +9,7 @@ COMANDOS = {
     "alerta": "Avísame una vez al llegar a un precio (ej: /alerta bitcoin 70000)",
     "alertas": "Las alertas que tienes puestas",
     "quitar": "Quitar una alerta (ej: /quitar 3)",
-    "historico": "Cómo ha ido una cripto en 24 h (ej: /historico bitcoin)",
+    "historico": "Cómo ha ido una cripto (ej: /historico bitcoin 7d)",
     "vigilar": "Ver o cambiar lo que vigilo (ej: /vigilar solana %5)",
     "dejar": "Dejar de vigilar una cripto (ej: /dejar solana)",
     "buscar": "Encuentra el id de una cripto (ej: /buscar btc)",

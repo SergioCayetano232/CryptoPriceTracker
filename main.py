@@ -26,6 +26,7 @@ from crypto_tracker import (
     database,
     diario,
     grafica,
+    periodo,
     puntuales,
     salud,
     telegram,
@@ -410,7 +411,7 @@ def responder(config: Config, nombre: str, argumento: str) -> str | comandos.Fot
         return texto or "No he podido consultar los precios. Prueba en un rato."
 
     if nombre == "historico":
-        return _historico(config, argumento.strip().lower())
+        return _historico(config, argumento)
 
     if nombre == "alerta":
         return _crear_alerta(config, argumento)
@@ -540,13 +541,16 @@ def _crear_alerta(config: Config, argumento: str) -> str:
     )
 
 
-def _historico(config: Config, coin_id: str) -> str | comandos.Foto:
-    if not coin_id:
-        return "¿De cuál? Por ejemplo: /historico bitcoin"
+def _historico(config: Config, argumento: str) -> str | comandos.Foto:
+    try:
+        coin_id, horas = periodo.interpretar(argumento)
+    except periodo.PeriodoError as e:
+        return telegram.escape(str(e))
 
-    serie = database.get_serie(
-        config.database_path, coin_id, HORAS_RESUMEN, config.vs_currency
-    )
+    if not coin_id:
+        return "¿De cuál? Por ejemplo: /historico bitcoin o /historico bitcoin 7d"
+
+    serie = database.get_serie(config.database_path, coin_id, horas, config.vs_currency)
     precios = [precio for _, precio in serie]
     mias = {w.coin_id for w in _con_cambios(config).watchlist}
     if len(precios) < 2 and coin_id in mias:
@@ -557,28 +561,33 @@ def _historico(config: Config, coin_id: str) -> str | comandos.Foto:
         )
     if len(precios) < 2:
         return (
-            f"No tengo precios de <b>{telegram.escape(coin_id)}</b> de las "
-            f"últimas {HORAS_RESUMEN} h. Tiene que ser el id de CoinGecko "
+            f"No tengo precios de <b>{telegram.escape(coin_id)}</b> "
+            f"({periodo.nombre(horas)}). Tiene que ser el id de CoinGecko "
             "(bitcoin, no BTC)."
         )
 
-    texto = alerts.con_fuente(
-        alerts.formatear_historico(coin_id, precios, config.vs_currency, HORAS_RESUMEN)
+    primero = serie[0][0]
+    desde = (
+        primero
+        if periodo.falta_principio(primero, datetime.now(timezone.utc), horas)
+        else None
     )
 
+    def mensaje(con_linea: bool) -> str:
+        return alerts.con_fuente(
+            alerts.formatear_historico(
+                coin_id, precios, config.vs_currency, horas, con_linea, desde
+            )
+        )
+
     try:
-        png = grafica.dibujar(coin_id, serie, config.vs_currency, HORAS_RESUMEN)
+        png = grafica.dibujar(coin_id, serie, config.vs_currency, horas)
     except Exception as e:
         # Sin imagen no pasa nada: el texto ya lleva lo importante.
         logger.warning("Mando /historico sin imagen: %s", e)
-        return texto
+        return mensaje(con_linea=True)
 
-    pie = alerts.con_fuente(
-        alerts.formatear_historico(
-            coin_id, precios, config.vs_currency, HORAS_RESUMEN, con_linea=False
-        )
-    )
-    return comandos.Foto(png, pie, texto)
+    return comandos.Foto(png, mensaje(con_linea=False), mensaje(con_linea=True))
 
 
 def resumen_diario(config: Config, ahora: datetime | None = None) -> None:

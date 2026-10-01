@@ -192,7 +192,7 @@ def get_prices_since(
 
 
 def get_serie(
-    db_path: str, coin_id: str, horas: int, currency: str
+    db_path: str, coin_id: str, horas: float, currency: str
 ) -> list[tuple[datetime, float]]:
     """Como get_prices_since, pero con la hora de cada precio, para dibujarlo."""
     desde = (datetime.now(timezone.utc) - timedelta(hours=horas)).isoformat(

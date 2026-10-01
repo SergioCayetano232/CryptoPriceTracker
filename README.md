@@ -162,6 +162,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/vigilar solana %5` | Añade una cripto, o cambia cómo vigila una que ya estaba |
 | `/dejar solana` | Deja de vigilarla |
 | `/historico bitcoin` | Imagen con la gráfica de las últimas 24 h, máximo y mínimo |
+| `/historico bitcoin 7d` | Lo mismo, del tramo que digas (`12h`, `7d`, `30d`...) |
 | `/buscar btc` | Encuentra el id de CoinGecko de una cripto |
 | `/mute 2h` | Calla los avisos un rato |
 | `/unmute` | Vuelve a avisar |

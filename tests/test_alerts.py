@@ -455,3 +455,21 @@ def test_resumen_con_otro_titulo():
     texto = formatear_resumen([("bitcoin", 63000.0, 1.0)], "eur", titulo="Hola")
 
     assert texto.startswith("Hola\n")
+
+
+def test_historico_avisa_desde_cuando_hay_datos():
+    from datetime import datetime
+
+    from crypto_tracker.alerts import formatear_historico
+
+    desde = datetime(2026, 9, 28, 10, 30).astimezone()
+    texto = formatear_historico("bitcoin", [1.0, 2.0], "eur", 720, desde=desde)
+
+    assert "últimos 30 días" in texto
+    assert "Solo tengo precios desde el 28/09 a las 10:30" in texto
+
+
+def test_historico_sin_desde_no_dice_nada():
+    from crypto_tracker.alerts import formatear_historico
+
+    assert "Solo tengo" not in formatear_historico("bitcoin", [1.0, 2.0], "eur", 24)

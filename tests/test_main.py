@@ -938,3 +938,68 @@ def test_vigilar_un_rango_no_promete_esperar(config, enviados):
 
     assert "si baja de €55.000,00 o si sube de €75.000,00" in enviados[0]
     assert "primer ciclo" not in enviados[0]
+
+
+# --- /historico con tramo ---
+
+
+def _con_fecha(config, precio, horas_atras):
+    import sqlite3
+    from datetime import datetime, timedelta, timezone
+
+    cuando = datetime.now(timezone.utc) - timedelta(hours=horas_atras)
+    conn = sqlite3.connect(config.database_path)
+    conn.execute(
+        "INSERT INTO prices (coin_id, price, currency, created_at) VALUES (?,?,?,?)",
+        ("bitcoin", precio, "eur", cuando.isoformat(timespec="seconds")),
+    )
+    conn.commit()
+    conn.close()
+
+
+def test_historico_de_una_semana(config, enviados, sin_fotos_de_verdad):
+    _con_fecha(config, 50000.0, 167)
+    _con_fecha(config, 70000.0, 100)  # el maximo, fuera de las ultimas 24 h
+    _con_fecha(config, 60000.0, 1)
+
+    main.atender(config, _mensaje("/historico bitcoin 7d"))
+
+    _, pie = sin_fotos_de_verdad[0]
+    assert "últimos 7 días" in pie
+    assert "Máximo €70.000,00" in pie
+    assert "Solo tengo" not in pie
+
+
+def test_historico_sin_tramo_siguen_siendo_24h(config, sin_fotos_de_verdad):
+    _con_fecha(config, 70000.0, 100)
+    _con_fecha(config, 61000.0, 23)
+    _con_fecha(config, 60000.0, 1)
+
+    main.atender(config, _mensaje("/historico bitcoin"))
+
+    _, pie = sin_fotos_de_verdad[0]
+    assert "últimas 24 h" in pie
+    assert "Máximo €61.000,00" in pie  # lo de hace 100 h no entra
+
+
+def test_historico_avisa_si_no_hay_datos_de_todo_el_tramo(config, sin_fotos_de_verdad):
+    _con_fecha(config, 60000.0, 48)
+    _con_fecha(config, 61000.0, 1)
+
+    main.atender(config, _mensaje("/historico bitcoin 30d"))
+
+    _, pie = sin_fotos_de_verdad[0]
+    assert "Solo tengo precios desde el" in pie
+
+
+def test_historico_tramo_mal_escrito(config, enviados):
+    main.atender(config, _mensaje("/historico bitcoin siempre"))
+
+    assert "30m, 2h o 1d" in enviados[0]
+
+
+def test_historico_sin_datos_dice_el_tramo(config, enviados):
+    main.atender(config, _mensaje("/historico btc 7d"))
+
+    assert "últimos 7 días" in enviados[0]
+    assert "bitcoin, no BTC" in enviados[0]

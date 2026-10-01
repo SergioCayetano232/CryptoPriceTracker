@@ -4,6 +4,7 @@ import io
 from datetime import datetime
 
 from .alerts import SIMBOLOS, _num
+from .periodo import nombre as nombre_periodo
 
 VERDE = "#16a34a"
 ROJO = "#dc2626"
@@ -18,7 +19,7 @@ class GraficaError(Exception):
 
 
 def dibujar(
-    coin_id: str, serie: list[tuple[datetime, float]], currency: str, horas: int
+    coin_id: str, serie: list[tuple[datetime, float]], currency: str, horas: float
 ) -> bytes:
     """Devuelve el PNG de la serie, que va del precio mas viejo al de ahora."""
     # Import aqui dentro: si el servidor aun no tiene matplotlib, el bot sigue
@@ -51,7 +52,9 @@ def dibujar(
     margen = (techo - suelo) * 0.18 or abs(techo) * 0.01 or 1
     ax.set_ylim(suelo - margen, techo + margen)
 
-    ax.plot(fechas, precios, color=color, linewidth=2.2, solid_capstyle="round")
+    # Con miles de puntos una linea gruesa se emborrona.
+    grosor = 2.2 if horas <= 48 else 1.4
+    ax.plot(fechas, precios, color=color, linewidth=grosor, solid_capstyle="round")
     ax.fill_between(
         fechas, precios, suelo - margen, color=color, alpha=0.10, linewidth=0
     )
@@ -84,12 +87,15 @@ def dibujar(
     ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: _eje(v)))
     ax.xaxis.set_major_locator(mdates.AutoDateLocator(minticks=4, maxticks=7))
     # Sin tz, matplotlib pinta las horas en UTC y no cuadran con tu reloj.
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M", tz=fechas[-1].tzinfo))
+    ax.xaxis.set_major_formatter(
+        mdates.DateFormatter(_formato_eje(horas), tz=fechas[-1].tzinfo)
+    )
     ax.margins(x=0.01)
 
     nombre = coin_id.replace("-", " ").title()
     fig.text(0.08, 0.89, nombre, fontsize=16, weight="bold", color=TEXTO)
-    fig.text(0.08, 0.83, f"Últimas {horas} h", fontsize=9, color=SUAVE)
+    periodo = nombre_periodo(horas)
+    fig.text(0.08, 0.83, periodo[0].upper() + periodo[1:], fontsize=9, color=SUAVE)
     fig.text(
         0.94,
         0.89,
@@ -112,6 +118,15 @@ def dibujar(
     salida = io.BytesIO()
     fig.savefig(salida, format="png", facecolor=FONDO)
     return salida.getvalue()
+
+
+def _formato_eje(horas: float) -> str:
+    # En un dia basta la hora; en una semana, la hora sola se repite y lia.
+    if horas <= 24:
+        return "%H:%M"
+    if horas <= 72:
+        return "%d/%m %Hh"
+    return "%d/%m"
 
 
 def _eje(valor: float) -> str:

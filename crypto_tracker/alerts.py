@@ -3,9 +3,11 @@
 import logging
 import math
 from dataclasses import dataclass
+from datetime import datetime
 
 from .cartera import Valor
 from .config import Watch
+from .periodo import nombre as nombre_periodo
 from .puntuales import Puntual
 from .telegram import escape
 
@@ -291,10 +293,14 @@ def formatear_historico(
     coin_id: str,
     precios: list[float],
     currency: str,
-    horas: int,
+    horas: float,
     con_linea: bool = True,
+    desde: datetime | None = None,
 ) -> str:
-    """Mensaje de /historico. Los precios van del mas viejo al mas nuevo."""
+    """Mensaje de /historico. Los precios van del mas viejo al mas nuevo.
+
+    desde va solo si faltan datos del principio, para no vender un tramo entero.
+    """
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
     nombre = escape(coin_id.replace("-", " ").title())
     ahora = precios[-1]
@@ -305,13 +311,17 @@ def formatear_historico(
     if con_linea:
         linea = f"<code>{sparkline(muestrear(precios, BARRAS_MOVIL))}</code>\n"
 
-    return (
-        f"📈 <b>{nombre}</b>, últimas {horas} h\n"
+    texto = (
+        f"📈 <b>{nombre}</b>, {nombre_periodo(horas)}\n"
         f"{linea}\n"
         f"Ahora <b>{simbolo}{_num(ahora)}</b>  {_flecha(variacion)} {variacion:+.2f}%\n"
         f"Máximo {simbolo}{_num(max(precios))}\n"
         f"Mínimo {simbolo}{_num(min(precios))}"
     )
+    if desde is not None:
+        cuando = desde.astimezone()
+        texto += f"\n<i>Solo tengo precios desde el {cuando:%d/%m a las %H:%M}.</i>"
+    return texto
 
 
 def formatear_cartera(
