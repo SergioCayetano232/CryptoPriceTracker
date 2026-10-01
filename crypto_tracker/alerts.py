@@ -42,6 +42,7 @@ class Alert:
     percent: float | None = None  # variacion, solo en las alertas de %
     minutos: int | None = None  # solo en los movimientos bruscos
     puntual: bool = False  # de /alerta, se borra al avisar
+    variacion_24h: float | None = None  # None si aun no hay historico de un dia
 
 
 def clasificar(price: float, watch: Watch) -> str:
@@ -208,25 +209,29 @@ def formatear(alerta: Alert, currency: str) -> str:
 
     if alerta.minutos is not None:
         verbo = "ha caído" if alerta.estado == BAJO else "ha subido"
-        return (
+        texto = (
             f"⚡ <b>{nombre}</b> {verbo} un <b>{abs(alerta.percent):.2f}%</b> "
             f"en menos de {_minutos(alerta.minutos)}\n"
             f"De {simbolo}{_num(alerta.threshold)} a "
             f"<b>{simbolo}{_num(alerta.price)}</b>"
         )
-
-    if alerta.percent is not None:
-        return (
+    elif alerta.percent is not None:
+        texto = (
             f"{icono} <b>{nombre}</b> {verbo} un "
             f"<b>{abs(alerta.percent):.2f}%</b>\n"
             f"De {simbolo}{_num(alerta.threshold)} a "
             f"<b>{simbolo}{_num(alerta.price)}</b>"
         )
+    else:
+        texto = (
+            f"{icono} <b>{nombre}</b> {verbo} de {simbolo}{_num(alerta.threshold)}\n"
+            f"Precio actual: <b>{simbolo}{_num(alerta.price)}</b>"
+        )
 
-    texto = (
-        f"{icono} <b>{nombre}</b> {verbo} de {simbolo}{_num(alerta.threshold)}\n"
-        f"Precio actual: <b>{simbolo}{_num(alerta.price)}</b>"
-    )
+    # Cruzar 64.000 no es lo mismo si viene de subir un 1% que un 15%.
+    if alerta.variacion_24h is not None:
+        v = alerta.variacion_24h
+        texto += f"\n<i>En 24 h: {_flecha(v)} {v:+.2f}%</i>"
     if alerta.puntual:
         texto += "\n<i>Era tu /alerta, ya la he quitado.</i>"
     return texto

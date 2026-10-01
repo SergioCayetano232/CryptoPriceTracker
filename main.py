@@ -153,6 +153,10 @@ def ejecutar_ciclo(
         )
         return estado_nuevo, None
 
+    avisos = [
+        replace(a, variacion_24h=_variacion(config, a.coin_id, a.price)) for a in avisos
+    ]
+
     # Todo en un mensaje: si cruzan tres a la vez, tres notificaciones
     # seguidas molestan y encima Telegram empieza a cortar el ritmo.
     texto = alerts.con_fuente(alerts.formatear_varios(avisos, config.vs_currency))

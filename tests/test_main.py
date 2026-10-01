@@ -1042,3 +1042,40 @@ def test_el_resumen_diario_tambien_lo_lleva(con_resumen, enviados):
 
     assert "Tu resumen del día" in enviados[0]
     assert "↑ €64.050,00" in enviados[0]
+
+
+# --- 24 h en los avisos ---
+
+
+def test_el_aviso_lleva_la_variacion_de_24h(config, enviados, monkeypatch):
+    _con_fecha(config, 60000.0, 24)
+    _precio(monkeypatch, {"bitcoin": 66000.0})
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%62000.0"})
+
+    assert "ha subido un" in enviados[0]
+    assert "En 24 h: 🔺 +10.00%" in enviados[0]
+
+
+def test_recien_instalado_el_aviso_va_sin_24h(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 66000.0})
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%62000.0"})
+
+    assert "ha subido un" in enviados[0]
+    assert "24 h" not in enviados[0]
+
+
+def test_varios_avisos_cada_uno_con_lo_suyo(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    con_dos = replace(
+        config, watchlist=[Watch("bitcoin", percent=5), Watch("solana", step=10)]
+    )
+    _con_fecha(config, 60000.0, 24)  # solana sin historico
+    _precio(monkeypatch, {"bitcoin": 66000.0, "solana": 151.0})
+
+    main.ejecutar_ciclo(con_dos, {"bitcoin": "%62000.0", "solana": "140.0"})
+
+    assert "2 avisos" in enviados[0]
+    assert enviados[0].count("En 24 h") == 1

@@ -6,6 +6,7 @@ from crypto_tracker.alerts import (
     ALTO,
     BAJO,
     NORMAL,
+    Alert,
     clasificar,
     formatear,
     formatear_resumen,
@@ -520,3 +521,39 @@ def test_resumen_si_ya_paso_el_objetivo(proximo):
 
     assert "te llega en el próximo ciclo" in texto
     assert "↑" not in texto
+
+
+# --- la variacion de 24 h en los avisos ---
+
+
+@pytest.mark.parametrize(
+    "aviso",
+    [
+        Alert("bitcoin", 64100.0, 64000.0, ALTO),  # paso o rango
+        Alert("bitcoin", 63000.0, 60000.0, ALTO, percent=5.0),
+        Alert("bitcoin", 55000.0, 60000.0, BAJO, percent=-8.3, minutos=60),
+        Alert("bitcoin", 70100.0, 70000.0, ALTO, puntual=True),
+    ],
+)
+def test_todos_los_avisos_llevan_las_24h(aviso):
+    from dataclasses import replace
+
+    texto = formatear(replace(aviso, variacion_24h=3.2), "eur")
+
+    assert "<i>En 24 h: 🔺 +3.20%</i>" in texto
+
+
+def test_la_variacion_de_24h_bajando():
+    aviso = Alert("bitcoin", 62900.0, 63000.0, BAJO, variacion_24h=-4.5)
+
+    assert "En 24 h: 🔻 -4.50%" in formatear(aviso, "eur")
+
+
+def test_sin_historico_no_sale_la_linea():
+    assert "24 h" not in formatear(Alert("bitcoin", 64100.0, 64000.0, ALTO), "eur")
+
+
+def test_la_alerta_puntual_sigue_cerrando_el_mensaje():
+    aviso = Alert("bitcoin", 70100.0, 70000.0, ALTO, puntual=True, variacion_24h=1.0)
+
+    assert formatear(aviso, "eur").endswith("ya la he quitado.</i>")
