@@ -394,6 +394,39 @@ def formatear_puntuales(alertas: list[Puntual], currency: str) -> str:
     return "\n".join(lineas)
 
 
+def describir(watch: Watch, currency: str) -> str:
+    """Como se vigila una cripto, en cristiano: 'cada 5 % que se mueva'."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    if watch.percent is not None:
+        return f"cada {watch.percent:g} % que se mueva".replace(".", ",")
+    if watch.step is not None:
+        return f"cada {simbolo}{_num(watch.step)}"
+
+    lados = []
+    if watch.min_price is not None:
+        lados.append(f"si baja de {simbolo}{_num(watch.min_price)}")
+    if watch.max_price is not None:
+        lados.append(f"si sube de {simbolo}{_num(watch.max_price)}")
+    return " o ".join(lados)
+
+
+def formatear_vigiladas(
+    watchlist: list[Watch], currency: str, desde_telegram: set[str]
+) -> str:
+    """Respuesta de /vigilar a secas."""
+    lineas = ["👀 <b>Lo que vigilo</b>", ""]
+    for w in watchlist:
+        nombre = escape(w.coin_id.replace("-", " ").title())
+        linea = f"<b>{nombre}</b>  {describir(w, currency)}"
+        # Si no, no hay forma de saber por que no cuadra con el .env
+        if w.coin_id in desde_telegram:
+            linea += "  <i>(desde Telegram)</i>"
+        lineas.append(linea)
+
+    lineas.append("\nPara cambiarlo: /vigilar solana %5 o /dejar solana")
+    return "\n".join(lineas)
+
+
 def muestrear(precios: list[float], n: int) -> list[float]:
     """Se queda con n puntos repartidos, siempre con el primero y el ultimo."""
     if len(precios) <= n:

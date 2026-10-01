@@ -351,3 +351,41 @@ def test_una_base_vieja_gana_la_tabla_al_arrancar(tmp_path):
 
     assert database.get_puntuales(ruta, "eur") == []
     assert str(database.ultimo_resumen(ruta)) == "2026-09-30"
+
+
+# --- cambios de la watchlist ---
+
+
+def test_cambios_van_y_vuelven(db):
+    database.guardar_cambio(db, "solana", "solana:%5.0")
+    database.guardar_cambio(db, "bitcoin", None)
+
+    assert database.get_cambios(db) == {"solana": "solana:%5.0", "bitcoin": None}
+
+
+def test_cambio_se_pisa(db):
+    database.guardar_cambio(db, "solana", "solana:%5.0")
+    database.guardar_cambio(db, "solana", "solana:10.0")
+
+    assert database.get_cambios(db) == {"solana": "solana:10.0"}
+
+
+def test_cambios_sin_nada(db):
+    assert database.get_cambios(db) == {}
+
+
+def test_de_cero_se_devuelve_una_vez(db):
+    database.guardar_cambio(db, "solana", "solana:%5.0")
+    database.guardar_cambio(db, "bitcoin", None)
+
+    assert database.tomar_de_cero(db) == {"solana", "bitcoin"}
+    assert database.tomar_de_cero(db) == set()
+
+
+def test_volver_a_cambiar_vuelve_a_empezar_de_cero(db):
+    database.guardar_cambio(db, "solana", "solana:%5.0")
+    database.tomar_de_cero(db)
+
+    database.guardar_cambio(db, "solana", "solana:10.0")
+
+    assert database.tomar_de_cero(db) == {"solana"}

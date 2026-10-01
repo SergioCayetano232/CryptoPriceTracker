@@ -49,6 +49,16 @@ CREATE TABLE IF NOT EXISTS alertas_puntuales (
     currency   TEXT    NOT NULL,
     created_at TEXT    NOT NULL
 );
+
+-- Lo que cambias por Telegram encima del WATCHLIST del .env. regla va con el
+-- mismo formato (solana:%5.0), y NULL es que la dejaste. de_cero = 1 hasta
+-- que un ciclo olvide por donde iba con la regla vieja.
+CREATE TABLE IF NOT EXISTS watchlist_cambios (
+    coin_id    TEXT PRIMARY KEY,
+    regla      TEXT,
+    de_cero    INTEGER NOT NULL DEFAULT 1,
+    updated_at TEXT NOT NULL
+);
 """
 
 # Clave donde se guarda hasta cuando callamos, en ISO y UTC.
@@ -356,6 +366,38 @@ def borrar_puntual(db_path: str, alerta_id: int) -> bool:
             "DELETE FROM alertas_puntuales WHERE id = ?", (alerta_id,)
         )
         return cursor.rowcount > 0
+
+
+def guardar_cambio(db_path: str, coin_id: str, regla: str | None) -> None:
+    """Apunta un /vigilar o un /dejar. None es que la dejas."""
+    ahora = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    with _connect(db_path) as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO watchlist_cambios "
+            "(coin_id, regla, de_cero, updated_at) VALUES (?, ?, 1, ?)",
+            (coin_id, regla, ahora),
+        )
+
+
+def get_cambios(db_path: str) -> dict[str, str | None]:
+    """Los cambios de Telegram, en el orden en que los hiciste."""
+    with _connect(db_path) as conn:
+        filas = conn.execute(
+            "SELECT coin_id, regla FROM watchlist_cambios ORDER BY rowid"
+        ).fetchall()
+
+    return {f["coin_id"]: f["regla"] for f in filas}
+
+
+def tomar_de_cero(db_path: str) -> set[str]:
+    """Las que acaban de cambiar de regla. Las devuelve una sola vez."""
+    with _connect(db_path) as conn:
+        filas = conn.execute(
+            "SELECT coin_id FROM watchlist_cambios WHERE de_cero = 1"
+        ).fetchall()
+        conn.execute("UPDATE watchlist_cambios SET de_cero = 0 WHERE de_cero = 1")
+
+    return {f["coin_id"] for f in filas}
 
 
 def get_history(db_path: str, coin_id: str, limit: int = 50) -> list[sqlite3.Row]:

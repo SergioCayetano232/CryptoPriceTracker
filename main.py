@@ -14,6 +14,7 @@ import argparse
 import logging
 import sys
 import time
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 
 from crypto_tracker import (
@@ -28,6 +29,7 @@ from crypto_tracker import (
     puntuales,
     salud,
     telegram,
+    vigiladas,
 )
 from crypto_tracker.config import (
     Config,
@@ -70,6 +72,7 @@ def ejecutar_ciclo(
     falla, lo registra y devuelve el estado sin tocar para reintentar luego.
     sin_precio son los ids de los que ya se aviso que no existen.
     """
+    config = _con_cambios(config)
     coin_ids = [w.coin_id for w in config.watchlist]
     pendientes = _puntuales(config)
     # Las de /alerta pueden ser de criptos que no vigilas. Todo en una consulta.
@@ -109,6 +112,7 @@ def ejecutar_ciclo(
         except database.DatabaseError as e:
             logger.error("No se pudo purgar el historico: %s", e)
 
+    estado = _olvidar_cambiadas(config, estado)
     avisos, estado_nuevo = alerts.revisar(precios, config.watchlist, estado)
     vigiladas = {c: p for c, p in precios.items() if c in coin_ids}
     avisos += revisar_bruscos(config, vigiladas)
@@ -166,6 +170,32 @@ def ejecutar_ciclo(
         logger.error("No se pudo avisar de: %s", cruzadas)
 
     return estado_nuevo, None
+
+
+def _con_cambios(config: Config) -> Config:
+    """La config con lo que vigilas de verdad: el .env mas lo de Telegram."""
+    try:
+        cambios = database.get_cambios(config.database_path)
+    except database.DatabaseError as e:
+        logger.error("No se pudieron leer los cambios de /vigilar: %s", e)
+        return config
+
+    if not cambios:
+        return config
+    return replace(config, watchlist=vigiladas.combinar(config.watchlist, cambios))
+
+
+def _olvidar_cambiadas(config: Config, estado: dict[str, str]) -> dict[str, str]:
+    """Si cambiaste la regla, el nivel guardado con la vieja daria avisos falsos."""
+    try:
+        cambiadas = database.tomar_de_cero(config.database_path)
+    except database.DatabaseError as e:
+        logger.error("No se pudo mirar que criptos han cambiado: %s", e)
+        return estado
+
+    if cambiadas:
+        logger.info("Empiezan de cero: %s", ", ".join(sorted(cambiadas)))
+    return {c: v for c, v in estado.items() if c not in cambiadas}
 
 
 def _puntuales(config: Config) -> list[puntuales.Puntual]:
@@ -385,6 +415,12 @@ def responder(config: Config, nombre: str, argumento: str) -> str | comandos.Fot
     if nombre == "alerta":
         return _crear_alerta(config, argumento)
 
+    if nombre == "vigilar":
+        return _vigilar(config, argumento) if argumento else _lista_vigiladas(config)
+
+    if nombre == "dejar":
+        return _dejar(config, argumento.strip().lower())
+
     if nombre == "alertas":
         pendientes = database.get_puntuales(config.database_path, config.vs_currency)
         return alerts.formatear_puntuales(pendientes, config.vs_currency)
@@ -410,6 +446,65 @@ def responder(config: Config, nombre: str, argumento: str) -> str | comandos.Fot
         return alerts.con_fuente(alerts.formatear_busqueda(argumento, resultados))
 
     return comandos.NO_ENTIENDO
+
+
+def _lista_vigiladas(config: Config) -> str:
+    cambios = database.get_cambios(config.database_path)
+    desde_telegram = {c for c, regla in cambios.items() if regla is not None}
+    return alerts.formatear_vigiladas(
+        _con_cambios(config).watchlist, config.vs_currency, desde_telegram
+    )
+
+
+def _vigilar(config: Config, argumento: str) -> str:
+    try:
+        watch, regla = vigiladas.interpretar(argumento)
+    except vigiladas.VigilarError as e:
+        return telegram.escape(str(e))
+
+    nombre = telegram.escape(watch.coin_id.replace("-", " ").title())
+    ya_estaba = watch.coin_id in {w.coin_id for w in _con_cambios(config).watchlist}
+
+    # Si es nueva, que exista. Si no, nos enterariamos en el siguiente ciclo.
+    if not ya_estaba:
+        try:
+            precios = coingecko.get_prices([watch.coin_id], config.vs_currency)
+        except coingecko.CoinGeckoError as e:
+            return (
+                f"No he podido comprobar el id ahora mismo: {telegram.escape(str(e))}"
+            )
+        if watch.coin_id not in precios:
+            return (
+                f"No encuentro <b>{telegram.escape(watch.coin_id)}</b> en CoinGecko. "
+                f"Prueba con /buscar {telegram.escape(watch.coin_id)}"
+            )
+
+    database.guardar_cambio(config.database_path, watch.coin_id, regla)
+    logger.info("Watchlist: %s pasa a %s", watch.coin_id, regla)
+    texto = f"👀 Vigilo <b>{nombre}</b>: {alerts.describir(watch, config.vs_currency)}."
+    # Los rangos avisan nada mas empezar si ya esta fuera; los otros no.
+    if watch.percent is not None or watch.step is not None:
+        texto += "\nEmpieza de cero, así que el primer ciclo solo apunta dónde está."
+    return texto
+
+
+def _dejar(config: Config, coin_id: str) -> str:
+    if not coin_id:
+        return "¿Cuál? Por ejemplo: /dejar solana"
+
+    actuales = [w.coin_id for w in _con_cambios(config).watchlist]
+    if coin_id not in actuales:
+        return f"No estoy vigilando <b>{telegram.escape(coin_id)}</b>. Mira /vigilar"
+    if len(actuales) == 1:
+        return (
+            "Es la única que vigilo. Si la quito no te avisaría de nada. "
+            "Añade otra antes con /vigilar."
+        )
+
+    database.guardar_cambio(config.database_path, coin_id, None)
+    logger.info("Watchlist: deja de vigilar %s", coin_id)
+    nombre = telegram.escape(coin_id.replace("-", " ").title())
+    return f"👋 Dejo de vigilar <b>{nombre}</b>."
 
 
 def _crear_alerta(config: Config, argumento: str) -> str:
@@ -453,8 +548,8 @@ def _historico(config: Config, coin_id: str) -> str | comandos.Foto:
         config.database_path, coin_id, HORAS_RESUMEN, config.vs_currency
     )
     precios = [precio for _, precio in serie]
-    vigiladas = {w.coin_id for w in config.watchlist}
-    if len(precios) < 2 and coin_id in vigiladas:
+    mias = {w.coin_id for w in _con_cambios(config).watchlist}
+    if len(precios) < 2 and coin_id in mias:
         # Recien instalado: el id esta bien, lo que falta es tiempo.
         return (
             f"Aún tengo pocos precios de <b>{telegram.escape(coin_id)}</b>. "
@@ -631,6 +726,7 @@ def enviar_resumen(config: Config) -> int:
 
 def montar_resumen(config: Config, titulo: str | None = None) -> str | None:
     """El texto del resumen con los precios de ahora. None si no hay precios."""
+    config = _con_cambios(config)
     coin_ids = [w.coin_id for w in config.watchlist]
     # Lo de la cartera puede no estar en la lista de vigiladas, pero tambien
     # necesita precio. Una sola consulta para todo.
@@ -859,7 +955,11 @@ def main() -> int:
         logger.warning("No se pudo leer el estado anterior: %s", e)
         estado = {}
 
-    logger.info("Vigilando %d criptos en %s", len(config.watchlist), config.vs_currency)
+    logger.info(
+        "Vigilando %d criptos en %s",
+        len(_con_cambios(config).watchlist),
+        config.vs_currency,
+    )
 
     if args.loop:
         return ejecutar_bucle(config, estado)

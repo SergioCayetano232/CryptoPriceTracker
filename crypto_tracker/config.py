@@ -145,6 +145,13 @@ def _parse_watchlist(raw: str) -> list[Watch]:
     return watches
 
 
+def parse_entrada(raw: str) -> Watch:
+    """Una sola entrada con el formato de WATCHLIST: 'solana:%5'."""
+    if "," in raw:
+        raise ConfigError(f"Solo una cripto cada vez, no '{raw}'")
+    return _parse_watchlist(raw)[0]
+
+
 def _parse_step(raw: str, coin_id: str) -> float:
     """Lee el paso de variacion. Tiene que ser un numero mayor que cero."""
     valor = _parse_threshold(raw, coin_id, "paso")

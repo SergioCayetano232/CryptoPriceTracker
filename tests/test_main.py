@@ -810,3 +810,131 @@ def test_la_alerta_aguanta_si_telegram_falla(config, monkeypatch):
     main.ejecutar_ciclo(config, {"bitcoin": "%70000.0"})
 
     assert len(database.get_puntuales(config.database_path, "eur")) == 1
+
+
+# --- /vigilar y /dejar ---
+
+
+def test_vigilar_a_secas_lista_lo_del_env(config, enviados):
+    main.atender(config, _mensaje("/vigilar"))
+
+    assert "<b>Bitcoin</b>  cada 5 % que se mueva" in enviados[0]
+    assert "desde Telegram" not in enviados[0]
+
+
+def test_vigilar_una_nueva(config, enviados, monkeypatch):
+    pedidas = _precio(monkeypatch, {"bitcoin": 63000.0, "solana": 150.0})
+
+    main.atender(config, _mensaje("/vigilar solana 5%"))
+    main.ejecutar_ciclo(config, {})
+    main.atender(config, _mensaje("/vigilar"))
+
+    assert "Vigilo <b>Solana</b>: cada 5 % que se mueva" in enviados[0]
+    assert pedidas[-1] == ["bitcoin", "solana"]  # el ciclo ya la consulta
+    assert (
+        "<b>Solana</b>  cada 5 % que se mueva  <i>(desde Telegram)</i>" in enviados[1]
+    )
+
+
+def test_vigilar_una_que_no_existe(config, enviados, monkeypatch):
+    _precio(monkeypatch, {})
+
+    main.atender(config, _mensaje("/vigilar solanna %5"))
+
+    assert "/buscar solanna" in enviados[0]
+    assert database.get_cambios(config.database_path) == {}
+
+
+def test_vigilar_mal_escrito(config, enviados):
+    main.atender(config, _mensaje("/vigilar solana <%5>"))
+
+    assert "&lt;" in enviados[0]
+    assert database.get_cambios(config.database_path) == {}
+
+
+def test_cambiar_la_regla_no_vuelve_a_mirar_el_id(config, enviados, monkeypatch):
+    def no_llamar(*a):
+        raise AssertionError("ya la vigilaba, no hace falta comprobarla")
+
+    monkeypatch.setattr(coingecko, "get_prices", no_llamar)
+
+    main.atender(config, _mensaje("/vigilar bitcoin 1000"))
+
+    assert "cada €1.000,00" in enviados[0]
+
+
+def test_cambiar_la_regla_no_da_avisos_falsos(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 63568.0})
+    # venia por %, con la referencia muy lejos: con la regla vieja avisaria
+    estado = {"bitcoin": "%50000.0"}
+
+    main.atender(config, _mensaje("/vigilar bitcoin 1000"))
+    enviados.clear()
+    estado, _ = main.ejecutar_ciclo(config, estado)
+
+    assert enviados == []
+    assert estado["bitcoin"] == "63000.0"  # el nivel de partida de la regla nueva
+
+
+def test_tras_empezar_de_cero_avisa_normal(config, enviados, monkeypatch):
+    main.atender(config, _mensaje("/vigilar bitcoin 1000"))
+    enviados.clear()
+    _precio(monkeypatch, {"bitcoin": 63568.0})
+    estado, _ = main.ejecutar_ciclo(config, {"bitcoin": "%50000.0"})
+
+    _precio(monkeypatch, {"bitcoin": 64100.0})
+    main.ejecutar_ciclo(config, estado)
+
+    assert "ha subido de €64.000,00" in enviados[0]
+
+
+def test_dejar_una(config, enviados, monkeypatch):
+    database.guardar_cambio(config.database_path, "solana", "solana:%5.0")
+    pedidas = _precio(monkeypatch, {"bitcoin": 63000.0})
+
+    main.atender(config, _mensaje("/dejar Solana"))
+    main.ejecutar_ciclo(config, {})
+
+    assert "Dejo de vigilar <b>Solana</b>" in enviados[0]
+    assert pedidas[-1] == ["bitcoin"]
+
+
+def test_dejar_una_del_env(config, enviados, monkeypatch):
+    database.guardar_cambio(config.database_path, "solana", "solana:%5.0")
+    pedidas = _precio(monkeypatch, {"solana": 150.0})
+
+    main.atender(config, _mensaje("/dejar bitcoin"))
+    main.ejecutar_ciclo(config, {})
+
+    assert pedidas[-1] == ["solana"]
+
+
+def test_no_deja_quitar_la_ultima(config, enviados):
+    main.atender(config, _mensaje("/dejar bitcoin"))
+
+    assert "Es la única" in enviados[0]
+    assert database.get_cambios(config.database_path) == {}
+
+
+def test_dejar_una_que_no_vigilo(config, enviados):
+    main.atender(config, _mensaje("/dejar dogecoin"))
+    main.atender(config, _mensaje("/dejar"))
+
+    assert "No estoy vigilando <b>dogecoin</b>" in enviados[0]
+    assert "/dejar solana" in enviados[1]
+
+
+def test_el_status_incluye_lo_de_telegram(config, enviados, monkeypatch):
+    database.guardar_cambio(config.database_path, "solana", "solana:%5.0")
+    _precio(monkeypatch, {"bitcoin": 63000.0, "solana": 150.0})
+
+    main.atender(config, _mensaje("/status"))
+
+    assert "<b>Solana</b>" in enviados[0]
+
+
+def test_vigilar_un_rango_no_promete_esperar(config, enviados):
+    main.atender(config, _mensaje("/vigilar bitcoin 55000 75000"))
+
+    assert "si baja de €55.000,00 o si sube de €75.000,00" in enviados[0]
+    assert "primer ciclo" not in enviados[0]

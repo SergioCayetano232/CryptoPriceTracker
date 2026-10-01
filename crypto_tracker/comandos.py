@@ -10,6 +10,8 @@ COMANDOS = {
     "alertas": "Las alertas que tienes puestas",
     "quitar": "Quitar una alerta (ej: /quitar 3)",
     "historico": "Cómo ha ido una cripto en 24 h (ej: /historico bitcoin)",
+    "vigilar": "Ver o cambiar lo que vigilo (ej: /vigilar solana %5)",
+    "dejar": "Dejar de vigilar una cripto (ej: /dejar solana)",
     "buscar": "Encuentra el id de una cripto (ej: /buscar btc)",
     "mute": "Callar los avisos un rato (ej: /mute 2h)",
     "unmute": "Volver a avisar",
@@ -25,6 +27,7 @@ ALIAS = {
     "portfolio": "cartera",
     "alert": "alerta",
     "alerts": "alertas",
+    "watch": "vigilar",
 }
 
 AYUDA = "🤖 <b>Esto es lo que sé hacer</b>\n\n" + "\n".join(

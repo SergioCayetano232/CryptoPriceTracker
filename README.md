@@ -158,6 +158,9 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/alerta bitcoin 70000` | Te avisa una vez cuando llegue a ese precio |
 | `/alertas` | Las alertas que tienes puestas |
 | `/quitar 3` | Quita la alerta número 3 |
+| `/vigilar` | Lo que está vigilando y cómo |
+| `/vigilar solana %5` | Añade una cripto, o cambia cómo vigila una que ya estaba |
+| `/dejar solana` | Deja de vigilarla |
 | `/historico bitcoin` | Imagen con la gráfica de las últimas 24 h, máximo y mínimo |
 | `/buscar btc` | Encuentra el id de CoinGecko de una cripto |
 | `/mute 2h` | Calla los avisos un rato |
@@ -174,6 +177,17 @@ baje, según dónde esté ahora. Avisa una vez y se borra sola, sin tocar el `.e
 ni reiniciar. Vale cualquier cripto, aunque no esté en `WATCHLIST`, y puedes
 escribir el precio como `70.000` o `0,35`. Si estás en `/mute`, no se pierde: te
 avisa al volver si sigue en ese precio.
+
+**Cambiar lo que vigila sin tocar el `.env`:**
+
+`/vigilar` admite lo mismo que `WATCHLIST`, con espacios en vez de dos puntos:
+`/vigilar solana 10`, `/vigilar solana %5` o `/vigilar bitcoin 55000 75000`
+(con un `-` dejas un lado sin vigilar: `/vigilar ethereum - 4000`). Se aplica al
+momento, sin reiniciar, y se guarda aunque se apague.
+
+El `.env` sigue siendo la base y lo que hagas por Telegram va encima. Si una
+cripto la has tocado por Telegram, manda eso aunque luego cambies el `.env`.
+`/vigilar` te lo marca con *(desde Telegram)*.
 
 **Ver cómo van ahora mismo:**
 ```
