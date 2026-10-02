@@ -147,4 +147,4 @@ El bot arranca y se cierra solo
 No me llega ningun aviso
     Normal al principio: la primera consulta solo apunta
     los precios. Necesita una segunda para comparar.
-    Con CHECK_INTERVAL=300 eso son 5 minutos.
+    Con CHECK_INTERVAL=330 eso son 5 minutos y medio.

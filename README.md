@@ -303,7 +303,9 @@ Necesita saber dónde estaban antes para saber si han cruzado algo.
 
 ## Dejarlo funcionando siempre en un servidor Windows
 
-En la carpeta `windows/` hay cuatro archivos:
+En la carpeta `windows/` está todo lo necesario. Si es la primera vez,
+`INSTALAR-EN-EL-SERVIDOR.txt` lo explica paso a paso, desde copiar la carpeta.
+Si ya lo tienes preparado:
 
 **1. Haz clic derecho en `instalar-tarea.bat` → Ejecutar como administrador.**
 
@@ -323,6 +325,8 @@ schtasks /run /tn "CryptoPriceTracker"
 - `estado.bat` — te dice si está funcionando y enseña lo último que hizo
 - `quitar-tarea.bat` — lo desinstala (ejecutar como administrador)
 - `iniciar.bat` — lo arranca a mano, no hace falta tocarlo
+- `revisar.bat` — el vigía: la tarea lo lanza cada 15 minutos y vuelve a
+  arrancar el bot si se ha caído. Tampoco hace falta tocarlo
 
 Todo lo que va haciendo queda apuntado en `data/tracker.log`.
 
