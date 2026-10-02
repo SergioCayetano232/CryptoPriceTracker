@@ -66,6 +66,7 @@ SILENCIO = "silenciado_hasta"
 
 # Dia del ultimo resumen diario, para no mandarlo dos veces si se reinicia.
 ULTIMO_RESUMEN = "ultimo_resumen"
+ULTIMO_SEMANAL = "ultimo_semanal"
 
 
 class DatabaseError(Exception):
@@ -309,11 +310,11 @@ def silenciado_hasta(db_path: str) -> datetime | None:
     return cuando
 
 
-def ultimo_resumen(db_path: str) -> date | None:
-    """Dia en que se mando el ultimo resumen diario."""
+def ultimo_resumen(db_path: str, clave: str = ULTIMO_RESUMEN) -> date | None:
+    """Dia en que se mando el ultimo resumen, el diario o el semanal."""
     with _connect(db_path) as conn:
         fila = conn.execute(
-            "SELECT valor FROM ajustes WHERE clave = ?", (ULTIMO_RESUMEN,)
+            "SELECT valor FROM ajustes WHERE clave = ?", (clave,)
         ).fetchone()
 
     if not fila:
@@ -325,11 +326,11 @@ def ultimo_resumen(db_path: str) -> date | None:
         return None
 
 
-def guardar_resumen(db_path: str, dia: date) -> None:
+def guardar_resumen(db_path: str, dia: date, clave: str = ULTIMO_RESUMEN) -> None:
     with _connect(db_path) as conn:
         conn.execute(
             "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
-            (ULTIMO_RESUMEN, dia.isoformat()),
+            (clave, dia.isoformat()),
         )
 
 

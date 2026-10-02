@@ -127,14 +127,19 @@ def _explain(status: int, data: dict) -> str:
     return f"HTTP {status}: {descripcion}"
 
 
-def send_photo(token: str, chat_id: str, png: bytes, caption: str = "") -> bool:
+def send_photo(
+    token: str, chat_id: str, png: bytes, caption: str = "", sin_sonido: bool = False
+) -> bool:
     """Manda una imagen con su pie. Como send_message, no lanza excepciones."""
     caption = _recortar(caption, MAX_CAPTION)
+    datos = {"chat_id": chat_id, "caption": caption, "parse_mode": "HTML"}
+    if sin_sonido:
+        datos["disable_notification"] = "true"
 
     try:
         response = requests.post(
             PHOTO_URL.format(token=token),
-            data={"chat_id": chat_id, "caption": caption, "parse_mode": "HTML"},
+            data=datos,
             files={"photo": ("grafica.png", png, "image/png")},
             timeout=TIMEOUT,
         )

@@ -42,7 +42,7 @@ def sin_fotos_de_verdad(monkeypatch):
     monkeypatch.setattr(
         telegram,
         "send_photo",
-        lambda token, chat, png, pie="": fotos.append((png, pie)) or True,
+        lambda token, chat, png, pie="", **kw: fotos.append((png, pie)) or True,
     )
     return fotos
 
@@ -1382,3 +1382,141 @@ def test_la_espera_atiende_los_botones(config, enviados, contestados, monkeypatc
     assert main.esperar_escuchando(config, 1, None) == 10
     assert contestados == ["q1"]
     assert len(enviados) == 1
+
+
+# --- resumen semanal ---
+
+
+@pytest.fixture
+def con_semana(config):
+    from dataclasses import replace
+    from datetime import time as hora
+
+    from crypto_tracker.config import parse_cartera
+
+    return replace(
+        config,
+        resumen_diario=hora(9, 0),
+        cartera=parse_cartera("bitcoin:0.1:5000,solana:10:1000"),
+    )
+
+
+def _guardar(config, coin_id, precio, horas_atras):
+    import sqlite3
+    from datetime import datetime, timedelta, timezone
+
+    cuando = datetime.now(timezone.utc) - timedelta(hours=horas_atras)
+    conn = sqlite3.connect(config.database_path)
+    conn.execute(
+        "INSERT INTO prices (coin_id, price, currency, created_at) VALUES (?,?,?,?)",
+        (coin_id, precio, "eur", cuando.isoformat(timespec="seconds")),
+    )
+    conn.commit()
+    conn.close()
+
+
+def _semana_guardada(config):
+    for coin_id, antes, ahora in (("bitcoin", 60000.0, 63000.0), ("solana", 100, 95)):
+        _guardar(config, coin_id, antes, 7 * 24 - 1)
+        _guardar(config, coin_id, ahora, 0)
+
+
+DOMINGO = _dia(9, 30, dia=27)
+LUNES = _dia(9, 30, dia=28)
+
+
+def test_semanal_el_domingo(con_semana, enviados, sin_fotos_de_verdad):
+    _semana_guardada(con_semana)
+
+    main.resumen_semanal(con_semana, DOMINGO)
+
+    [(png, pie)] = sin_fotos_de_verdad
+    assert png
+    assert "Tu semana" in pie
+    assert "+3.57% (+€250,00) en la semana" in pie
+    assert pie.index("Bitcoin") < pie.index("Solana")
+    assert "Solo tengo precios" not in pie
+    assert enviados == []
+
+
+def test_semanal_una_vez(con_semana, sin_fotos_de_verdad):
+    _semana_guardada(con_semana)
+
+    main.resumen_semanal(con_semana, DOMINGO)
+    main.resumen_semanal(con_semana, DOMINGO)
+
+    assert len(sin_fotos_de_verdad) == 1
+
+
+def test_semanal_solo_los_domingos(con_semana, sin_fotos_de_verdad):
+    _semana_guardada(con_semana)
+
+    main.resumen_semanal(con_semana, LUNES)
+
+    assert sin_fotos_de_verdad == []
+
+
+def test_semanal_sin_cartera(con_resumen, enviados, sin_fotos_de_verdad):
+    main.resumen_semanal(con_resumen, DOMINGO)
+
+    assert enviados == [] and sin_fotos_de_verdad == []
+
+
+def test_semanal_sin_precios_no_manda_ni_insiste(con_semana, enviados):
+    main.resumen_semanal(con_semana, DOMINGO)
+
+    assert enviados == []
+    ultimo = database.ultimo_resumen(con_semana.database_path, database.ULTIMO_SEMANAL)
+    assert ultimo == DOMINGO.date()
+
+
+def test_semanal_callado(con_semana, sin_fotos_de_verdad):
+    from datetime import datetime, timedelta, timezone
+
+    _semana_guardada(con_semana)
+    hasta = datetime.now(timezone.utc) + timedelta(hours=1)
+    database.silenciar_hasta(con_semana.database_path, hasta)
+
+    main.resumen_semanal(con_semana, DOMINGO)
+
+    assert sin_fotos_de_verdad == []
+    # al quitar el mute, si sigue en hora, llega
+    assert (
+        database.ultimo_resumen(con_semana.database_path, database.ULTIMO_SEMANAL)
+        is None
+    )
+
+
+def test_semanal_sin_imagen_manda_texto(con_semana, enviados, monkeypatch):
+    def falla(*a, **k):
+        raise grafica.GraficaError("Falta matplotlib")
+
+    monkeypatch.setattr(grafica, "dibujar", falla)
+    _semana_guardada(con_semana)
+
+    main.resumen_semanal(con_semana, DOMINGO)
+
+    assert "Tu semana" in enviados[0]
+
+
+def test_semanal_reintenta_si_telegram_falla(con_semana, monkeypatch):
+    monkeypatch.setattr(telegram, "send_photo", lambda *a, **k: False)
+    monkeypatch.setattr(telegram, "send_message", lambda *a, **k: False)
+    _semana_guardada(con_semana)
+
+    main.resumen_semanal(con_semana, DOMINGO)
+
+    assert (
+        database.ultimo_resumen(con_semana.database_path, database.ULTIMO_SEMANAL)
+        is None
+    )
+
+
+def test_semanal_avisa_si_no_hay_semana_entera(con_semana, sin_fotos_de_verdad):
+    for coin_id, antes, ahora in (("bitcoin", 60000.0, 63000.0), ("solana", 100, 95)):
+        _guardar(con_semana, coin_id, antes, 30)
+        _guardar(con_semana, coin_id, ahora, 0)
+
+    main.resumen_semanal(con_semana, DOMINGO)
+
+    assert "Solo tengo precios desde" in sin_fotos_de_verdad[0][1]

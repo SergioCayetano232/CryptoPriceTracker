@@ -32,6 +32,7 @@ from crypto_tracker import (
     proximo,
     puntuales,
     salud,
+    semanal,
     telegram,
     vigiladas,
 )
@@ -309,6 +310,7 @@ def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:
             estado, problema = ejecutar_ciclo(config, estado, sin_precio)
             fallos = 0
             resumen_diario(config)
+            resumen_semanal(config)
         except KeyboardInterrupt:
             raise
         except Exception as e:
@@ -701,6 +703,89 @@ def resumen_diario(config: Config, ahora: datetime | None = None) -> None:
         database.guardar_resumen(config.database_path, ahora.date())
     except database.DatabaseError as e:
         logger.error("No se pudo apuntar el resumen, puede que llegue repetido: %s", e)
+
+
+def resumen_semanal(config: Config, ahora: datetime | None = None) -> None:
+    """Los domingos, a la hora del diario, como le ha ido a la cartera."""
+    if config.resumen_diario is None or not config.cartera:
+        return
+
+    ahora = ahora or datetime.now().astimezone()
+    try:
+        ultimo = database.ultimo_resumen(config.database_path, database.ULTIMO_SEMANAL)
+    except database.DatabaseError as e:
+        logger.error("No se pudo leer el ultimo resumen semanal: %s", e)
+        return
+
+    if not semanal.toca(ahora, config.resumen_diario, ultimo) or _silenciado(config):
+        return
+
+    # Con lo ya guardado: el ciclo de justo antes acaba de apuntar los precios
+    # de ahora, asi que no hace falta gastar otra consulta.
+    posiciones = list(config.cartera)
+    try:
+        filas = database.get_series(
+            config.database_path,
+            [p.coin_id for p in posiciones],
+            semanal.HORAS,
+            config.vs_currency,
+        )
+    except database.DatabaseError as e:
+        logger.error("No se pudieron leer los precios de la semana: %s", e)
+        return
+    semana = semanal.semana(posiciones, filas)
+    if semana is None:
+        logger.info("Toca el resumen semanal, pero aun no hay precios de la semana")
+    elif not _mandar_semana(config, semana):
+        logger.error("No se pudo enviar el resumen semanal, lo reintento luego")
+        return
+    else:
+        logger.info("Resumen semanal enviado")
+
+    try:
+        database.guardar_resumen(
+            config.database_path, ahora.date(), database.ULTIMO_SEMANAL
+        )
+    except database.DatabaseError as e:
+        logger.error("No se pudo apuntar el resumen semanal: %s", e)
+
+
+def _mandar_semana(config: Config, semana: semanal.Semana) -> bool:
+    primero = semana.serie[0][0]
+    # Contra la hora de verdad, que es con la que se leyeron los precios.
+    ahora = datetime.now(timezone.utc)
+    desde = primero if periodo.falta_principio(primero, ahora, semanal.HORAS) else None
+    texto = alerts.con_fuente(
+        alerts.formatear_semana(semana, config.vs_currency, desde)
+    )
+    sin_sonido = _sin_sonido(config)
+
+    invertidos = [p.invertido for p in config.cartera]
+    invertido = None if None in invertidos else sum(invertidos)
+    try:
+        png = grafica.dibujar(
+            "cartera",
+            semana.serie,
+            config.vs_currency,
+            semanal.HORAS,
+            titulo="Tu semana",
+            invertido=invertido,
+        )
+    except Exception as e:
+        logger.warning("Mando el resumen semanal sin imagen: %s", e)
+    else:
+        if telegram.send_photo(
+            config.telegram_token,
+            config.telegram_chat_id,
+            png,
+            texto,
+            sin_sonido=sin_sonido,
+        ):
+            return True
+
+    return telegram.send_message(
+        config.telegram_token, config.telegram_chat_id, texto, sin_sonido=sin_sonido
+    )
 
 
 def _avisar_salud(config: Config, texto: str) -> bool:

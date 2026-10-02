@@ -9,6 +9,7 @@ from .cartera import Valor
 from .config import Watch
 from .periodo import nombre as nombre_periodo
 from .puntuales import Puntual
+from .semanal import Semana
 from .telegram import escape
 
 logger = logging.getLogger(__name__)
@@ -365,6 +366,35 @@ def formatear_cartera(
         # Mejor decir que el total esta cojo que dar uno que parezca completo.
         nombres = ", ".join(escape(c) for c in faltan)
         texto.append(f"<i>Sin precio ahora de: {nombres}. El total no las cuenta.</i>")
+
+    return "\n".join(texto)
+
+
+def formatear_semana(
+    semana: Semana, currency: str, desde: datetime | None = None
+) -> str:
+    """El resumen de los domingos. desde va solo si falta el principio."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["📅 <b>Tu semana</b>", ""]
+
+    linea = f"Tu cartera vale <b>{simbolo}{_num(semana.fin)}</b>"
+    if semana.porcentaje is not None:
+        signo = "+" if semana.ganancia >= 0 else "-"
+        linea += (
+            f"\n{_flecha(semana.porcentaje)} {semana.porcentaje:+.2f}% "
+            f"({signo}{simbolo}{_num(abs(semana.ganancia))}) en la semana"
+        )
+    texto.append(linea)
+
+    if desde is not None:
+        cuando = desde.astimezone()
+        texto.append(f"<i>Solo tengo precios desde el {cuando:%d/%m a las %H:%M}.</i>")
+
+    if semana.cambios:
+        texto.append("")
+        for coin_id, cambio in semana.cambios:
+            nombre = escape(coin_id.replace("-", " ").title())
+            texto.append(f"<b>{nombre}</b>  {_flecha(cambio)} {cambio:+.2f}%")
 
     return "\n".join(texto)
 

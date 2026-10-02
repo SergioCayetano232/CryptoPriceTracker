@@ -275,6 +275,12 @@ Mientras esté en modo `--loop`, te manda cada día a esa hora lo mismo que
 `--status`. Si a esa hora estaba apagado, te lo manda al volver, pero solo hasta
 dos horas tarde. Con `--mute` tampoco llega.
 
+Si además tienes `PORTFOLIO`, los domingos a esa misma hora te llega **tu
+semana**: cuánto ha ganado o perdido la cartera en 7 días, cada cripto de la que
+mejor ha ido a la que peor y la gráfica de la semana. Sale de los precios que ya
+tiene guardados, así que no gasta consultas, pero necesita que el bot lleve
+unos días en `--loop`.
+
 **Que no te despierte:**
 ```
 HORAS_TRANQUILAS=23-8
@@ -394,6 +400,7 @@ crypto_tracker/
   grafica.py     las imágenes de /historico y /cartera
   periodo.py     lee tramos como 7d
   diario.py      el resumen diario y las horas tranquilas
+  semanal.py     el resumen de la semana de la cartera
   salud.py       avisa si el bot deja de funcionar
   cuota.py       cuenta las consultas a CoinGecko
   comandos.py    entiende lo que le escribes
