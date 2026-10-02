@@ -76,3 +76,12 @@ def test_un_id_larguisimo_se_queda_sin_los_botones_que_no_caben():
 
     # Telegram rechazaria el mensaje entero, mejor sin esos botones
     assert filas == [[CALLAR]]
+
+
+def test_aviso_de_la_cartera_lleva_a_cartera():
+    filas = para_avisos([Alert("cartera", 5100.0, 5000.0, ALTO, puntual=True)], "eur")
+
+    assert filas[0] == [
+        ("📈 Gráfica", "/cartera"),
+        ("🎯 Si vuelve a €5.000,00", "/alerta cartera 5000,0"),
+    ]

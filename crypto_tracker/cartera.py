@@ -52,6 +52,15 @@ def total(valores: list[Valor]) -> Valor:
     return Valor("total", sum(v.valor for v in valores), invertido)
 
 
+def valor_total(posiciones: list[Posicion], precios: dict[str, float]) -> float | None:
+    """Lo que vale todo junto. None si falta el precio de alguna."""
+    # Un total sin una de ellas parece una caida, y daria una alerta falsa.
+    valores, faltan = valorar(posiciones, precios)
+    if not posiciones or faltan:
+        return None
+    return sum(v.valor for v in valores)
+
+
 def serie_valor(
     posiciones: list[Posicion], filas: list[tuple[datetime, str, float]]
 ) -> list[tuple[datetime, float]]:

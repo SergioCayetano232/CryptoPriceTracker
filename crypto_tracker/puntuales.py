@@ -10,6 +10,10 @@ _MILES = re.compile(r"[1-9]\d{0,2}(\.\d{3})+")
 EJEMPLO = "/alerta bitcoin 70000"
 EJEMPLO_RELATIVA = "/alerta bitcoin +10%"
 
+# Con este nombre la alerta es del valor de toda la cartera, no de una cripto.
+# Va en la misma tabla, asi no hace falta otra.
+CARTERA = "cartera"
+
 
 class PuntualError(Exception):
     """Lo que escribiste en /alerta no se entiende."""

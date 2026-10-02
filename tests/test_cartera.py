@@ -5,7 +5,7 @@ from datetime import timedelta
 import pytest
 
 from crypto_tracker.alerts import formatear_cartera
-from crypto_tracker.cartera import Valor, serie_valor, total, valorar
+from crypto_tracker.cartera import Valor, serie_valor, total, valor_total, valorar
 from crypto_tracker.config import ConfigError, Posicion, parse_cartera
 
 # --- leer PORTFOLIO ---
@@ -80,6 +80,23 @@ def test_total_si_alguna_no_dice_lo_invertido():
 
 
 # --- mensaje ---
+
+
+def test_valor_total():
+    posiciones = [Posicion("bitcoin", 0.02, 1000), Posicion("ethereum", 0.5)]
+    precios = {"bitcoin": 50000.0, "ethereum": 2000.0}
+
+    assert valor_total(posiciones, precios) == 2000
+
+
+def test_valor_total_sin_alguna_no_da_total():
+    posiciones = [Posicion("bitcoin", 0.02), Posicion("ethereum", 0.5)]
+
+    assert valor_total(posiciones, {"bitcoin": 50000.0}) is None
+
+
+def test_valor_total_sin_cartera():
+    assert valor_total([], {"bitcoin": 50000.0}) is None
 
 
 def test_mensaje_de_la_cartera():

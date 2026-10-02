@@ -1100,6 +1100,83 @@ def test_cartera_solo_desde_telegram(config, enviados, monkeypatch):
     assert "<b>Solana</b>  €300,00" in enviados[1]
 
 
+# --- /alerta cartera ---
+
+
+def test_alerta_de_la_cartera(config, enviados, monkeypatch):
+    config = _con_cartera(
+        config, Posicion("bitcoin", 0.02, 1000), Posicion("ethereum", 0.5)
+    )
+    _precio(monkeypatch, {"bitcoin": 50000.0, "ethereum": 2000.0})
+
+    main.atender(config, _mensaje("/alerta cartera 2500"))
+
+    assert "cuando <b>tu cartera</b> suba a <b>€2.500,00</b>" in enviados[0]
+    assert "Ahora vale €2.000,00" in enviados[0]
+
+
+def test_alerta_de_la_cartera_en_porcentaje(config, enviados, monkeypatch):
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
+    _precio(monkeypatch, {"bitcoin": 50000.0})
+
+    main.atender(config, _mensaje("/alerta cartera -10%"))
+
+    assert "baje a <b>€900,00</b>" in enviados[0]
+
+
+def test_alerta_de_la_cartera_salta(config, enviados, monkeypatch):
+    config = _con_cartera(
+        config, Posicion("bitcoin", 0.02, 1000), Posicion("ethereum", 0.5)
+    )
+    _precio(monkeypatch, {"bitcoin": 50000.0, "ethereum": 2000.0})
+    main.atender(config, _mensaje("/alerta cartera 2500"))
+    enviados.clear()
+
+    pedidas = _precio(monkeypatch, {"bitcoin": 70000.0, "ethereum": 2300.0})
+    main.ejecutar_ciclo(config, {})
+
+    assert "<b>Tu cartera</b> ha subido de €2.500,00" in enviados[0]
+    assert "Ahora vale <b>€2.550,00</b>" in enviados[0]
+    assert "cartera" not in pedidas[-1]  # no es una cripto, no se le pide a CoinGecko
+    assert database.get_puntuales(config.database_path, "eur") == []
+
+
+def test_alerta_de_la_cartera_no_salta_sin_todos_los_precios(
+    config, enviados, monkeypatch
+):
+    config = _con_cartera(
+        config, Posicion("bitcoin", 0.02, 1000), Posicion("ethereum", 0.5)
+    )
+    _precio(monkeypatch, {"bitcoin": 50000.0, "ethereum": 2000.0})
+    main.atender(config, _mensaje("/alerta cartera 1500"))
+    enviados.clear()
+
+    # Sin ethereum la cartera parece valer 1000 y bajaria de 1500, pero no es verdad
+    _precio(monkeypatch, {"bitcoin": 50000.0})
+    main.ejecutar_ciclo(config, {})
+
+    assert not any("Tu cartera" in t for t in enviados)
+    assert len(database.get_puntuales(config.database_path, "eur")) == 1
+
+
+def test_alerta_de_la_cartera_con_lo_comprado_por_telegram(
+    config, enviados, monkeypatch
+):
+    _precio(monkeypatch, {"solana": 150.0})
+    main.atender(config, _mensaje("/compra solana 10 1000"))
+
+    main.atender(config, _mensaje("/alerta cartera 2000"))
+
+    assert "Ahora vale €1.500,00" in enviados[1]
+
+
+def test_alerta_de_la_cartera_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/alerta cartera 5000"))
+
+    assert "No tienes cartera" in enviados[0]
+    assert database.get_puntuales(config.database_path, "eur") == []
+
+
 # --- /historico con tramo ---
 
 

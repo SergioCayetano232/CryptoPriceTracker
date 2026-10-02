@@ -9,7 +9,7 @@ from .cartera import Valor
 from .config import Posicion, Watch
 from .movimientos import texto_cantidad
 from .periodo import nombre as nombre_periodo
-from .puntuales import Puntual
+from .puntuales import CARTERA, Puntual
 from .semanal import Semana
 from .telegram import escape
 
@@ -223,6 +223,11 @@ def formatear(alerta: Alert, currency: str) -> str:
             f"<b>{abs(alerta.percent):.2f}%</b>\n"
             f"De {simbolo}{_num(alerta.threshold)} a "
             f"<b>{simbolo}{_num(alerta.price)}</b>"
+        )
+    elif alerta.coin_id == CARTERA:
+        texto = (
+            f"{icono} <b>Tu cartera</b> {verbo} de {simbolo}{_num(alerta.threshold)}\n"
+            f"Ahora vale <b>{simbolo}{_num(alerta.price)}</b>"
         )
     else:
         texto = (
@@ -455,8 +460,15 @@ def formatear_busqueda(texto: str, resultados: list[dict]) -> str:
 def formatear_puntual(alerta: Puntual, precio: float, currency: str) -> str:
     """Respuesta al crear una /alerta."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
-    nombre = escape(alerta.coin_id.replace("-", " ").title())
     verbo = "suba" if alerta.sube else "baje"
+    if alerta.coin_id == CARTERA:
+        return (
+            f"🎯 Te aviso cuando <b>tu cartera</b> {verbo} a "
+            f"<b>{simbolo}{_num(alerta.objetivo)}</b>.\n"
+            f"Ahora vale {simbolo}{_num(precio)}. Solo te aviso una vez."
+        )
+
+    nombre = escape(alerta.coin_id.replace("-", " ").title())
     return (
         f"🎯 Te aviso cuando <b>{nombre}</b> {verbo} a "
         f"<b>{simbolo}{_num(alerta.objetivo)}</b>.\n"
@@ -472,7 +484,11 @@ def formatear_puntuales(alertas: list[Puntual], currency: str) -> str:
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
     lineas = ["🎯 <b>Tus alertas</b>", ""]
     for a in alertas:
-        nombre = escape(a.coin_id.replace("-", " ").title())
+        nombre = (
+            "Tu cartera"
+            if a.coin_id == CARTERA
+            else escape(a.coin_id.replace("-", " ").title())
+        )
         flecha = "🔺" if a.sube else "🔻"
         lineas.append(
             f"<code>{a.id}</code>  <b>{nombre}</b> {flecha} {simbolo}{_num(a.objetivo)}"

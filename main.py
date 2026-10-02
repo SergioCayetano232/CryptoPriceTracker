@@ -87,7 +87,7 @@ def ejecutar_ciclo(
     # Las de /alerta y la cartera pueden ser de criptos que no vigilas. Van en
     # la misma consulta, y asi la cartera tiene historico para su grafica.
     extra = [p.coin_id for p in (*pendientes, *config.cartera)]
-    extra = [c for c in extra if c not in coin_ids]
+    extra = [c for c in extra if c not in coin_ids and c != puntuales.CARTERA]
 
     try:
         precios = coingecko.get_prices(
@@ -128,11 +128,17 @@ def ejecutar_ciclo(
     vigiladas = {c: p for c, p in precios.items() if c in coin_ids}
     avisos += revisar_bruscos(config, vigiladas)
 
-    hechas = puntuales.cumplidas(pendientes, precios)
+    # Para las de /alerta cartera, lo que vale todo junto cuenta como un precio mas.
+    con_cartera = dict(precios)
+    valor = cartera.valor_total(list(config.cartera), precios)
+    if valor is not None:
+        con_cartera[puntuales.CARTERA] = valor
+
+    hechas = puntuales.cumplidas(pendientes, con_cartera)
     avisos += [
         alerts.Alert(
             p.coin_id,
-            precios[p.coin_id],
+            con_cartera[p.coin_id],
             p.objetivo,
             alerts.ALTO if p.sube else alerts.BAJO,
             puntual=True,
@@ -645,13 +651,24 @@ def _crear_alerta(config: Config, argumento: str) -> str:
     except puntuales.PuntualError as e:
         return telegram.escape(str(e))
 
+    es_cartera = coin_id == puntuales.CARTERA
+    if es_cartera and not _con_cambios(config).cartera:
+        return "No tienes cartera. Apunta lo que tienes con /compra bitcoin 0.016 1000"
+
     # Hace falta el precio de ahora para saber si esperar a que suba o a que
     # baje. Y de paso se comprueba que el id existe.
     try:
-        precio = coingecko.get_prices([coin_id], config.vs_currency).get(coin_id)
+        if es_cartera:
+            precio = _valor_cartera(config)
+        else:
+            precio = coingecko.get_prices([coin_id], config.vs_currency).get(coin_id)
     except coingecko.CoinGeckoError as e:
         return f"No he podido mirar el precio ahora mismo: {telegram.escape(str(e))}"
 
+    if precio is None and es_cartera:
+        return (
+            "Ahora mismo no tengo el precio de todo lo que tienes. Prueba en un rato."
+        )
     if precio is None:
         return (
             f"No encuentro <b>{telegram.escape(coin_id)}</b> en CoinGecko. "
@@ -675,6 +692,12 @@ def _crear_alerta(config: Config, argumento: str) -> str:
     return alerts.con_fuente(
         alerts.formatear_puntual(alerta, precio, config.vs_currency)
     )
+
+
+def _valor_cartera(config: Config) -> float | None:
+    posiciones = list(_con_cambios(config).cartera)
+    precios = coingecko.get_prices([p.coin_id for p in posiciones], config.vs_currency)
+    return cartera.valor_total(posiciones, precios)
 
 
 def _historico(config: Config, argumento: str) -> str | comandos.Foto:

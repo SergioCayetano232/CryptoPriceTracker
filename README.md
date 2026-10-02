@@ -163,6 +163,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/venta bitcoin 0.005` | Apunta una venta (`/venta bitcoin todo` la saca de la cartera) |
 | `/alerta bitcoin 70000` | Te avisa una vez cuando llegue a ese precio |
 | `/alerta bitcoin +10%` | Te avisa una vez cuando suba un 10% desde ahora |
+| `/alerta cartera 5000` | Lo mismo con lo que vale tu cartera entera (también `-10%`) |
 | `/alertas` | Las alertas que tienes puestas |
 | `/quitar 3` | Quita la alerta número 3 |
 | `/vigilar` | Lo que está vigilando y cómo |
@@ -202,6 +203,11 @@ Si no quieres hacer cuentas, ponlo en porcentaje: `/alerta bitcoin +10%` o
 `/alerta solana -5%`. Calcula el precio con lo que vale en ese momento y te
 contesta a cuánto ha quedado. El signo es obligatorio, que un `10%` a secas no
 dice si esperar a que suba o a que baje.
+
+Con `cartera` en vez de una cripto, mira lo que vale todo lo que tienes junto:
+`/alerta cartera 5000` o `/alerta cartera -10%`. Si en un ciclo falta el precio
+de alguna, ese ciclo no la mira, que el total saldría más bajo de lo que es y
+daría un aviso falso.
 
 **Cambiar lo que vigila sin tocar el `.env`:**
 

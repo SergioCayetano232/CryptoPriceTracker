@@ -1,6 +1,7 @@
 """Los botones que van debajo de cada aviso."""
 
 from .alerts import SIMBOLOS, Alert, _num
+from .puntuales import CARTERA
 
 # Telegram no deja meter mas de 64 bytes en cada boton.
 MAX_DATOS = 64
@@ -27,8 +28,9 @@ def para_avisos(avisos: list[Alert], currency: str) -> list[list[tuple[str, str]
         nombre = a.coin_id.replace("-", " ").title()
         # Con coma: puntuales.numero leeria "1.234" como 1234.
         precio = repr(a.threshold).replace(".", ",")
+        grafica = "/cartera" if a.coin_id == CARTERA else f"/historico {a.coin_id}"
         fila = [
-            ("📈 Gráfica" if solo_una else f"📈 {nombre}", f"/historico {a.coin_id}"),
+            ("📈 Gráfica" if solo_una else f"📈 {nombre}", grafica),
             (
                 f"🎯 Si vuelve a {simbolo}{_num(a.threshold)}",
                 f"/alerta {a.coin_id} {precio}",

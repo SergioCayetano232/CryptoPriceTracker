@@ -9,10 +9,13 @@ from crypto_tracker.alerts import (
     Alert,
     clasificar,
     formatear,
+    formatear_puntual,
+    formatear_puntuales,
     formatear_resumen,
     revisar,
 )
 from crypto_tracker.config import Watch
+from crypto_tracker.puntuales import Puntual
 
 # --- clasificar ---
 
@@ -557,3 +560,31 @@ def test_la_alerta_puntual_sigue_cerrando_el_mensaje():
     aviso = Alert("bitcoin", 70100.0, 70000.0, ALTO, puntual=True, variacion_24h=1.0)
 
     assert formatear(aviso, "eur").endswith("ya la he quitado.</i>")
+
+
+# --- alertas de la cartera entera ---
+
+
+def test_aviso_de_la_cartera():
+    aviso = Alert("cartera", 5120.0, 5000.0, ALTO, puntual=True)
+
+    texto = formatear(aviso, "eur")
+
+    assert texto.startswith("🚀 <b>Tu cartera</b> ha subido de €5.000,00\n")
+    assert "Ahora vale <b>€5.120,00</b>" in texto
+    assert "Precio actual" not in texto
+
+
+def test_crear_alerta_de_la_cartera():
+    alerta = Puntual(1, "cartera", 4500.0, sube=False)
+
+    texto = formatear_puntual(alerta, 5000.0, "eur")
+
+    assert "cuando <b>tu cartera</b> baje a <b>€4.500,00</b>" in texto
+    assert "Ahora vale €5.000,00" in texto
+
+
+def test_lista_con_la_cartera():
+    texto = formatear_puntuales([Puntual(2, "cartera", 6000.0, sube=True)], "eur")
+
+    assert "<code>2</code>  <b>Tu cartera</b> 🔺 €6.000,00" in texto
