@@ -159,6 +159,8 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/status` | Cómo van tus criptos ahora |
 | `/cartera` | Tu cartera: cuánto vale, cuánto ganas o pierdes y la gráfica de 7 días |
 | `/cartera 30d` | Lo mismo, con la gráfica del tramo que digas |
+| `/compra bitcoin 0.01 600` | Apunta en la cartera que has comprado 0,01 por 600 € |
+| `/venta bitcoin 0.005` | Apunta una venta (`/venta bitcoin todo` la saca de la cartera) |
 | `/alerta bitcoin 70000` | Te avisa una vez cuando llegue a ese precio |
 | `/alerta bitcoin +10%` | Te avisa una vez cuando suba un 10% desde ahora |
 | `/alertas` | Las alertas que tienes puestas |
@@ -238,6 +240,20 @@ vale cada una, el total y cuánto llevas ganado o perdido. Si solo quieres eso, 
 discontinua en lo que invertiste. Ojo: usa las cantidades de ahora, así que es
 lo que habría valido lo que tienes hoy, no tu historial de compras. Empieza a
 tener datos en cuanto el bot lleva un rato en `--loop`.
+
+**Apuntar compras y ventas desde el móvil:**
+
+No hace falta tocar el `.env` cada vez que compras. Escríbele
+`/compra bitcoin 0.01 600` y suma 0,01 a lo que tienes y 600 € a lo que te
+costó. Si no pones el precio (`/compra solana 3`), lo apunta a lo que vale en
+ese momento.
+
+`/venta bitcoin 0.005` lo resta, y lo que te costó baja en la misma proporción:
+si vendes la mitad, se va la mitad de lo invertido. `/venta bitcoin todo` la
+saca de la cartera.
+
+Como con `/vigilar`, el `.env` es la base y lo de Telegram va encima. Si una
+cripto la cambias por Telegram, deja de mirar lo que ponga de ella `PORTFOLIO`.
 
 **Callar los avisos un rato:**
 ```
@@ -399,6 +415,7 @@ crypto_tracker/
   brusco.py      los movimientos bruscos
   puntuales.py   las alertas de /alerta
   vigiladas.py   lo que cambias con /vigilar
+  movimientos.py las compras y ventas de /compra y /venta
   proximo.py     a qué precio salta el siguiente aviso
   cartera.py     cuánto vale lo que tienes
   grafica.py     las imágenes de /historico y /cartera

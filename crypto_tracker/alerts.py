@@ -6,7 +6,8 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from .cartera import Valor
-from .config import Watch
+from .config import Posicion, Watch
+from .movimientos import texto_cantidad
 from .periodo import nombre as nombre_periodo
 from .puntuales import Puntual
 from .semanal import Semana
@@ -368,6 +369,38 @@ def formatear_cartera(
         texto.append(f"<i>Sin precio ahora de: {nombres}. El total no las cuenta.</i>")
 
     return "\n".join(texto)
+
+
+def formatear_compra(
+    cantidad: float, coste: float, ahora: Posicion, currency: str
+) -> str:
+    """Lo que se contesta a un /compra: lo apuntado y como queda."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(ahora.coin_id.replace("-", " ").title())
+    texto = (
+        f"🛒 Apunto <b>{texto_cantidad(cantidad)}</b> de {nombre} "
+        f"por {simbolo}{_num(coste)}.\n"
+        f"Ahora tienes {texto_cantidad(ahora.cantidad)}"
+    )
+    if ahora.invertido is not None:
+        texto += f", que te costaron {simbolo}{_num(ahora.invertido)}"
+    return texto + ". Mira /cartera"
+
+
+def formatear_venta(
+    coin_id: str, vendido: float, queda: Posicion | None, currency: str
+) -> str:
+    """Lo que se contesta a un /venta. queda es None si ya no tienes nada."""
+    nombre = escape(coin_id.replace("-", " ").title())
+    texto = f"💸 Apunto la venta de <b>{texto_cantidad(vendido)}</b> de {nombre}.\n"
+    if queda is None:
+        return texto + f"Ya no te queda nada de {nombre}."
+
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto += f"Te quedan {texto_cantidad(queda.cantidad)}"
+    if queda.invertido is not None:
+        texto += f", que te costaron {simbolo}{_num(queda.invertido)}"
+    return texto + ". Mira /cartera"
 
 
 def formatear_semana(

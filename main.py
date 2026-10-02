@@ -28,6 +28,7 @@ from crypto_tracker import (
     database,
     diario,
     grafica,
+    movimientos,
     periodo,
     proximo,
     puntuales,
@@ -188,16 +189,27 @@ def ejecutar_ciclo(
 
 
 def _con_cambios(config: Config) -> Config:
-    """La config con lo que vigilas de verdad: el .env mas lo de Telegram."""
+    """La config de verdad: lo que vigilas y tu cartera, el .env mas lo de Telegram."""
     try:
         cambios = database.get_cambios(config.database_path)
     except database.DatabaseError as e:
         logger.error("No se pudieron leer los cambios de /vigilar: %s", e)
-        return config
+        cambios = {}
+    if cambios:
+        config = replace(
+            config, watchlist=vigiladas.combinar(config.watchlist, cambios)
+        )
 
-    if not cambios:
-        return config
-    return replace(config, watchlist=vigiladas.combinar(config.watchlist, cambios))
+    try:
+        de_cartera = database.get_cambios_cartera(config.database_path)
+    except database.DatabaseError as e:
+        logger.error("No se pudieron leer las compras y ventas: %s", e)
+        de_cartera = {}
+    if de_cartera:
+        config = replace(
+            config, cartera=movimientos.combinar(config.cartera, de_cartera)
+        )
+    return config
 
 
 def _olvidar_cambiadas(config: Config, estado: dict[str, str]) -> dict[str, str]:
@@ -463,12 +475,20 @@ def responder(config: Config, nombre: str, argumento: str) -> str | comandos.Fot
         return "🔔 Vuelvo a avisar." if estaba else "No estaba callado."
 
     if nombre == "cartera":
+        config = _con_cambios(config)
         if not config.cartera:
             return (
-                "No tienes cartera puesta. Añade al .env algo como:\n"
+                "No tienes cartera puesta. Apunta lo que tienes con "
+                "/compra bitcoin 0.016 1000, o añade al .env algo como:\n"
                 "<code>PORTFOLIO=bitcoin:0.016:1000</code>"
             )
         return _cartera(config, argumento)
+
+    if nombre == "compra":
+        return _comprar(config, argumento)
+
+    if nombre == "venta":
+        return _vender(config, argumento)
 
     if nombre == "historico":
         return _historico(config, argumento)
@@ -572,6 +592,47 @@ def _dejar(config: Config, coin_id: str) -> str:
     logger.info("Watchlist: deja de vigilar %s", coin_id)
     nombre = telegram.escape(coin_id.replace("-", " ").title())
     return f"👋 Dejo de vigilar <b>{nombre}</b>."
+
+
+def _comprar(config: Config, argumento: str) -> str:
+    try:
+        coin_id, cantidad, coste = movimientos.interpretar_compra(argumento)
+    except movimientos.MovimientoError as e:
+        return telegram.escape(str(e))
+
+    antes = movimientos.buscar(_con_cambios(config).cartera, coin_id)
+    # Sin coste hace falta el precio de ahora; si es nueva, de paso vemos que existe.
+    if coste is None or antes is None:
+        try:
+            precios = coingecko.get_prices([coin_id], config.vs_currency)
+        except coingecko.CoinGeckoError as e:
+            return f"No he podido consultar el precio: {telegram.escape(str(e))}"
+        if coin_id not in precios:
+            return (
+                f"No encuentro <b>{telegram.escape(coin_id)}</b> en CoinGecko. "
+                f"Prueba con /buscar {telegram.escape(coin_id)}"
+            )
+        if coste is None:
+            coste = cantidad * precios[coin_id]
+
+    ahora = movimientos.comprar(antes, coin_id, cantidad, coste)
+    database.guardar_posicion(config.database_path, coin_id, ahora)
+    logger.info("Cartera: compra %s de %s por %s", cantidad, coin_id, coste)
+    return alerts.formatear_compra(cantidad, coste, ahora, config.vs_currency)
+
+
+def _vender(config: Config, argumento: str) -> str:
+    try:
+        coin_id, cantidad = movimientos.interpretar_venta(argumento)
+        antes = movimientos.buscar(_con_cambios(config).cartera, coin_id)
+        queda = movimientos.vender(antes, coin_id, cantidad)
+    except movimientos.MovimientoError as e:
+        return telegram.escape(str(e))
+
+    vendido = antes.cantidad if cantidad is None else cantidad
+    database.guardar_posicion(config.database_path, coin_id, queda)
+    logger.info("Cartera: vende %s de %s", vendido, coin_id)
+    return alerts.formatear_venta(coin_id, vendido, queda, config.vs_currency)
 
 
 def _crear_alerta(config: Config, argumento: str) -> str:
@@ -707,6 +768,7 @@ def resumen_diario(config: Config, ahora: datetime | None = None) -> None:
 
 def resumen_semanal(config: Config, ahora: datetime | None = None) -> None:
     """Los domingos, a la hora del diario, como le ha ido a la cartera."""
+    config = _con_cambios(config)
     if config.resumen_diario is None or not config.cartera:
         return
 

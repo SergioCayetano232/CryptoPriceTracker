@@ -6,6 +6,7 @@ from contextlib import contextmanager
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
+from .config import Posicion
 from .puntuales import Puntual
 
 logger = logging.getLogger(__name__)
@@ -57,6 +58,15 @@ CREATE TABLE IF NOT EXISTS watchlist_cambios (
     coin_id    TEXT PRIMARY KEY,
     regla      TEXT,
     de_cero    INTEGER NOT NULL DEFAULT 1,
+    updated_at TEXT NOT NULL
+);
+
+-- Lo que cambias de la cartera por Telegram encima del PORTFOLIO del .env.
+-- cantidad NULL es que la vendiste toda.
+CREATE TABLE IF NOT EXISTS cartera_cambios (
+    coin_id    TEXT PRIMARY KEY,
+    cantidad   REAL,
+    invertido  REAL,
     updated_at TEXT NOT NULL
 );
 """
@@ -424,6 +434,35 @@ def tomar_de_cero(db_path: str) -> set[str]:
         conn.execute("UPDATE watchlist_cambios SET de_cero = 0 WHERE de_cero = 1")
 
     return {f["coin_id"] for f in filas}
+
+
+def guardar_posicion(db_path: str, coin_id: str, posicion: Posicion | None) -> None:
+    """Apunta como queda una cripto tras un /compra o /venta. None, vendida."""
+    cantidad = invertido = None
+    if posicion is not None:
+        cantidad, invertido = posicion.cantidad, posicion.invertido
+
+    ahora = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    with _connect(db_path) as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO cartera_cambios "
+            "(coin_id, cantidad, invertido, updated_at) VALUES (?, ?, ?, ?)",
+            (coin_id, cantidad, invertido, ahora),
+        )
+
+
+def get_cambios_cartera(db_path: str) -> dict[str, Posicion | None]:
+    with _connect(db_path) as conn:
+        filas = conn.execute(
+            "SELECT coin_id, cantidad, invertido FROM cartera_cambios ORDER BY rowid"
+        ).fetchall()
+
+    return {
+        f["coin_id"]: None
+        if f["cantidad"] is None
+        else Posicion(f["coin_id"], f["cantidad"], f["invertido"])
+        for f in filas
+    }
 
 
 def sumar_consultas(db_path: str, mes: str, cuantas: int) -> int:

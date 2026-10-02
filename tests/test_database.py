@@ -3,6 +3,7 @@
 import pytest
 
 from crypto_tracker import database
+from crypto_tracker.config import Posicion
 
 
 @pytest.fixture
@@ -389,6 +390,32 @@ def test_volver_a_cambiar_vuelve_a_empezar_de_cero(db):
     database.guardar_cambio(db, "solana", "solana:10.0")
 
     assert database.tomar_de_cero(db) == {"solana"}
+
+
+# --- cambios de la cartera ---
+
+
+def test_cambios_cartera_van_y_vuelven(db):
+    database.guardar_posicion(db, "bitcoin", Posicion("bitcoin", 0.026, 1600))
+    database.guardar_posicion(db, "solana", Posicion("solana", 5))
+    database.guardar_posicion(db, "ethereum", None)
+
+    assert database.get_cambios_cartera(db) == {
+        "bitcoin": Posicion("bitcoin", 0.026, 1600),
+        "solana": Posicion("solana", 5),
+        "ethereum": None,
+    }
+
+
+def test_cambio_cartera_se_pisa(db):
+    database.guardar_posicion(db, "bitcoin", Posicion("bitcoin", 0.026, 1600))
+    database.guardar_posicion(db, "bitcoin", None)
+
+    assert database.get_cambios_cartera(db) == {"bitcoin": None}
+
+
+def test_cambios_cartera_sin_nada(db):
+    assert database.get_cambios_cartera(db) == {}
 
 
 # --- varias series a la vez ---

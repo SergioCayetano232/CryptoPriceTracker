@@ -6,7 +6,7 @@ import pytest
 
 import main
 from crypto_tracker import coingecko, database, grafica, telegram
-from crypto_tracker.config import Config, Watch
+from crypto_tracker.config import Config, Posicion, Watch
 
 
 @pytest.fixture
@@ -987,6 +987,117 @@ def test_vigilar_un_rango_no_promete_esperar(config, enviados):
 
     assert "si baja de €55.000,00 o si sube de €75.000,00" in enviados[0]
     assert "primer ciclo" not in enviados[0]
+
+
+# --- /compra y /venta ---
+
+
+def _con_cartera(config, *posiciones):
+    from dataclasses import replace
+
+    return replace(config, cartera=posiciones)
+
+
+def test_comprar_algo_nuevo(config, enviados, monkeypatch):
+    pedidas = _precio(monkeypatch, {"bitcoin": 63000.0, "solana": 150.0})
+
+    main.atender(config, _mensaje("/compra solana 5 700"))
+    main.ejecutar_ciclo(config, {})
+
+    assert "Apunto <b>5</b> de Solana por €700,00" in enviados[0]
+    assert "Ahora tienes 5, que te costaron €700,00" in enviados[0]
+    assert database.get_cambios_cartera(config.database_path) == {
+        "solana": Posicion("solana", 5, 700)
+    }
+    assert pedidas[-1] == ["bitcoin", "solana"]  # el ciclo ya la consulta
+
+
+def test_comprar_sin_coste_va_al_precio_de_ahora(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"solana": 150.0})
+
+    main.atender(config, _mensaje("/compra solana 2"))
+
+    assert "por €300,00" in enviados[0]
+
+
+def test_comprar_algo_que_no_existe(config, enviados, monkeypatch):
+    _precio(monkeypatch, {})
+
+    main.atender(config, _mensaje("/compra solanna 5 700"))
+
+    assert "/buscar solanna" in enviados[0]
+    assert database.get_cambios_cartera(config.database_path) == {}
+
+
+def test_comprar_mas_de_lo_del_env(config, enviados, monkeypatch):
+    def no_llamar(*a):
+        raise AssertionError("ya la tenia y dice el coste, no hace falta el precio")
+
+    monkeypatch.setattr(coingecko, "get_prices", no_llamar)
+    config = _con_cartera(config, Posicion("bitcoin", 0.016, 1000))
+
+    main.atender(config, _mensaje("/compra bitcoin 0,01 600"))
+
+    assert "Ahora tienes 0,026, que te costaron €1.600,00" in enviados[0]
+
+
+def test_comprar_mal_escrito(config, enviados):
+    main.atender(config, _mensaje("/compra bitcoin"))
+
+    assert "/compra bitcoin 0.01 600" in enviados[0]
+    assert database.get_cambios_cartera(config.database_path) == {}
+
+
+def test_vender_una_parte(config, enviados):
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
+
+    main.atender(config, _mensaje("/venta bitcoin 0.005"))
+
+    assert "venta de <b>0,005</b> de Bitcoin" in enviados[0]
+    assert "Te quedan 0,015, que te costaron €750,00" in enviados[0]
+
+
+def test_vender_todo_la_quita_de_la_cartera(config, enviados, monkeypatch):
+    config = _con_cartera(
+        config,
+        Posicion("bitcoin", 0.02, 1000),
+        Posicion("ethereum", 0.4, 1000),
+    )
+    _precio(monkeypatch, {"bitcoin": 50000.0, "ethereum": 2000.0})
+
+    main.atender(config, _mensaje("/venta ethereum todo"))
+    main.atender(config, _mensaje("/cartera"))
+
+    assert "venta de <b>0,4</b> de Ethereum" in enviados[0]
+    assert "Ya no te queda nada de Ethereum" in enviados[0]
+    assert "Ethereum" not in enviados[1]
+    assert "Total <b>€1.000,00</b>" in enviados[1]
+
+
+def test_vender_mas_de_lo_que_tienes(config, enviados):
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
+
+    main.atender(config, _mensaje("/venta bitcoin 1"))
+    main.atender(config, _mensaje("/venta solana todo"))
+
+    assert "Solo tienes 0,02 de bitcoin" in enviados[0]
+    assert "No tienes solana" in enviados[1]
+    assert database.get_cambios_cartera(config.database_path) == {}
+
+
+def test_cartera_sin_nada_explica_compra(config, enviados):
+    main.atender(config, _mensaje("/cartera"))
+
+    assert "/compra bitcoin 0.016 1000" in enviados[0]
+
+
+def test_cartera_solo_desde_telegram(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"solana": 150.0})
+
+    main.atender(config, _mensaje("/compra solana 2 200"))
+    main.atender(config, _mensaje("/cartera"))
+
+    assert "<b>Solana</b>  €300,00" in enviados[1]
 
 
 # --- /historico con tramo ---

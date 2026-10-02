@@ -1,0 +1,112 @@
+"""Compras y ventas apuntadas por Telegram, encima del PORTFOLIO del .env."""
+
+from .config import Posicion
+from .puntuales import numero
+
+EJEMPLO_COMPRA = "/compra bitcoin 0.01 600"
+EJEMPLO_VENTA = "/venta bitcoin 0.005 o /venta bitcoin todo"
+
+# Lo que queda por debajo de esto son restos de los decimales, no algo que tengas.
+RESTO = 1e-9
+
+
+class MovimientoError(Exception):
+    """La compra o la venta no se entiende o no se puede hacer."""
+
+
+def interpretar_compra(argumento: str) -> tuple[str, float, float | None]:
+    """'bitcoin 0.01 600' -> ('bitcoin', 0.01, 600). Sin coste, None."""
+    partes = argumento.split()
+    if len(partes) not in (2, 3):
+        raise MovimientoError(
+            f"Escríbelo así: {EJEMPLO_COMPRA} (cripto, cantidad y lo que te costó). "
+            "Sin lo que te costó, la apunto al precio de ahora."
+        )
+
+    cantidad = _cantidad(partes[1], EJEMPLO_COMPRA)
+    coste = None
+    if len(partes) == 3:
+        coste = _numero(partes[2], EJEMPLO_COMPRA)
+        if coste < 0:
+            raise MovimientoError("Lo que te costó no puede ser negativo.")
+    return partes[0].lower(), cantidad, coste
+
+
+def interpretar_venta(argumento: str) -> tuple[str, float | None]:
+    """'bitcoin 0.005' -> ('bitcoin', 0.005). 'bitcoin todo' -> ('bitcoin', None)."""
+    partes = argumento.split()
+    if len(partes) != 2:
+        raise MovimientoError(f"Escríbelo así: {EJEMPLO_VENTA}")
+
+    if partes[1].lower() == "todo":
+        return partes[0].lower(), None
+    return partes[0].lower(), _cantidad(partes[1], EJEMPLO_VENTA)
+
+
+def comprar(
+    posicion: Posicion | None, coin_id: str, cantidad: float, coste: float
+) -> Posicion:
+    if posicion is None:
+        return Posicion(coin_id, cantidad, coste)
+    # Si no sé lo que costó lo de antes, sumarle esto daría una ganancia falsa.
+    invertido = None if posicion.invertido is None else posicion.invertido + coste
+    return Posicion(coin_id, posicion.cantidad + cantidad, invertido)
+
+
+def vender(
+    posicion: Posicion | None, coin_id: str, cantidad: float | None
+) -> Posicion | None:
+    """Lo que te queda. None si lo vendes todo."""
+    if posicion is None:
+        raise MovimientoError(f"No tienes {coin_id} en la cartera. Mira /cartera")
+    if cantidad is None:
+        return None
+    if cantidad > posicion.cantidad + RESTO:
+        raise MovimientoError(
+            f"Solo tienes {texto_cantidad(posicion.cantidad)} de {coin_id}."
+        )
+
+    queda = posicion.cantidad - cantidad
+    if queda <= RESTO:
+        return None
+    # Lo invertido baja en proporción: lo vendido se lleva su parte de lo que costó.
+    invertido = (
+        None
+        if posicion.invertido is None
+        else posicion.invertido * queda / posicion.cantidad
+    )
+    return Posicion(coin_id, queda, invertido)
+
+
+def combinar(
+    base: tuple[Posicion, ...], cambios: dict[str, Posicion | None]
+) -> tuple[Posicion, ...]:
+    """Aplica lo de Telegram al .env. None en un cambio es que la vendiste toda."""
+    resultado = [cambios.get(p.coin_id, p) for p in base]
+    del_env = {p.coin_id for p in base}
+    resultado += [p for c, p in cambios.items() if c not in del_env]
+    return tuple(p for p in resultado if p is not None)
+
+
+def buscar(posiciones: tuple[Posicion, ...], coin_id: str) -> Posicion | None:
+    return next((p for p in posiciones if p.coin_id == coin_id), None)
+
+
+def texto_cantidad(valor: float) -> str:
+    """0,016 o 1.500: todos los decimales que tenga, hasta 8, como los satoshis."""
+    texto = f"{valor:,.8f}".rstrip("0").rstrip(".")
+    return texto.replace(",", "@").replace(".", ",").replace("@", ".")
+
+
+def _cantidad(texto: str, ejemplo: str) -> float:
+    valor = _numero(texto, ejemplo)
+    if valor <= 0:
+        raise MovimientoError("La cantidad tiene que ser mayor que 0.")
+    return valor
+
+
+def _numero(texto: str, ejemplo: str) -> float:
+    valor = numero(texto)
+    if valor is None:
+        raise MovimientoError(f"'{texto}' no es un número. Ejemplo: {ejemplo}")
+    return valor
