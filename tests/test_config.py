@@ -189,6 +189,39 @@ def test_brusco_con_ventana_mas_corta_que_el_intervalo(monkeypatch):
         load_config()
 
 
+# --- maximos y minimos ---
+
+
+def test_extremos():
+    from crypto_tracker.config import parse_extremos
+
+    assert parse_extremos("30d") == 30
+    assert parse_extremos(" 7D ") == 7
+    assert parse_extremos("90") == 90
+    assert parse_extremos("") is None
+
+
+@pytest.mark.parametrize("entrada", ["hola", "1d", "0", "-5d", "2h", "1.5d"])
+def test_extremos_invalidos(entrada):
+    from crypto_tracker.config import parse_extremos
+
+    with pytest.raises(ConfigError):
+        parse_extremos(entrada)
+
+
+def test_extremos_mas_largos_que_el_historico(monkeypatch):
+    from crypto_tracker.config import load_config
+
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "x")
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "1")
+    monkeypatch.setenv("WATCHLIST", "bitcoin:%5")
+    monkeypatch.setenv("HISTORY_DAYS", "30")
+    monkeypatch.setenv("MAXIMOS_MINIMOS", "60d")
+
+    with pytest.raises(ConfigError, match="HISTORY_DAYS"):
+        load_config()
+
+
 # --- horas tranquilas ---
 
 

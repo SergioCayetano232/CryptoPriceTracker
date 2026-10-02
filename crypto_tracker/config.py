@@ -57,6 +57,8 @@ class Config:
     # (inicio, fin), o None si no hay horas tranquilas
     horas_tranquilas: tuple[time, time] | None = None
     cartera: tuple[Posicion, ...] = ()
+    # None = sin aviso de maximos y minimos
+    extremos_dias: int | None = None
 
 
 def _require(name: str) -> str:
@@ -334,6 +336,24 @@ def parse_brusco(raw: str) -> tuple[float, int] | None:
     return porcentaje, minutos
 
 
+def parse_extremos(raw: str) -> int | None:
+    """'30d' -> 30. Vacio es None."""
+    raw = raw.strip().lower()
+    if not raw:
+        return None
+
+    try:
+        dias = int(raw.removesuffix("d"))
+    except ValueError:
+        raise ConfigError(
+            f"MAXIMOS_MINIMOS tiene que ser un numero de dias, como 30d, no '{raw}'"
+        ) from None
+    # Con un dia, cualquier subida de la tarde ya seria "maximo".
+    if dias < 2:
+        raise ConfigError("MAXIMOS_MINIMOS tiene que ser de 2 dias o mas.")
+    return dias
+
+
 def load_config() -> Config:
     """Monta la configuracion. Lanza ConfigError si algo falta o esta mal."""
     check_interval = _parse_positive_int("CHECK_INTERVAL", "300")
@@ -347,6 +367,15 @@ def load_config() -> Config:
             f"mas larga que CHECK_INTERVAL ({check_interval} s)."
         )
 
+    history_days = _parse_history_days()
+    extremos = parse_extremos(os.getenv("MAXIMOS_MINIMOS", ""))
+    # Si se borra antes, nunca habria historico suficiente y no avisaria nunca.
+    if extremos and history_days and extremos > history_days:
+        raise ConfigError(
+            f"MAXIMOS_MINIMOS ({extremos}d) mira mas atras de lo que guarda "
+            f"HISTORY_DAYS ({history_days}). Sube HISTORY_DAYS o baja los dias."
+        )
+
     return Config(
         telegram_token=_require("TELEGRAM_BOT_TOKEN"),
         telegram_chat_id=_require("TELEGRAM_CHAT_ID"),
@@ -355,10 +384,11 @@ def load_config() -> Config:
         check_interval=check_interval,
         database_path=os.getenv("DATABASE_PATH", "data/prices.db").strip()
         or "data/prices.db",
-        history_days=_parse_history_days(),
+        history_days=history_days,
         resumen_diario=parse_hora(os.getenv("RESUMEN_DIARIO", "")),
         brusco_porcentaje=brusco[0] if brusco else None,
         brusco_minutos=brusco[1] if brusco else 60,
         horas_tranquilas=parse_tramo(os.getenv("HORAS_TRANQUILAS", "")),
         cartera=parse_cartera(os.getenv("PORTFOLIO", "")),
+        extremos_dias=extremos,
     )

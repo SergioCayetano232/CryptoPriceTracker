@@ -27,6 +27,7 @@ from crypto_tracker import (
     cuota,
     database,
     diario,
+    extremos,
     grafica,
     movimientos,
     periodo,
@@ -110,6 +111,9 @@ def ejecutar_ciclo(
         ", ".join(f"{c}={p}" for c, p in sorted(precios.items())),
     )
 
+    # Lo guardado antes de esto es el pasado contra el que se miran los maximos.
+    antes_de_guardar = datetime.now(timezone.utc).replace(microsecond=0)
+
     # Guardar no es critico: si falla el disco, aun queremos avisar.
     try:
         database.save_prices(config.database_path, precios, config.vs_currency)
@@ -127,6 +131,7 @@ def ejecutar_ciclo(
     avisos, estado_nuevo = alerts.revisar(precios, config.watchlist, estado)
     vigiladas = {c: p for c, p in precios.items() if c in coin_ids}
     avisos += revisar_bruscos(config, vigiladas)
+    avisos += revisar_extremos(config, vigiladas, antes_de_guardar)
 
     # Para las de /alerta cartera, lo que vale todo junto cuenta como un precio mas.
     con_cartera = dict(precios)
@@ -300,6 +305,40 @@ def revisar_bruscos(config: Config, precios: dict[str, float]) -> list[alerts.Al
             database.guardar_brusco(config.database_path, coin_id, ahora)
         except database.DatabaseError as e:
             logger.error("No se pudo apuntar el aviso brusco de %s: %s", coin_id, e)
+
+    return avisos
+
+
+def revisar_extremos(
+    config: Config, precios: dict[str, float], hasta: datetime
+) -> list[alerts.Alert]:
+    """Busca maximos o minimos de los ultimos MAXIMOS_MINIMOS dias."""
+    if config.extremos_dias is None:
+        return []
+
+    desde = hasta - timedelta(days=config.extremos_dias)
+    avisos = []
+    for coin_id, precio in precios.items():
+        try:
+            rango = database.get_rango(
+                config.database_path, coin_id, desde, hasta, config.vs_currency
+            )
+            aviso = extremos.revisar(
+                coin_id, precio, rango, hasta, config.extremos_dias
+            )
+            if aviso is None:
+                continue
+            ultimo = database.ultimo_extremo(
+                config.database_path, coin_id, aviso.estado
+            )
+            if not extremos.toca(ultimo, hasta):
+                continue
+            database.guardar_extremo(config.database_path, coin_id, aviso.estado, hasta)
+        except database.DatabaseError as e:
+            # Sin poder apuntarlo avisaria en cada ciclo; mejor callar este.
+            logger.error("No se pudo mirar el maximo o minimo de %s: %s", coin_id, e)
+            continue
+        avisos.append(aviso)
 
     return avisos
 

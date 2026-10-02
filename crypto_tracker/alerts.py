@@ -45,6 +45,7 @@ class Alert:
     minutos: int | None = None  # solo en los movimientos bruscos
     puntual: bool = False  # de /alerta, se borra al avisar
     variacion_24h: float | None = None  # None si aun no hay historico de un dia
+    extremo_dias: int | None = None  # solo en los de maximo o minimo de N dias
 
 
 def clasificar(price: float, watch: Watch) -> str:
@@ -209,7 +210,17 @@ def formatear(alerta: Alert, currency: str) -> str:
     else:
         icono, verbo = "🚀", "ha subido"
 
-    if alerta.minutos is not None:
+    if alerta.extremo_dias is not None:
+        if alerta.estado == BAJO:
+            icono, cual = "🕳", "mínimo"
+        else:
+            icono, cual = "🏔", "máximo"
+        texto = (
+            f"{icono} <b>{nombre}</b> marca su {cual} de {alerta.extremo_dias} días\n"
+            f"Ahora a <b>{simbolo}{_num(alerta.price)}</b>, "
+            f"el anterior era {simbolo}{_num(alerta.threshold)}"
+        )
+    elif alerta.minutos is not None:
         verbo = "ha caído" if alerta.estado == BAJO else "ha subido"
         texto = (
             f"⚡ <b>{nombre}</b> {verbo} un <b>{abs(alerta.percent):.2f}%</b> "

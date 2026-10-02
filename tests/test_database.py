@@ -1,5 +1,7 @@
 """Tests de la base de datos, sobre un fichero temporal."""
 
+from datetime import datetime, timedelta, timezone
+
 import pytest
 
 from crypto_tracker import database
@@ -390,6 +392,55 @@ def test_volver_a_cambiar_vuelve_a_empezar_de_cero(db):
     database.guardar_cambio(db, "solana", "solana:10.0")
 
     assert database.tomar_de_cero(db) == {"solana"}
+
+
+# --- maximos y minimos ---
+
+
+def test_rango(db):
+    _insertar_con_fecha(db, "bitcoin", 60000.0, 20)
+    _insertar_con_fecha(db, "bitcoin", 70000.0, 10)
+    _insertar_con_fecha(db, "bitcoin", 55000.0, 5)
+    _insertar_con_fecha(db, "bitcoin", 40000.0, 50)  # antes del tramo
+    _insertar_con_fecha(db, "ethereum", 99999.0, 5)  # otra cripto
+    ahora = datetime.now(timezone.utc)
+
+    primero, techo, suelo = database.get_rango(
+        db, "bitcoin", ahora - timedelta(hours=24), ahora, "eur"
+    )
+
+    assert (techo, suelo) == (70000.0, 55000.0)
+    assert ahora - primero == pytest.approx(
+        timedelta(hours=20), abs=timedelta(seconds=5)
+    )
+
+
+def test_rango_no_cuenta_el_de_ahora(db):
+    _insertar_con_fecha(db, "bitcoin", 60000.0, 2)
+    hasta = datetime.now(timezone.utc).replace(microsecond=0)
+    database.save_prices(db, {"bitcoin": 99999.0}, "eur")
+
+    rango = database.get_rango(db, "bitcoin", hasta - timedelta(days=1), hasta, "eur")
+
+    assert rango[1] == 60000.0
+
+
+def test_rango_sin_nada(db):
+    ahora = datetime.now(timezone.utc)
+
+    assert (
+        database.get_rango(db, "bitcoin", ahora - timedelta(days=1), ahora, "eur")
+        is None
+    )
+
+
+def test_ultimo_extremo(db):
+    cuando = datetime(2026, 10, 3, 12, tzinfo=timezone.utc)
+    database.guardar_extremo(db, "bitcoin", "alto", cuando)
+
+    assert database.ultimo_extremo(db, "bitcoin", "alto") == cuando
+    assert database.ultimo_extremo(db, "bitcoin", "bajo") is None
+    assert database.ultimo_extremo(db, "ethereum", "alto") is None
 
 
 # --- cambios de la cartera ---

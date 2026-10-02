@@ -346,9 +346,48 @@ def guardar_resumen(db_path: str, dia: date, clave: str = ULTIMO_RESUMEN) -> Non
 
 def ultimo_brusco(db_path: str, coin_id: str) -> datetime | None:
     """Cuando se aviso del ultimo movimiento brusco de esta cripto."""
+    return _leer_fecha(db_path, f"brusco:{coin_id}")
+
+
+def ultimo_extremo(db_path: str, coin_id: str, estado: str) -> datetime | None:
+    """Cuando se aviso del ultimo maximo (estado alto) o minimo (bajo)."""
+    return _leer_fecha(db_path, f"extremo:{coin_id}:{estado}")
+
+
+def guardar_extremo(db_path: str, coin_id: str, estado: str, cuando: datetime) -> None:
+    with _connect(db_path) as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (f"extremo:{coin_id}:{estado}", cuando.isoformat(timespec="seconds")),
+        )
+
+
+def get_rango(
+    db_path: str, coin_id: str, desde: datetime, hasta: datetime, currency: str
+) -> tuple[datetime, float, float] | None:
+    """(primer precio guardado, maximo, minimo) entre desde y hasta, sin hasta."""
     with _connect(db_path) as conn:
         fila = conn.execute(
-            "SELECT valor FROM ajustes WHERE clave = ?", (f"brusco:{coin_id}",)
+            "SELECT MIN(created_at) AS primero, MAX(price) AS techo, "
+            "MIN(price) AS suelo FROM prices WHERE coin_id = ? AND currency = ? "
+            "AND created_at >= ? AND created_at < ?",
+            (
+                coin_id,
+                currency,
+                desde.isoformat(timespec="seconds"),
+                hasta.isoformat(timespec="seconds"),
+            ),
+        ).fetchone()
+
+    if fila["primero"] is None:
+        return None
+    return datetime.fromisoformat(fila["primero"]), fila["techo"], fila["suelo"]
+
+
+def _leer_fecha(db_path: str, clave: str) -> datetime | None:
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT valor FROM ajustes WHERE clave = ?", (clave,)
         ).fetchone()
 
     if not fila:

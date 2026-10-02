@@ -287,6 +287,19 @@ aunque no cruce ninguno de sus niveles. Cuenta desde el punto más alto o más
 bajo de esa hora, así que también pilla un "sube un 10% y lo devuelve todo".
 Tras un aviso, solo vuelve a avisar si se mueve otro 8% desde ahí.
 
+**Saber cuándo marca un máximo o un mínimo:**
+
+```
+MAXIMOS_MINIMOS=30d
+```
+Te avisa cuando una de tus criptos supera el precio más alto de los últimos 30
+días, o baja del más bajo. Lo mira con los precios que ya tiene guardados, así
+que no gasta consultas, pero necesita llevar esos 30 días funcionando: hasta
+entonces no dice nada, para no llamar "máximo de 30 días" a algo de anteayer.
+Avisa como mucho una vez al día de cada cosa, que en plena subida cada ciclo es
+un máximo nuevo. Tiene que ser de 2 días o más, y no más de los que guarda
+`HISTORY_DAYS`.
+
 **Recibir un resumen cada mañana:**
 
 Pon la hora en el `.env`:
@@ -365,6 +378,7 @@ Todo lo que va haciendo queda apuntado en `data/tracker.log`.
 | `DATABASE_PATH` | Dónde se guardan los datos | `data/prices.db` |
 | `RESUMEN_DIARIO` | Hora del resumen de cada día (`09:00`). Vacío, sin resumen | vacío |
 | `MOVIMIENTO_BRUSCO` | Aviso si se mueve mucho en poco tiempo (`8%/1h`). Vacío, sin aviso | vacío |
+| `MAXIMOS_MINIMOS` | Aviso al marcar el máximo o mínimo de esos días (`30d`). Vacío, sin aviso | vacío |
 | `HORAS_TRANQUILAS` | Tramo en que los avisos llegan sin sonar (`23-8`) | vacío |
 | `PORTFOLIO` | Lo que tienes, para ver cuánto vale (`bitcoin:0.016:1000`) | vacío |
 
@@ -419,6 +433,7 @@ crypto_tracker/
   botones.py     los botones de debajo de los avisos
   alerts.py      decide cuándo avisar y escribe los avisos
   brusco.py      los movimientos bruscos
+  extremos.py    los máximos y mínimos de los últimos días
   puntuales.py   las alertas de /alerta
   vigiladas.py   lo que cambias con /vigilar
   movimientos.py las compras y ventas de /compra y /venta

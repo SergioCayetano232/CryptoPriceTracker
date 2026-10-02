@@ -372,6 +372,79 @@ def test_brusco_llega_por_telegram(con_brusco, enviados, monkeypatch):
     assert "⚡" in enviados[0]
 
 
+# --- maximos y minimos ---
+
+
+@pytest.fixture
+def con_extremos(config):
+    from dataclasses import replace
+
+    config = replace(config, extremos_dias=30)
+    # Un mes guardado: de 60.000 a 70.000, con el primero de hace 30 dias
+    _precio_hace(config, 60000.0, 30 * 24 * 60)
+    _precio_hace(config, 70000.0, 10 * 24 * 60)
+    _precio_hace(config, 55000.0, 5 * 24 * 60)
+    return config
+
+
+def _ahora():
+    from datetime import datetime, timezone
+
+    return datetime.now(timezone.utc).replace(microsecond=0)
+
+
+def test_extremo_maximo(con_extremos):
+    avisos = main.revisar_extremos(con_extremos, {"bitcoin": 71000.0}, _ahora())
+
+    assert len(avisos) == 1
+    assert avisos[0].extremo_dias == 30
+    assert avisos[0].threshold == 70000.0
+
+
+def test_extremo_minimo(con_extremos):
+    avisos = main.revisar_extremos(con_extremos, {"bitcoin": 54000.0}, _ahora())
+
+    assert avisos[0].threshold == 55000.0
+
+
+def test_extremo_dentro_del_rango(con_extremos):
+    assert main.revisar_extremos(con_extremos, {"bitcoin": 65000.0}, _ahora()) == []
+
+
+def test_extremo_una_vez_al_dia(con_extremos):
+    main.revisar_extremos(con_extremos, {"bitcoin": 71000.0}, _ahora())
+    database.save_prices(con_extremos.database_path, {"bitcoin": 71000.0}, "eur")
+
+    # sigue subiendo, pero ya avisó hoy de un máximo
+    assert main.revisar_extremos(con_extremos, {"bitcoin": 72000.0}, _ahora()) == []
+    # un mínimo es otra cosa y sí avisa
+    assert len(main.revisar_extremos(con_extremos, {"bitcoin": 50000.0}, _ahora())) == 1
+
+
+def test_extremo_sin_un_mes_guardado(config):
+    from dataclasses import replace
+
+    config = replace(config, extremos_dias=30)
+    _precio_hace(config, 60000.0, 3 * 24 * 60)
+
+    assert main.revisar_extremos(config, {"bitcoin": 99000.0}, _ahora()) == []
+
+
+def test_extremo_desactivado(config):
+    _precio_hace(config, 60000.0, 30 * 24 * 60)
+
+    assert main.revisar_extremos(config, {"bitcoin": 99000.0}, _ahora()) == []
+
+
+def test_extremo_llega_por_telegram(con_extremos, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 71000.0})
+
+    main.ejecutar_ciclo(con_extremos, {"bitcoin": "%71000.0"})
+
+    assert len(enviados) == 1
+    assert "🏔 <b>Bitcoin</b> marca su máximo de 30 días" in enviados[0]
+
+
 # --- horas tranquilas ---
 
 
