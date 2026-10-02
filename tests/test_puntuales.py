@@ -14,7 +14,9 @@ from crypto_tracker.puntuales import (
     PuntualError,
     cumplidas,
     interpretar,
+    interpretar_relativa,
     numero,
+    objetivo_relativo,
     sube,
 )
 
@@ -143,3 +145,46 @@ def test_el_aviso_dice_que_era_tu_alerta():
 
 def test_los_avisos_normales_no_cambian():
     assert "/alerta" not in formatear(Alert("bitcoin", 70100, 70000, ALTO), "eur")
+
+
+# --- relativas: /alerta bitcoin +10% ---
+
+
+@pytest.mark.parametrize(
+    "texto, esperado",
+    [
+        ("Bitcoin +10%", ("bitcoin", 10.0)),
+        ("bitcoin -5%", ("bitcoin", -5.0)),
+        ("bitcoin +2,5%", ("bitcoin", 2.5)),
+        ("bitcoin -0.5%", ("bitcoin", -0.5)),
+    ],
+)
+def test_interpretar_relativa(texto, esperado):
+    assert interpretar_relativa(texto) == esperado
+
+
+def test_un_precio_no_es_relativa():
+    # asi sigue por el camino de siempre
+    assert interpretar_relativa("bitcoin 70000") is None
+    assert interpretar_relativa("bitcoin") is None
+
+
+def test_relativa_sin_signo_pregunta():
+    with pytest.raises(PuntualError, match=r"\+10% o -10%"):
+        interpretar_relativa("bitcoin 10%")
+
+
+@pytest.mark.parametrize("texto", ["bitcoin +0%", "bitcoin +%", "bitcoin +mucho%"])
+def test_relativa_mal_escrita(texto):
+    with pytest.raises(PuntualError):
+        interpretar_relativa(texto)
+
+
+def test_relativa_no_puede_bajar_del_todo():
+    with pytest.raises(PuntualError):
+        interpretar_relativa("bitcoin -100%")
+
+
+def test_objetivo_relativo():
+    assert objetivo_relativo(60000.0, 10) == pytest.approx(66000.0)
+    assert objetivo_relativo(60000.0, -5) == pytest.approx(57000.0)

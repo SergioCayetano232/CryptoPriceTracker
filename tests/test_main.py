@@ -713,6 +713,47 @@ def test_crear_alerta_hacia_abajo(config, enviados, monkeypatch):
     assert database.get_puntuales(config.database_path, "eur")[0].sube is False
 
 
+def test_crear_alerta_relativa_subiendo(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+
+    main.atender(config, _mensaje("/alerta bitcoin +10%"))
+
+    assert "suba a <b>€66.000,00</b>" in enviados[0]
+    [alerta] = database.get_puntuales(config.database_path, "eur")
+    assert alerta.objetivo == pytest.approx(66000.0)
+    assert alerta.sube is True
+
+
+def test_crear_alerta_relativa_bajando(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+
+    main.atender(config, _mensaje("/alerta bitcoin -5%"))
+
+    assert "baje a <b>€57.000,00</b>" in enviados[0]
+    assert database.get_puntuales(config.database_path, "eur")[0].sube is False
+
+
+def test_crear_alerta_relativa_sin_signo(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+
+    main.atender(config, _mensaje("/alerta bitcoin 10%"))
+
+    assert "¿Sube o baja?" in enviados[0]
+    assert database.get_puntuales(config.database_path, "eur") == []
+
+
+def test_la_alerta_relativa_salta(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+    main.atender(config, _mensaje("/alerta bitcoin -5%"))
+    enviados.clear()
+
+    _precio(monkeypatch, {"bitcoin": 56900.0})
+    main.ejecutar_ciclo(config, {"bitcoin": "%60000.0"})
+
+    assert "Era tu /alerta" in enviados[0]
+    assert database.get_puntuales(config.database_path, "eur") == []
+
+
 def test_crear_alerta_de_un_id_que_no_existe(config, enviados, monkeypatch):
     _precio(monkeypatch, {})
 

@@ -574,7 +574,11 @@ def _dejar(config: Config, coin_id: str) -> str:
 
 def _crear_alerta(config: Config, argumento: str) -> str:
     try:
-        coin_id, objetivo = puntuales.interpretar(argumento)
+        relativa = puntuales.interpretar_relativa(argumento)
+        if relativa:
+            coin_id, porcentaje = relativa
+        else:
+            coin_id, objetivo = puntuales.interpretar(argumento)
     except puntuales.PuntualError as e:
         return telegram.escape(str(e))
 
@@ -591,10 +595,15 @@ def _crear_alerta(config: Config, argumento: str) -> str:
             f"Prueba con /buscar {telegram.escape(coin_id)}"
         )
 
-    try:
-        sube = puntuales.sube(objetivo, precio)
-    except puntuales.PuntualError as e:
-        return telegram.escape(str(e))
+    if relativa:
+        # El precio se fija ahora: "+10%" es desde lo que vale en este momento.
+        objetivo = puntuales.objetivo_relativo(precio, porcentaje)
+        sube = porcentaje > 0
+    else:
+        try:
+            sube = puntuales.sube(objetivo, precio)
+        except puntuales.PuntualError as e:
+            return telegram.escape(str(e))
 
     alerta = database.crear_puntual(
         config.database_path, coin_id, objetivo, sube, config.vs_currency

@@ -6,7 +6,7 @@ from dataclasses import dataclass
 COMANDOS = {
     "status": "Cómo van tus criptos ahora",
     "cartera": "Cuánto vale lo que tienes, con gráfica (ej: /cartera 30d)",
-    "alerta": "Avísame una vez al llegar a un precio (ej: /alerta bitcoin 70000)",
+    "alerta": "Avísame una vez a un precio o un % (ej: /alerta bitcoin 70000 o +10%)",
     "alertas": "Las alertas que tienes puestas",
     "quitar": "Quitar una alerta (ej: /quitar 3)",
     "historico": "Cómo ha ido una cripto (ej: /historico bitcoin 7d)",

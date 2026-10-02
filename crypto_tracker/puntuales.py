@@ -8,6 +8,7 @@ from dataclasses import dataclass
 _MILES = re.compile(r"[1-9]\d{0,2}(\.\d{3})+")
 
 EJEMPLO = "/alerta bitcoin 70000"
+EJEMPLO_RELATIVA = "/alerta bitcoin +10%"
 
 
 class PuntualError(Exception):
@@ -33,6 +34,32 @@ def interpretar(argumento: str) -> tuple[str, float]:
         raise PuntualError(f"'{partes[1]}' no es un precio. Por ejemplo: {EJEMPLO}")
 
     return partes[0].lower(), objetivo
+
+
+def interpretar_relativa(argumento: str) -> tuple[str, float] | None:
+    """'bitcoin +10%' -> ('bitcoin', 10.0). None si no va en porcentaje."""
+    partes = argumento.split()
+    if len(partes) != 2 or not partes[1].endswith("%"):
+        return None
+
+    texto = partes[1][:-1]
+    # Sin signo no se sabe si esperar a que suba o a que baje.
+    if not texto.startswith(("+", "-")):
+        raise PuntualError(f"¿Sube o baja? Pon +{texto}% o -{texto}%")
+
+    porcentaje = numero(texto[1:])
+    if porcentaje is None or porcentaje <= 0:
+        raise PuntualError(f"'{partes[1]}' no es un porcentaje. Ej: {EJEMPLO_RELATIVA}")
+    if texto.startswith("-"):
+        porcentaje = -porcentaje
+    if porcentaje <= -100:
+        raise PuntualError("No puede bajar un 100 % o más, se quedaría en nada.")
+
+    return partes[0].lower(), porcentaje
+
+
+def objetivo_relativo(precio: float, porcentaje: float) -> float:
+    return precio * (1 + porcentaje / 100)
 
 
 def numero(texto: str) -> float | None:

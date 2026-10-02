@@ -160,6 +160,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/cartera` | Tu cartera: cuánto vale, cuánto ganas o pierdes y la gráfica de 7 días |
 | `/cartera 30d` | Lo mismo, con la gráfica del tramo que digas |
 | `/alerta bitcoin 70000` | Te avisa una vez cuando llegue a ese precio |
+| `/alerta bitcoin +10%` | Te avisa una vez cuando suba un 10% desde ahora |
 | `/alertas` | Las alertas que tienes puestas |
 | `/quitar 3` | Quita la alerta número 3 |
 | `/vigilar` | Lo que está vigilando y cómo |
@@ -194,6 +195,11 @@ baje, según dónde esté ahora. Avisa una vez y se borra sola, sin tocar el `.e
 ni reiniciar. Vale cualquier cripto, aunque no esté en `WATCHLIST`, y puedes
 escribir el precio como `70.000` o `0,35`. Si estás en `/mute`, no se pierde: te
 avisa al volver si sigue en ese precio.
+
+Si no quieres hacer cuentas, ponlo en porcentaje: `/alerta bitcoin +10%` o
+`/alerta solana -5%`. Calcula el precio con lo que vale en ese momento y te
+contesta a cuánto ha quedado. El signo es obligatorio, que un `10%` a secas no
+dice si esperar a que suba o a que baje.
 
 **Cambiar lo que vigila sin tocar el `.env`:**
 
