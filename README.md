@@ -200,8 +200,8 @@ cripto la has tocado por Telegram, manda eso aunque luego cambies el `.env`.
 python main.py --status
 ```
 Te manda a Telegram un resumen con el precio de todo lo que vigilas y cuánto ha
-cambiado en las últimas 24 horas. Si acabas de instalarlo no hay con qué
-comparar, así que pone "sin histórico" hasta que lleve un día funcionando.
+cambiado en las últimas 24 horas. Ese dato lo da CoinGecko en la misma consulta,
+así que sale desde el primer momento aunque acabes de instalarlo.
 
 Debajo de cada una te dice a qué precio saltaría el siguiente aviso y cuánto le
 falta, por ejemplo `↑ €64.000,00 (+1.59%) · ↓ €63.000,00 (-0.90%)`. Así sabes si

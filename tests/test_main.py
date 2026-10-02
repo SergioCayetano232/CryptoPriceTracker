@@ -47,6 +47,12 @@ def sin_fotos_de_verdad(monkeypatch):
     return fotos
 
 
+@pytest.fixture(autouse=True)
+def sin_cambios_de_coingecko(monkeypatch):
+    """Sin esto, la variacion de 24 h de un test aparece en el siguiente."""
+    monkeypatch.setattr(coingecko, "_cambios", {})
+
+
 def _mensaje(texto, chat=123, hace=0):
     return {"chat": {"id": chat}, "text": texto, "date": int(time.time()) - hace}
 
@@ -1064,6 +1070,28 @@ def test_recien_instalado_el_aviso_va_sin_24h(config, enviados, monkeypatch):
 
     assert "ha subido un" in enviados[0]
     assert "24 h" not in enviados[0]
+
+
+def test_la_variacion_de_coingecko_manda_sobre_el_historico(
+    config, enviados, monkeypatch
+):
+    _con_fecha(config, 60000.0, 24)  # el historico diria +10%
+    _precio(monkeypatch, {"bitcoin": 66000.0})
+    monkeypatch.setattr(coingecko, "_cambios", {"bitcoin": 7.25})
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%62000.0"})
+
+    assert "En 24 h: 🔺 +7.25%" in enviados[0]
+
+
+def test_recien_instalado_el_resumen_ya_lleva_las_24h(config, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 66000.0})
+    monkeypatch.setattr(coingecko, "_cambios", {"bitcoin": -1.5})
+
+    texto = main.montar_resumen(config)
+
+    assert "sin histórico" not in texto
+    assert "🔻 -1.50%" in texto
 
 
 def test_varios_avisos_cada_uno_con_lo_suyo(config, enviados, monkeypatch):

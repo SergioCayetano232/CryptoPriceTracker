@@ -901,6 +901,12 @@ def _consultar(config: Config, coin_ids: list[str]) -> dict[str, float] | None:
 
 def _variacion(config: Config, coin_id: str, precio: float) -> float | None:
     """Cuanto ha variado en porcentaje desde hace HORAS_RESUMEN horas."""
+    # La de CoinGecko vale aunque el bot lleve poco funcionando o haya estado
+    # apagado. El historico propio queda de reserva.
+    cambio = coingecko.cambio_24h(coin_id)
+    if cambio is not None:
+        return cambio
+
     try:
         antes = database.get_price_at(config.database_path, coin_id, HORAS_RESUMEN)
     except database.DatabaseError as e:

@@ -10,6 +10,8 @@ from crypto_tracker import coingecko
 def sin_esperas(monkeypatch):
     """Los reintentos esperan segundos de verdad y aqui no hace falta."""
     monkeypatch.setattr(coingecko.time, "sleep", lambda s: None)
+    # que la variacion de un test no se cuele en el siguiente
+    monkeypatch.setattr(coingecko, "_cambios", {})
 
 
 class RespuestaFalsa:
@@ -342,3 +344,46 @@ def test_sin_conexion_no_cuenta(monkeypatch):
         coingecko.get_prices(["bitcoin"], "eur")
 
     assert coingecko.tomar_consultas() == 0
+
+
+# --- variacion en 24 h ---
+
+
+def test_pide_la_variacion_de_24h(monkeypatch):
+    pedido = {}
+
+    def get(url, params=None, headers=None, timeout=None):
+        pedido.update(params)
+        return RespuestaFalsa({"bitcoin": {"eur": 63000.0, "eur_24h_change": -2.5}})
+
+    monkeypatch.setattr(requests, "get", get)
+
+    precios = coingecko.get_prices(["bitcoin"], "eur")
+
+    assert pedido["include_24hr_change"] == "true"
+    assert precios == {"bitcoin": 63000.0}  # el precio sigue igual que antes
+    assert coingecko.cambio_24h("bitcoin") == -2.5
+
+
+def test_sin_variacion_no_se_inventa(monkeypatch):
+    datos = {"bitcoin": {"eur": 63000.0, "eur_24h_change": None}}
+    monkeypatch.setattr(requests, "get", lambda *a, **k: RespuestaFalsa(datos))
+
+    coingecko.get_prices(["bitcoin"], "eur")
+
+    assert coingecko.cambio_24h("bitcoin") is None
+
+
+def test_si_deja_de_venir_se_olvida_la_vieja(monkeypatch):
+    respuestas = [
+        {"bitcoin": {"eur": 63000.0, "eur_24h_change": 4.0}},
+        {"bitcoin": {"eur": 64000.0}},
+    ]
+    monkeypatch.setattr(
+        requests, "get", lambda *a, **k: RespuestaFalsa(respuestas.pop(0))
+    )
+
+    coingecko.get_prices(["bitcoin"], "eur")
+    coingecko.get_prices(["bitcoin"], "eur")
+
+    assert coingecko.cambio_24h("bitcoin") is None

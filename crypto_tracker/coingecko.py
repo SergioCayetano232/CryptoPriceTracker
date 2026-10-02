@@ -1,6 +1,7 @@
 """Cliente de la API publica de CoinGecko."""
 
 import logging
+import math
 import os
 import time
 
@@ -23,6 +24,10 @@ ESPERA_INICIAL = 2
 # Peticiones hechas desde la ultima vez que se apuntaron. Aqui no hay base de
 # datos, asi que solo se cuentan; main las va guardando.
 _hechas = 0
+
+# Variacion en 24 h de cada cripto segun CoinGecko, de la ultima consulta en
+# que salio. Va en la misma peticion que el precio, asi que no gasta cuota.
+_cambios: dict[str, float] = {}
 
 
 class CoinGeckoError(Exception):
@@ -75,6 +80,11 @@ def mejores(monedas: list, texto: str, maximo: int = 5) -> list[dict]:
     return sorted(validas, key=orden)[:maximo]
 
 
+def cambio_24h(coin_id: str) -> float | None:
+    """Cuanto ha variado en 24 h, en %, segun la ultima consulta. None si no vino."""
+    return _cambios.get(coin_id)
+
+
 def tomar_consultas() -> int:
     """Las peticiones hechas desde la ultima llamada, y pone la cuenta a cero."""
     global _hechas
@@ -107,6 +117,7 @@ def _pedir_precios(coin_ids: list[str], vs_currency: str) -> dict[str, float]:
     params = {
         "ids": ",".join(coin_ids),
         "vs_currencies": vs_currency,
+        "include_24hr_change": "true",
     }
     return _extract_prices(_pedir(API_URL, params), coin_ids, vs_currency)
 
@@ -184,6 +195,14 @@ def _extract_prices(
             prices[coin_id] = float(entry[vs_currency])
         except (TypeError, ValueError):
             logger.warning("Precio raro para %s: %r", coin_id, entry[vs_currency])
+
+        # Si esta vez no viene (a veces llega null), fuera la vieja: mejor sin
+        # dato que uno de hace horas.
+        cambio = entry.get(f"{vs_currency}_24h_change")
+        if isinstance(cambio, (int, float)) and math.isfinite(cambio):
+            _cambios[coin_id] = float(cambio)
+        else:
+            _cambios.pop(coin_id, None)
 
     faltan = [c for c in coin_ids if c not in prices]
     if faltan:
