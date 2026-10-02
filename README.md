@@ -176,6 +176,17 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 Al escribir `/` en el chat te salen solos. Solo contesta a tu chat id, y si
 estaba apagado, al volver ignora lo que le escribiste hace más de 10 minutos.
 
+**Botones en los avisos:**
+
+Cada aviso lleva debajo unos botones para reaccionar de un toque:
+
+- **📈 Gráfica**: la de las últimas 24 h, como `/historico`.
+- **🎯 Si vuelve a 64.000**: te avisa una vez si vuelve al precio que acaba de
+  cruzar, como `/alerta`.
+- **🔕 Callar 1 h**: como `/mute 1h`.
+
+Si en un mensaje vienen varias criptos, salen los botones de las tres primeras.
+
 **Alertas de una sola vez:**
 
 Escríbele `/alerta bitcoin 70000` y te avisa cuando llegue a 70.000, suba o
@@ -367,6 +378,7 @@ crypto_tracker/
   coingecko.py   consulta los precios
   database.py    guarda el histórico
   telegram.py    manda los mensajes
+  botones.py     los botones de debajo de los avisos
   alerts.py      decide cuándo avisar y escribe los avisos
   brusco.py      los movimientos bruscos
   puntuales.py   las alertas de /alerta

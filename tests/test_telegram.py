@@ -238,3 +238,73 @@ def test_corte_del_pie_de_foto(monkeypatch):
 
 def test_lo_corto_no_se_toca():
     assert telegram._recortar("<b>hola</b>\nadios", 100) == "<b>hola</b>\nadios"
+
+
+# --- botones ---
+
+
+def test_mensaje_con_botones(monkeypatch):
+    enviado = {}
+
+    def capturar(url, json=None, timeout=None):
+        enviado.update(json)
+        return RespuestaFalsa()
+
+    monkeypatch.setattr(requests, "post", capturar)
+    botones = [[("📈 Gráfica", "/historico bitcoin")], [("🔕 Callar", "/mute 1h")]]
+    telegram.send_message("token", "123", "hola", botones=botones)
+
+    assert enviado["reply_markup"] == {
+        "inline_keyboard": [
+            [{"text": "📈 Gráfica", "callback_data": "/historico bitcoin"}],
+            [{"text": "🔕 Callar", "callback_data": "/mute 1h"}],
+        ]
+    }
+
+
+def test_mensaje_sin_botones_como_antes(monkeypatch):
+    enviado = {}
+
+    def capturar(url, json=None, timeout=None):
+        enviado.update(json)
+        return RespuestaFalsa()
+
+    monkeypatch.setattr(requests, "post", capturar)
+    telegram.send_message("token", "123", "hola")
+
+    assert "reply_markup" not in enviado
+
+
+def test_pide_tambien_los_botones_pulsados(monkeypatch):
+    pedido = {}
+
+    def get(url, params=None, timeout=None):
+        pedido.update(params)
+        return RespuestaFalsa(data={"ok": True, "result": []})
+
+    monkeypatch.setattr(requests, "get", get)
+    telegram.get_updates("token", None, 30)
+
+    assert "callback_query" in pedido["allowed_updates"]
+
+
+def test_contestar_un_boton(monkeypatch):
+    enviado = {}
+
+    def capturar(url, json=None, timeout=None):
+        enviado.update(json)
+        return RespuestaFalsa()
+
+    monkeypatch.setattr(requests, "post", capturar)
+
+    assert telegram.answer_callback("token", "abc") is True
+    assert enviado == {"callback_query_id": "abc"}
+
+
+def test_contestar_un_boton_sin_conexion(monkeypatch):
+    def falla(*a, **k):
+        raise requests.ConnectionError()
+
+    monkeypatch.setattr(requests, "post", falla)
+
+    assert telegram.answer_callback("token", "abc") is False

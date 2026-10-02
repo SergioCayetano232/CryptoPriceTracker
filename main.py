@@ -19,6 +19,7 @@ from datetime import datetime, timedelta, timezone
 
 from crypto_tracker import (
     alerts,
+    botones,
     brusco,
     cartera,
     coingecko,
@@ -173,6 +174,7 @@ def ejecutar_ciclo(
         config.telegram_chat_id,
         texto,
         sin_sonido=_sin_sonido(config),
+        botones=botones.para_avisos(avisos, config.vs_currency),
     ):
         logger.info("Aviso enviado (%d): %s", len(avisos), cruzadas)
         _borrar_puntuales(config, hechas)
@@ -369,7 +371,10 @@ def esperar_escuchando(config: Config, segundos: int, offset: int | None) -> int
             # que vuelva a llegar una y otra vez.
             offset = update["update_id"] + 1
             try:
-                atender(config, update.get("message") or {})
+                if "callback_query" in update:
+                    atender_boton(config, update["callback_query"])
+                else:
+                    atender(config, update.get("message") or {})
             except Exception:
                 logger.exception("Error contestando un comando")
 
@@ -390,6 +395,27 @@ def atender(config: Config, mensaje: dict) -> None:
         return
 
     logger.info("Comando recibido: %s", texto)
+    contestar(config, texto)
+
+
+def atender_boton(config: Config, boton: dict) -> None:
+    """Un boton de debajo de un aviso. Lleva dentro el comando que hace."""
+    # Hay que contestarlo aunque no sea tuyo, o se queda dando vueltas.
+    telegram.answer_callback(config.telegram_token, boton.get("id", ""))
+
+    chat = str((boton.get("message") or {}).get("chat", {}).get("id", ""))
+    if chat != config.telegram_chat_id:
+        logger.warning("Boton de un chat que no es el tuyo (%s), lo ignoro", chat)
+        return
+
+    # Sin mirar la antigüedad: un aviso de ayer sigue teniendo sus botones.
+    texto = boton.get("data") or ""
+    logger.info("Boton pulsado: %s", texto)
+    contestar(config, texto)
+
+
+def contestar(config: Config, texto: str) -> None:
+    """Hace el comando y manda la respuesta, con imagen si la lleva."""
     orden = comandos.interpretar(texto)
 
     try:

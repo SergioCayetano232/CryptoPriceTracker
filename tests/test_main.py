@@ -395,7 +395,9 @@ def sonidos(monkeypatch):
     monkeypatch.setattr(
         telegram,
         "send_message",
-        lambda token, chat, texto, sin_sonido=False: lista.append(sin_sonido) or True,
+        lambda token, chat, texto, sin_sonido=False, **kw: (
+            lista.append(sin_sonido) or True
+        ),
     )
     return lista
 
@@ -1254,3 +1256,88 @@ def test_el_ciclo_cuenta_de_verdad(config, enviados, sin_cuenta_previa, monkeypa
 
     mes = datetime.now(timezone.utc).strftime("%Y-%m")
     assert database.get_consultas(config.database_path, mes) == 1
+
+
+# --- botones de los avisos ---
+
+
+@pytest.fixture
+def contestados(monkeypatch):
+    lista = []
+    monkeypatch.setattr(
+        telegram, "answer_callback", lambda token, cid: lista.append(cid) or True
+    )
+    return lista
+
+
+def _boton(datos, chat=123):
+    return {"id": "q1", "data": datos, "message": {"chat": {"id": chat}}}
+
+
+def test_el_aviso_lleva_botones(config, monkeypatch):
+    mandados = []
+    monkeypatch.setattr(
+        telegram,
+        "send_message",
+        lambda token, chat, texto, **kw: mandados.append(kw) or True,
+    )
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 90000.0})
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%60000.0"})
+
+    filas = mandados[0]["botones"]
+    assert ("📈 Gráfica", "/historico bitcoin") in filas[0]
+    assert filas[-1] == [("🔕 Callar 1 h", "/mute 1h")]
+
+
+def test_boton_de_callar(config, enviados, contestados):
+    main.atender_boton(config, _boton("/mute 1h"))
+
+    assert contestados == ["q1"]
+    assert database.silenciado_hasta(config.database_path) is not None
+    assert "Callado" in enviados[0]
+
+
+def test_boton_si_vuelve_crea_la_alerta(config, enviados, contestados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 64100.0})
+
+    main.atender_boton(config, _boton("/alerta bitcoin 64000,0"))
+
+    pendientes = database.get_puntuales(config.database_path, "eur")
+    assert [(p.coin_id, p.objetivo, p.sube) for p in pendientes] == [
+        ("bitcoin", 64000.0, False)
+    ]
+
+
+def test_boton_de_grafica(config, contestados, sin_fotos_de_verdad):
+    _con_fecha(config, 60000.0, 2)
+    _con_fecha(config, 61000.0, 1)
+
+    main.atender_boton(config, _boton("/historico bitcoin"))
+
+    assert len(sin_fotos_de_verdad) == 1
+
+
+def test_boton_de_otro_chat(config, enviados, contestados):
+    main.atender_boton(config, _boton("/mute 1h", chat=999))
+
+    # se contesta para que no se quede cargando, pero no hace nada
+    assert contestados == ["q1"]
+    assert enviados == []
+    assert database.silenciado_hasta(config.database_path) is None
+
+
+def test_la_espera_atiende_los_botones(config, enviados, contestados, monkeypatch):
+    llamadas = []
+
+    def get_updates(token, offset, espera):
+        llamadas.append(offset)
+        if len(llamadas) == 1:
+            return [{"update_id": 9, "callback_query": _boton("/ayuda")}]
+        return []
+
+    monkeypatch.setattr(telegram, "get_updates", get_updates)
+
+    assert main.esperar_escuchando(config, 1, None) == 10
+    assert contestados == ["q1"]
+    assert len(enviados) == 1

@@ -11,6 +11,7 @@ API_URL = "https://api.telegram.org/bot{token}/sendMessage"
 UPDATES_URL = "https://api.telegram.org/bot{token}/getUpdates"
 COMMANDS_URL = "https://api.telegram.org/bot{token}/setMyCommands"
 PHOTO_URL = "https://api.telegram.org/bot{token}/sendPhoto"
+ANSWER_URL = "https://api.telegram.org/bot{token}/answerCallbackQuery"
 
 # El pie de una foto admite mucho menos que un mensaje.
 MAX_CAPTION = 1024
@@ -25,8 +26,16 @@ class TelegramError(Exception):
     """No se pudo enviar el mensaje."""
 
 
-def send_message(token: str, chat_id: str, text: str, sin_sonido: bool = False) -> bool:
+def send_message(
+    token: str,
+    chat_id: str,
+    text: str,
+    sin_sonido: bool = False,
+    botones: list[list[tuple[str, str]]] | None = None,
+) -> bool:
     """Manda un mensaje al chat. Devuelve True si se envio.
+
+    botones son filas de (texto, datos); los datos vuelven al pulsarlo.
 
     No lanza excepcion: un fallo de Telegram no deberia tumbar el
     programa, asi que lo registra y devuelve False.
@@ -46,6 +55,13 @@ def send_message(token: str, chat_id: str, text: str, sin_sonido: bool = False) 
         # Llega igual, pero sin sonar ni vibrar.
         "disable_notification": sin_sonido,
     }
+    if botones:
+        payload["reply_markup"] = {
+            "inline_keyboard": [
+                [{"text": texto, "callback_data": datos} for texto, datos in fila]
+                for fila in botones
+            ]
+        }
 
     try:
         response = requests.post(
@@ -143,7 +159,10 @@ def get_updates(token: str, offset: int | None, espera: int) -> list[dict]:
 
     Pedir con offset le dice a Telegram que los anteriores ya los tenemos.
     """
-    params = {"timeout": espera, "allowed_updates": '["message"]'}
+    params = {
+        "timeout": espera,
+        "allowed_updates": '["message", "callback_query"]',
+    }
     if offset is not None:
         params["offset"] = offset
 
@@ -161,6 +180,19 @@ def get_updates(token: str, offset: int | None, espera: int) -> list[dict]:
         raise TelegramError(_explain(response.status_code, data))
 
     return data.get("result", [])
+
+
+def answer_callback(token: str, callback_id: str) -> bool:
+    """Le dice a Telegram que el boton ya se atendio, si no se queda cargando."""
+    try:
+        response = requests.post(
+            ANSWER_URL.format(token=token),
+            json={"callback_query_id": callback_id},
+            timeout=TIMEOUT,
+        )
+        return bool(response.json().get("ok"))
+    except (requests.RequestException, ValueError):
+        return False
 
 
 def set_commands(token: str, comandos: dict[str, str]) -> bool:
