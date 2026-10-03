@@ -188,6 +188,31 @@ def test_pie_largo_se_corta(monkeypatch):
     assert len(enviado["caption"]) <= telegram.MAX_CAPTION
 
 
+# --- archivos ---
+
+
+def test_mandar_archivo(monkeypatch):
+    enviado = {}
+
+    def capturar(url, data=None, files=None, timeout=None):
+        enviado.update(url=url, data=data, files=files)
+        return RespuestaFalsa()
+
+    monkeypatch.setattr(requests, "post", capturar)
+
+    assert telegram.send_document("token", "123", b"a;b", "x.csv", "pie") is True
+    assert enviado["url"].endswith("/sendDocument")
+    assert enviado["files"]["document"] == ("x.csv", b"a;b", "text/csv")
+    assert enviado["data"]["caption"] == "pie"
+
+
+def test_archivo_rechazado(monkeypatch):
+    respuesta = RespuestaFalsa(400, {"ok": False, "description": "too big"})
+    monkeypatch.setattr(requests, "post", lambda *a, **k: respuesta)
+
+    assert telegram.send_document("token", "123", b"x", "x.csv") is False
+
+
 # --- cortar sin romper el html ---
 
 

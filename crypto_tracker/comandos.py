@@ -15,6 +15,7 @@ COMANDOS = {
     "vigilar": "Ver o cambiar lo que vigilo (ej: /vigilar solana %5)",
     "dejar": "Dejar de vigilar una cripto (ej: /dejar solana)",
     "convertir": "Cuánto es en dinero o en cripto (ej: /convertir 0.05 bitcoin)",
+    "exportar": "Los precios guardados en un CSV (ej: /exportar bitcoin 30d)",
     "buscar": "Encuentra el id de una cripto (ej: /buscar btc)",
     "consultas": "Cuántas consultas a CoinGecko llevas este mes",
     "mute": "Callar los avisos un rato (ej: /mute 2h)",
@@ -29,6 +30,7 @@ ALIAS = {
     "history": "historico",
     "search": "buscar",
     "convert": "convertir",
+    "export": "exportar",
     "portfolio": "cartera",
     "comprar": "compra",
     "buy": "compra",
@@ -65,3 +67,13 @@ def interpretar(texto: str) -> tuple[str, str] | None:
     nombre = partes[0][1:].split("@")[0].lower()
     argumento = partes[1].strip() if len(partes) > 1 else ""
     return ALIAS.get(nombre, nombre), argumento
+
+
+@dataclass(frozen=True)
+class Archivo:
+    """Una respuesta con un adjunto. texto es lo que se manda si no pasa."""
+
+    contenido: bytes
+    nombre: str
+    pie: str
+    texto: str

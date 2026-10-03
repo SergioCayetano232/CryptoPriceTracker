@@ -11,6 +11,7 @@ API_URL = "https://api.telegram.org/bot{token}/sendMessage"
 UPDATES_URL = "https://api.telegram.org/bot{token}/getUpdates"
 COMMANDS_URL = "https://api.telegram.org/bot{token}/setMyCommands"
 PHOTO_URL = "https://api.telegram.org/bot{token}/sendPhoto"
+DOCUMENT_URL = "https://api.telegram.org/bot{token}/sendDocument"
 ANSWER_URL = "https://api.telegram.org/bot{token}/answerCallbackQuery"
 
 # El pie de una foto admite mucho menos que un mensaje.
@@ -131,21 +132,43 @@ def send_photo(
     token: str, chat_id: str, png: bytes, caption: str = "", sin_sonido: bool = False
 ) -> bool:
     """Manda una imagen con su pie. Como send_message, no lanza excepciones."""
+    return _mandar_archivo(
+        PHOTO_URL.format(token=token),
+        chat_id,
+        {"photo": ("grafica.png", png, "image/png")},
+        caption,
+        sin_sonido,
+        "la imagen",
+    )
+
+
+def send_document(
+    token: str, chat_id: str, contenido: bytes, nombre: str, caption: str = ""
+) -> bool:
+    """Manda un archivo adjunto, como el CSV de /exportar."""
+    return _mandar_archivo(
+        DOCUMENT_URL.format(token=token),
+        chat_id,
+        {"document": (nombre, contenido, "text/csv")},
+        caption,
+        False,
+        "el archivo",
+    )
+
+
+def _mandar_archivo(
+    url: str, chat_id: str, files: dict, caption: str, sin_sonido: bool, que: str
+) -> bool:
     caption = _recortar(caption, MAX_CAPTION)
     datos = {"chat_id": chat_id, "caption": caption, "parse_mode": "HTML"}
     if sin_sonido:
         datos["disable_notification"] = "true"
 
     try:
-        response = requests.post(
-            PHOTO_URL.format(token=token),
-            data=datos,
-            files={"photo": ("grafica.png", png, "image/png")},
-            timeout=TIMEOUT,
-        )
+        response = requests.post(url, data=datos, files=files, timeout=TIMEOUT)
         data = response.json()
     except requests.RequestException as e:
-        logger.error("Fallo el envio de la imagen a Telegram: %s", e)
+        logger.error("Fallo el envio de %s a Telegram: %s", que, e)
         return False
     except ValueError:
         logger.error("Telegram devolvio algo que no es JSON")
@@ -153,7 +176,7 @@ def send_photo(
 
     if not data.get("ok"):
         logger.error(
-            "Telegram rechazo la imagen: %s", _explain(response.status_code, data)
+            "Telegram rechazo %s: %s", que, _explain(response.status_code, data)
         )
         return False
     return True

@@ -15,7 +15,7 @@ import logging
 import sys
 import time
 from dataclasses import replace
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from crypto_tracker import (
     alerts,
@@ -28,6 +28,7 @@ from crypto_tracker import (
     cuota,
     database,
     diario,
+    exportar,
     extremos,
     grafica,
     movimientos,
@@ -491,10 +492,23 @@ def contestar(config: Config, texto: str) -> None:
             return
         respuesta = respuesta.texto
 
+    if isinstance(respuesta, comandos.Archivo):
+        if telegram.send_document(
+            config.telegram_token,
+            config.telegram_chat_id,
+            respuesta.contenido,
+            respuesta.nombre,
+            respuesta.pie,
+        ):
+            return
+        respuesta = respuesta.texto
+
     telegram.send_message(config.telegram_token, config.telegram_chat_id, respuesta)
 
 
-def responder(config: Config, nombre: str, argumento: str) -> str | comandos.Foto:
+def responder(
+    config: Config, nombre: str, argumento: str
+) -> str | comandos.Foto | comandos.Archivo:
     """El texto con el que se contesta a cada comando."""
     if nombre == "ayuda":
         return comandos.AYUDA
@@ -569,6 +583,9 @@ def responder(config: Config, nombre: str, argumento: str) -> str | comandos.Fot
 
     if nombre == "convertir":
         return _convertir(config, argumento)
+
+    if nombre == "exportar":
+        return _exportar(config, argumento)
 
     if nombre == "buscar":
         if not argumento:
@@ -764,6 +781,35 @@ def _convertir(config: Config, argumento: str) -> str:
         alerts.formatear_conversion(
             dinero, cripto, coin_id, precio, conversion.desde_dinero, config.vs_currency
         )
+    )
+
+
+def _exportar(config: Config, argumento: str) -> str | comandos.Archivo:
+    try:
+        coin_id, horas = exportar.interpretar(argumento)
+    except periodo.PeriodoError as e:
+        return telegram.escape(str(e))
+
+    serie = database.get_serie(config.database_path, coin_id, horas, config.vs_currency)
+    nombre = telegram.escape(coin_id)
+    if not serie:
+        return (
+            f"No tengo precios de <b>{nombre}</b> ({periodo.nombre(horas)}). "
+            "Tiene que ser el id de CoinGecko (bitcoin, no BTC)."
+        )
+
+    pie = f"📄 {len(serie)} precios de <b>{nombre}</b>, {periodo.nombre(horas)}"
+    primero = serie[0][0]
+    if periodo.falta_principio(primero, datetime.now(timezone.utc), horas):
+        pie += (
+            f"\n<i>Solo los tengo desde el {primero.astimezone():%d/%m a las %H:%M}</i>"
+        )
+
+    return comandos.Archivo(
+        exportar.a_csv(serie, config.vs_currency),
+        exportar.nombre_archivo(coin_id, horas, date.today()),
+        alerts.con_fuente(pie),
+        "No he podido mandarte el archivo. Prueba en un rato.",
     )
 
 

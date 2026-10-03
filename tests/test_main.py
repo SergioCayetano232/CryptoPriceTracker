@@ -1290,6 +1290,70 @@ def test_convertir_mal_escrito(config, enviados, monkeypatch):
     assert pedidas == []  # no gasta consultas en lo que no entiende
 
 
+# --- /exportar ---
+
+
+@pytest.fixture
+def archivos(monkeypatch):
+    lista = []
+    monkeypatch.setattr(
+        telegram,
+        "send_document",
+        lambda token, chat, contenido, nombre, pie="": (
+            lista.append((contenido, nombre, pie)) or True
+        ),
+    )
+    return lista
+
+
+def test_exportar(config, enviados, archivos):
+    _precio_hace(config, 60000.0, 60)
+    _precio_hace(config, 61000.5, 30)
+    _precio_hace(config, 99999.0, 40 * 24 * 60)  # fuera de los 30 dias
+
+    main.atender(config, _mensaje("/exportar bitcoin"))
+
+    contenido, nombre, pie = archivos[0]
+    lineas = contenido.decode("utf-8-sig").splitlines()
+    assert lineas[0] == "fecha;precio_eur"
+    assert [linea.split(";")[1] for linea in lineas[1:]] == ["60000", "61000,5"]
+    assert nombre.startswith("bitcoin-30d-") and nombre.endswith(".csv")
+    assert "2 precios de <b>bitcoin</b>, últimos 30 días" in pie
+    assert "Solo los tengo desde" in pie  # hay una hora, no un mes
+    assert enviados == []
+
+
+def test_exportar_con_tramo(config, archivos):
+    _precio_hace(config, 60000.0, 60)
+    _precio_hace(config, 61000.0, 3 * 60)
+
+    main.atender(config, _mensaje("/exportar bitcoin 2h"))
+
+    assert archivos[0][0].decode("utf-8-sig").count("\r\n") == 2  # cabecera y uno
+
+
+def test_exportar_sin_precios(config, enviados, archivos):
+    main.atender(config, _mensaje("/exportar BTC"))
+
+    assert "No tengo precios de <b>btc</b>" in enviados[0]
+    assert archivos == []
+
+
+def test_exportar_mal_escrito(config, enviados, archivos):
+    main.atender(config, _mensaje("/exportar"))
+
+    assert "/exportar bitcoin 30d" in enviados[0]
+
+
+def test_exportar_si_falla_el_archivo_lo_dice(config, enviados, monkeypatch):
+    _precio_hace(config, 60000.0, 60)
+    monkeypatch.setattr(telegram, "send_document", lambda *a, **k: False)
+
+    main.atender(config, _mensaje("/exportar bitcoin"))
+
+    assert "No he podido mandarte el archivo" in enviados[0]
+
+
 # --- /historico con tramo ---
 
 
