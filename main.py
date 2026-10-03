@@ -24,6 +24,7 @@ from crypto_tracker import (
     cartera,
     coingecko,
     comandos,
+    convertir,
     cuota,
     database,
     diario,
@@ -566,6 +567,9 @@ def responder(config: Config, nombre: str, argumento: str) -> str | comandos.Fot
         total = database.get_consultas(config.database_path, cuota.mes(ahora))
         return cuota.mensaje_estado(total, ahora)
 
+    if nombre == "convertir":
+        return _convertir(config, argumento)
+
     if nombre == "buscar":
         if not argumento:
             return "¿Qué busco? Por ejemplo: /buscar btc"
@@ -730,6 +734,36 @@ def _crear_alerta(config: Config, argumento: str) -> str:
     logger.info("Alerta %d creada: %s a %s", alerta.id, coin_id, objetivo)
     return alerts.con_fuente(
         alerts.formatear_puntual(alerta, precio, config.vs_currency)
+    )
+
+
+def _convertir(config: Config, argumento: str) -> str:
+    try:
+        conversion = convertir.interpretar(argumento, config.vs_currency)
+    except convertir.ConvertirError as e:
+        return telegram.escape(str(e))
+
+    coin_id = conversion.coin_id
+    try:
+        precio = coingecko.get_prices([coin_id], config.vs_currency).get(coin_id)
+    except coingecko.CoinGeckoError as e:
+        return f"No he podido mirar el precio ahora mismo: {telegram.escape(str(e))}"
+    if not precio:
+        return (
+            f"No encuentro <b>{telegram.escape(coin_id)}</b> en CoinGecko. "
+            f"Prueba con /buscar {telegram.escape(coin_id)}"
+        )
+
+    resultado = conversion.resultado(precio)
+    dinero, cripto = (
+        (conversion.cantidad, resultado)
+        if conversion.desde_dinero
+        else (resultado, conversion.cantidad)
+    )
+    return alerts.con_fuente(
+        alerts.formatear_conversion(
+            dinero, cripto, coin_id, precio, conversion.desde_dinero, config.vs_currency
+        )
     )
 
 

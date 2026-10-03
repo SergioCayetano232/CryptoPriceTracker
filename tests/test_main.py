@@ -1250,6 +1250,46 @@ def test_alerta_de_la_cartera_sin_cartera(config, enviados):
     assert database.get_puntuales(config.database_path, "eur") == []
 
 
+# --- /convertir ---
+
+
+def test_convertir_cripto_a_dinero(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 62000.0})
+
+    main.atender(config, _mensaje("/convertir 0.05 bitcoin"))
+
+    assert "💱 0,05 Bitcoin = <b>€3.100,00</b>" in enviados[0]
+    assert "<i>1 Bitcoin = €62.000,00</i>" in enviados[0]
+    assert "CoinGecko" in enviados[0]
+
+
+def test_convertir_dinero_a_cripto(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"solana": 150.0})
+
+    main.atender(config, _mensaje("/convertir 500€ solana"))
+
+    assert "💱 €500,00 = <b>3,33333333 Solana</b>" in enviados[0]
+
+
+def test_convertir_algo_que_no_existe(config, enviados, monkeypatch):
+    _precio(monkeypatch, {})
+
+    main.atender(config, _mensaje("/convertir 1 solanna"))
+
+    assert "/buscar solanna" in enviados[0]
+
+
+def test_convertir_mal_escrito(config, enviados, monkeypatch):
+    pedidas = _precio(monkeypatch, {"solana": 150.0})
+
+    main.atender(config, _mensaje("/convertir"))
+    main.atender(config, _mensaje("/convertir 500 usd solana"))
+
+    assert "/convertir 0.05 bitcoin" in enviados[0]
+    assert "en EUR, no en USD" in enviados[1]
+    assert pedidas == []  # no gasta consultas en lo que no entiende
+
+
 # --- /historico con tramo ---
 
 

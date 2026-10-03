@@ -419,6 +419,26 @@ def formatear_venta(
     return texto + ". Mira /cartera"
 
 
+def formatear_conversion(
+    dinero: float,
+    cripto: float,
+    coin_id: str,
+    precio: float,
+    desde_dinero: bool,
+    currency: str,
+) -> str:
+    """Respuesta de /convertir. Lo que escribiste va primero."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(coin_id.replace("-", " ").title())
+    lado_dinero = f"{simbolo}{_num(dinero)}"
+    lado_cripto = f"{texto_cantidad(cripto)} {nombre}"
+    if desde_dinero:
+        linea = f"{lado_dinero} = <b>{lado_cripto}</b>"
+    else:
+        linea = f"{lado_cripto} = <b>{lado_dinero}</b>"
+    return f"💱 {linea}\n<i>1 {nombre} = {simbolo}{_num(precio)}</i>"
+
+
 def formatear_semana(
     semana: Semana, currency: str, desde: datetime | None = None
 ) -> str:

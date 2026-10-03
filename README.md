@@ -171,6 +171,8 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/dejar solana` | Deja de vigilarla |
 | `/historico bitcoin` | Imagen con la gráfica de las últimas 24 h, máximo y mínimo |
 | `/historico bitcoin 7d` | Lo mismo, del tramo que digas (`12h`, `7d`, `30d`...) |
+| `/convertir 0.05 bitcoin` | Cuánto es en euros al precio de ahora |
+| `/convertir 500 eur solana` | Al revés: cuánta solana compras con 500 € (vale `500€`) |
 | `/buscar btc` | Encuentra el id de CoinGecko de una cripto |
 | `/consultas` | Cuántas consultas a CoinGecko llevas este mes |
 | `/mute 2h` | Calla los avisos un rato |
@@ -434,6 +436,7 @@ crypto_tracker/
   alerts.py      decide cuándo avisar y escribe los avisos
   brusco.py      los movimientos bruscos
   extremos.py    los máximos y mínimos de los últimos días
+  convertir.py   entiende lo que le pides a /convertir
   puntuales.py   las alertas de /alerta
   vigiladas.py   lo que cambias con /vigilar
   movimientos.py las compras y ventas de /compra y /venta
