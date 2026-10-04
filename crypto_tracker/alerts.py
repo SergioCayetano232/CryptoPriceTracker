@@ -439,6 +439,18 @@ def formatear_conversion(
     return f"💱 {linea}\n<i>1 {nombre} = {simbolo}{_num(precio)}</i>"
 
 
+def formatear_precio(
+    coin_id: str, precio: float, variacion: float | None, currency: str
+) -> str:
+    """Respuesta de /precio: lo que vale ahora y cómo va en 24 h."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(coin_id.replace("-", " ").title())
+    texto = f"💰 <b>{nombre}</b>  {simbolo}{_num(precio)}"
+    if variacion is None:
+        return texto + "\n<i>Sin datos de las últimas 24 h</i>"
+    return texto + f"\n{_flecha(variacion)} {variacion:+.2f}% en 24 h"
+
+
 def formatear_semana(
     semana: Semana, currency: str, desde: datetime | None = None
 ) -> str:

@@ -9,6 +9,7 @@ from crypto_tracker.alerts import (
     Alert,
     clasificar,
     formatear,
+    formatear_precio,
     formatear_puntual,
     formatear_puntuales,
     formatear_resumen,
@@ -588,3 +589,19 @@ def test_lista_con_la_cartera():
     texto = formatear_puntuales([Puntual(2, "cartera", 6000.0, sube=True)], "eur")
 
     assert "<code>2</code>  <b>Tu cartera</b> 🔺 €6.000,00" in texto
+
+
+# --- /precio ---
+
+
+def test_precio_con_variacion():
+    texto = formatear_precio("bitcoin-cash", 0.1234, -3.5, "eur")
+
+    assert texto == "💰 <b>Bitcoin Cash</b>  €0,1234\n🔻 -3.50% en 24 h"
+
+
+def test_precio_sin_variacion():
+    texto = formatear_precio("bitcoin", 62000.0, None, "usd")
+
+    assert texto.startswith("💰 <b>Bitcoin</b>  $62.000,00\n")
+    assert "Sin datos de las últimas 24 h" in texto

@@ -581,6 +581,9 @@ def responder(
         total = database.get_consultas(config.database_path, cuota.mes(ahora))
         return cuota.mensaje_estado(total, ahora)
 
+    if nombre == "precio":
+        return _precio(config, argumento)
+
     if nombre == "convertir":
         return _convertir(config, argumento)
 
@@ -751,6 +754,29 @@ def _crear_alerta(config: Config, argumento: str) -> str:
     logger.info("Alerta %d creada: %s a %s", alerta.id, coin_id, objetivo)
     return alerts.con_fuente(
         alerts.formatear_puntual(alerta, precio, config.vs_currency)
+    )
+
+
+def _precio(config: Config, argumento: str) -> str:
+    partes = argumento.lower().split()
+    if len(partes) != 1:
+        return "¿De cuál? Por ejemplo: /precio solana"
+
+    coin_id = partes[0]
+    try:
+        precio = coingecko.get_prices([coin_id], config.vs_currency).get(coin_id)
+    except coingecko.CoinGeckoError as e:
+        return f"No he podido mirar el precio ahora mismo: {telegram.escape(str(e))}"
+    if precio is None:
+        return (
+            f"No encuentro <b>{telegram.escape(coin_id)}</b> en CoinGecko. "
+            f"Prueba con /buscar {telegram.escape(coin_id)}"
+        )
+
+    return alerts.con_fuente(
+        alerts.formatear_precio(
+            coin_id, precio, _variacion(config, coin_id, precio), config.vs_currency
+        )
     )
 
 

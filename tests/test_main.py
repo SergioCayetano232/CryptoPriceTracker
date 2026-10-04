@@ -1250,6 +1250,60 @@ def test_alerta_de_la_cartera_sin_cartera(config, enviados):
     assert database.get_puntuales(config.database_path, "eur") == []
 
 
+# --- /precio ---
+
+
+def test_precio_de_una_que_no_vigilas(config, enviados, monkeypatch):
+    pedidas = _precio(monkeypatch, {"solana": 150.0})
+    monkeypatch.setattr(coingecko, "_cambios", {"solana": 2.5})
+
+    main.atender(config, _mensaje("/precio Solana"))
+
+    assert pedidas == [["solana"]]  # una sola consulta, sin lo vigilado
+    assert "💰 <b>Solana</b>  €150,00\n🔺 +2.50% en 24 h" in enviados[0]
+    assert "CoinGecko" in enviados[0]
+
+
+def test_precio_tira_del_historico_si_coingecko_no_da_el_24h(
+    config, enviados, monkeypatch
+):
+    _precio(monkeypatch, {"bitcoin": 66000.0})
+    _precio_hace(config, 60000.0, 24 * 60 + 5)
+
+    main.atender(config, _mensaje("/price bitcoin"))
+
+    assert "🔺 +10.00% en 24 h" in enviados[0]
+
+
+def test_precio_de_algo_que_no_existe(config, enviados, monkeypatch):
+    _precio(monkeypatch, {})
+
+    main.atender(config, _mensaje("/precio solanna"))
+
+    assert "/buscar solanna" in enviados[0]
+
+
+def test_precio_mal_escrito(config, enviados, monkeypatch):
+    pedidas = _precio(monkeypatch, {"solana": 150.0})
+
+    main.atender(config, _mensaje("/precio"))
+    main.atender(config, _mensaje("/precio solana bitcoin"))
+
+    assert all("/precio solana" in t for t in enviados)
+    assert pedidas == []
+
+
+def test_precio_sin_conexion(config, enviados, monkeypatch):
+    def falla(ids, cur):
+        raise coingecko.CoinGeckoError("Sin conexion con CoinGecko")
+
+    monkeypatch.setattr(coingecko, "get_prices", falla)
+
+    main.atender(config, _mensaje("/precio solana"))
+
+    assert "No he podido mirar el precio" in enviados[0]
+
+
 # --- /convertir ---
 
 

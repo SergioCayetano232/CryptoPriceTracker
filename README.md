@@ -157,6 +157,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | Comando | Qué hace |
 |---|---|
 | `/status` | Cómo van tus criptos ahora |
+| `/precio solana` | Lo que vale una cripto ahora y cómo va en 24 h, aunque no la vigiles |
 | `/cartera` | Tu cartera: cuánto vale, cuánto ganas o pierdes y la gráfica de 7 días |
 | `/cartera 30d` | Lo mismo, con la gráfica del tramo que digas |
 | `/compra bitcoin 0.01 600` | Apunta en la cartera que has comprado 0,01 por 600 € |
