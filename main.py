@@ -65,6 +65,9 @@ ESPERA_TELEGRAM = 30
 # no pinta nada esta mañana.
 ANTIGUEDAD_MAXIMA = 10 * 60
 
+# El del bucle en marcha, para que /bot sepa como va. None fuera de --loop.
+_pulso: salud.Pulso | None = None
+
 
 def configurar_logs(verbose: bool = False) -> None:
     """Deja los logs con hora y nivel, para saber que paso y cuando."""
@@ -356,8 +359,9 @@ def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:
         config.check_interval,
     )
 
+    global _pulso
     fallos = 0
-    pulso = salud.Pulso()
+    pulso = _pulso = salud.Pulso()
     sin_precio: set[str] = set()
     offset = None
 
@@ -580,6 +584,17 @@ def responder(
         ahora = datetime.now(timezone.utc)
         total = database.get_consultas(config.database_path, cuota.mes(ahora))
         return cuota.mensaje_estado(total, ahora)
+
+    if nombre == "bot":
+        if _pulso is None:
+            return "Esto solo lo sé con el bot vigilando (--loop)."
+        return salud.mensaje_bot(
+            _pulso,
+            datetime.now(timezone.utc),
+            len(_con_cambios(config).watchlist),
+            len(database.get_puntuales(config.database_path, config.vs_currency)),
+            _silenciado(config),
+        )
 
     if nombre == "precio":
         return _precio(config, argumento)

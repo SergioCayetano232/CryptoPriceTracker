@@ -2,7 +2,13 @@
 
 from datetime import datetime, timedelta, timezone
 
-from crypto_tracker.salud import Pulso, mensaje_parado, mensaje_sin_precio, sin_precio
+from crypto_tracker.salud import (
+    Pulso,
+    mensaje_bot,
+    mensaje_parado,
+    mensaje_sin_precio,
+    sin_precio,
+)
 
 INICIO = datetime(2026, 9, 29, 12, 0, tzinfo=timezone.utc)
 
@@ -136,3 +142,49 @@ def test_mensaje_sin_precio_escapa_el_id():
 
     assert "<raro>" not in texto
     assert "&lt;raro&gt;" in texto
+
+
+# --- /bot ---
+
+
+def test_bot_recien_arrancado():
+    pulso = Pulso(ahora=_min(0))
+
+    texto = mensaje_bot(pulso, INICIO + timedelta(seconds=20), vigiladas=1, alertas=0)
+
+    assert "Encendido desde hace menos de un minuto" in texto
+    assert "Aún no he terminado ningún ciclo" in texto
+    assert "Vigilo 1 cripto · 0 alertas puestas" in texto
+    assert "Callado" not in texto
+
+
+def test_bot_tras_unos_dias():
+    pulso = Pulso(ahora=_min(0))
+    pulso.exito(_min(3 * 24 * 60 + 4 * 60 - 5))
+
+    texto = mensaje_bot(pulso, _min(3 * 24 * 60 + 4 * 60), vigiladas=3, alertas=1)
+
+    assert "Encendido desde hace 3 d 4 h" in texto
+    assert "Último ciclo bueno: hace 5 min" in texto
+    assert "Vigilo 3 criptos · 1 alerta puesta" in texto
+    assert "fallan" not in texto
+
+
+def test_bot_cuando_esta_fallando():
+    pulso = Pulso(ahora=_min(0))
+    pulso.exito(_min(10))
+    pulso.fallo("Sin conexion", _min(15))
+
+    texto = mensaje_bot(pulso, _min(55), vigiladas=2, alertas=0, callado=_min(120))
+
+    assert "Último ciclo bueno: hace 45 min" in texto
+    assert "⚠️ Las consultas fallan desde hace 40 min" in texto
+    assert "🔕 Callado hasta las" in texto
+
+
+def test_bot_vuelve_a_ir_tras_fallar():
+    pulso = Pulso(ahora=_min(0))
+    pulso.fallo("Sin conexion", _min(5))
+    pulso.exito(_min(10))
+
+    assert "fallan" not in mensaje_bot(pulso, _min(12), vigiladas=1, alertas=0)

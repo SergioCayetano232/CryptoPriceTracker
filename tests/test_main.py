@@ -1250,6 +1250,53 @@ def test_alerta_de_la_cartera_sin_cartera(config, enviados):
     assert database.get_puntuales(config.database_path, "eur") == []
 
 
+# --- /bot ---
+
+
+def test_bot_fuera_del_bucle(config, enviados, monkeypatch):
+    monkeypatch.setattr(main, "_pulso", None)
+
+    main.atender(config, _mensaje("/bot"))
+
+    assert "--loop" in enviados[0]
+
+
+def test_bot_con_el_bucle_en_marcha(config, enviados, monkeypatch):
+    from datetime import datetime, timedelta, timezone
+
+    from crypto_tracker import salud
+
+    ahora = datetime.now(timezone.utc)
+    pulso = salud.Pulso(ahora=ahora - timedelta(hours=2))
+    pulso.exito(ahora - timedelta(minutes=4))
+    monkeypatch.setattr(main, "_pulso", pulso)
+    database.crear_puntual(config.database_path, "solana", 200.0, True, "eur")
+
+    main.atender(config, _mensaje("/bot"))
+
+    assert "Encendido desde hace 2 h" in enviados[0]
+    assert "Último ciclo bueno: hace 4 min" in enviados[0]
+    assert "Vigilo 1 cripto · 1 alerta puesta" in enviados[0]
+
+
+def test_el_bucle_deja_su_pulso_para_bot(config, monkeypatch):
+    monkeypatch.setattr(main, "_pulso", None)
+    monkeypatch.setattr(telegram, "set_commands", lambda *a: True)
+    monkeypatch.setattr(main, "ejecutar_ciclo", lambda c, e, s: (e, None))
+    monkeypatch.setattr(main, "apuntar_consultas", lambda c: None)
+
+    def corta(*a):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(main, "esperar_escuchando", corta)
+
+    with pytest.raises(KeyboardInterrupt):
+        main.ejecutar_bucle(config, {})
+
+    assert main._pulso is not None
+    assert main._pulso.ultimo_bien is not None
+
+
 # --- /precio ---
 
 

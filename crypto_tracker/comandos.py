@@ -21,6 +21,7 @@ COMANDOS = {
     "consultas": "Cuántas consultas a CoinGecko llevas este mes",
     "mute": "Callar los avisos un rato (ej: /mute 2h)",
     "unmute": "Volver a avisar",
+    "bot": "Si sigo funcionando: desde cuándo y el último ciclo",
     "ayuda": "Lo que sé hacer",
 }
 

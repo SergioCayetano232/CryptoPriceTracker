@@ -12,10 +12,15 @@ MINUTOS_PARA_AVISAR = 30
 class Pulso:
     """Lleva la cuenta de cuanto llevamos fallando y dice cuando avisar."""
 
-    def __init__(self, minutos: int = MINUTOS_PARA_AVISAR):
+    def __init__(
+        self, minutos: int = MINUTOS_PARA_AVISAR, ahora: datetime | None = None
+    ):
         self.margen = timedelta(minutes=minutos)
         self.fallando_desde: datetime | None = None
         self.avisado = False
+        # Para /bot: desde cuando esta encendido y cuando trajo precios por ultima vez.
+        self.arrancado = ahora or datetime.now(timezone.utc)
+        self.ultimo_bien: datetime | None = None
 
     def fallo(self, error: str, ahora: datetime | None = None) -> str | None:
         """Apunta un ciclo fallido. Devuelve el mensaje si toca mandarlo."""
@@ -39,6 +44,7 @@ class Pulso:
     def exito(self, ahora: datetime | None = None) -> str | None:
         """Apunta un ciclo bueno. Si antes avisamos de la caida, dice que ya va."""
         ahora = ahora or datetime.now(timezone.utc)
+        self.ultimo_bien = ahora
         desde, avisado = self.fallando_desde, self.avisado
         self.fallando_desde = None
         self.avisado = False
@@ -50,6 +56,39 @@ class Pulso:
             "✅ <b>CryptoPriceTracker</b>\n"
             f"Vuelvo a funcionar tras {_duracion(ahora - desde)} sin precios."
         )
+
+
+def mensaje_bot(
+    pulso: Pulso,
+    ahora: datetime,
+    vigiladas: int,
+    alertas: int,
+    callado: datetime | None = None,
+) -> str:
+    """Respuesta de /bot: si sigue vivo y desde cuando."""
+    texto = [
+        "🤖 <b>CryptoPriceTracker</b>",
+        f"Encendido desde hace {_hace(ahora - pulso.arrancado)} "
+        f"({pulso.arrancado.astimezone():%d/%m a las %H:%M})",
+    ]
+
+    if pulso.ultimo_bien is None:
+        texto.append("Aún no he terminado ningún ciclo.")
+    else:
+        texto.append(f"Último ciclo bueno: hace {_hace(ahora - pulso.ultimo_bien)}")
+    # El ultimo bueno puede ser de hace nada y llevar fallando desde entonces.
+    if pulso.fallando_desde is not None:
+        texto.append(
+            f"⚠️ Las consultas fallan desde hace {_hace(ahora - pulso.fallando_desde)}"
+        )
+
+    texto.append(
+        f"Vigilo {vigiladas} {'cripto' if vigiladas == 1 else 'criptos'} · "
+        f"{alertas} {'alerta puesta' if alertas == 1 else 'alertas puestas'}"
+    )
+    if callado is not None:
+        texto.append(f"🔕 Callado hasta las {callado.astimezone():%H:%M del %d/%m}")
+    return "\n".join(texto)
 
 
 def mensaje_parado(fallos: int, error: str) -> str:
@@ -83,6 +122,18 @@ def mensaje_sin_precio(coin_ids: list[str], todas: bool = False) -> str:
     if todas:
         texto += "\nComo no me llega ninguna, revisa también VS_CURRENCY."
     return texto
+
+
+def _hace(tiempo: timedelta) -> str:
+    """Como _duracion, pero en dias cuando pasa de uno: '3 d 4 h' y no '76 h'."""
+    # Justo despues de arrancar, un "0 min" parece que algo va mal.
+    if tiempo < timedelta(minutes=1):
+        return "menos de un minuto"
+    dias = tiempo.days
+    if dias < 1:
+        return _duracion(tiempo)
+    horas = tiempo.seconds // 3600
+    return f"{dias} d {horas} h" if horas else f"{dias} d"
 
 
 def _duracion(tiempo: timedelta) -> str:
