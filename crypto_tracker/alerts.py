@@ -369,6 +369,12 @@ def formatear_cartera(
         if v.porcentaje is not None:
             linea += f"  {_flecha(v.porcentaje)} {v.porcentaje:+.2f}%"
         texto.append(linea)
+        # Comparar los dos precios dice mas que el % para decidir si vender.
+        if v.precio_medio is not None:
+            texto.append(
+                f"   <i>Te salió a {simbolo}{_num(v.precio_medio)} · "
+                f"ahora {simbolo}{_num(v.precio)}</i>"
+            )
 
     linea = f"\nTotal <b>{simbolo}{_num(total.valor)}</b>"
     if total.porcentaje is not None:

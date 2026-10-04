@@ -16,6 +16,7 @@ class Valor:
     coin_id: str
     valor: float
     invertido: float | None = None
+    cantidad: float | None = None  # None en el total, que mezcla criptos
 
     @property
     def ganancia(self) -> float | None:
@@ -26,6 +27,17 @@ class Valor:
         if not self.invertido:
             return None
         return self.ganancia / self.invertido * 100
+
+    @property
+    def precio_medio(self) -> float | None:
+        """A cuanto te salio cada una, de media."""
+        if not self.invertido or not self.cantidad:
+            return None
+        return self.invertido / self.cantidad
+
+    @property
+    def precio(self) -> float | None:
+        return self.valor / self.cantidad if self.cantidad else None
 
 
 def valorar(
@@ -39,7 +51,7 @@ def valorar(
         if precio is None:
             faltan.append(p.coin_id)
             continue
-        valores.append(Valor(p.coin_id, p.cantidad * precio, p.invertido))
+        valores.append(Valor(p.coin_id, p.cantidad * precio, p.invertido, p.cantidad))
 
     return valores, faltan
 

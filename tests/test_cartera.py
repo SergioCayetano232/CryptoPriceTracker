@@ -119,6 +119,30 @@ def test_mensaje_con_perdidas():
     assert "🔻" in texto
 
 
+def test_precio_medio():
+    cartera = parse_cartera("bitcoin:0.016:1000,solana:7,ethereum:0.4:0")
+    valores, _ = valorar(cartera, {"bitcoin": 70000.0, "solana": 150.0, "ethereum": 1})
+
+    assert valores[0].precio_medio == pytest.approx(62500.0)
+    assert valores[0].precio == pytest.approx(70000.0)
+    assert valores[1].precio_medio is None  # sin lo que costo no hay media
+    assert valores[2].precio_medio is None  # regalada: una media de 0 no dice nada
+
+
+def test_el_total_no_tiene_precio_medio():
+    valores = [Valor("bitcoin", 1120.0, 1000.0, 0.016)]
+
+    assert total(valores).precio_medio is None
+
+
+def test_mensaje_con_precio_medio():
+    valores = [Valor("bitcoin", 1120.0, 1000.0, 0.016), Valor("solana", 1050.0)]
+    texto = formatear_cartera(valores, total(valores), [], "eur")
+
+    assert "<i>Te salió a €62.500,00 · ahora €70.000,00</i>" in texto
+    assert texto.count("Te salió") == 1
+
+
 def test_mensaje_avisa_de_lo_que_falta():
     valores = [Valor("bitcoin", 1120.0, 1000.0)]
     texto = formatear_cartera(valores, total(valores), ["solana"], "usd")
