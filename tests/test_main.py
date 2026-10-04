@@ -101,8 +101,30 @@ def test_mute_y_unmute(config, enviados):
     assert "Vuelvo a avisar" in enviados[1]
 
 
-def test_mute_sin_tiempo_explica_el_formato(config, enviados):
+def test_mute_a_secas_calla_una_hora(config, enviados):
+    from datetime import datetime, timedelta, timezone
+
     main.atender(config, _mensaje("/mute"))
+
+    hasta = database.silenciado_hasta(config.database_path)
+    falta = hasta - datetime.now(timezone.utc)
+    assert timedelta(minutes=59) < falta <= timedelta(hours=1)
+    assert "🔕 Callado hasta" in enviados[0]
+
+
+def test_mute_a_secas_si_ya_estaba_callado_no_lo_toca(config, enviados):
+    main.atender(config, _mensaje("/mute 3h"))
+    antes = database.silenciado_hasta(config.database_path)
+
+    main.atender(config, _mensaje("/mute"))
+
+    assert database.silenciado_hasta(config.database_path) == antes
+    assert f"Ya estoy callado hasta las {antes.astimezone():%H:%M}" in enviados[1]
+    assert "/unmute" in enviados[1]
+
+
+def test_mute_con_tiempo_mal_escrito_explica_el_formato(config, enviados):
+    main.atender(config, _mensaje("/mute mucho"))
 
     assert "30m" in enviados[0]
     assert database.silenciado_hasta(config.database_path) is None

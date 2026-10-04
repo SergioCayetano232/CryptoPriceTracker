@@ -65,6 +65,9 @@ ESPERA_TELEGRAM = 30
 # no pinta nada esta mañana.
 ANTIGUEDAD_MAXIMA = 10 * 60
 
+# Lo que dura un /mute a secas, el mismo que el boton de callar de los avisos.
+MUTE_POR_DEFECTO = "1h"
+
 # El del bucle en marcha, para que /bot sepa como va. None fuera de --loop.
 _pulso: salud.Pulso | None = None
 
@@ -522,6 +525,16 @@ def responder(
         return texto or "No he podido consultar los precios. Prueba en un rato."
 
     if nombre == "mute":
+        if not argumento:
+            # A secas, si ya estaba callado, mejor decirlo que alargarlo sin querer.
+            estaba = database.silenciado_hasta(config.database_path)
+            if estaba:
+                cuando = estaba.astimezone()
+                return (
+                    f"🔕 Ya estoy callado hasta las {cuando:%H:%M del %d/%m}.\n"
+                    "Para volver antes: /unmute · para cambiarlo: /mute 2h"
+                )
+            argumento = MUTE_POR_DEFECTO
         try:
             minutos = parse_duracion(argumento)
         except ConfigError as e:

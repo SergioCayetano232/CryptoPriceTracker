@@ -178,7 +178,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/buscar btc` | Encuentra el id de CoinGecko de una cripto |
 | `/consultas` | Cuántas consultas a CoinGecko llevas este mes |
 | `/bot` | Si sigue funcionando: desde cuándo está encendido y cuándo fue el último ciclo |
-| `/mute 2h` | Calla los avisos un rato |
+| `/mute 2h` | Calla los avisos un rato (a secas, una hora; si ya está callado, te dice hasta cuándo) |
 | `/unmute` | Vuelve a avisar |
 | `/ayuda` | La lista de comandos |
 
