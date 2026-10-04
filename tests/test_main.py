@@ -857,7 +857,8 @@ def test_crear_alerta_con_coingecko_caido(config, enviados, monkeypatch):
     assert database.get_puntuales(config.database_path, "eur") == []
 
 
-def test_listar_y_quitar_alertas(config, enviados):
+def test_listar_y_quitar_alertas(config, enviados, monkeypatch):
+    _precio(monkeypatch, {})
     a = database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
 
     main.atender(config, _mensaje("/alertas"))
@@ -867,6 +868,57 @@ def test_listar_y_quitar_alertas(config, enviados):
     assert "€70.000,00" in enviados[0]
     assert "quitada" in enviados[1]
     assert "No tienes alertas" in enviados[2]
+
+
+def test_alertas_con_lo_que_falta(config, enviados, monkeypatch):
+    pedidas = _precio(monkeypatch, {"bitcoin": 62500.0, "solana": 125.0})
+    database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
+    database.crear_puntual(config.database_path, "solana", 100, False, "eur")
+    database.crear_puntual(config.database_path, "bitcoin", 60000, False, "eur")
+
+    main.atender(config, _mensaje("/alertas"))
+
+    assert pedidas == [["bitcoin", "solana"]]  # una consulta, sin repetir
+    assert "(falta +12.00%)" in enviados[0]
+    assert "(falta -20.00%)" in enviados[0]
+    assert "(falta -4.00%)" in enviados[0]
+    assert "CoinGecko" in enviados[0]
+
+
+def test_alertas_de_la_cartera_con_lo_que_falta(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    config = replace(config, cartera=(Posicion("ethereum", 2.0, 4000.0),))
+    pedidas = _precio(monkeypatch, {"ethereum": 2500.0})
+    database.crear_puntual(config.database_path, "cartera", 6000, True, "eur")
+
+    main.atender(config, _mensaje("/alertas"))
+
+    assert pedidas == [["ethereum"]]
+    assert "<b>Tu cartera</b> 🔺 €6.000,00  <i>(falta +20.00%)</i>" in enviados[0]
+
+
+def test_alertas_sin_conexion_sale_la_lista_igual(config, enviados, monkeypatch):
+    def falla(ids, cur):
+        raise coingecko.CoinGeckoError("Sin conexion con CoinGecko")
+
+    monkeypatch.setattr(coingecko, "get_prices", falla)
+    database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
+
+    main.atender(config, _mensaje("/alertas"))
+
+    assert "€70.000,00" in enviados[0]
+    assert "falta" not in enviados[0]
+    assert "CoinGecko" not in enviados[0]
+
+
+def test_alertas_sin_ninguna_no_gasta_consultas(config, enviados, monkeypatch):
+    pedidas = _precio(monkeypatch, {})
+
+    main.atender(config, _mensaje("/alertas"))
+
+    assert pedidas == []
+    assert "No tienes alertas" in enviados[0]
 
 
 def test_quitar_una_que_no_existe(config, enviados):

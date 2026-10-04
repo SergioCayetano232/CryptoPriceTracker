@@ -591,6 +591,42 @@ def test_lista_con_la_cartera():
     assert "<code>2</code>  <b>Tu cartera</b> 🔺 €6.000,00" in texto
 
 
+def test_lista_con_lo_que_falta():
+    alertas = [
+        Puntual(1, "bitcoin", 70000.0, sube=True),
+        Puntual(2, "solana", 100.0, sube=False),
+        Puntual(3, "cartera", 6000.0, sube=True),
+    ]
+
+    texto = formatear_puntuales(
+        alertas, "eur", {"bitcoin": 62500.0, "solana": 125.0, "cartera": 5000.0}
+    )
+
+    assert "€70.000,00  <i>(falta +12.00%)</i>" in texto
+    assert "€100,00  <i>(falta -20.00%)</i>" in texto
+    assert "€6.000,00  <i>(falta +20.00%)</i>" in texto
+
+
+def test_lista_con_una_que_ya_ha_llegado():
+    alertas = [Puntual(1, "bitcoin", 70000.0, sube=True)]
+
+    texto = formatear_puntuales(alertas, "eur", {"bitcoin": 70100.0})
+
+    assert "ya ha llegado, te aviso en el próximo ciclo" in texto
+
+
+def test_lista_sin_precio_de_alguna():
+    alertas = [
+        Puntual(1, "bitcoin", 70000.0, sube=True),
+        Puntual(2, "solana", 100.0, sube=False),
+    ]
+
+    texto = formatear_puntuales(alertas, "eur", {"bitcoin": 62500.0})
+
+    assert "(falta +12.00%)" in texto
+    assert texto.count("falta") == 1  # la de solana sale, pero sin nada
+
+
 # --- /precio ---
 
 

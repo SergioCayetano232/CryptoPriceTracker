@@ -9,7 +9,7 @@ from .cartera import Valor
 from .config import Posicion, Watch
 from .movimientos import texto_cantidad
 from .periodo import nombre as nombre_periodo
-from .puntuales import CARTERA, Puntual
+from .puntuales import CARTERA, Puntual, cumplidas
 from .semanal import Semana
 from .telegram import escape
 
@@ -525,8 +525,10 @@ def formatear_puntual(alerta: Puntual, precio: float, currency: str) -> str:
     )
 
 
-def formatear_puntuales(alertas: list[Puntual], currency: str) -> str:
-    """Respuesta de /alertas."""
+def formatear_puntuales(
+    alertas: list[Puntual], currency: str, precios: dict[str, float] | None = None
+) -> str:
+    """Respuesta de /alertas. Con precios, dice cuanto le falta a cada una."""
     if not alertas:
         return "No tienes alertas puestas. Crea una con /alerta bitcoin 70000"
 
@@ -539,9 +541,11 @@ def formatear_puntuales(alertas: list[Puntual], currency: str) -> str:
             else escape(a.coin_id.replace("-", " ").title())
         )
         flecha = "🔺" if a.sube else "🔻"
-        lineas.append(
+        linea = (
             f"<code>{a.id}</code>  <b>{nombre}</b> {flecha} {simbolo}{_num(a.objetivo)}"
         )
+        falta = _falta((precios or {}).get(a.coin_id), a)
+        lineas.append(f"{linea}  <i>{falta}</i>" if falta else linea)
     lineas.append(f"\nPara quitar una: /quitar {alertas[0].id}")
     return "\n".join(lineas)
 
@@ -605,6 +609,16 @@ def _siguiente(
         falta = (objetivo - precio) / precio * 100
         lados.append(f"{flecha} {simbolo}{_num(objetivo)} ({falta:+.2f}%)")
     return " · ".join(lados)
+
+
+def _falta(precio: float | None, alerta: Puntual) -> str:
+    """'(falta +3.20%)'. Vacio si no hay precio con el que comparar."""
+    if not precio:
+        return ""
+    # Entre ciclo y ciclo puede haber llegado ya; saltara en el siguiente.
+    if cumplidas([alerta], {alerta.coin_id: precio}):
+        return "(ya ha llegado, te aviso en el próximo ciclo)"
+    return f"(falta {(alerta.objetivo - precio) / precio * 100:+.2f}%)"
 
 
 def _minutos(minutos: int) -> str:

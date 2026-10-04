@@ -568,7 +568,9 @@ def responder(
 
     if nombre == "alertas":
         pendientes = database.get_puntuales(config.database_path, config.vs_currency)
-        return alerts.formatear_puntuales(pendientes, config.vs_currency)
+        precios = _precios_alertas(config, pendientes)
+        texto = alerts.formatear_puntuales(pendientes, config.vs_currency, precios)
+        return alerts.con_fuente(texto) if precios else texto
 
     if nombre == "quitar":
         try:
@@ -852,6 +854,31 @@ def _exportar(config: Config, argumento: str) -> str | comandos.Archivo:
         alerts.con_fuente(pie),
         "No he podido mandarte el archivo. Prueba en un rato.",
     )
+
+
+def _precios_alertas(
+    config: Config, pendientes: list[puntuales.Puntual]
+) -> dict[str, float]:
+    """Los precios de ahora para /alertas, la cartera incluida. Todo en una consulta."""
+    if not pendientes:
+        return {}
+
+    posiciones = list(_con_cambios(config).cartera)
+    ids = [p.coin_id for p in pendientes if p.coin_id != puntuales.CARTERA]
+    if any(p.coin_id == puntuales.CARTERA for p in pendientes):
+        ids += [p.coin_id for p in posiciones]
+
+    try:
+        precios = coingecko.get_prices(list(dict.fromkeys(ids)), config.vs_currency)
+    except coingecko.CoinGeckoError as e:
+        # La lista vale igual sin lo que falta; no merece un error.
+        logger.warning("Mando /alertas sin precios: %s", e)
+        return {}
+
+    valor = cartera.valor_total(posiciones, precios)
+    if valor is not None:
+        precios[puntuales.CARTERA] = valor
+    return precios
 
 
 def _valor_cartera(config: Config) -> float | None:
