@@ -59,16 +59,17 @@ def dibujar(
         detalle = f"{variacion:+.2f}% sobre lo invertido"
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
 
-    fig = Figure(figsize=(8, 4.5), dpi=150, facecolor=FONDO)
-    ax = fig.add_axes((0.08, 0.1, 0.86, 0.67))
-    ax.set_facecolor(FONDO)
-
     # Lo invertido tiene que verse aunque quede lejos: es justo lo que interesa.
     alto = max(techo, invertido) if invertido else techo
     bajo = min(suelo, invertido) if invertido else suelo
 
     # Aire arriba y abajo para que las etiquetas del maximo y minimo quepan.
     margen = (alto - bajo) * 0.18 or abs(alto) * 0.01 or 1
+
+    fig = Figure(figsize=(8, 4.5), dpi=150, facecolor=FONDO)
+    izquierda = _margen_eje(alto + margen)
+    ax = fig.add_axes((izquierda, 0.1, 0.94 - izquierda, 0.67))
+    ax.set_facecolor(FONDO)
     ax.set_ylim(bajo - margen, alto + margen)
 
     # Con miles de puntos una linea gruesa se emborrona.
@@ -158,6 +159,13 @@ def _formato_eje(horas: float) -> str:
     if horas <= 72:
         return "%d/%m %Hh"
     return "%d/%m"
+
+
+def _margen_eje(tope: float) -> float:
+    """Hueco a la izquierda para los numeros del eje, que en un SHIB son largos."""
+    # Con una cifra de mas que el tope: los del eje van mas finos que el.
+    largo = len(_eje(tope)) + 1
+    return max(0.08, 0.01 + largo * 0.0095)
 
 
 def _eje(valor: float) -> str:

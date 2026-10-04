@@ -7,6 +7,7 @@ from crypto_tracker.alerts import (
     BAJO,
     NORMAL,
     Alert,
+    _num,
     clasificar,
     formatear,
     formatear_precio,
@@ -651,3 +652,31 @@ def test_precio_sin_variacion():
 
     assert texto.startswith("💰 <b>Bitcoin</b>  $62.000,00\n")
     assert "Sin datos de las últimas 24 h" in texto
+
+
+# --- numeros ---
+
+
+@pytest.mark.parametrize(
+    "valor, esperado",
+    [
+        (63000, "63.000,00"),
+        (1, "1,00"),
+        (0.3421, "0,3421"),  # lo de antes no cambia
+        (0.05, "0,0500"),
+        (0.00001234, "0,00001234"),  # un SHIB salia como 0,0000
+        (0.00002, "0,00002"),  # sin ceros de relleno al final
+        (0, "0,0000"),
+        (-0.00002, "-0,00002"),
+    ],
+)
+def test_num(valor, esperado):
+    assert _num(valor) == esperado
+
+
+def test_aviso_de_una_cripto_de_centimos():
+    aviso = Alert("shiba-inu", 0.00001290, 0.00001234, ALTO, percent=4.54)
+
+    texto = formatear(aviso, "eur")
+
+    assert "De €0,00001234 a <b>€0,0000129</b>" in texto

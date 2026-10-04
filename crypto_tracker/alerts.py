@@ -32,6 +32,9 @@ BARRAS = "▁▂▃▄▅▆▇█"
 # Mas barritas que esto y en el movil la linea salta a la siguiente.
 BARRAS_MOVIL = 24
 
+# Ni la cripto mas barata necesita mas para que se vea su precio.
+MAX_DECIMALES = 12
+
 
 @dataclass(frozen=True)
 class Alert:
@@ -632,12 +635,18 @@ def _flecha(variacion: float) -> str:
 
 
 def _num(valor: float) -> str:
-    """Formatea el numero segun su tamaño: 55.500 pero 0,3421."""
-    if valor >= 1:
+    """Formatea el numero segun su tamaño: 55.500, 0,3421 o 0,00001234."""
+    if abs(valor) >= 1:
         texto = f"{valor:,.2f}"
+    elif valor == 0:
+        texto = "0.0000"
     else:
-        # Las criptos baratas necesitan mas decimales para verse.
-        texto = f"{valor:,.4f}"
+        # Con 4 decimales fijos un SHIB salia como 0,0000. Van las que hagan
+        # falta para 4 cifras, y los ceros sobrantes fuera: 0,00002 y no 0,00002000.
+        cifras = -math.floor(math.log10(abs(valor))) + 3
+        texto = f"{valor:.{min(max(4, cifras), MAX_DECIMALES)}f}"
+        entero, decimales = texto.split(".")
+        texto = f"{entero}.{decimales[:4]}{decimales[4:].rstrip('0')}"
 
     # De formato ingles (1,234.56) a español (1.234,56).
     return texto.replace(",", "@").replace(".", ",").replace("@", ".")
