@@ -510,12 +510,18 @@ def contestar(config: Config, texto: str) -> None:
             return
         respuesta = respuesta.texto
 
-    telegram.send_message(config.telegram_token, config.telegram_chat_id, respuesta)
+    teclado = None
+    if isinstance(respuesta, comandos.ConBotones):
+        respuesta, teclado = respuesta.texto, respuesta.botones
+
+    telegram.send_message(
+        config.telegram_token, config.telegram_chat_id, respuesta, botones=teclado
+    )
 
 
 def responder(
     config: Config, nombre: str, argumento: str
-) -> str | comandos.Foto | comandos.Archivo:
+) -> str | comandos.Foto | comandos.Archivo | comandos.ConBotones:
     """El texto con el que se contesta a cada comando."""
     if nombre == "ayuda":
         return comandos.AYUDA
@@ -583,7 +589,11 @@ def responder(
         pendientes = database.get_puntuales(config.database_path, config.vs_currency)
         precios = _precios_alertas(config, pendientes)
         texto = alerts.formatear_puntuales(pendientes, config.vs_currency, precios)
-        return alerts.con_fuente(texto) if precios else texto
+        if precios:
+            texto = alerts.con_fuente(texto)
+        if not pendientes:
+            return texto
+        return comandos.ConBotones(texto, botones.para_alertas(pendientes))
 
     if nombre == "quitar":
         if argumento.lower() == "todas":

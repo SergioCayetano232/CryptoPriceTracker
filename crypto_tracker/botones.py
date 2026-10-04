@@ -1,7 +1,7 @@
 """Los botones que van debajo de cada aviso."""
 
 from .alerts import SIMBOLOS, Alert, _num
-from .puntuales import CARTERA
+from .puntuales import CARTERA, Puntual
 
 # Telegram no deja meter mas de 64 bytes en cada boton.
 MAX_DATOS = 64
@@ -10,6 +10,12 @@ MAX_DATOS = 64
 MAX_CRIPTOS = 3
 
 CALLAR = ("🔕 Callar 1 h", "/mute 1h")
+
+# En el movil, con mas de dos por fila los nombres se cortan.
+POR_FILA = 2
+
+# Con mas, el mensaje se convierte en un muro de botones. El resto, con /quitar.
+MAX_ALERTAS = 10
 
 
 def para_avisos(avisos: list[Alert], currency: str) -> list[list[tuple[str, str]]]:
@@ -40,3 +46,16 @@ def para_avisos(avisos: list[Alert], currency: str) -> list[list[tuple[str, str]
 
     filas.append([CALLAR])
     return [f for f in filas if f]
+
+
+def para_alertas(alertas: list[Puntual]) -> list[list[tuple[str, str]]]:
+    """Un 🗑 por alerta para /alertas, y otro para quitarlas todas si hay varias."""
+    botones = []
+    for a in alertas[:MAX_ALERTAS]:
+        nombre = "Cartera" if a.coin_id == CARTERA else a.coin_id.replace("-", " ")
+        botones.append((f"🗑 {a.id} {nombre.title()}", f"/quitar {a.id}"))
+
+    filas = [botones[i : i + POR_FILA] for i in range(0, len(botones), POR_FILA)]
+    if len(alertas) > 1:
+        filas.append([("🗑 Quitar todas", "/quitar todas")])
+    return filas

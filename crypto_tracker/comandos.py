@@ -80,3 +80,11 @@ class Archivo:
     nombre: str
     pie: str
     texto: str
+
+
+@dataclass(frozen=True)
+class ConBotones:
+    """Una respuesta de texto con botones debajo, filas de (texto, comando)."""
+
+    texto: str
+    botones: list[list[tuple[str, str]]]

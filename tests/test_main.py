@@ -1920,6 +1920,55 @@ def test_boton_de_grafica(config, contestados, sin_fotos_de_verdad):
     assert len(sin_fotos_de_verdad) == 1
 
 
+def test_alertas_lleva_botones_para_quitarlas(config, monkeypatch):
+    mandados = []
+    monkeypatch.setattr(
+        telegram,
+        "send_message",
+        lambda token, chat, texto, **kw: mandados.append((texto, kw)) or True,
+    )
+    _precio(monkeypatch, {})
+    a = database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
+    b = database.crear_puntual(config.database_path, "solana", 100, False, "eur")
+
+    main.atender(config, _mensaje("/alertas"))
+
+    texto, kw = mandados[0]
+    assert "Tus alertas" in texto
+    assert kw["botones"] == [
+        [
+            (f"🗑 {a.id} Bitcoin", f"/quitar {a.id}"),
+            (f"🗑 {b.id} Solana", f"/quitar {b.id}"),
+        ],
+        [("🗑 Quitar todas", "/quitar todas")],
+    ]
+
+
+def test_alertas_sin_ninguna_no_lleva_botones(config, monkeypatch):
+    mandados = []
+    monkeypatch.setattr(
+        telegram,
+        "send_message",
+        lambda token, chat, texto, **kw: mandados.append(kw) or True,
+    )
+
+    main.atender(config, _mensaje("/alertas"))
+
+    assert mandados[0]["botones"] is None
+
+
+def test_boton_de_quitar_alerta(config, enviados, contestados):
+    a = database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
+    b = database.crear_puntual(config.database_path, "solana", 100, False, "eur")
+
+    main.atender_boton(config, _boton(f"/quitar {a.id}"))
+    main.atender_boton(config, _boton(f"/quitar {a.id}"))  # el mensaje viejo sigue ahi
+
+    assert enviados[0] == "🗑 Alerta quitada."
+    assert f"ninguna alerta con el número {a.id}" in enviados[1]
+    assert database.get_puntuales(config.database_path, "eur") == [b]
+
+
 def test_boton_de_otro_chat(config, enviados, contestados):
     main.atender_boton(config, _boton("/mute 1h", chat=999))
 

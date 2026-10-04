@@ -2,7 +2,7 @@
 
 from crypto_tracker import comandos, puntuales
 from crypto_tracker.alerts import ALTO, BAJO, Alert
-from crypto_tracker.botones import CALLAR, para_avisos
+from crypto_tracker.botones import CALLAR, MAX_ALERTAS, para_alertas, para_avisos
 
 
 def test_un_aviso():
@@ -85,3 +85,46 @@ def test_aviso_de_la_cartera_lleva_a_cartera():
         ("📈 Gráfica", "/cartera"),
         ("🎯 Si vuelve a €5.000,00", "/alerta cartera 5000,0"),
     ]
+
+
+# --- /alertas ---
+
+
+def test_una_alerta():
+    filas = para_alertas([puntuales.Puntual(3, "bitcoin", 70000.0, True)])
+
+    assert filas == [[("🗑 3 Bitcoin", "/quitar 3")]]  # sin "todas" para una sola
+
+
+def test_varias_alertas_de_dos_en_dos():
+    alertas = [
+        puntuales.Puntual(1, "bitcoin", 70000.0, True),
+        puntuales.Puntual(2, "shiba-inu", 0.00002, False),
+        puntuales.Puntual(5, "cartera", 6000.0, True),
+    ]
+
+    filas = para_alertas(alertas)
+
+    assert filas == [
+        [("🗑 1 Bitcoin", "/quitar 1"), ("🗑 2 Shiba Inu", "/quitar 2")],
+        [("🗑 5 Cartera", "/quitar 5")],
+        [("🗑 Quitar todas", "/quitar todas")],
+    ]
+
+
+def test_muchas_alertas_no_llenan_el_mensaje():
+    alertas = [puntuales.Puntual(i, "bitcoin", 1000.0 * i, True) for i in range(1, 30)]
+
+    filas = para_alertas(alertas)
+    sueltos = [b for fila in filas[:-1] for b in fila]
+
+    assert len(sueltos) == MAX_ALERTAS
+    assert filas[-1] == [("🗑 Quitar todas", "/quitar todas")]
+
+
+def test_cada_boton_de_alerta_es_un_comando_que_se_entiende():
+    alertas = [puntuales.Puntual(i, "bitcoin", 1000.0, True) for i in (1, 2)]
+
+    for fila in para_alertas(alertas):
+        for _, datos in fila:
+            assert comandos.interpretar(datos)[0] == "quitar"
