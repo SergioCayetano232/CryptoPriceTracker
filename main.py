@@ -573,10 +573,22 @@ def responder(
         return alerts.con_fuente(texto) if precios else texto
 
     if nombre == "quitar":
+        if argumento.lower() == "todas":
+            cuantas = database.borrar_puntuales(
+                config.database_path, config.vs_currency
+            )
+            if not cuantas:
+                return "No tenías ninguna alerta puesta."
+            if cuantas == 1:
+                return "🗑 Alerta quitada."
+            return f"🗑 {cuantas} alertas quitadas."
         try:
             alerta_id = int(argumento.lstrip("#"))
         except ValueError:
-            return "¿Cuál? Mira el número con /alertas y luego, por ejemplo, /quitar 3"
+            return (
+                "¿Cuál? Mira el número con /alertas y luego, por ejemplo, /quitar 3. "
+                "Para quitarlas todas: /quitar todas"
+            )
         if database.borrar_puntual(config.database_path, alerta_id):
             return "🗑 Alerta quitada."
         return f"No tengo ninguna alerta con el número {alerta_id}. Mira /alertas"

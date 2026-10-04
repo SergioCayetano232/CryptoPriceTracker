@@ -339,6 +339,20 @@ def test_borrar_puntual_que_no_existe(db):
     assert database.borrar_puntual(db, 99) is False
 
 
+def test_borrar_todas_las_puntuales(db):
+    database.crear_puntual(db, "bitcoin", 70000.0, True, "eur")
+    database.crear_puntual(db, "solana", 100.0, False, "eur")
+    de_dolares = database.crear_puntual(db, "bitcoin", 80000.0, True, "usd")
+
+    assert database.borrar_puntuales(db, "eur") == 2
+    assert database.get_puntuales(db, "eur") == []
+    assert database.get_puntuales(db, "usd") == [de_dolares]  # esas no se tocan
+
+
+def test_borrar_todas_sin_ninguna(db):
+    assert database.borrar_puntuales(db, "eur") == 0
+
+
 def test_una_base_vieja_gana_la_tabla_al_arrancar(tmp_path):
     # como el prices.db de antes de las alertas: sin la tabla nueva
     import sqlite3

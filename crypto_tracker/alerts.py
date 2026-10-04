@@ -547,6 +547,8 @@ def formatear_puntuales(
         falta = _falta((precios or {}).get(a.coin_id), a)
         lineas.append(f"{linea}  <i>{falta}</i>" if falta else linea)
     lineas.append(f"\nPara quitar una: /quitar {alertas[0].id}")
+    if len(alertas) > 1:
+        lineas[-1] += " · todas: /quitar todas"
     return "\n".join(lineas)
 
 

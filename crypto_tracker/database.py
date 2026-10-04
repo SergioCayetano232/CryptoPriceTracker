@@ -443,6 +443,16 @@ def borrar_puntual(db_path: str, alerta_id: int) -> bool:
         return cursor.rowcount > 0
 
 
+def borrar_puntuales(db_path: str, currency: str) -> int:
+    """Quita todas las alertas. Devuelve cuantas habia."""
+    # Solo las de esta moneda: las otras no salen en /alertas y no sabrias que se van.
+    with _connect(db_path) as conn:
+        cursor = conn.execute(
+            "DELETE FROM alertas_puntuales WHERE currency = ?", (currency,)
+        )
+        return cursor.rowcount
+
+
 def guardar_cambio(db_path: str, coin_id: str, regla: str | None) -> None:
     """Apunta un /vigilar o un /dejar. None es que la dejas."""
     ahora = datetime.now(timezone.utc).isoformat(timespec="seconds")

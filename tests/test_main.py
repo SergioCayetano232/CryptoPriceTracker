@@ -921,12 +921,33 @@ def test_alertas_sin_ninguna_no_gasta_consultas(config, enviados, monkeypatch):
     assert "No tienes alertas" in enviados[0]
 
 
+def test_quitar_todas(config, enviados):
+    database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
+    database.crear_puntual(config.database_path, "solana", 100, False, "eur")
+
+    main.atender(config, _mensaje("/quitar Todas"))
+    main.atender(config, _mensaje("/quitar todas"))
+
+    assert enviados[0] == "🗑 2 alertas quitadas."
+    assert enviados[1] == "No tenías ninguna alerta puesta."
+    assert database.get_puntuales(config.database_path, "eur") == []
+
+
+def test_quitar_todas_con_una_sola(config, enviados):
+    database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
+
+    main.atender(config, _mensaje("/quitar todas"))
+
+    assert enviados[0] == "🗑 Alerta quitada."
+
+
 def test_quitar_una_que_no_existe(config, enviados):
     main.atender(config, _mensaje("/quitar 42"))
     main.atender(config, _mensaje("/quitar"))
 
     assert "ninguna alerta con el número 42" in enviados[0]
     assert "/alertas" in enviados[1]
+    assert "/quitar todas" in enviados[1]
 
 
 def test_la_alerta_salta_una_vez_y_se_borra(config, enviados, monkeypatch):

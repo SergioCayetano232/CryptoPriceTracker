@@ -607,6 +607,16 @@ def test_lista_con_lo_que_falta():
     assert "€6.000,00  <i>(falta +20.00%)</i>" in texto
 
 
+def test_lista_dice_como_quitarlas_todas():
+    una = [Puntual(1, "bitcoin", 70000.0, sube=True)]
+    dos = una + [Puntual(2, "solana", 100.0, sube=False)]
+
+    assert "/quitar todas" not in formatear_puntuales(una, "eur")
+    assert "Para quitar una: /quitar 1 · todas: /quitar todas" in formatear_puntuales(
+        dos, "eur"
+    )
+
+
 def test_lista_con_una_que_ya_ha_llegado():
     alertas = [Puntual(1, "bitcoin", 70000.0, sube=True)]
 
