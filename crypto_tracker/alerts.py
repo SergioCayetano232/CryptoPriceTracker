@@ -591,6 +591,27 @@ def formatear_puntuales(
     return "\n".join(lineas)
 
 
+def formatear_quitadas(quitadas: list[int], no_estaban: list[int]) -> str:
+    """Respuesta de /quitar con los numeros que habia y los que no."""
+    lineas = []
+    if len(quitadas) == 1:
+        lineas.append("🗑 Alerta quitada.")
+    elif quitadas:
+        lineas.append(f"🗑 {len(quitadas)} alertas quitadas.")
+
+    if len(no_estaban) == 1:
+        lineas.append(
+            f"No tengo ninguna alerta con el número {no_estaban[0]}. Mira /alertas"
+        )
+    elif no_estaban:
+        numeros = ", ".join(str(n) for n in no_estaban[:-1])
+        lineas.append(
+            f"No tengo ninguna alerta con los números {numeros} y {no_estaban[-1]}. "
+            "Mira /alertas"
+        )
+    return "\n".join(lineas)
+
+
 def describir(watch: Watch, currency: str) -> str:
     """Como se vigila una cripto, en cristiano: 'cada 5 % que se mueva'."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")

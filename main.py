@@ -637,15 +637,17 @@ def responder(
                 return "🗑 Alerta quitada."
             return f"🗑 {cuantas} alertas quitadas."
         try:
-            alerta_id = int(argumento.lstrip("#"))
-        except ValueError:
+            numeros = puntuales.numeros(argumento)
+        except puntuales.PuntualError:
             return (
-                "¿Cuál? Mira el número con /alertas y luego, por ejemplo, /quitar 3. "
-                "Para quitarlas todas: /quitar todas"
+                "¿Cuál? Mira el número con /alertas y luego, por ejemplo, /quitar 3 "
+                "o /quitar 2 5. Para quitarlas todas: /quitar todas"
             )
-        if database.borrar_puntual(config.database_path, alerta_id):
-            return "🗑 Alerta quitada."
-        return f"No tengo ninguna alerta con el número {alerta_id}. Mira /alertas"
+        quitadas = [
+            n for n in numeros if database.borrar_puntual(config.database_path, n)
+        ]
+        no_estaban = [n for n in numeros if n not in quitadas]
+        return alerts.formatear_quitadas(quitadas, no_estaban)
 
     if nombre == "consultas":
         apuntar_consultas(config)

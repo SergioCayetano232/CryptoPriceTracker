@@ -64,6 +64,18 @@ def interpretar_relativa(argumento: str) -> tuple[str, float] | None:
     return a_id(partes[0]), porcentaje
 
 
+def numeros(argumento: str) -> list[int]:
+    """'3', '#3' o '2 5, 7' -> los numeros de las alertas, sin repetir."""
+    partes = argumento.replace(",", " ").split()
+    try:
+        ids = [int(p.lstrip("#")) for p in partes]
+    except ValueError:
+        raise PuntualError("No son números de alerta") from None
+    if not ids:
+        raise PuntualError("Falta el número de la alerta")
+    return list(dict.fromkeys(ids))
+
+
 def objetivo_relativo(precio: float, porcentaje: float) -> float:
     return precio * (1 + porcentaje / 100)
 

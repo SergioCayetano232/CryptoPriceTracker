@@ -972,6 +972,40 @@ def test_quitar_una_que_no_existe(config, enviados):
     assert "/quitar todas" in enviados[1]
 
 
+def test_quitar_varias(config, enviados):
+    ids = [
+        database.crear_puntual(config.database_path, "bitcoin", p, True, "eur").id
+        for p in (70000, 80000, 90000)
+    ]
+
+    main.atender(config, _mensaje(f"/quitar {ids[0]}, #{ids[2]}"))
+
+    assert enviados[0] == "🗑 2 alertas quitadas."
+    [queda] = database.get_puntuales(config.database_path, "eur")
+    assert queda.id == ids[1]
+
+
+def test_quitar_varias_con_alguna_que_no_existe(config, enviados):
+    a = database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
+
+    main.atender(config, _mensaje(f"/quitar {a.id} 41 42"))
+
+    assert enviados[0] == (
+        "🗑 Alerta quitada.\n"
+        "No tengo ninguna alerta con los números 41 y 42. Mira /alertas"
+    )
+    assert database.get_puntuales(config.database_path, "eur") == []
+
+
+def test_quitar_con_algo_que_no_es_numero_no_borra_nada(config, enviados):
+    a = database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
+
+    main.atender(config, _mensaje(f"/quitar {a.id} bitcoin"))
+
+    assert "/quitar 2 5" in enviados[0]
+    assert database.get_puntuales(config.database_path, "eur") == [a]
+
+
 def test_la_alerta_salta_una_vez_y_se_borra(config, enviados, monkeypatch):
     database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
     estado = {"bitcoin": "%69000.0"}  # que el aviso de % no salte

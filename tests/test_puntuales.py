@@ -8,6 +8,7 @@ from crypto_tracker.alerts import (
     formatear,
     formatear_puntual,
     formatear_puntuales,
+    formatear_quitadas,
 )
 from crypto_tracker.puntuales import (
     Puntual,
@@ -16,6 +17,7 @@ from crypto_tracker.puntuales import (
     interpretar,
     interpretar_relativa,
     numero,
+    numeros,
     objetivo_relativo,
     sube,
 )
@@ -188,3 +190,43 @@ def test_relativa_no_puede_bajar_del_todo():
 def test_objetivo_relativo():
     assert objetivo_relativo(60000.0, 10) == pytest.approx(66000.0)
     assert objetivo_relativo(60000.0, -5) == pytest.approx(57000.0)
+
+
+# --- /quitar ---
+
+
+@pytest.mark.parametrize(
+    "texto, esperado",
+    [
+        ("3", [3]),
+        ("#3", [3]),
+        ("2 5", [2, 5]),
+        ("2, 5,7", [2, 5, 7]),
+        ("5 5 2", [5, 2]),
+    ],
+)
+def test_numeros(texto, esperado):
+    assert numeros(texto) == esperado
+
+
+@pytest.mark.parametrize("texto", ["", "  ", "tres", "2 bitcoin", "2.5"])
+def test_numeros_malos(texto):
+    with pytest.raises(PuntualError):
+        numeros(texto)
+
+
+@pytest.mark.parametrize(
+    "quitadas, no_estaban, esperado",
+    [
+        ([3], [], "🗑 Alerta quitada."),
+        ([], [9], "No tengo ninguna alerta con el número 9. Mira /alertas"),
+        ([2, 5], [], "🗑 2 alertas quitadas."),
+        (
+            [],
+            [7, 8, 9],
+            "No tengo ninguna alerta con los números 7, 8 y 9. Mira /alertas",
+        ),
+    ],
+)
+def test_formatear_quitadas(quitadas, no_estaban, esperado):
+    assert formatear_quitadas(quitadas, no_estaban) == esperado
