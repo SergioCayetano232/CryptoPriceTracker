@@ -48,6 +48,11 @@ def para_avisos(avisos: list[Alert], currency: str) -> list[list[tuple[str, str]
     return [f for f in filas if f]
 
 
+def actualizar(comando: str) -> list[list[tuple[str, str]]]:
+    """Un solo boton que repite el comando, para ver los precios de ahora."""
+    return [[("🔄 Actualizar", comando)]]
+
+
 def para_alertas(alertas: list[Puntual]) -> list[list[tuple[str, str]]]:
     """Un 🗑 por alerta para /alertas, y otro para quitarlas todas si hay varias."""
     botones = []

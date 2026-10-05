@@ -2148,3 +2148,92 @@ def test_semanal_avisa_si_no_hay_semana_entera(con_semana, sin_fotos_de_verdad):
     main.resumen_semanal(con_semana, DOMINGO)
 
     assert "Solo tengo precios desde" in sin_fotos_de_verdad[0][1]
+
+
+# --- boton de actualizar ---
+
+
+@pytest.fixture
+def con_teclado(monkeypatch):
+    """Lo que se manda junto con los botones, sea texto o foto."""
+    mandados = []
+    monkeypatch.setattr(
+        telegram,
+        "send_message",
+        lambda token, chat, texto, **kw: mandados.append((texto, kw)) or True,
+    )
+    monkeypatch.setattr(
+        telegram,
+        "send_photo",
+        lambda token, chat, png, pie="", **kw: mandados.append((pie, kw)) or True,
+    )
+    return mandados
+
+
+def test_status_lleva_boton_de_actualizar(config, con_teclado, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 63000.0})
+
+    main.atender(config, _mensaje("/status"))
+
+    texto, kw = con_teclado[0]
+    assert "63.000,00" in texto
+    assert kw["botones"] == [[("🔄 Actualizar", "/status")]]
+
+
+def test_pulsar_actualizar_vuelve_a_consultar(config, con_teclado, monkeypatch):
+    pedidas = _precio(monkeypatch, {"bitcoin": 63000.0})
+
+    main.atender_boton(config, _boton("/status"))
+
+    assert len(pedidas) == 1
+    assert "63.000,00" in con_teclado[0][0]
+
+
+def test_status_sin_precios_no_lleva_boton(config, con_teclado, monkeypatch):
+    def falla(ids, cur):
+        raise coingecko.CoinGeckoError("Sin conexion")
+
+    monkeypatch.setattr(coingecko, "get_prices", falla)
+
+    main.atender(config, _mensaje("/status"))
+
+    assert con_teclado[0][1]["botones"] is None
+
+
+def test_cartera_sin_grafica_lleva_boton(con_cartera, con_teclado, monkeypatch):
+    _precio(monkeypatch, {p.coin_id: 3000.0 for p in con_cartera.cartera})
+
+    main.atender(con_cartera, _mensaje("/cartera"))
+
+    assert con_teclado[0][1]["botones"] == [[("🔄 Actualizar", "/cartera")]]
+
+
+def test_la_grafica_de_cartera_lleva_boton_con_su_tramo(
+    con_cartera, con_teclado, monkeypatch
+):
+    for horas, precio in ((100, 50000.0), (50, 55000.0)):
+        for coin_id in [p.coin_id for p in con_cartera.cartera]:
+            _cartera_con_fecha(con_cartera, coin_id, precio / 20, horas)
+    _precio(monkeypatch, {p.coin_id: 3000.0 for p in con_cartera.cartera})
+
+    main.atender(con_cartera, _mensaje("/cartera 7d"))
+
+    pie, kw = con_teclado[0]
+    assert "Tu cartera" in pie
+    assert kw["botones"] == [[("🔄 Actualizar", "/cartera 7d")]]
+
+
+def test_si_la_foto_no_pasa_el_texto_lleva_el_boton(
+    con_cartera, con_teclado, monkeypatch
+):
+    for horas, precio in ((100, 50000.0), (50, 55000.0)):
+        for coin_id in [p.coin_id for p in con_cartera.cartera]:
+            _cartera_con_fecha(con_cartera, coin_id, precio / 20, horas)
+    _precio(monkeypatch, {p.coin_id: 3000.0 for p in con_cartera.cartera})
+    monkeypatch.setattr(telegram, "send_photo", lambda *a, **kw: False)
+
+    main.atender(con_cartera, _mensaje("/cartera"))
+
+    texto, kw = con_teclado[0]
+    assert "Tu cartera" in texto
+    assert kw["botones"] == [[("🔄 Actualizar", "/cartera")]]

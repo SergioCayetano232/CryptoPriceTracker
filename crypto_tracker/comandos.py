@@ -58,6 +58,7 @@ class Foto:
     png: bytes
     pie: str
     texto: str
+    botones: list[list[tuple[str, str]]] | None = None
 
 
 def interpretar(texto: str) -> tuple[str, str] | None:

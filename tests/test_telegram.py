@@ -1,5 +1,7 @@
 """Tests del envio a Telegram, sin llamar a la API de verdad."""
 
+import json
+
 import pytest
 import requests
 
@@ -333,3 +335,32 @@ def test_contestar_un_boton_sin_conexion(monkeypatch):
     monkeypatch.setattr(requests, "post", falla)
 
     assert telegram.answer_callback("token", "abc") is False
+
+
+def test_imagen_con_botones(monkeypatch):
+    enviado = {}
+
+    def capturar(url, data=None, files=None, timeout=None):
+        enviado.update(data)
+        return RespuestaFalsa()
+
+    monkeypatch.setattr(requests, "post", capturar)
+    telegram.send_photo("token", "123", b"x", botones=[[("🔄 Actualizar", "/status")]])
+
+    # Va en un formulario, asi que el teclado viaja como texto JSON.
+    assert json.loads(enviado["reply_markup"]) == {
+        "inline_keyboard": [[{"text": "🔄 Actualizar", "callback_data": "/status"}]]
+    }
+
+
+def test_imagen_sin_botones_como_antes(monkeypatch):
+    enviado = {}
+
+    def capturar(url, data=None, files=None, timeout=None):
+        enviado.update(data)
+        return RespuestaFalsa()
+
+    monkeypatch.setattr(requests, "post", capturar)
+    telegram.send_photo("token", "123", b"x")
+
+    assert "reply_markup" not in enviado

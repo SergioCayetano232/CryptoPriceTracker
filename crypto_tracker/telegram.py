@@ -1,6 +1,7 @@
 """Envia mensajes por Telegram usando la API HTTP del bot."""
 
 import html
+import json
 import logging
 
 import requests
@@ -57,12 +58,7 @@ def send_message(
         "disable_notification": sin_sonido,
     }
     if botones:
-        payload["reply_markup"] = {
-            "inline_keyboard": [
-                [{"text": texto, "callback_data": datos} for texto, datos in fila]
-                for fila in botones
-            ]
-        }
+        payload["reply_markup"] = _teclado(botones)
 
     try:
         response = requests.post(
@@ -91,6 +87,15 @@ def send_message(
 
     logger.debug("Mensaje enviado al chat %s", chat_id)
     return True
+
+
+def _teclado(botones: list[list[tuple[str, str]]]) -> dict:
+    return {
+        "inline_keyboard": [
+            [{"text": texto, "callback_data": datos} for texto, datos in fila]
+            for fila in botones
+        ]
+    }
 
 
 def _recortar(text: str, limite: int) -> str:
@@ -129,7 +134,12 @@ def _explain(status: int, data: dict) -> str:
 
 
 def send_photo(
-    token: str, chat_id: str, png: bytes, caption: str = "", sin_sonido: bool = False
+    token: str,
+    chat_id: str,
+    png: bytes,
+    caption: str = "",
+    sin_sonido: bool = False,
+    botones: list[list[tuple[str, str]]] | None = None,
 ) -> bool:
     """Manda una imagen con su pie. Como send_message, no lanza excepciones."""
     return _mandar_archivo(
@@ -139,6 +149,7 @@ def send_photo(
         caption,
         sin_sonido,
         "la imagen",
+        botones,
     )
 
 
@@ -157,12 +168,21 @@ def send_document(
 
 
 def _mandar_archivo(
-    url: str, chat_id: str, files: dict, caption: str, sin_sonido: bool, que: str
+    url: str,
+    chat_id: str,
+    files: dict,
+    caption: str,
+    sin_sonido: bool,
+    que: str,
+    botones: list[list[tuple[str, str]]] | None = None,
 ) -> bool:
     caption = _recortar(caption, MAX_CAPTION)
     datos = {"chat_id": chat_id, "caption": caption, "parse_mode": "HTML"}
     if sin_sonido:
         datos["disable_notification"] = "true"
+    if botones:
+        # Con archivo va como formulario, y ahi el teclado tiene que ir en texto.
+        datos["reply_markup"] = json.dumps(_teclado(botones))
 
     try:
         response = requests.post(url, data=datos, files=files, timeout=TIMEOUT)

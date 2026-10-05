@@ -199,6 +199,8 @@ Cada aviso lleva debajo unos botones para reaccionar de un toque:
 
 Si en un mensaje vienen varias criptos, salen los botones de las tres primeras.
 
+`/status` y `/cartera` llevan un **🔄 Actualizar** para volver a pedirlos de un toque.
+
 **Alertas de una sola vez:**
 
 Escríbele `/alerta bitcoin 70000` y te avisa cuando llegue a 70.000, suba o

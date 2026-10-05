@@ -495,10 +495,17 @@ def contestar(config: Config, texto: str) -> None:
 
     if isinstance(respuesta, comandos.Foto):
         if telegram.send_photo(
-            config.telegram_token, config.telegram_chat_id, respuesta.png, respuesta.pie
+            config.telegram_token,
+            config.telegram_chat_id,
+            respuesta.png,
+            respuesta.pie,
+            botones=respuesta.botones,
         ):
             return
-        respuesta = respuesta.texto
+        if respuesta.botones:
+            respuesta = comandos.ConBotones(respuesta.texto, respuesta.botones)
+        else:
+            respuesta = respuesta.texto
 
     if isinstance(respuesta, comandos.Archivo):
         if telegram.send_document(
@@ -529,7 +536,9 @@ def responder(
 
     if nombre == "status":
         texto = montar_resumen(config)
-        return texto or "No he podido consultar los precios. Prueba en un rato."
+        if texto is None:
+            return "No he podido consultar los precios. Prueba en un rato."
+        return comandos.ConBotones(texto, botones.actualizar("/status"))
 
     if nombre == "mute":
         if not argumento:
@@ -1250,7 +1259,9 @@ def _proximos(
     }
 
 
-def _cartera(config: Config, argumento: str) -> str | comandos.Foto:
+def _cartera(
+    config: Config, argumento: str
+) -> str | comandos.Foto | comandos.ConBotones:
     """/cartera con la grafica de lo que ha valido. Sin datos, solo el texto."""
     try:
         horas = periodo.leer(argumento) if argumento else HORAS_CARTERA
@@ -1260,6 +1271,8 @@ def _cartera(config: Config, argumento: str) -> str | comandos.Foto:
     texto = montar_cartera(config)
     if texto is None:
         return "No he podido consultar los precios. Prueba en un rato."
+    # Con el mismo tramo: si pediste 30d, actualizar no te devuelve a 7d.
+    teclado = botones.actualizar(f"/cartera {argumento}".strip())
 
     filas = database.get_series(
         config.database_path,
@@ -1269,7 +1282,7 @@ def _cartera(config: Config, argumento: str) -> str | comandos.Foto:
     )
     serie = cartera.serie_valor(list(config.cartera), filas)
     if len(serie) < 2:
-        return texto
+        return comandos.ConBotones(texto, teclado)
 
     # Si de alguna no sabes lo que costo, la linea mentiria: mejor sin ella.
     invertidos = [p.invertido for p in config.cartera]
@@ -1285,9 +1298,9 @@ def _cartera(config: Config, argumento: str) -> str | comandos.Foto:
         )
     except Exception as e:
         logger.warning("Mando /cartera sin imagen: %s", e)
-        return texto
+        return comandos.ConBotones(texto, teclado)
 
-    return comandos.Foto(png, texto, texto)
+    return comandos.Foto(png, texto, texto, teclado)
 
 
 def montar_cartera(config: Config) -> str | None:
