@@ -91,6 +91,24 @@ def mensaje_bot(
     return "\n".join(texto)
 
 
+def mensaje_encendido(
+    vigiladas: int, intervalo: int, ultimo: datetime | None, ahora: datetime
+) -> str:
+    """Al arrancar --loop. ultimo es el ultimo precio guardado, si hay alguno."""
+    texto = [
+        "🟢 <b>CryptoPriceTracker</b>",
+        f"Encendido: vigilo {vigiladas} {'cripto' if vigiladas == 1 else 'criptos'} "
+        f"cada {_cada(intervalo)}.",
+    ]
+    # Un par de ciclos sin precio es un reinicio normal; mas, es que estuvo caido.
+    if ultimo is not None and ahora - ultimo > timedelta(seconds=intervalo * 2):
+        texto.append(
+            f"Llevaba apagado desde el {ultimo.astimezone():%d/%m a las %H:%M} "
+            f"({_hace(ahora - ultimo)})."
+        )
+    return "\n".join(texto)
+
+
 def mensaje_parado(fallos: int, error: str) -> str:
     """El ultimo mensaje antes de que el bucle se rinda."""
     return (
@@ -134,6 +152,14 @@ def _hace(tiempo: timedelta) -> str:
         return _duracion(tiempo)
     horas = tiempo.seconds // 3600
     return f"{dias} d {horas} h" if horas else f"{dias} d"
+
+
+def _cada(segundos: int) -> str:
+    """330 -> '5 min 30 s'."""
+    minutos, resto = divmod(segundos, 60)
+    if not minutos:
+        return f"{resto} s"
+    return f"{minutos} min {resto} s" if resto else f"{minutos} min"
 
 
 def _duracion(tiempo: timedelta) -> str:

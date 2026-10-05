@@ -525,3 +525,15 @@ def test_consultas_cada_mes_aparte(db):
     database.sumar_consultas(db, "2026-09", 9000)
 
     assert database.get_consultas(db, "2026-10") == 0
+
+
+def test_ultimo_guardado_sin_nada(db):
+    assert database.ultimo_guardado(db) is None
+
+
+def test_ultimo_guardado(db):
+    antes = datetime.now(timezone.utc).replace(microsecond=0)
+    database.save_prices(db, {"bitcoin": 63000.0, "solana": 150.0}, "eur")
+
+    cuando = database.ultimo_guardado(db)
+    assert antes <= cuando <= datetime.now(timezone.utc)

@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from crypto_tracker.salud import (
     Pulso,
     mensaje_bot,
+    mensaje_encendido,
     mensaje_parado,
     mensaje_sin_precio,
     sin_precio,
@@ -188,3 +189,33 @@ def test_bot_vuelve_a_ir_tras_fallar():
     pulso.exito(_min(10))
 
     assert "fallan" not in mensaje_bot(pulso, _min(12), vigiladas=1, alertas=0)
+
+
+# --- al encenderse ---
+
+
+def test_encendido_por_primera_vez():
+    texto = mensaje_encendido(3, 300, None, INICIO)
+
+    assert "Encendido: vigilo 3 criptos cada 5 min." in texto
+    assert "apagado" not in texto
+
+
+def test_encendido_una_sola_cripto_y_segundos_sueltos():
+    texto = mensaje_encendido(1, 330, None, INICIO)
+
+    assert "vigilo 1 cripto cada 5 min 30 s." in texto
+
+
+def test_encendido_tras_un_reinicio_rapido_no_dice_apagado():
+    # Un ciclo sin precio es lo que tarda en reiniciar, no una caida.
+    texto = mensaje_encendido(3, 300, _min(-6), INICIO)
+
+    assert "apagado" not in texto
+
+
+def test_encendido_dice_cuanto_llevaba_apagado():
+    texto = mensaje_encendido(3, 300, _min(-(2 * 24 * 60 + 3 * 60)), INICIO)
+
+    assert "Llevaba apagado desde el" in texto
+    assert "(2 d 3 h)" in texto

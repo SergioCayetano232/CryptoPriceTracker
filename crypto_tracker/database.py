@@ -170,6 +170,14 @@ def get_last_price(db_path: str, coin_id: str) -> float | None:
     return fila["price"] if fila else None
 
 
+def ultimo_guardado(db_path: str) -> datetime | None:
+    """Cuando se guardo el ultimo precio, de la cripto que sea."""
+    with _connect(db_path) as conn:
+        fila = conn.execute("SELECT MAX(created_at) AS cuando FROM prices").fetchone()
+
+    return datetime.fromisoformat(fila["cuando"]) if fila["cuando"] else None
+
+
 def get_price_at(
     db_path: str, coin_id: str, horas: int, margen: int = 12
 ) -> float | None:

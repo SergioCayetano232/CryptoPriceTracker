@@ -1383,7 +1383,7 @@ def test_bot_con_el_bucle_en_marcha(config, enviados, monkeypatch):
     assert "Vigilo 1 cripto · 1 alerta puesta" in enviados[0]
 
 
-def test_el_bucle_deja_su_pulso_para_bot(config, monkeypatch):
+def test_el_bucle_deja_su_pulso_para_bot(config, enviados, monkeypatch):
     monkeypatch.setattr(main, "_pulso", None)
     monkeypatch.setattr(telegram, "set_commands", lambda *a: True)
     monkeypatch.setattr(main, "ejecutar_ciclo", lambda c, e, s: (e, None))
@@ -1399,6 +1399,58 @@ def test_el_bucle_deja_su_pulso_para_bot(config, monkeypatch):
 
     assert main._pulso is not None
     assert main._pulso.ultimo_bien is not None
+
+
+def _arrancar_bucle(config, monkeypatch):
+    """Arranca --loop y lo corta tras el primer ciclo."""
+    monkeypatch.setattr(telegram, "set_commands", lambda *a: True)
+    monkeypatch.setattr(main, "ejecutar_ciclo", lambda c, e, s: (e, None))
+    monkeypatch.setattr(main, "apuntar_consultas", lambda c: None)
+
+    def corta(*a):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(main, "esperar_escuchando", corta)
+    with pytest.raises(KeyboardInterrupt):
+        main.ejecutar_bucle(config, {})
+
+
+def test_avisa_al_encenderse(config, enviados, monkeypatch):
+    _arrancar_bucle(config, monkeypatch)
+
+    assert "Encendido: vigilo 1 cripto cada 5 min." in enviados[0]
+    assert "apagado" not in enviados[0]  # nunca habia guardado nada
+
+
+def test_al_encenderse_dice_cuanto_estuvo_apagado(config, enviados, monkeypatch):
+    _precio_hace(config, 60000.0, 3 * 60)
+
+    _arrancar_bucle(config, monkeypatch)
+
+    assert "Llevaba apagado desde el" in enviados[0]
+    assert "(3 h)" in enviados[0]
+
+
+def test_al_encenderse_cuenta_lo_de_telegram(config, enviados, monkeypatch):
+    database.guardar_cambio(config.database_path, "solana", "solana:%5.0")
+
+    _arrancar_bucle(config, monkeypatch)
+
+    assert "vigilo 2 criptos" in enviados[0]
+
+
+def test_el_aviso_de_encendido_suena_bajito_de_noche(config, monkeypatch):
+    mandados = []
+    monkeypatch.setattr(
+        telegram,
+        "send_message",
+        lambda token, chat, texto, **kw: mandados.append(kw) or True,
+    )
+    monkeypatch.setattr(main, "_sin_sonido", lambda c: True)
+
+    _arrancar_bucle(config, monkeypatch)
+
+    assert mandados[0]["sin_sonido"] is True
 
 
 # --- /precio ---

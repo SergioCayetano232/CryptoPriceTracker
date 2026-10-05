@@ -371,6 +371,7 @@ def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:
 
     if not telegram.set_commands(config.telegram_token, comandos.COMANDOS):
         logger.warning("No se pudo poner el menu de comandos en Telegram")
+    avisar_encendido(config)
 
     while True:
         try:
@@ -399,6 +400,26 @@ def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:
         # Aqui entran tambien las de los comandos de la espera anterior.
         apuntar_consultas(config)
         offset = esperar_escuchando(config, config.check_interval, offset)
+
+
+def avisar_encendido(config: Config) -> None:
+    """Asi, si el servidor se reinicia o el vigia lo levanta, te enteras."""
+    try:
+        ultimo = database.ultimo_guardado(config.database_path)
+    except database.DatabaseError as e:
+        # Sin esto el aviso vale igual, solo sin decir cuanto estuvo apagado.
+        logger.warning("No se pudo mirar el ultimo precio guardado: %s", e)
+        ultimo = None
+
+    _avisar_salud(
+        config,
+        salud.mensaje_encendido(
+            len(_con_cambios(config).watchlist),
+            config.check_interval,
+            ultimo,
+            datetime.now(timezone.utc),
+        ),
+    )
 
 
 def apuntar_consultas(config: Config, ahora: datetime | None = None) -> None:
