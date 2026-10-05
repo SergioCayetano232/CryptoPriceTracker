@@ -1495,13 +1495,61 @@ def test_precio_de_algo_que_no_existe(config, enviados, monkeypatch):
     assert "/buscar solanna" in enviados[0]
 
 
-def test_precio_mal_escrito(config, enviados, monkeypatch):
+def test_precio_sin_decir_cual(config, enviados, monkeypatch):
     pedidas = _precio(monkeypatch, {"solana": 150.0})
 
     main.atender(config, _mensaje("/precio"))
-    main.atender(config, _mensaje("/precio solana bitcoin"))
 
-    assert all("/precio solana" in t for t in enviados)
+    assert "/precio solana" in enviados[0]
+    assert pedidas == []
+
+
+def test_precio_de_varias(config, enviados, monkeypatch):
+    pedidas = _precio(monkeypatch, {"bitcoin": 63000.0, "solana": 150.0})
+    monkeypatch.setattr(coingecko, "_cambios", {"bitcoin": -1.5, "solana": 2.5})
+
+    main.atender(config, _mensaje("/precio btc, sol"))
+
+    assert pedidas == [["bitcoin", "solana"]]  # en una sola consulta
+    assert "<b>Bitcoin</b>  €63.000,00  🔻 -1.50%" in enviados[0]
+    assert "<b>Solana</b>  €150,00  🔺 +2.50%" in enviados[0]
+    assert enviados[0].index("Bitcoin") < enviados[0].index("Solana")  # en tu orden
+    assert "CoinGecko" in enviados[0]
+
+
+def test_precio_de_varias_con_alguna_mal(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 63000.0})
+
+    main.atender(config, _mensaje("/precio bitcoin solanna"))
+
+    assert "<b>Bitcoin</b>  €63.000,00" in enviados[0]
+    assert "No encuentro <b>solanna</b>" in enviados[0]
+
+
+def test_precio_de_varias_todas_mal(config, enviados, monkeypatch):
+    _precio(monkeypatch, {})
+
+    main.atender(config, _mensaje("/precio bitcion solanna"))
+
+    assert "No encuentro <b>bitcion</b>, <b>solanna</b>" in enviados[0]
+    assert "/buscar bitcion" in enviados[0]
+
+
+def test_precio_repetida_cuenta_una(config, enviados, monkeypatch):
+    pedidas = _precio(monkeypatch, {"bitcoin": 63000.0})
+
+    main.atender(config, _mensaje("/precio btc bitcoin"))
+
+    assert pedidas == [["bitcoin"]]
+    assert "💰 <b>Bitcoin</b>  €63.000,00" in enviados[0]  # como con una sola
+
+
+def test_precio_de_demasiadas(config, enviados, monkeypatch):
+    pedidas = _precio(monkeypatch, {})
+
+    main.atender(config, _mensaje("/precio " + " ".join(f"c{i}" for i in range(11))))
+
+    assert "Como mucho 10" in enviados[0]
     assert pedidas == []
 
 

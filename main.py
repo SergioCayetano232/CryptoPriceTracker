@@ -841,25 +841,32 @@ def _crear_alerta(config: Config, argumento: str) -> str:
 
 
 def _precio(config: Config, argumento: str) -> str:
-    partes = argumento.lower().split()
-    if len(partes) != 1:
-        return "¿De cuál? Por ejemplo: /precio solana"
+    coin_ids = simbolos.varias(argumento)
+    if not coin_ids:
+        return "¿De cuál? Por ejemplo: /precio solana o /precio btc eth sol"
+    if len(coin_ids) > simbolos.MAX_VARIAS:
+        return f"Como mucho {simbolos.MAX_VARIAS} a la vez."
 
-    coin_id = simbolos.a_id(partes[0])
     try:
-        precio = coingecko.get_prices([coin_id], config.vs_currency).get(coin_id)
+        precios = coingecko.get_prices(coin_ids, config.vs_currency)
     except coingecko.CoinGeckoError as e:
         return f"No he podido mirar el precio ahora mismo: {telegram.escape(str(e))}"
-    if precio is None:
-        return (
-            f"No encuentro <b>{telegram.escape(coin_id)}</b> en CoinGecko. "
-            f"Prueba con /buscar {telegram.escape(coin_id)}"
-        )
 
-    return alerts.con_fuente(
-        alerts.formatear_precio(
-            coin_id, precio, _variacion(config, coin_id, precio), config.vs_currency
+    lineas = [
+        (c, precios[c], _variacion(config, c, precios[c]))
+        for c in coin_ids
+        if c in precios
+    ]
+    faltan = [c for c in coin_ids if c not in precios]
+    if not lineas:
+        return alerts.formatear_no_encuentro(faltan)
+
+    if len(coin_ids) == 1:
+        return alerts.con_fuente(
+            alerts.formatear_precio(*lineas[0], config.vs_currency)
         )
+    return alerts.con_fuente(
+        alerts.formatear_precios(lineas, faltan, config.vs_currency)
     )
 
 

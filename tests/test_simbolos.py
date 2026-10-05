@@ -10,7 +10,7 @@ from crypto_tracker import (
     puntuales,
     vigiladas,
 )
-from crypto_tracker.simbolos import IDS, a_id
+from crypto_tracker.simbolos import IDS, a_id, varias
 
 
 @pytest.mark.parametrize(
@@ -51,3 +51,16 @@ def test_en_cada_comando():
 
 def test_la_alerta_de_cartera_no_se_toca():
     assert puntuales.interpretar("cartera 5000") == ("cartera", 5000)
+
+
+@pytest.mark.parametrize(
+    "texto, esperado",
+    [
+        ("btc eth", ["bitcoin", "ethereum"]),
+        ("btc, sol,eth", ["bitcoin", "solana", "ethereum"]),
+        ("BTC bitcoin", ["bitcoin"]),  # la misma dos veces
+        ("  ", []),
+    ],
+)
+def test_varias(texto, esperado):
+    assert varias(texto) == esperado

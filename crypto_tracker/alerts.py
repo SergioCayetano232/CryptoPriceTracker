@@ -471,6 +471,31 @@ def formatear_precio(
     return texto + f"\n{_flecha(variacion)} {variacion:+.2f}% en 24 h"
 
 
+def formatear_precios(
+    lineas: list[tuple[str, float, float | None]], faltan: list[str], currency: str
+) -> str:
+    """/precio de varias: (cripto, precio, variacion en 24 h), una por linea."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["💰 <b>Precio ahora</b> · <i>en 24 h</i>", ""]
+    for coin_id, precio, variacion in lineas:
+        nombre = escape(coin_id.replace("-", " ").title())
+        linea = f"<b>{nombre}</b>  {simbolo}{_num(precio)}"
+        if variacion is not None:
+            linea += f"  {_flecha(variacion)} {variacion:+.2f}%"
+        texto.append(linea)
+
+    if faltan:
+        texto += ["", formatear_no_encuentro(faltan)]
+    return "\n".join(texto)
+
+
+def formatear_no_encuentro(coin_ids: list[str]) -> str:
+    nombres = ", ".join(f"<b>{escape(c)}</b>" for c in coin_ids)
+    return (
+        f"No encuentro {nombres} en CoinGecko. Prueba con /buscar {escape(coin_ids[0])}"
+    )
+
+
 def formatear_semana(
     semana: Semana, currency: str, desde: datetime | None = None
 ) -> str:
