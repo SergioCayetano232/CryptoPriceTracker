@@ -3,6 +3,7 @@
 from datetime import date, datetime
 
 from .periodo import PeriodoError, leer
+from .simbolos import a_id
 
 POR_DEFECTO = 30 * 24
 
@@ -16,7 +17,7 @@ def interpretar(argumento: str) -> tuple[str, float]:
         raise PeriodoError(f"Escríbelo así: {EJEMPLO}")
 
     horas = leer(partes[1]) if len(partes) == 2 else POR_DEFECTO
-    return partes[0].lower(), horas
+    return a_id(partes[0]), horas
 
 
 def a_csv(serie: list[tuple[datetime, float]], currency: str) -> bytes:

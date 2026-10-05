@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from .alerts import SIMBOLOS
 from .puntuales import numero
+from .simbolos import a_id
 
 EJEMPLOS = "/convertir 0.05 bitcoin o /convertir 500 eur solana"
 
@@ -56,7 +57,7 @@ def interpretar(argumento: str, currency: str) -> Conversion:
     cantidad = numero(partes[0])
     if cantidad is None or cantidad <= 0:
         raise ConvertirError(f"'{partes[0]}' no es una cantidad. Ej: {EJEMPLOS}")
-    return Conversion(cantidad, partes[1], desde_dinero)
+    return Conversion(cantidad, a_id(partes[1]), desde_dinero)
 
 
 def _monedas(currency: str) -> set[str]:

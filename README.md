@@ -182,6 +182,9 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/unmute` | Vuelve a avisar |
 | `/ayuda` | La lista de comandos |
 
+En los comandos vale el símbolo de las más conocidas en vez del id: `/precio btc`,
+`/alerta eth 3000`, `/compra sol 2`. Para las demás, el id de `/buscar`.
+
 Al escribir `/` en el chat te salen solos. Solo contesta a tu chat id, y si
 estaba apagado, al volver ignora lo que le escribiste hace más de 10 minutos.
 
@@ -457,6 +460,7 @@ crypto_tracker/
   cartera.py     cuánto vale lo que tienes
   grafica.py     las imágenes de /historico y /cartera
   periodo.py     lee tramos como 7d
+  simbolos.py    btc, eth... a su id de CoinGecko
   diario.py      el resumen diario y las horas tranquilas
   semanal.py     el resumen de la semana de la cartera
   salud.py       avisa si el bot deja de funcionar

@@ -3,6 +3,7 @@
 from datetime import datetime, timedelta
 
 from .config import ConfigError, parse_duracion
+from .simbolos import a_id
 
 POR_DEFECTO = 24
 
@@ -22,7 +23,7 @@ def interpretar(argumento: str) -> tuple[str, float]:
     if len(partes) > 2:
         raise PeriodoError("Escríbelo así: /historico bitcoin 7d")
 
-    coin_id = partes[0].lower()
+    coin_id = a_id(partes[0])
     if len(partes) == 1:
         return coin_id, POR_DEFECTO
     return coin_id, leer(partes[1])

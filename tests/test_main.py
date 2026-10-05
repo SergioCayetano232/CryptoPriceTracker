@@ -192,9 +192,9 @@ def test_historico_si_la_foto_no_pasa_manda_texto(config, enviados, monkeypatch)
 
 
 def test_historico_sin_datos(config, enviados):
-    main.atender(config, _mensaje("/historico btc"))
+    main.atender(config, _mensaje("/historico bitcion"))
 
-    assert "bitcoin, no BTC" in enviados[0]
+    assert "/buscar bitcion" in enviados[0]
 
 
 def test_historico_sin_cripto(config, enviados):
@@ -1116,6 +1116,15 @@ def test_dejar_una(config, enviados, monkeypatch):
     assert pedidas[-1] == ["bitcoin"]
 
 
+def test_dejar_con_el_simbolo(config, enviados, monkeypatch):
+    database.guardar_cambio(config.database_path, "solana", "solana:%5.0")
+
+    main.atender(config, _mensaje("/dejar sol"))
+
+    assert "Dejo de vigilar <b>Solana</b>" in enviados[0]
+    assert database.get_cambios(config.database_path)["solana"] is None
+
+
 def test_dejar_una_del_env(config, enviados, monkeypatch):
     database.guardar_cambio(config.database_path, "solana", "solana:%5.0")
     pedidas = _precio(monkeypatch, {"solana": 150.0})
@@ -1406,6 +1415,15 @@ def test_precio_de_una_que_no_vigilas(config, enviados, monkeypatch):
     assert "CoinGecko" in enviados[0]
 
 
+def test_precio_con_el_simbolo(config, enviados, monkeypatch):
+    pedidas = _precio(monkeypatch, {"bitcoin": 63000.0})
+
+    main.atender(config, _mensaje("/precio BTC"))
+
+    assert pedidas == [["bitcoin"]]
+    assert "💰 <b>Bitcoin</b>  €63.000,00" in enviados[0]
+
+
 def test_precio_tira_del_historico_si_coingecko_no_da_el_24h(
     config, enviados, monkeypatch
 ):
@@ -1529,9 +1547,9 @@ def test_exportar_con_tramo(config, archivos):
 
 
 def test_exportar_sin_precios(config, enviados, archivos):
-    main.atender(config, _mensaje("/exportar BTC"))
+    main.atender(config, _mensaje("/exportar Bitcion"))
 
-    assert "No tengo precios de <b>btc</b>" in enviados[0]
+    assert "No tengo precios de <b>bitcion</b>" in enviados[0]
     assert archivos == []
 
 
@@ -1609,10 +1627,10 @@ def test_historico_tramo_mal_escrito(config, enviados):
 
 
 def test_historico_sin_datos_dice_el_tramo(config, enviados):
-    main.atender(config, _mensaje("/historico btc 7d"))
+    main.atender(config, _mensaje("/historico bitcion 7d"))
 
     assert "últimos 7 días" in enviados[0]
-    assert "bitcoin, no BTC" in enviados[0]
+    assert "/buscar bitcion" in enviados[0]
 
 
 # --- siguiente aviso en /status ---

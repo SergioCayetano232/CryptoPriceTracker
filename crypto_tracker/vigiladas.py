@@ -4,6 +4,7 @@ import logging
 
 from .config import ConfigError, Watch, parse_entrada
 from .puntuales import numero
+from .simbolos import a_id
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ def interpretar(argumento: str) -> tuple[Watch, str]:
     if len(partes) not in (2, 3):
         raise VigilarError(f"Escríbelo así: {EJEMPLOS}")
 
-    coin_id = partes[0].lower()
+    coin_id = a_id(partes[0])
     if len(partes) == 2:
         valor = partes[1]
         # 5% y %5, que lo natural es ponerlo detras

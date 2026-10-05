@@ -2,6 +2,7 @@
 
 from .config import Posicion
 from .puntuales import numero
+from .simbolos import a_id
 
 EJEMPLO_COMPRA = "/compra bitcoin 0.01 600"
 EJEMPLO_VENTA = "/venta bitcoin 0.005 o /venta bitcoin todo"
@@ -29,7 +30,7 @@ def interpretar_compra(argumento: str) -> tuple[str, float, float | None]:
         coste = _numero(partes[2], EJEMPLO_COMPRA)
         if coste < 0:
             raise MovimientoError("Lo que te costó no puede ser negativo.")
-    return partes[0].lower(), cantidad, coste
+    return a_id(partes[0]), cantidad, coste
 
 
 def interpretar_venta(argumento: str) -> tuple[str, float | None]:
@@ -39,8 +40,8 @@ def interpretar_venta(argumento: str) -> tuple[str, float | None]:
         raise MovimientoError(f"Escríbelo así: {EJEMPLO_VENTA}")
 
     if partes[1].lower() == "todo":
-        return partes[0].lower(), None
-    return partes[0].lower(), _cantidad(partes[1], EJEMPLO_VENTA)
+        return a_id(partes[0]), None
+    return a_id(partes[0]), _cantidad(partes[1], EJEMPLO_VENTA)
 
 
 def comprar(

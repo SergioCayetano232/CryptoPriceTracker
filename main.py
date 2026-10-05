@@ -37,6 +37,7 @@ from crypto_tracker import (
     puntuales,
     salud,
     semanal,
+    simbolos,
     telegram,
     vigiladas,
 )
@@ -583,7 +584,7 @@ def responder(
         return _vigilar(config, argumento) if argumento else _lista_vigiladas(config)
 
     if nombre == "dejar":
-        return _dejar(config, argumento.strip().lower())
+        return _dejar(config, simbolos.a_id(argumento))
 
     if nombre == "alertas":
         pendientes = database.get_puntuales(config.database_path, config.vs_currency)
@@ -814,7 +815,7 @@ def _precio(config: Config, argumento: str) -> str:
     if len(partes) != 1:
         return "¿De cuál? Por ejemplo: /precio solana"
 
-    coin_id = partes[0]
+    coin_id = simbolos.a_id(partes[0])
     try:
         precio = coingecko.get_prices([coin_id], config.vs_currency).get(coin_id)
     except coingecko.CoinGeckoError as e:
@@ -873,7 +874,7 @@ def _exportar(config: Config, argumento: str) -> str | comandos.Archivo:
     if not serie:
         return (
             f"No tengo precios de <b>{nombre}</b> ({periodo.nombre(horas)}). "
-            "Tiene que ser el id de CoinGecko (bitcoin, no BTC)."
+            f"Si no das con el nombre, prueba con /buscar {nombre}"
         )
 
     pie = f"📄 {len(serie)} precios de <b>{nombre}</b>, {periodo.nombre(horas)}"
@@ -943,8 +944,8 @@ def _historico(config: Config, argumento: str) -> str | comandos.Foto:
     if len(precios) < 2:
         return (
             f"No tengo precios de <b>{telegram.escape(coin_id)}</b> "
-            f"({periodo.nombre(horas)}). Tiene que ser el id de CoinGecko "
-            "(bitcoin, no BTC)."
+            f"({periodo.nombre(horas)}). Si no das con el nombre, prueba con "
+            f"/buscar {telegram.escape(coin_id)}"
         )
 
     primero = serie[0][0]

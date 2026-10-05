@@ -4,6 +4,8 @@ import math
 import re
 from dataclasses import dataclass
 
+from .simbolos import a_id
+
 # 70.000 es setenta mil, que es como lo escribe uno aqui. 0.5 sigue siendo medio.
 _MILES = re.compile(r"[1-9]\d{0,2}(\.\d{3})+")
 
@@ -37,7 +39,7 @@ def interpretar(argumento: str) -> tuple[str, float]:
     if objetivo is None or objetivo <= 0:
         raise PuntualError(f"'{partes[1]}' no es un precio. Por ejemplo: {EJEMPLO}")
 
-    return partes[0].lower(), objetivo
+    return a_id(partes[0]), objetivo
 
 
 def interpretar_relativa(argumento: str) -> tuple[str, float] | None:
@@ -59,7 +61,7 @@ def interpretar_relativa(argumento: str) -> tuple[str, float] | None:
     if porcentaje <= -100:
         raise PuntualError("No puede bajar un 100 % o más, se quedaría en nada.")
 
-    return partes[0].lower(), porcentaje
+    return a_id(partes[0]), porcentaje
 
 
 def objetivo_relativo(precio: float, porcentaje: float) -> float:
