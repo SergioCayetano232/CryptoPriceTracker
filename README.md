@@ -176,6 +176,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/dejar solana` | Deja de vigilarla |
 | `/historico bitcoin` | Imagen con la gráfica de las últimas 24 h, máximo y mínimo |
 | `/historico bitcoin 7d` | Lo mismo, del tramo que digas (`12h`, `7d`, `30d`...) |
+| `/historico` | Sin decir cuál, la primera que vigilas (también `/historico 7d`) |
 | `/convertir 0.05 bitcoin` | Cuánto es en euros al precio de ahora |
 | `/convertir 500 eur solana` | Al revés: cuánta solana compras con 500 € (vale `500€`) |
 | `/exportar bitcoin 30d` | Te manda un CSV con los precios guardados (sin tramo, 30 días) |

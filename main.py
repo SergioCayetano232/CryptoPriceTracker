@@ -969,7 +969,11 @@ def _historico(config: Config, argumento: str) -> str | comandos.Foto:
         return telegram.escape(str(e))
 
     if not coin_id:
-        return "¿De cuál? Por ejemplo: /historico bitcoin o /historico bitcoin 7d"
+        # A secas, la primera que vigilas: suele ser la que mas te importa.
+        vigiladas = _con_cambios(config).watchlist
+        if not vigiladas:
+            return "¿De cuál? Por ejemplo: /historico bitcoin o /historico bitcoin 7d"
+        coin_id = vigiladas[0].coin_id
 
     serie = database.get_serie(config.database_path, coin_id, horas, config.vs_currency)
     precios = [precio for _, precio in serie]

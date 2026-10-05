@@ -197,10 +197,36 @@ def test_historico_sin_datos(config, enviados):
     assert "/buscar bitcion" in enviados[0]
 
 
-def test_historico_sin_cripto(config, enviados):
+def test_historico_sin_cripto_saca_la_primera_que_vigilas(
+    config, enviados, sin_fotos_de_verdad
+):
+    for precio in (60000.0, 61000.0):
+        database.save_prices(config.database_path, {"bitcoin": precio}, "eur")
+
     main.atender(config, _mensaje("/historico"))
 
-    assert "¿De cuál?" in enviados[0]
+    png, pie = sin_fotos_de_verdad[0]
+    assert "<b>Bitcoin</b>, últimas 24 h" in pie
+
+
+def test_historico_solo_con_el_tramo(config, enviados, sin_fotos_de_verdad):
+    for precio in (60000.0, 61000.0):
+        database.save_prices(config.database_path, {"bitcoin": precio}, "eur")
+
+    main.atender(config, _mensaje("/historico 7d"))
+
+    png, pie = sin_fotos_de_verdad[0]
+    assert "<b>Bitcoin</b>, últimos 7 días" in pie
+
+
+def test_historico_sin_cripto_cuenta_lo_de_telegram(config, enviados):
+    # Si la del .env la dejaste, la primera es la que añadiste por Telegram.
+    database.guardar_cambio(config.database_path, "solana", "solana:%5.0")
+    database.guardar_cambio(config.database_path, "bitcoin", None)
+
+    main.atender(config, _mensaje("/historico"))
+
+    assert "pocos precios de <b>solana</b>" in enviados[0]
 
 
 def test_la_espera_contesta_y_avanza_el_offset(config, enviados, monkeypatch):

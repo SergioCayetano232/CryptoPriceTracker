@@ -1,11 +1,15 @@
 """El tramo de tiempo de /historico: leerlo y decirlo bien."""
 
+import re
 from datetime import datetime, timedelta
 
 from .config import ConfigError, parse_duracion
 from .simbolos import a_id
 
 POR_DEFECTO = 24
+
+# '7d', '12h', '6'... Ninguna cripto se llama asi, asi que es el tramo a secas.
+_TRAMO = re.compile(r"\d+([.,]\d+)?[mhd]?")
 
 # Mas de un año no cabe en una grafica de movil y tampoco se suele guardar.
 MAXIMO = 366 * 24
@@ -16,12 +20,15 @@ class PeriodoError(Exception):
 
 
 def interpretar(argumento: str) -> tuple[str, float]:
-    """'bitcoin 7d' -> ('bitcoin', 168). Sin tramo son 24 h."""
+    """'bitcoin 7d' -> ('bitcoin', 168). Sin tramo son 24 h; sin cripto, ''."""
     partes = argumento.split()
     if not partes:
         return "", POR_DEFECTO
     if len(partes) > 2:
         raise PeriodoError("Escríbelo así: /historico bitcoin 7d")
+
+    if len(partes) == 1 and _TRAMO.fullmatch(partes[0].lower()):
+        return "", leer(partes[0])
 
     coin_id = a_id(partes[0])
     if len(partes) == 1:

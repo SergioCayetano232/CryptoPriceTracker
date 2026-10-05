@@ -18,13 +18,19 @@ from crypto_tracker.periodo import PeriodoError, falta_principio, interpretar, n
         ("bitcoin 30m", ("bitcoin", 0.5)),
         ("bitcoin 6", ("bitcoin", 6)),  # sin letra son horas, como en /mute
         ("", ("", 24)),
+        ("7d", ("", 168)),  # solo el tramo: la cripto la pone quien llama
+        ("12H", ("", 12)),
+        ("6", ("", 6)),
+        ("1inch", ("1inch", 24)),  # empieza por numero pero es una cripto
     ],
 )
 def test_interpretar(argumento, esperado):
     assert interpretar(argumento) == esperado
 
 
-@pytest.mark.parametrize("argumento", ["bitcoin siempre", "bitcoin 0d", "bitcoin -2h"])
+@pytest.mark.parametrize(
+    "argumento", ["bitcoin siempre", "bitcoin 0d", "bitcoin -2h", "0d", "500d"]
+)
 def test_interpretar_tramo_malo(argumento):
     with pytest.raises(PeriodoError):
         interpretar(argumento)
