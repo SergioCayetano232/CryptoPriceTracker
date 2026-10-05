@@ -5,7 +5,7 @@ import math
 from dataclasses import dataclass
 from datetime import datetime
 
-from .cartera import Valor
+from .cartera import Valor, peso
 from .config import Posicion, Watch
 from .movimientos import texto_cantidad
 from .periodo import nombre as nombre_periodo
@@ -370,21 +370,32 @@ def formatear_cartera(
         nombre = escape(v.coin_id.replace("-", " ").title())
         linea = f"<b>{nombre}</b>  {simbolo}{_num(v.valor)}"
         if v.porcentaje is not None:
-            linea += f"  {_flecha(v.porcentaje)} {v.porcentaje:+.2f}%"
+            linea += (
+                f"  {_flecha(v.porcentaje)} {v.porcentaje:+.2f}% "
+                f"({_ganancia(v.ganancia, simbolo)})"
+            )
         texto.append(linea)
+
+        detalle = []
+        # Con una sola, un "100% del total" no dice nada.
+        parte = peso(v, total)
+        if len(valores) > 1 and parte is not None:
+            detalle.append(f"{_peso(parte)} del total")
         # Comparar los dos precios dice mas que el % para decidir si vender.
         if v.precio_medio is not None:
-            texto.append(
-                f"   <i>Te salió a {simbolo}{_num(v.precio_medio)} · "
-                f"ahora {simbolo}{_num(v.precio)}</i>"
+            detalle.append(
+                f"te salió a {simbolo}{_num(v.precio_medio)} · "
+                f"ahora {simbolo}{_num(v.precio)}"
             )
+        if detalle:
+            frase = " · ".join(detalle)
+            texto.append(f"   <i>{frase[0].upper()}{frase[1:]}</i>")
 
     linea = f"\nTotal <b>{simbolo}{_num(total.valor)}</b>"
     if total.porcentaje is not None:
-        signo = "+" if total.ganancia >= 0 else "-"
         linea += (
             f"  {_flecha(total.porcentaje)} {total.porcentaje:+.2f}% "
-            f"({signo}{simbolo}{_num(abs(total.ganancia))})"
+            f"({_ganancia(total.ganancia, simbolo)})"
         )
     texto.append(linea)
 
@@ -624,6 +635,17 @@ def _falta(precio: float | None, alerta: Puntual) -> str:
     if cumplidas([alerta], {alerta.coin_id: precio}):
         return "(ya ha llegado, te aviso en el próximo ciclo)"
     return f"(falta {(alerta.objetivo - precio) / precio * 100:+.2f}%)"
+
+
+def _ganancia(ganancia: float, simbolo: str) -> str:
+    """'+€20,00' o '-€200,00'."""
+    signo = "+" if ganancia >= 0 else "-"
+    return f"{signo}{simbolo}{_num(abs(ganancia))}"
+
+
+def _peso(porcentaje: float) -> str:
+    # Un "0%" parece que no tienes nada; va escapado, que el mensaje es HTML.
+    return f"{porcentaje:.0f}%" if porcentaje >= 1 else "&lt;1%"
 
 
 def _minutos(minutos: int) -> str:

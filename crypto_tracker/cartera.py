@@ -64,6 +64,11 @@ def total(valores: list[Valor]) -> Valor:
     return Valor("total", sum(v.valor for v in valores), invertido)
 
 
+def peso(valor: Valor, total: Valor) -> float | None:
+    """Que parte del total es esta, en %."""
+    return valor.valor / total.valor * 100 if total.valor else None
+
+
 def valor_total(posiciones: list[Posicion], precios: dict[str, float]) -> float | None:
     """Lo que vale todo junto. None si falta el precio de alguna."""
     # Un total sin una de ellas parece una caida, y daria una alerta falsa.

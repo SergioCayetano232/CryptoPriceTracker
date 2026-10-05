@@ -5,7 +5,14 @@ from datetime import timedelta
 import pytest
 
 from crypto_tracker.alerts import formatear_cartera
-from crypto_tracker.cartera import Valor, serie_valor, total, valor_total, valorar
+from crypto_tracker.cartera import (
+    Valor,
+    peso,
+    serie_valor,
+    total,
+    valor_total,
+    valorar,
+)
 from crypto_tracker.config import ConfigError, Posicion, parse_cartera
 
 # --- leer PORTFOLIO ---
@@ -139,8 +146,48 @@ def test_mensaje_con_precio_medio():
     valores = [Valor("bitcoin", 1120.0, 1000.0, 0.016), Valor("solana", 1050.0)]
     texto = formatear_cartera(valores, total(valores), [], "eur")
 
+    assert "<i>52% del total · te salió a €62.500,00 · ahora €70.000,00</i>" in texto
+    assert texto.count("te salió") == 1
+    assert "<i>48% del total</i>" in texto  # la que no dice lo que costo
+
+
+def test_ganancia_de_cada_una():
+    valores = [Valor("bitcoin", 1120.0, 1000.0), Valor("ethereum", 900.0, 1000.0)]
+    texto = formatear_cartera(valores, total(valores), [], "eur")
+
+    assert "<b>Bitcoin</b>  €1.120,00  🔺 +12.00% (+€120,00)" in texto
+    assert "<b>Ethereum</b>  €900,00  🔻 -10.00% (-€100,00)" in texto
+
+
+def test_sin_lo_invertido_no_hay_ganancia():
+    valores = [Valor("solana", 1050.0), Valor("bitcoin", 1120.0, 1000.0)]
+    texto = formatear_cartera(valores, total(valores), [], "eur")
+
+    assert "<b>Solana</b>  €1.050,00\n" in texto
+
+
+def test_con_una_sola_no_dice_el_peso():
+    valores = [Valor("bitcoin", 1120.0, 1000.0, 0.016)]
+    texto = formatear_cartera(valores, total(valores), [], "eur")
+
+    assert "del total" not in texto
     assert "<i>Te salió a €62.500,00 · ahora €70.000,00</i>" in texto
-    assert texto.count("Te salió") == 1
+
+
+def test_peso_de_lo_que_casi_no_tienes():
+    valores = [Valor("bitcoin", 10000.0), Valor("pepe", 5.0)]
+    texto = formatear_cartera(valores, total(valores), [], "eur")
+
+    assert "<i>100% del total</i>" in texto
+    assert "<i>&lt;1% del total</i>" in texto  # mejor que un 0%
+
+
+def test_peso():
+    valores = [Valor("bitcoin", 750.0), Valor("solana", 250.0)]
+
+    assert peso(valores[0], total(valores)) == pytest.approx(75.0)
+    assert peso(valores[1], total(valores)) == pytest.approx(25.0)
+    assert peso(Valor("bitcoin", 0.0), Valor("total", 0.0)) is None
 
 
 def test_mensaje_avisa_de_lo_que_falta():

@@ -252,9 +252,10 @@ PORTFOLIO=bitcoin:0.016:1000,ethereum:0.4:1000
 Cada una es `cripto:cantidad:lo que te costó`. La cantidad es la que te sale en
 el exchange; lo que te costó es opcional, pero sin eso no sabe si ganas o
 pierdes. El resumen (`--status`, `/status` y el diario) añade al final lo que
-vale cada una, el total y cuánto llevas ganado o perdido. Debajo de cada una
-te pone a cuánto te salió de media y a cuánto está ahora (`Te salió a
-€62.500,00 · ahora €76.258,00`). Si solo quieres eso, escríbele `/cartera`.
+vale cada una, cuánto llevas ganado o perdido con ella y el total. Debajo de
+cada una te pone qué parte del total es, a cuánto te salió de media y a cuánto
+está ahora (`38% del total · te salió a €62.500,00 · ahora €76.258,00`). Si solo
+quieres eso, escríbele `/cartera`.
 
 `/cartera` además te manda una gráfica de lo que ha valido, con una línea
 discontinua en lo que invertiste. Ojo: usa las cantidades de ahora, así que es
