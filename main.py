@@ -658,12 +658,15 @@ def responder(
     if nombre == "bot":
         if _pulso is None:
             return "Esto solo lo sé con el bot vigilando (--loop)."
+        apuntar_consultas(config)
+        ahora = datetime.now(timezone.utc)
         return salud.mensaje_bot(
             _pulso,
-            datetime.now(timezone.utc),
+            ahora,
             len(_con_cambios(config).watchlist),
             len(database.get_puntuales(config.database_path, config.vs_currency)),
             _silenciado(config),
+            database.get_consultas(config.database_path, cuota.mes(ahora)),
         )
 
     if nombre == "precio":

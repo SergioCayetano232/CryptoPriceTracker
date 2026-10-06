@@ -1492,6 +1492,20 @@ def test_bot_con_el_bucle_en_marcha(config, enviados, monkeypatch):
     assert "Vigilo 1 cripto · 1 alerta puesta" in enviados[0]
 
 
+def test_bot_cuenta_las_consultas_del_mes(config, enviados, monkeypatch):
+    from datetime import datetime, timezone
+
+    from crypto_tracker import cuota, salud
+
+    ahora = datetime.now(timezone.utc)
+    database.sumar_consultas(config.database_path, cuota.mes(ahora), 812)
+    monkeypatch.setattr(main, "_pulso", salud.Pulso(ahora=ahora))
+
+    main.atender(config, _mensaje("/bot"))
+
+    assert "📡 812 de 10.000 consultas" in enviados[0]
+
+
 def test_el_bucle_deja_su_pulso_para_bot(config, enviados, monkeypatch):
     monkeypatch.setattr(main, "_pulso", None)
     monkeypatch.setattr(telegram, "set_commands", lambda *a: True)

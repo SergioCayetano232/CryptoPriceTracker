@@ -191,6 +191,20 @@ def test_bot_vuelve_a_ir_tras_fallar():
     assert "fallan" not in mensaje_bot(pulso, _min(12), vigiladas=1, alertas=0)
 
 
+def test_bot_con_las_consultas_del_mes():
+    pulso = Pulso(ahora=_min(0))
+
+    texto = mensaje_bot(pulso, _min(5), vigiladas=1, alertas=0, consultas=1234)
+
+    assert "📡 1.234 de 10.000 consultas a CoinGecko este mes (12%)" in texto
+
+
+def test_bot_sin_saber_las_consultas():
+    texto = mensaje_bot(Pulso(ahora=_min(0)), _min(5), vigiladas=1, alertas=0)
+
+    assert "consultas" not in texto
+
+
 # --- al encenderse ---
 
 

@@ -2,6 +2,7 @@
 
 from datetime import datetime, timedelta, timezone
 
+from . import cuota
 from .telegram import escape
 
 # Un fallo suelto es ruido, CoinGecko corta un momento y a la siguiente va.
@@ -64,6 +65,7 @@ def mensaje_bot(
     vigiladas: int,
     alertas: int,
     callado: datetime | None = None,
+    consultas: int | None = None,
 ) -> str:
     """Respuesta de /bot: si sigue vivo y desde cuando."""
     texto = [
@@ -86,6 +88,8 @@ def mensaje_bot(
         f"Vigilo {vigiladas} {'cripto' if vigiladas == 1 else 'criptos'} · "
         f"{alertas} {'alerta puesta' if alertas == 1 else 'alertas puestas'}"
     )
+    if consultas is not None:
+        texto.append(f"📡 {cuota.corto(consultas)}")
     if callado is not None:
         texto.append(f"🔕 Callado hasta las {callado.astimezone():%H:%M del %d/%m}")
     return "\n".join(texto)

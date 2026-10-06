@@ -61,6 +61,14 @@ def mensaje_estado(total: int, ahora: datetime, limite: int = LIMITE) -> str:
     )
 
 
+def corto(total: int, limite: int = LIMITE) -> str:
+    """Una linea para /bot."""
+    return (
+        f"{_miles(total)} de {_miles(limite)} consultas a CoinGecko "
+        f"este mes ({total / limite:.0%})"
+    )
+
+
 def _llevas(total: int, limite: int) -> str:
     return (
         f"Llevas {_miles(total)} de las {_miles(limite)} consultas a CoinGecko "

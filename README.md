@@ -184,7 +184,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/exportar bitcoin 30d` | Te manda un CSV con los precios guardados (sin tramo, 30 días) |
 | `/buscar btc` | Encuentra el id de CoinGecko de una cripto |
 | `/consultas` | Cuántas consultas a CoinGecko llevas este mes |
-| `/bot` | Si sigue funcionando: desde cuándo está encendido y cuándo fue el último ciclo |
+| `/bot` | Si sigue funcionando: desde cuándo está encendido, cuándo fue el último ciclo y las consultas del mes |
 | `/mute 2h` | Calla los avisos un rato (a secas, una hora; si ya está callado, te dice hasta cuándo) |
 | `/mute hasta 8:00` | Calla los avisos hasta esa hora (si ya ha pasado, la de mañana) |
 | `/unmute` | Vuelve a avisar |
