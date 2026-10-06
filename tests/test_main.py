@@ -2155,7 +2155,7 @@ def test_alertas_lleva_botones_para_quitarlas(config, monkeypatch):
             (f"🗑 {a.id} Bitcoin", f"/quitar {a.id}"),
             (f"🗑 {b.id} Solana", f"/quitar {b.id}"),
         ],
-        [("🗑 Quitar todas", "/quitar todas")],
+        [("🔄 Actualizar", "/alertas"), ("🗑 Quitar todas", "/quitar todas")],
     ]
 
 
@@ -2384,6 +2384,19 @@ def test_pulsar_actualizar_vuelve_a_consultar(config, con_teclado, monkeypatch):
 
     assert len(pedidas) == 1
     assert "63.000,00" in con_teclado[0][0]
+
+
+def test_pulsar_actualizar_en_alertas_mira_el_precio_de_ahora(
+    config, con_teclado, monkeypatch
+):
+    database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
+    pedidas = _precio(monkeypatch, {"bitcoin": 63000.0})
+
+    main.atender_boton(config, _boton("/alertas"))
+
+    assert pedidas == [["bitcoin"]]
+    assert "Tus alertas" in con_teclado[0][0]
+    assert ("🔄 Actualizar", "/alertas") in con_teclado[0][1]["botones"][-1]
 
 
 def test_status_sin_precios_no_lleva_boton(config, con_teclado, monkeypatch):

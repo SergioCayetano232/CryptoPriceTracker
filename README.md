@@ -206,7 +206,8 @@ Cada aviso lleva debajo unos botones para reaccionar de un toque:
 
 Si en un mensaje vienen varias criptos, salen los botones de las tres primeras.
 
-`/status` y `/cartera` llevan un **🔄 Actualizar** para volver a pedirlos de un toque.
+`/status`, `/cartera` y `/alertas` llevan un **🔄 Actualizar** para volver a pedirlos
+de un toque.
 
 **Alertas de una sola vez:**
 

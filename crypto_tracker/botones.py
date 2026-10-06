@@ -54,13 +54,15 @@ def actualizar(comando: str) -> list[list[tuple[str, str]]]:
 
 
 def para_alertas(alertas: list[Puntual]) -> list[list[tuple[str, str]]]:
-    """Un 🗑 por alerta para /alertas, y otro para quitarlas todas si hay varias."""
+    """Un 🗑 por alerta para /alertas, y al final actualizar y quitarlas todas."""
     botones = []
     for a in alertas[:MAX_ALERTAS]:
         nombre = "Cartera" if a.coin_id == CARTERA else a.coin_id.replace("-", " ")
         botones.append((f"🗑 {a.id} {nombre.title()}", f"/quitar {a.id}"))
 
     filas = [botones[i : i + POR_FILA] for i in range(0, len(botones), POR_FILA)]
+    ultima = actualizar("/alertas")[0]
     if len(alertas) > 1:
-        filas.append([("🗑 Quitar todas", "/quitar todas")])
+        ultima.append(("🗑 Quitar todas", "/quitar todas"))
+    filas.append(ultima)
     return filas

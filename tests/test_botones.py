@@ -93,7 +93,10 @@ def test_aviso_de_la_cartera_lleva_a_cartera():
 def test_una_alerta():
     filas = para_alertas([puntuales.Puntual(3, "bitcoin", 70000.0, True)])
 
-    assert filas == [[("🗑 3 Bitcoin", "/quitar 3")]]  # sin "todas" para una sola
+    assert filas == [
+        [("🗑 3 Bitcoin", "/quitar 3")],
+        [("🔄 Actualizar", "/alertas")],  # sin "todas" para una sola
+    ]
 
 
 def test_varias_alertas_de_dos_en_dos():
@@ -108,7 +111,7 @@ def test_varias_alertas_de_dos_en_dos():
     assert filas == [
         [("🗑 1 Bitcoin", "/quitar 1"), ("🗑 2 Shiba Inu", "/quitar 2")],
         [("🗑 5 Cartera", "/quitar 5")],
-        [("🗑 Quitar todas", "/quitar todas")],
+        [("🔄 Actualizar", "/alertas"), ("🗑 Quitar todas", "/quitar todas")],
     ]
 
 
@@ -119,7 +122,10 @@ def test_muchas_alertas_no_llenan_el_mensaje():
     sueltos = [b for fila in filas[:-1] for b in fila]
 
     assert len(sueltos) == MAX_ALERTAS
-    assert filas[-1] == [("🗑 Quitar todas", "/quitar todas")]
+    assert filas[-1] == [
+        ("🔄 Actualizar", "/alertas"),
+        ("🗑 Quitar todas", "/quitar todas"),
+    ]
 
 
 def test_cada_boton_de_alerta_es_un_comando_que_se_entiende():
@@ -127,4 +133,4 @@ def test_cada_boton_de_alerta_es_un_comando_que_se_entiende():
 
     for fila in para_alertas(alertas):
         for _, datos in fila:
-            assert comandos.interpretar(datos)[0] == "quitar"
+            assert comandos.interpretar(datos)[0] in ("quitar", "alertas")
