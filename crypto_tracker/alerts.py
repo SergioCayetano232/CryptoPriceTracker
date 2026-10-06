@@ -9,7 +9,7 @@ from .cartera import Valor, peso
 from .config import Posicion, Watch
 from .movimientos import texto_cantidad
 from .periodo import nombre as nombre_periodo
-from .puntuales import CARTERA, Puntual, cumplidas
+from .puntuales import CARTERA, Puntual, cumplidas, ejemplo
 from .semanal import Semana
 from .telegram import escape
 
@@ -561,6 +561,21 @@ def formatear_puntual(alerta: Puntual, precio: float, currency: str) -> str:
         f"🎯 Te aviso cuando <b>{nombre}</b> {verbo} a "
         f"<b>{simbolo}{_num(alerta.objetivo)}</b>.\n"
         f"Ahora está a {simbolo}{_num(precio)}. Solo te aviso una vez."
+    )
+
+
+def formatear_sin_objetivo(coin_id: str, precio: float, currency: str) -> str:
+    """/alerta con la cripto pero sin precio: a cuanto esta y un ejemplo."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    if coin_id == CARTERA:
+        ahora = f"💰 <b>Tu cartera</b> vale {simbolo}{_num(precio)}."
+    else:
+        nombre = escape(coin_id.replace("-", " ").title())
+        ahora = f"💰 <b>{nombre}</b> está a {simbolo}{_num(precio)}."
+    comando = f"/alerta {escape(coin_id)}"
+    return (
+        f"{ahora}\n¿A cuánto te aviso? Por ejemplo {comando} {ejemplo(precio)} "
+        f"o {comando} +10%"
     )
 
 

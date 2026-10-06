@@ -170,6 +170,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/venta bitcoin 0.005` | Apunta una venta (`/venta bitcoin todo` la saca de la cartera) |
 | `/alerta bitcoin 70000` | Te avisa una vez cuando llegue a ese precio |
 | `/alerta bitcoin +10%` | Te avisa una vez cuando suba un 10% desde ahora |
+| `/alerta bitcoin` | Sin precio, te dice a cuánto está y te pone un ejemplo |
 | `/alerta cartera 5000` | Lo mismo con lo que vale tu cartera entera (también `-10%`) |
 | `/alertas` | Las alertas que tienes puestas y cuánto le falta a cada una, con un 🗑 para quitarlas |
 | `/quitar 3` | Quita la alerta número 3 (`/quitar 2 5` varias, `/quitar todas` todas) |

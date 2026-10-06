@@ -80,6 +80,16 @@ def objetivo_relativo(precio: float, porcentaje: float) -> float:
     return precio * (1 + porcentaje / 100)
 
 
+def ejemplo(precio: float) -> str:
+    """Un precio redondo algo por encima del de ahora, para poner de ejemplo."""
+    # Dos cifras: con mas ya no parece un numero que escribirias tu.
+    paso = 10 ** (math.floor(math.log10(precio * 1.1)) - 1)
+    redondo = math.floor(precio * 1.1 / paso) * paso
+    decimales = max(0, -round(math.log10(paso)))
+    # Con coma decimal, como lo escribiria uno aqui.
+    return f"{redondo:.{decimales}f}".replace(".", ",")
+
+
 def numero(texto: str) -> float | None:
     """Lee 70000, 70.000, 0,35 o 70000€. None si no es un numero."""
     texto = texto.strip().strip("€$£")

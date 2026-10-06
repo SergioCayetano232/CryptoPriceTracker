@@ -904,6 +904,36 @@ def test_crear_alerta_mal_escrita(config, enviados, monkeypatch):
     assert database.get_puntuales(config.database_path, "eur") == []
 
 
+def test_alerta_sin_precio_dice_a_cuanto_esta(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"solana": 150.0})
+
+    main.atender(config, _mensaje("/alerta sol"))
+
+    assert "<b>Solana</b> está a €150,00" in enviados[0]
+    assert "/alerta solana 160" in enviados[0]  # el ejemplo, con sus numeros
+    assert "/alerta solana +10%" in enviados[0]
+    assert database.get_puntuales(config.database_path, "eur") == []
+
+
+def test_alerta_sin_cripto_explica_el_formato(config, enviados, monkeypatch):
+    pedidas = _precio(monkeypatch, {})
+
+    main.atender(config, _mensaje("/alerta 70000"))
+    main.atender(config, _mensaje("/alerta +10%"))
+
+    assert "Escríbelo así" in enviados[0]
+    assert "Escríbelo así" in enviados[1]
+    assert pedidas == []
+
+
+def test_alerta_sin_precio_de_algo_que_no_existe(config, enviados, monkeypatch):
+    _precio(monkeypatch, {})
+
+    main.atender(config, _mensaje("/alerta solanna"))
+
+    assert "/buscar solanna" in enviados[0]
+
+
 def test_crear_alerta_con_coingecko_caido(config, enviados, monkeypatch):
     def falla(ids, cur):
         raise coingecko.CoinGeckoError("Sin conexion")
@@ -1454,6 +1484,17 @@ def test_alerta_de_la_cartera_con_lo_comprado_por_telegram(
     main.atender(config, _mensaje("/alerta cartera 2000"))
 
     assert "Ahora vale €1.500,00" in enviados[1]
+
+
+def test_alerta_de_la_cartera_sin_precio(config, enviados, monkeypatch):
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
+    _precio(monkeypatch, {"bitcoin": 50000.0})
+
+    main.atender(config, _mensaje("/alerta cartera"))
+
+    assert "<b>Tu cartera</b> vale €1.000,00" in enviados[0]
+    assert "/alerta cartera 1100" in enviados[0]
+    assert database.get_puntuales(config.database_path, "eur") == []
 
 
 def test_alerta_de_la_cartera_sin_cartera(config, enviados):

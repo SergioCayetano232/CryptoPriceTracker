@@ -230,3 +230,20 @@ def test_numeros_malos(texto):
 )
 def test_formatear_quitadas(quitadas, no_estaban, esperado):
     assert formatear_quitadas(quitadas, no_estaban) == esperado
+
+
+@pytest.mark.parametrize(
+    "precio, esperado",
+    [
+        (150.0, "160"),
+        (1000.0, "1100"),
+        (85601.0, "94000"),
+        (0.35, "0,38"),
+        (0.00002, "0,000022"),
+    ],
+)
+def test_ejemplo_redondo_por_encima(precio, esperado):
+    from crypto_tracker.puntuales import ejemplo, numero
+
+    assert ejemplo(precio) == esperado
+    assert numero(ejemplo(precio)) > precio  # y /alerta lo entiende

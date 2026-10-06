@@ -813,9 +813,15 @@ def _vender(config: Config, argumento: str) -> str:
 
 
 def _crear_alerta(config: Config, argumento: str) -> str:
+    # Solo la cripto: le digo a cuanto esta para que sepa que poner.
+    sin_objetivo = (
+        len(argumento.split()) == 1 and puntuales.numero(argumento.rstrip("%")) is None
+    )
     try:
         relativa = puntuales.interpretar_relativa(argumento)
-        if relativa:
+        if sin_objetivo:
+            coin_id = simbolos.a_id(argumento)
+        elif relativa:
             coin_id, porcentaje = relativa
         else:
             coin_id, objetivo = puntuales.interpretar(argumento)
@@ -846,6 +852,10 @@ def _crear_alerta(config: Config, argumento: str) -> str:
             f"Prueba con /buscar {telegram.escape(coin_id)}"
         )
 
+    if sin_objetivo:
+        return alerts.con_fuente(
+            alerts.formatear_sin_objetivo(coin_id, precio, config.vs_currency)
+        )
     if relativa:
         # El precio se fija ahora: "+10%" es desde lo que vale en este momento.
         objetivo = puntuales.objetivo_relativo(precio, porcentaje)
