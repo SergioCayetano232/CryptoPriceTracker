@@ -174,7 +174,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/quitar 3` | Quita la alerta número 3 (`/quitar 2 5` varias, `/quitar todas` todas) |
 | `/vigilar` | Lo que está vigilando y cómo |
 | `/vigilar solana %5` | Añade una cripto, o cambia cómo vigila una que ya estaba |
-| `/dejar solana` | Deja de vigilarla |
+| `/dejar solana` | Deja de vigilarla (`/dejar sol eth` varias a la vez) |
 | `/historico bitcoin` | Imagen con la gráfica de las últimas 24 h, máximo y mínimo |
 | `/historico bitcoin 7d` | Lo mismo, del tramo que digas (`12h`, `7d`, `30d`...) |
 | `/historico` | Sin decir cuál, la primera que vigilas (también `/historico 7d`) |

@@ -614,7 +614,7 @@ def responder(
         return _vigilar(config, argumento) if argumento else _lista_vigiladas(config)
 
     if nombre == "dejar":
-        return _dejar(config, simbolos.a_id(argumento))
+        return _dejar(config, simbolos.varias(argumento))
 
     if nombre == "alertas":
         pendientes = database.get_puntuales(config.database_path, config.vs_currency)
@@ -729,23 +729,43 @@ def _vigilar(config: Config, argumento: str) -> str:
     return texto
 
 
-def _dejar(config: Config, coin_id: str) -> str:
-    if not coin_id:
-        return "¿Cuál? Por ejemplo: /dejar solana"
+def _dejar(config: Config, coin_ids: list[str]) -> str:
+    if not coin_ids:
+        return "¿Cuál? Por ejemplo: /dejar solana o /dejar sol eth"
 
     actuales = [w.coin_id for w in _con_cambios(config).watchlist]
-    if coin_id not in actuales:
-        return f"No estoy vigilando <b>{telegram.escape(coin_id)}</b>. Mira /vigilar"
-    if len(actuales) == 1:
+    quitar = [c for c in coin_ids if c in actuales]
+    no_estan = [c for c in coin_ids if c not in actuales]
+    if not quitar:
+        return f"No estoy vigilando {_en_negrita(no_estan, 'ni')}. Mira /vigilar"
+    # O todas o ninguna: quitar solo algunas sin que lo pidas seria peor.
+    if len(quitar) == len(actuales):
+        if len(actuales) == 1:
+            return (
+                "Es la única que vigilo. Si la quito no te avisaría de nada. "
+                "Añade otra antes con /vigilar."
+            )
         return (
-            "Es la única que vigilo. Si la quito no te avisaría de nada. "
-            "Añade otra antes con /vigilar."
+            "Son todas las que vigilo. Si las quito no te avisaría de nada. "
+            "Deja alguna o añade otra antes con /vigilar."
         )
 
-    database.guardar_cambio(config.database_path, coin_id, None)
-    logger.info("Watchlist: deja de vigilar %s", coin_id)
-    nombre = telegram.escape(coin_id.replace("-", " ").title())
-    return f"👋 Dejo de vigilar <b>{nombre}</b>."
+    for coin_id in quitar:
+        database.guardar_cambio(config.database_path, coin_id, None)
+        logger.info("Watchlist: deja de vigilar %s", coin_id)
+    nombres = [c.replace("-", " ").title() for c in quitar]
+    texto = f"👋 Dejo de vigilar {_en_negrita(nombres, 'y')}."
+    if no_estan:
+        texto += f"\nNo estaba vigilando {_en_negrita(no_estan, 'ni')}."
+    return texto
+
+
+def _en_negrita(nombres: list[str], ultimo: str) -> str:
+    """['a', 'b', 'c'] -> '<b>a</b>, <b>b</b> y <b>c</b>'."""
+    partes = [f"<b>{telegram.escape(n)}</b>" for n in nombres]
+    if len(partes) == 1:
+        return partes[0]
+    return f"{', '.join(partes[:-1])} {ultimo} {partes[-1]}"
 
 
 def _comprar(config: Config, argumento: str) -> str:

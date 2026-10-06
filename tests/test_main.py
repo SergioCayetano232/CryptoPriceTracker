@@ -1221,6 +1221,44 @@ def test_dejar_una_que_no_vigilo(config, enviados):
     assert "/dejar solana" in enviados[1]
 
 
+def test_dejar_varias(config, enviados):
+    for coin_id in ("solana", "ethereum", "cardano"):
+        database.guardar_cambio(config.database_path, coin_id, f"{coin_id}:%5.0")
+
+    main.atender(config, _mensaje("/dejar sol, eth ada"))
+
+    esperado = "Dejo de vigilar <b>Solana</b>, <b>Ethereum</b> y <b>Cardano</b>"
+    assert esperado in enviados[0]
+    cambios = database.get_cambios(config.database_path)
+    assert cambios["solana"] is cambios["ethereum"] is cambios["cardano"] is None
+
+
+def test_dejar_varias_con_alguna_que_no_vigilo(config, enviados):
+    database.guardar_cambio(config.database_path, "solana", "solana:%5.0")
+
+    main.atender(config, _mensaje("/dejar solana dogecoin"))
+
+    assert "Dejo de vigilar <b>Solana</b>." in enviados[0]
+    assert "No estaba vigilando <b>dogecoin</b>" in enviados[0]
+    assert database.get_cambios(config.database_path)["solana"] is None
+
+
+def test_dejar_varias_sin_ninguna_vigilada(config, enviados):
+    main.atender(config, _mensaje("/dejar dogecoin pepe"))
+
+    assert "No estoy vigilando <b>dogecoin</b> ni <b>pepe</b>" in enviados[0]
+
+
+def test_dejar_todas_no_quita_ninguna(config, enviados):
+    database.guardar_cambio(config.database_path, "solana", "solana:%5.0")
+
+    main.atender(config, _mensaje("/dejar btc sol"))
+
+    assert "Son todas las que vigilo" in enviados[0]
+    assert database.get_cambios(config.database_path)["solana"] == "solana:%5.0"
+    assert "bitcoin" not in database.get_cambios(config.database_path)
+
+
 def test_el_status_incluye_lo_de_telegram(config, enviados, monkeypatch):
     database.guardar_cambio(config.database_path, "solana", "solana:%5.0")
     _precio(monkeypatch, {"bitcoin": 63000.0, "solana": 150.0})

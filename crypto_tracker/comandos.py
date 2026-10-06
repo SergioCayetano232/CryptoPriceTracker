@@ -14,7 +14,7 @@ COMANDOS = {
     "quitar": "Quitar alertas (ej: /quitar 3, /quitar 2 5 o /quitar todas)",
     "historico": "Cómo ha ido una cripto (ej: /historico bitcoin 7d)",
     "vigilar": "Ver o cambiar lo que vigilo (ej: /vigilar solana %5)",
-    "dejar": "Dejar de vigilar una cripto (ej: /dejar solana)",
+    "dejar": "Dejar de vigilar una o varias (ej: /dejar solana o /dejar sol eth)",
     "convertir": "Cuánto es en dinero o en cripto (ej: /convertir 0.05 bitcoin)",
     "exportar": "Los precios guardados en un CSV (ej: /exportar bitcoin 30d)",
     "buscar": "Encuentra el id de una cripto (ej: /buscar btc)",
