@@ -844,6 +844,10 @@ def _crear_alerta(config: Config, argumento: str) -> str:
 
 def _precio(config: Config, argumento: str) -> str:
     coin_ids = simbolos.varias(argumento)
+    if not argumento:
+        # A secas, las que vigilas. Si son muchas, las primeras, que no caben.
+        vigiladas = _con_cambios(config).watchlist
+        coin_ids = [w.coin_id for w in vigiladas][: simbolos.MAX_VARIAS]
     if not coin_ids:
         return "¿De cuál? Por ejemplo: /precio solana o /precio btc eth sol"
     if len(coin_ids) > simbolos.MAX_VARIAS:

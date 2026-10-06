@@ -1555,13 +1555,39 @@ def test_precio_de_algo_que_no_existe(config, enviados, monkeypatch):
     assert "/buscar solanna" in enviados[0]
 
 
-def test_precio_sin_decir_cual(config, enviados, monkeypatch):
-    pedidas = _precio(monkeypatch, {"solana": 150.0})
+def test_precio_a_secas_saca_las_que_vigilas(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    con_dos = replace(
+        config, watchlist=[Watch("bitcoin", percent=5), Watch("solana", step=10)]
+    )
+    pedidas = _precio(monkeypatch, {"bitcoin": 63000.0, "solana": 150.0})
+
+    main.atender(con_dos, _mensaje("/precio"))
+
+    assert pedidas == [["bitcoin", "solana"]]
+    assert "<b>Bitcoin</b>  €63.000,00" in enviados[0]
+    assert "<b>Solana</b>  €150,00" in enviados[0]
+
+
+def test_precio_a_secas_cuenta_lo_de_telegram(config, enviados, monkeypatch):
+    database.guardar_cambio(config.database_path, "solana", "solana:10.0")
+    pedidas = _precio(monkeypatch, {"bitcoin": 63000.0, "solana": 150.0})
 
     main.atender(config, _mensaje("/precio"))
 
-    assert "/precio solana" in enviados[0]
-    assert pedidas == []
+    assert pedidas == [["bitcoin", "solana"]]
+
+
+def test_precio_a_secas_no_pasa_del_maximo(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    muchas = replace(config, watchlist=[Watch(f"c{i}", step=1) for i in range(12)])
+    pedidas = _precio(monkeypatch, {})
+
+    main.atender(muchas, _mensaje("/precio"))
+
+    assert pedidas == [[f"c{i}" for i in range(10)]]
 
 
 def test_precio_de_varias(config, enviados, monkeypatch):
