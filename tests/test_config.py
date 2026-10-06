@@ -132,6 +132,39 @@ def test_duraciones_invalidas(entrada):
         parse_duracion(entrada)
 
 
+def _a_las(hora, minuto=0):
+    from datetime import datetime, timedelta, timezone
+
+    madrid = timezone(timedelta(hours=2))
+    return datetime(2026, 10, 6, hora, minuto, tzinfo=madrid)
+
+
+def test_mute_hasta_una_hora():
+    from crypto_tracker.config import minutos_mute
+
+    assert minutos_mute("hasta 8:00", _a_las(7, 30)) == 30
+    assert minutos_mute("hasta 8", _a_las(7, 30)) == 30
+    assert minutos_mute("8:30", _a_las(7, 30)) == 60
+    # si ya ha pasado, la de mañana
+    assert minutos_mute("hasta 8", _a_las(23)) == 9 * 60
+    assert minutos_mute("hasta 7:30", _a_las(7, 30)) == 24 * 60
+
+
+def test_mute_sigue_entendiendo_duraciones():
+    from crypto_tracker.config import minutos_mute
+
+    assert minutos_mute("2h", _a_las(7)) == 120
+    assert minutos_mute("3", _a_las(7)) == 180  # sin "hasta", horas
+
+
+@pytest.mark.parametrize("entrada", ["hasta", "hasta 25:00", "hasta luego", "9:xx"])
+def test_mute_hasta_mal_escrito(entrada):
+    from crypto_tracker.config import minutos_mute
+
+    with pytest.raises(ConfigError, match="hasta 8:00"):
+        minutos_mute(entrada, _a_las(7))
+
+
 # --- resumen diario ---
 
 

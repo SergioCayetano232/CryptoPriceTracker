@@ -185,6 +185,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/consultas` | Cuántas consultas a CoinGecko llevas este mes |
 | `/bot` | Si sigue funcionando: desde cuándo está encendido y cuándo fue el último ciclo |
 | `/mute 2h` | Calla los avisos un rato (a secas, una hora; si ya está callado, te dice hasta cuándo) |
+| `/mute hasta 8:00` | Calla los avisos hasta esa hora (si ya ha pasado, la de mañana) |
 | `/unmute` | Vuelve a avisar |
 | `/ayuda` | La lista de comandos |
 
@@ -292,7 +293,8 @@ cripto la cambias por Telegram, deja de mirar lo que ponga de ella `PORTFOLIO`.
 python main.py --mute 2h
 ```
 No te avisa durante dos horas. Vale `30m`, `2h` o `1d`; sin letra se entienden
-horas. Sigue mirando y guardando precios, solo se calla.
+horas. También hasta una hora: `--mute "hasta 8:00"` (si ya ha pasado, la de
+mañana). Sigue mirando y guardando precios, solo se calla.
 
 Para volver antes de tiempo:
 ```

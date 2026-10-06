@@ -130,6 +130,17 @@ def test_mute_con_tiempo_mal_escrito_explica_el_formato(config, enviados):
     assert database.silenciado_hasta(config.database_path) is None
 
 
+def test_mute_hasta_una_hora(config, enviados):
+    from datetime import datetime, timedelta
+
+    main.atender(config, _mensaje("/mute hasta 8:00"))
+
+    hasta = database.silenciado_hasta(config.database_path).astimezone()
+    assert f"{hasta:%H:%M}" == "08:00"
+    assert hasta - datetime.now().astimezone() <= timedelta(days=1)
+    assert "Callado hasta las 08:00" in enviados[0]
+
+
 def test_unmute_sin_estar_callado(config, enviados):
     main.atender(config, _mensaje("/unmute"))
 

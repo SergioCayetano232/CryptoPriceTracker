@@ -1,8 +1,9 @@
 """Lee la configuracion del .env y la valida al arrancar."""
 
+import math
 import os
 from dataclasses import dataclass
-from datetime import time
+from datetime import datetime, time, timedelta
 
 from dotenv import load_dotenv
 
@@ -239,6 +240,27 @@ def parse_duracion(raw: str) -> int:
         raise ConfigError(f"'{raw}' es menos de un minuto.")
 
     return minutos
+
+
+def minutos_mute(raw: str, ahora: datetime) -> int:
+    """Lo que dura un mute: '2h' o 'hasta 8:00'. Si esa hora ya ha pasado, mañana."""
+    raw = raw.strip().lower()
+    # "8" a secas siguen siendo ocho horas, como siempre; la hora va con "hasta" o ":"
+    if not raw.startswith("hasta") and ":" not in raw:
+        return parse_duracion(raw)
+
+    try:
+        hora = parse_hora(raw.removeprefix("hasta").strip())
+    except ConfigError:
+        hora = None
+    if hora is None:
+        raise ConfigError(f"No entiendo '{raw}'. Usa algo como hasta 8:00.")
+
+    hasta = ahora.replace(hour=hora.hour, minute=hora.minute, second=0, microsecond=0)
+    if hasta <= ahora:
+        hasta += timedelta(days=1)
+    # Hacia arriba: si no, con los segundos de ahora se quedaria en las 7:59
+    return math.ceil((hasta - ahora).total_seconds() / 60)
 
 
 def parse_hora(raw: str, nombre: str = "RESUMEN_DIARIO") -> time | None:

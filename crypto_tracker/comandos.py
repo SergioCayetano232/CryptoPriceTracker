@@ -19,7 +19,7 @@ COMANDOS = {
     "exportar": "Los precios guardados en un CSV (ej: /exportar bitcoin 30d)",
     "buscar": "Encuentra el id de una cripto (ej: /buscar btc)",
     "consultas": "Cuántas consultas a CoinGecko llevas este mes",
-    "mute": "Callar los avisos un rato (ej: /mute 2h)",
+    "mute": "Callar los avisos un rato (ej: /mute 2h o /mute hasta 8:00)",
     "unmute": "Volver a avisar",
     "bot": "Si sigo funcionando: desde cuándo y el último ciclo",
     "ayuda": "Lo que sé hacer",

@@ -45,7 +45,7 @@ from crypto_tracker.config import (
     Config,
     ConfigError,
     load_config,
-    parse_duracion,
+    minutos_mute,
 )
 
 logger = logging.getLogger("crypto_tracker")
@@ -573,7 +573,7 @@ def responder(
                 )
             argumento = MUTE_POR_DEFECTO
         try:
-            minutos = parse_duracion(argumento)
+            minutos = minutos_mute(argumento, datetime.now().astimezone())
         except ConfigError as e:
             return str(e)
         hasta = datetime.now(timezone.utc) + timedelta(minutes=minutos)
@@ -1196,7 +1196,7 @@ def _sin_sonido(config: Config, ahora: datetime | None = None) -> bool:
 def silenciar(config: Config, duracion: str) -> int:
     """Calla los avisos durante el tiempo que se pida."""
     try:
-        minutos = parse_duracion(duracion)
+        minutos = minutos_mute(duracion, datetime.now().astimezone())
     except ConfigError as e:
         logger.error("%s", e)
         return 1
@@ -1491,7 +1491,7 @@ def main() -> int:
     parser.add_argument(
         "--mute",
         metavar="TIEMPO",
-        help="calla los avisos un rato (30m, 2h, 1d) y sale",
+        help="calla los avisos un rato (30m, 2h, 1d, 'hasta 8:00') y sale",
     )
     parser.add_argument("--unmute", action="store_true", help="vuelve a avisar y sale")
     parser.add_argument(
