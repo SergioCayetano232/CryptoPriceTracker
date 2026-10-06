@@ -16,20 +16,27 @@ class MovimientoError(Exception):
 
 
 def interpretar_compra(argumento: str) -> tuple[str, float, float | None]:
-    """'bitcoin 0.01 600' -> ('bitcoin', 0.01, 600). Sin coste, None."""
-    partes = argumento.split()
-    if len(partes) not in (2, 3):
+    """'bitcoin 0.01 600' -> ('bitcoin', 0.01, 600). Sin coste, None.
+
+    Con @ va el precio de cada una, como sale en el exchange: 'bitcoin 0.01 @60000'.
+    """
+    partes = argumento.replace("@ ", "@").split()
+    if len(partes) not in (2, 3) or partes[-1] == "@":
         raise MovimientoError(
-            f"Escríbelo así: {EJEMPLO_COMPRA} (cripto, cantidad y lo que te costó). "
+            f"Escríbelo así: {EJEMPLO_COMPRA} (cripto, cantidad y lo que te costó) "
+            "o /compra bitcoin 0.01 @60000 (a cuánto te salió cada una). "
             "Sin lo que te costó, la apunto al precio de ahora."
         )
 
     cantidad = _cantidad(partes[1], EJEMPLO_COMPRA)
     coste = None
     if len(partes) == 3:
-        coste = _numero(partes[2], EJEMPLO_COMPRA)
+        por_unidad = partes[2].startswith("@")
+        coste = _numero(partes[2].removeprefix("@"), EJEMPLO_COMPRA)
         if coste < 0:
             raise MovimientoError("Lo que te costó no puede ser negativo.")
+        if por_unidad:
+            coste *= cantidad
     return a_id(partes[0]), cantidad, coste
 
 

@@ -166,6 +166,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/cartera` | Tu cartera: cuánto vale, cuánto ganas o pierdes y la gráfica de 7 días |
 | `/cartera 30d` | Lo mismo, con la gráfica del tramo que digas |
 | `/compra bitcoin 0.01 600` | Apunta en la cartera que has comprado 0,01 por 600 € |
+| `/compra bitcoin 0.01 @60000` | Lo mismo, con el precio de cada una en vez del total |
 | `/venta bitcoin 0.005` | Apunta una venta (`/venta bitcoin todo` la saca de la cartera) |
 | `/alerta bitcoin 70000` | Te avisa una vez cuando llegue a ese precio |
 | `/alerta bitcoin +10%` | Te avisa una vez cuando suba un 10% desde ahora |
@@ -280,7 +281,8 @@ tiene lo que el bot ha ido guardando, así que no llega más atrás de
 No hace falta tocar el `.env` cada vez que compras. Escríbele
 `/compra bitcoin 0.01 600` y suma 0,01 a lo que tienes y 600 € a lo que te
 costó. Si no pones el precio (`/compra solana 3`), lo apunta a lo que vale en
-ese momento.
+ese momento. Si prefieres poner a cuánto te salió cada una, como lo enseña el
+exchange, va con `@`: `/compra bitcoin 0.01 @60000`.
 
 `/venta bitcoin 0.005` lo resta, y lo que te costó baja en la misma proporción:
 si vendes la mitad, se va la mitad de lo invertido. `/venta bitcoin todo` la

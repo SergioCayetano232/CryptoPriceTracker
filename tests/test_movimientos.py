@@ -25,13 +25,17 @@ from crypto_tracker.movimientos import (
         ("ethereum 2 3.000", ("ethereum", 2, 3000)),
         ("solana 5", ("solana", 5, None)),
         ("solana 5 0", ("solana", 5, 0)),
+        # con @, el precio de cada una en vez del total
+        ("bitcoin 0.01 @60000", ("bitcoin", 0.01, 600)),
+        ("bitcoin 0,5 @ 60.000€", ("bitcoin", 0.5, 30000)),
+        ("sol 4 @150,5", ("solana", 4, 602)),
     ],
 )
 def test_interpretar_compra(argumento, esperado):
     assert interpretar_compra(argumento) == esperado
 
 
-@pytest.mark.parametrize("argumento", ["", "bitcoin", "bitcoin 1 2 3"])
+@pytest.mark.parametrize("argumento", ["", "bitcoin", "bitcoin 1 2 3", "btc 1 @"])
 def test_interpretar_compra_formato_malo(argumento):
     with pytest.raises(MovimientoError, match="/compra bitcoin 0.01 600"):
         interpretar_compra(argumento)
@@ -45,6 +49,8 @@ def test_interpretar_compra_formato_malo(argumento):
         ("bitcoin -1 600", "mayor que 0"),
         ("bitcoin 1 -600", "negativo"),
         ("bitcoin 1 gratis", "no es un número"),
+        ("bitcoin 1 @gratis", "no es un número"),
+        ("bitcoin 1 @-5", "negativo"),
     ],
 )
 def test_interpretar_compra_numeros_malos(argumento, mensaje):
