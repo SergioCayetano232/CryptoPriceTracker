@@ -91,15 +91,18 @@ def ejemplo(precio: float) -> str:
 
 
 def numero(texto: str) -> float | None:
-    """Lee 70000, 70.000, 0,35 o 70000€. None si no es un numero."""
+    """Lee 70000, 70.000, 0,35, 70000€ o 70k. None si no es un numero."""
     texto = texto.strip().strip("€$£")
+    por = 1
+    if texto[-1:] in ("k", "K"):
+        texto, por = texto[:-1], 1000
     if "," in texto:
         texto = texto.replace(".", "").replace(",", ".")
     elif _MILES.fullmatch(texto):
         texto = texto.replace(".", "")
 
     try:
-        valor = float(texto)
+        valor = float(texto) * por
     except ValueError:
         return None
     # float() se traga "inf" y "nan", y con eso nunca saltaria

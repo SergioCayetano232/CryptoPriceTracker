@@ -41,13 +41,16 @@ def test_interpretar():
         ("0.150", 0.15),  # empieza por 0: son decimales, no miles
         ("70000€", 70000.0),
         ("$2500", 2500.0),
+        ("70k", 70000.0),
+        ("1,5k", 1500.0),
+        ("2.5K€", 2500.0),
     ],
 )
 def test_numero(texto, esperado):
     assert numero(texto) == esperado
 
 
-@pytest.mark.parametrize("texto", ["setenta", "inf", "nan", "", "7o000"])
+@pytest.mark.parametrize("texto", ["setenta", "inf", "nan", "", "7o000", "k", "70kk"])
 def test_numero_que_no_lo_es(texto):
     assert numero(texto) is None
 

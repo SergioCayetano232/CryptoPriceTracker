@@ -27,6 +27,7 @@ from crypto_tracker.movimientos import (
         ("solana 5 0", ("solana", 5, 0)),
         # con @, el precio de cada una en vez del total
         ("bitcoin 0.01 @60000", ("bitcoin", 0.01, 600)),
+        ("bitcoin 0.01 @60k", ("bitcoin", 0.01, 600)),
         ("bitcoin 0,5 @ 60.000€", ("bitcoin", 0.5, 30000)),
         ("sol 4 @150,5", ("solana", 4, 602)),
     ],
