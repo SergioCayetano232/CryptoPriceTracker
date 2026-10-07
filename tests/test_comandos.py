@@ -23,6 +23,9 @@ from crypto_tracker.comandos import (
         ("/start", ("ayuda", "")),
         ("/help", ("ayuda", "")),
         ("/history ethereum", ("historico", "ethereum")),
+        ("/estado", ("status", "")),
+        ("/p btc eth", ("precio", "btc eth")),
+        ("/callar 2h", ("mute", "2h")),
         ("/inventado", ("inventado", "")),  # se decide luego que no existe
     ],
 )

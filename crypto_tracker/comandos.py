@@ -43,6 +43,10 @@ ALIAS = {
     "alert": "alerta",
     "alerts": "alertas",
     "watch": "vigilar",
+    "estado": "status",
+    "p": "precio",
+    "silencio": "mute",
+    "callar": "mute",
 }
 
 AYUDA = "🤖 <b>Esto es lo que sé hacer</b>\n\n" + "\n".join(
