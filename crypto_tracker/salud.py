@@ -70,18 +70,18 @@ def mensaje_bot(
     """Respuesta de /bot: si sigue vivo y desde cuando."""
     texto = [
         "🤖 <b>CryptoPriceTracker</b>",
-        f"Encendido desde hace {_hace(ahora - pulso.arrancado)} "
+        f"Encendido desde hace {cuanto(ahora - pulso.arrancado)} "
         f"({pulso.arrancado.astimezone():%d/%m a las %H:%M})",
     ]
 
     if pulso.ultimo_bien is None:
         texto.append("Aún no he terminado ningún ciclo.")
     else:
-        texto.append(f"Último ciclo bueno: hace {_hace(ahora - pulso.ultimo_bien)}")
+        texto.append(f"Último ciclo bueno: hace {cuanto(ahora - pulso.ultimo_bien)}")
     # El ultimo bueno puede ser de hace nada y llevar fallando desde entonces.
     if pulso.fallando_desde is not None:
         texto.append(
-            f"⚠️ Las consultas fallan desde hace {_hace(ahora - pulso.fallando_desde)}"
+            f"⚠️ Las consultas fallan desde hace {cuanto(ahora - pulso.fallando_desde)}"
         )
 
     texto.append(
@@ -108,7 +108,7 @@ def mensaje_encendido(
     if ultimo is not None and ahora - ultimo > timedelta(seconds=intervalo * 2):
         texto.append(
             f"Llevaba apagado desde el {ultimo.astimezone():%d/%m a las %H:%M} "
-            f"({_hace(ahora - ultimo)})."
+            f"({cuanto(ahora - ultimo)})."
         )
     return "\n".join(texto)
 
@@ -146,7 +146,7 @@ def mensaje_sin_precio(coin_ids: list[str], todas: bool = False) -> str:
     return texto
 
 
-def _hace(tiempo: timedelta) -> str:
+def cuanto(tiempo: timedelta) -> str:
     """Como _duracion, pero en dias cuando pasa de uno: '3 d 4 h' y no '76 h'."""
     # Justo despues de arrancar, un "0 min" parece que algo va mal.
     if tiempo < timedelta(minutes=1):

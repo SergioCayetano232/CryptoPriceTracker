@@ -94,6 +94,7 @@ def test_mute_y_unmute(config, enviados):
 
     assert database.silenciado_hasta(config.database_path) is not None
     assert "Callado hasta" in enviados[0]
+    assert "(2 h)" in enviados[0]
 
     main.atender(config, _mensaje("/unmute"))
 
@@ -110,6 +111,13 @@ def test_mute_a_secas_calla_una_hora(config, enviados):
     falta = hasta - datetime.now(timezone.utc)
     assert timedelta(minutes=59) < falta <= timedelta(hours=1)
     assert "🔕 Callado hasta" in enviados[0]
+    assert "(1 h)" in enviados[0]
+
+
+def test_mute_dice_cuanto_en_dias(config, enviados):
+    main.atender(config, _mensaje("/mute 1sem"))
+
+    assert "(7 d)" in enviados[0]
 
 
 def test_mute_a_secas_si_ya_estaba_callado_no_lo_toca(config, enviados):

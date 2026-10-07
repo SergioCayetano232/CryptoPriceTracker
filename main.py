@@ -579,7 +579,8 @@ def responder(
         hasta = datetime.now(timezone.utc) + timedelta(minutes=minutos)
         database.silenciar_hasta(config.database_path, hasta)
         return (
-            f"🔕 Callado hasta las {hasta.astimezone():%H:%M del %d/%m}.\n"
+            f"🔕 Callado hasta las {hasta.astimezone():%H:%M del %d/%m} "
+            f"({salud.cuanto(timedelta(minutes=minutos))}).\n"
             "Para volver antes: /unmute"
         )
 
