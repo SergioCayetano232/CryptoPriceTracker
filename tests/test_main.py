@@ -617,7 +617,7 @@ def test_buscar_por_telegram(config, enviados, monkeypatch):
 
     assert "<code>bitcoin</code>" in enviados[0]
     assert "BTC" in enviados[0]
-    assert "bitcoin:%5" in enviados[0]
+    assert "<code>/vigilar bitcoin %5</code>" in enviados[0]
 
 
 def test_buscar_sin_texto(config, enviados):

@@ -538,9 +538,9 @@ def formatear_busqueda(texto: str, resultados: list[dict]) -> str:
             f"({escape(str(m.get('symbol', '')).upper())}){rango}"
         )
 
+    # En <code> se copia de un toque; como enlace mandaria /vigilar a secas.
     lineas.append(
-        f"\nEn WATCHLIST va el id, por ejemplo: "
-        f"<code>{escape(resultados[0]['id'])}:%5</code>"
+        f"\nPara vigilarla: <code>/vigilar {escape(resultados[0]['id'])} %5</code>"
     )
     return "\n".join(lineas)
 
