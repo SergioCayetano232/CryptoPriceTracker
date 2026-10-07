@@ -2,7 +2,13 @@
 
 import pytest
 
-from crypto_tracker.comandos import AYUDA, COMANDOS, interpretar
+from crypto_tracker.comandos import (
+    AYUDA,
+    COMANDOS,
+    NO_ENTIENDO,
+    interpretar,
+    no_entiendo,
+)
 
 
 @pytest.mark.parametrize(
@@ -32,3 +38,21 @@ def test_lo_que_no_es_comando(texto):
 def test_la_ayuda_lista_todos_los_comandos():
     for nombre in COMANDOS:
         assert f"/{nombre}" in AYUDA
+
+
+@pytest.mark.parametrize(
+    "nombre,argumento,esperado",
+    [
+        ("preico", "btc", "/precio btc"),
+        ("satus", "", "/status"),
+        ("alertass", "", "/alertas"),
+        ("histroy", "eth 7d", "/historico eth 7d"),  # el alias lleva al comando
+    ],
+)
+def test_no_entiendo_sugiere_el_parecido(nombre, argumento, esperado):
+    assert no_entiendo(nombre, argumento).endswith(f"¿Querías decir {esperado}?")
+
+
+@pytest.mark.parametrize("nombre", ["xyzzy", "bailar", "borrar", "hola"])
+def test_no_entiendo_sin_nada_parecido(nombre):
+    assert no_entiendo(nombre) == NO_ENTIENDO

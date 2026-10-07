@@ -689,7 +689,7 @@ def responder(
             return alerts.formatear_busqueda(argumento, resultados)
         return alerts.con_fuente(alerts.formatear_busqueda(argumento, resultados))
 
-    return comandos.NO_ENTIENDO
+    return comandos.no_entiendo(nombre, telegram.escape(argumento))
 
 
 def _lista_vigiladas(config: Config) -> str:

@@ -1,5 +1,6 @@
 """Entiende los comandos que le escribes al bot por Telegram."""
 
+import difflib
 from dataclasses import dataclass
 
 # Lo que sale en el menu de Telegram al escribir "/".
@@ -49,6 +50,16 @@ AYUDA = "🤖 <b>Esto es lo que sé hacer</b>\n\n" + "\n".join(
 )
 
 NO_ENTIENDO = "No te entiendo. Escribe /ayuda para ver lo que sé hacer."
+
+
+def no_entiendo(nombre: str, argumento: str = "") -> str:
+    """Si se parece a un comando, lo sugiere con lo que escribiste detras."""
+    # Con menos de 0.75 sugeria /vigilar para /bailar y /compra para /borrar.
+    parecidos = difflib.get_close_matches(nombre, [*COMANDOS, *ALIAS], n=1, cutoff=0.75)
+    if not parecidos:
+        return NO_ENTIENDO
+    sugerencia = f"/{ALIAS.get(parecidos[0], parecidos[0])} {argumento}".strip()
+    return f"No te entiendo. ¿Querías decir {sugerencia}?"
 
 
 @dataclass(frozen=True)
