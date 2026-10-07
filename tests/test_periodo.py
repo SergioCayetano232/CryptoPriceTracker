@@ -21,6 +21,8 @@ from crypto_tracker.periodo import PeriodoError, falta_principio, interpretar, n
         ("7d", ("", 168)),  # solo el tramo: la cripto la pone quien llama
         ("12H", ("", 12)),
         ("6", ("", 6)),
+        ("2sem", ("", 336)),
+        ("bitcoin 1w", ("bitcoin", 168)),
         ("1inch", ("1inch", 24)),  # empieza por numero pero es una cripto
     ],
 )

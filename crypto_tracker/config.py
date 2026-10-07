@@ -218,14 +218,16 @@ def _parse_history_days() -> int:
 
 
 def parse_duracion(raw: str) -> int:
-    """Convierte '30m', '2h' o '1d' en minutos. Sin letra se entienden horas."""
+    """Convierte '30m', '2h', '1d' o '2sem' en minutos. Sin letra son horas."""
     raw = raw.strip().lower()
     if not raw:
         raise ConfigError("Falta el tiempo. Ejemplos: 30m, 2h, 1d.")
 
-    unidades = {"m": 1, "h": 60, "d": 1440}
-    factor = unidades.get(raw[-1])
-    numero = raw[:-1] if factor else raw
+    # Semanas con "sem" y no con "s": /mute 30s callaria 30 semanas sin querer.
+    unidades = {"sem": 10080, "w": 10080, "m": 1, "h": 60, "d": 1440}
+    unidad = next((u for u in unidades if raw.endswith(u)), "")
+    factor = unidades.get(unidad)
+    numero = raw.removesuffix(unidad)
 
     try:
         cantidad = float(numero)

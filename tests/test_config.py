@@ -120,11 +120,15 @@ def test_duraciones():
     assert parse_duracion("2h") == 120
     assert parse_duracion("1d") == 1440
     assert parse_duracion("1.5h") == 90
+    assert parse_duracion("2sem") == 2 * 7 * 1440
+    assert parse_duracion("1W") == 7 * 1440
     # sin letra se entienden horas
     assert parse_duracion("3") == 180
 
 
-@pytest.mark.parametrize("entrada", ["", "0h", "-2h", "hola", "2x", "0.001m"])
+@pytest.mark.parametrize(
+    "entrada", ["", "0h", "-2h", "hola", "2x", "0.001m", "sem", "30s"]
+)
 def test_duraciones_invalidas(entrada):
     from crypto_tracker.config import parse_duracion
 

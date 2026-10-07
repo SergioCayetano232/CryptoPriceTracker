@@ -8,8 +8,8 @@ from .simbolos import a_id
 
 POR_DEFECTO = 24
 
-# '7d', '12h', '6'... Ninguna cripto se llama asi, asi que es el tramo a secas.
-_TRAMO = re.compile(r"\d+([.,]\d+)?[mhd]?")
+# '7d', '12h', '2sem', '6'... Ninguna cripto se llama asi, asi que es el tramo a secas.
+_TRAMO = re.compile(r"\d+([.,]\d+)?(sem|[mhdw])?")
 
 # Mas de un año no cabe en una grafica de movil y tampoco se suele guardar.
 MAXIMO = 366 * 24
