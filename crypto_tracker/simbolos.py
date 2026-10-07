@@ -27,6 +27,25 @@ IDS = {
     "uni": "uniswap",
     "xmr": "monero",
     "bch": "bitcoin-cash",
+    "etc": "ethereum-classic",
+    "arb": "arbitrum",
+    "op": "optimism",
+    "apt": "aptos",
+    # MATIC se cambio por POL; el id viejo sigue en CoinGecko pero ya no se mueve.
+    "pol": "polygon-ecosystem-token",
+    "matic": "polygon-ecosystem-token",
+    "icp": "internet-computer",
+    "fil": "filecoin",
+    "hbar": "hedera-hashgraph",
+    "hype": "hyperliquid",
+    "algo": "algorand",
+    "kas": "kaspa",
+    "vet": "vechain",
+    "wif": "dogwifcoin",
+    "tao": "bittensor",
+    "render": "render-token",
+    "inj": "injective-protocol",
+    "ondo": "ondo-finance",
 }
 
 

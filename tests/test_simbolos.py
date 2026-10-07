@@ -20,6 +20,8 @@ from crypto_tracker.simbolos import IDS, a_id, varias
         ("BTC", "bitcoin"),
         (" eth ", "ethereum"),
         ("avax", "avalanche-2"),
+        ("ARB", "arbitrum"),
+        ("matic", "polygon-ecosystem-token"),  # ahora es POL
         ("bitcoin", "bitcoin"),  # el id de siempre sigue valiendo
         ("Solana", "solana"),
         ("pepe", "pepe"),  # simbolo e id coinciden, no hace falta tabla
