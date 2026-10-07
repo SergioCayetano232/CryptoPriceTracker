@@ -617,16 +617,12 @@ def responder(
         return _dejar(config, simbolos.varias(argumento))
 
     if nombre == "alertas":
-        pendientes = database.get_puntuales(config.database_path, config.vs_currency)
-        precios = _precios_alertas(config, pendientes)
-        texto = alerts.formatear_puntuales(pendientes, config.vs_currency, precios)
-        if precios:
-            texto = alerts.con_fuente(texto)
-        if not pendientes:
-            return texto
-        return comandos.ConBotones(texto, botones.para_alertas(pendientes))
+        return _alertas(config)
 
     if nombre == "quitar":
+        # A secas, la lista con sus 🗑: mas facil que ir a mirar el numero.
+        if not argumento:
+            return _alertas(config)
         if argumento.lower() == "todas":
             cuantas = database.borrar_puntuales(
                 config.database_path, config.vs_currency
@@ -690,6 +686,17 @@ def responder(
         return alerts.con_fuente(alerts.formatear_busqueda(argumento, resultados))
 
     return comandos.no_entiendo(nombre, telegram.escape(argumento))
+
+
+def _alertas(config: Config) -> str | comandos.ConBotones:
+    pendientes = database.get_puntuales(config.database_path, config.vs_currency)
+    precios = _precios_alertas(config, pendientes)
+    texto = alerts.formatear_puntuales(pendientes, config.vs_currency, precios)
+    if precios:
+        texto = alerts.con_fuente(texto)
+    if not pendientes:
+        return texto
+    return comandos.ConBotones(texto, botones.para_alertas(pendientes))
 
 
 def _lista_vigiladas(config: Config) -> str:

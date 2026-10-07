@@ -1032,11 +1032,31 @@ def test_quitar_todas_con_una_sola(config, enviados):
 
 def test_quitar_una_que_no_existe(config, enviados):
     main.atender(config, _mensaje("/quitar 42"))
-    main.atender(config, _mensaje("/quitar"))
 
     assert "ninguna alerta con el número 42" in enviados[0]
-    assert "/alertas" in enviados[1]
-    assert "/quitar todas" in enviados[1]
+
+
+def test_quitar_a_secas_sin_alertas(config, enviados):
+    main.atender(config, _mensaje("/quitar"))
+
+    assert "No tienes alertas puestas" in enviados[0]
+
+
+def test_quitar_a_secas_ensena_las_alertas_con_botones(config, monkeypatch):
+    mandados = []
+    monkeypatch.setattr(
+        telegram,
+        "send_message",
+        lambda token, chat, texto, **kw: mandados.append((texto, kw)) or True,
+    )
+    _precio(monkeypatch, {})
+    a = database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
+
+    main.atender(config, _mensaje("/quitar"))
+
+    texto, kw = mandados[0]
+    assert "Tus alertas" in texto
+    assert (f"🗑 {a.id} Bitcoin", f"/quitar {a.id}") in kw["botones"][0]
 
 
 def test_quitar_varias(config, enviados):
