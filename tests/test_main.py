@@ -2165,6 +2165,52 @@ def test_comparar_mal_escrito(config, enviados):
     assert "Como mucho un año" in enviados[0]
 
 
+# --- /volatilidad ---
+
+
+def test_volatilidad(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    # Un precio al dia: +3%, +2,91%, -4,72%, -0,99%, de media 2,90%
+    for dias, precio in [(4, 100.0), (3, 103.0), (2, 106.0), (1, 101.0), (0, 100.0)]:
+        _precio_de(config, "bitcoin", precio, dias * 24 * 60 + 5)
+
+    main.atender(config, _mensaje("/volatilidad btc 7d"))
+
+    texto = enviados[0]
+    assert "〰️ <b>Bitcoin</b> · <i>últimos 7 días</i>" in texto
+    assert "Se mueve de media un <b>2.90%</b> al día <i>(4 días)</i>" in texto
+    assert "El día que más: 🔻 -4.72% el" in texto
+    assert "%2 → 3 veces" in texto
+    assert "%5 → 2 veces" in texto
+    assert "%10 → ninguna" in texto
+    assert "Solo tengo precios desde el" in texto
+
+
+def test_volatilidad_a_secas_la_primera_que_vigilas(config, enviados):
+    _precio_de(config, "bitcoin", 100.0, 24 * 60 + 5)
+    _precio_de(config, "bitcoin", 101.0, 5)
+
+    main.atender(config, _mensaje("/volatilidad"))
+
+    assert "<b>Bitcoin</b> · <i>últimos 30 días</i>" in enviados[0]
+    assert "<i>(1 día)</i>" in enviados[0]
+    assert "%2 → ninguna" in enviados[0]
+
+
+def test_volatilidad_sin_precios(config, enviados):
+    _precio_de(config, "solana", 100.0, 5)
+
+    main.atender(config, _mensaje("/volatilidad sol"))
+
+    assert "No tengo precios guardados de <b>solana</b> de al menos" in enviados[0]
+
+
+def test_volatilidad_tramo_corto(config, enviados):
+    main.atender(config, _mensaje("/volatilidad btc 12h"))
+
+    assert "Necesito al menos 2 días" in enviados[0]
+
+
 # --- /si ---
 
 

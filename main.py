@@ -42,6 +42,7 @@ from crypto_tracker import (
     simbolos,
     telegram,
     vigiladas,
+    volatilidad,
 )
 from crypto_tracker.config import (
     Config,
@@ -692,6 +693,9 @@ def responder(
     if nombre == "comparar":
         return _comparar(config, argumento)
 
+    if nombre == "volatilidad":
+        return _volatilidad(config, argumento)
+
     if nombre == "buscar":
         if not argumento:
             return "¿Qué busco? Por ejemplo: /buscar btc"
@@ -1010,6 +1014,40 @@ def _comparar(config: Config, argumento: str) -> str:
             "Solo sé de las que vigilo: míralas con /vigilar"
         )
     return alerts.con_fuente(alerts.formatear_comparar(resultados, sin_datos, horas))
+
+
+def _volatilidad(config: Config, argumento: str) -> str:
+    try:
+        coin_id, horas = volatilidad.interpretar(argumento)
+    except periodo.PeriodoError as e:
+        return telegram.escape(str(e))
+    if not coin_id:
+        vigiladas = _con_cambios(config).watchlist
+        if not vigiladas:
+            return "¿De cuál? Por ejemplo: /volatilidad bitcoin 30d"
+        coin_id = vigiladas[0].coin_id
+
+    serie = database.get_serie(config.database_path, coin_id, horas, config.vs_currency)
+    resultado = volatilidad.calcular(serie)
+    if resultado is None:
+        return (
+            f"No tengo precios guardados de <b>{telegram.escape(coin_id)}</b> de al "
+            f"menos dos días ({periodo.nombre(horas)}). Solo sé de las que vigilo: "
+            "míralas con /vigilar"
+        )
+
+    primero = serie[0][0]
+    falta = periodo.falta_principio(primero, datetime.now(timezone.utc), horas)
+    return alerts.formatear_volatilidad(
+        coin_id,
+        horas,
+        resultado.media,
+        resultado.peor,
+        resultado.peor_dia,
+        resultado.dias,
+        {p: volatilidad.avisos(serie, p) for p in volatilidad.PRUEBAS},
+        primero if falta else None,
+    )
 
 
 def _convertir(config: Config, argumento: str) -> str:

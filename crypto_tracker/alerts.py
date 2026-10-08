@@ -3,7 +3,7 @@
 import logging
 import math
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 
 from .cartera import Valor, peso
 from .comparar import Resultado
@@ -641,6 +641,34 @@ def formatear_comparar(
     if sin_datos:
         nombres = ", ".join(f"<b>{escape(c)}</b>" for c in sin_datos)
         texto += ["", f"<i>No tengo precios guardados de {nombres}.</i>"]
+    return "\n".join(texto)
+
+
+def formatear_volatilidad(
+    coin_id: str,
+    horas: float,
+    media: float,
+    peor: float,
+    peor_dia: date,
+    dias: int,
+    avisos: dict[int, int],
+    desde: datetime | None,
+) -> str:
+    """/volatilidad: lo que se mueve al dia y los avisos que habria dado cada %."""
+    nombre = escape(coin_id.replace("-", " ").title())
+    texto = [
+        f"〰️ <b>{nombre}</b> · <i>{nombre_periodo(horas)}</i>",
+        f"Se mueve de media un <b>{media:.2f}%</b> al día "
+        f"<i>({'1 día' if dias == 1 else f'{dias} días'})</i>",
+        f"El día que más: {_flecha(peor)} {peor:+.2f}% el {peor_dia:%d/%m}",
+        "",
+        f"Con /vigilar {escape(coin_id)} te habría avisado:",
+    ]
+    for porcentaje, veces in avisos.items():
+        cuantas = {0: "ninguna", 1: "1 vez"}.get(veces, f"{veces} veces")
+        texto.append(f"%{porcentaje} → {cuantas}")
+    if desde:
+        texto.append(f"\n<i>Solo tengo precios desde el {desde.astimezone():%d/%m}</i>")
     return "\n".join(texto)
 
 
