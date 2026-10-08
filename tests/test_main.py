@@ -103,16 +103,50 @@ def test_mute_y_unmute(config, enviados):
     assert "Vuelvo a avisar" in enviados[1]
 
 
-def test_mute_a_secas_calla_una_hora(config, enviados):
-    from datetime import datetime, timedelta, timezone
+def _con_botones(monkeypatch):
+    mandados = []
+    monkeypatch.setattr(
+        telegram,
+        "send_message",
+        lambda token, chat, texto, **kw: (
+            mandados.append((texto, kw["botones"])) or True
+        ),
+    )
+    return mandados
+
+
+def test_mute_a_secas_pregunta_cuanto(config, monkeypatch):
+    mandados = _con_botones(monkeypatch)
 
     main.atender(config, _mensaje("/mute"))
 
-    hasta = database.silenciado_hasta(config.database_path)
-    falta = hasta - datetime.now(timezone.utc)
-    assert timedelta(minutes=59) < falta <= timedelta(hours=1)
-    assert "🔕 Callado hasta" in enviados[0]
-    assert "(1 h)" in enviados[0]
+    texto, filas = mandados[0]
+    assert database.silenciado_hasta(config.database_path) is None
+    assert "¿Cuánto tiempo me callo?" in texto
+    assert filas == [
+        [("1 h", "/mute 1h"), ("4 h", "/mute 4h")],
+        [("🌙 Hasta las 8:00", "/mute hasta 8:00")],
+    ]
+
+
+def test_mute_con_el_boton_y_deshacer(config, monkeypatch):
+    from datetime import datetime, timedelta, timezone
+
+    mandados = _con_botones(monkeypatch)
+
+    main.atender_boton(config, _boton("/mute 4h"))
+
+    falta = database.silenciado_hasta(config.database_path) - datetime.now(timezone.utc)
+    assert timedelta(hours=3, minutes=59) < falta <= timedelta(hours=4)
+    texto, filas = mandados[0]
+    assert "🔕 Callado hasta" in texto
+    assert "(4 h)" in texto
+    assert filas == [[("🔔 Volver a avisar", "/unmute")]]
+
+    main.atender_boton(config, _boton("/unmute"))
+
+    assert database.silenciado_hasta(config.database_path) is None
+    assert "Vuelvo a avisar" in mandados[1][0]
 
 
 def test_mute_dice_cuanto_en_dias(config, enviados):
@@ -121,15 +155,18 @@ def test_mute_dice_cuanto_en_dias(config, enviados):
     assert "(7 d)" in enviados[0]
 
 
-def test_mute_a_secas_si_ya_estaba_callado_no_lo_toca(config, enviados):
+def test_mute_a_secas_si_ya_estaba_callado_no_lo_toca(config, monkeypatch):
+    mandados = _con_botones(monkeypatch)
     main.atender(config, _mensaje("/mute 3h"))
     antes = database.silenciado_hasta(config.database_path)
 
     main.atender(config, _mensaje("/mute"))
 
+    texto, filas = mandados[1]
     assert database.silenciado_hasta(config.database_path) == antes
-    assert f"Ya estoy callado hasta las {antes.astimezone():%H:%M}" in enviados[1]
-    assert "/unmute" in enviados[1]
+    assert f"Ya estoy callado hasta las {antes.astimezone():%H:%M}" in texto
+    assert filas[0] == [("🔔 Volver a avisar", "/unmute")]
+    assert ("1 h", "/mute 1h") in filas[1]
 
 
 def test_mute_con_tiempo_mal_escrito_explica_el_formato(config, enviados):

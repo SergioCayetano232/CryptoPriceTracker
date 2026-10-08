@@ -192,7 +192,8 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/buscar btc` | Encuentra el id de CoinGecko de una cripto |
 | `/consultas` | Cuántas consultas a CoinGecko llevas este mes |
 | `/bot` | Si sigue funcionando: desde cuándo está encendido, cuándo fue el último ciclo y las consultas del mes |
-| `/mute 2h` | Calla los avisos un rato (a secas, una hora; si ya está callado, te dice hasta cuándo) |
+| `/mute` | Te pregunta cuánto tiempo callarse, con botones: 1 h, 4 h o hasta las 8:00 (si ya está callado, te dice hasta cuándo) |
+| `/mute 2h` | Calla los avisos ese rato, con un botón para deshacerlo |
 | `/mute hasta 8:00` | Calla los avisos hasta esa hora (si ya ha pasado, la de mañana) |
 | `/unmute` | Vuelve a avisar |
 | `/ayuda` | La lista de comandos |
@@ -213,6 +214,9 @@ Cada aviso lleva debajo unos botones para reaccionar de un toque:
 - **🔕 Callar 1 h**: como `/mute 1h`.
 
 Si en un mensaje vienen varias criptos, salen los botones de las tres primeras.
+
+`/mute` a secas te deja elegir cuánto con un toque, y al callarlo sale un
+**🔔 Volver a avisar** por si te arrepientes.
 
 `/status`, `/cartera` y `/alertas` llevan un **🔄 Actualizar** para volver a pedirlos
 de un toque.

@@ -5,8 +5,10 @@ from crypto_tracker.alerts import ALTO, BAJO, Alert
 from crypto_tracker.botones import (
     CALLAR,
     MAX_ALERTAS,
+    deshacer_mute,
     para_alertas,
     para_avisos,
+    para_mute,
     para_tendencias,
 )
 from crypto_tracker.tendencias import Tendencia
@@ -160,3 +162,27 @@ def test_tendencias_con_id_larguisimo():
 
     # Telegram no admite mas de 64 bytes; sin simbolo va el nombre.
     assert para_tendencias([larga, corta]) == [[("🎯 Pepe", "/alerta pepe")]]
+
+
+def test_mute_a_elegir():
+    assert para_mute() == [
+        [("1 h", "/mute 1h"), ("4 h", "/mute 4h")],
+        [("🌙 Hasta las 8:00", "/mute hasta 8:00")],
+    ]
+
+
+def test_mute_ya_callado_primero_volver():
+    filas = para_mute(ya_callado=True)
+
+    assert filas[0] == [("🔔 Volver a avisar", "/unmute")]
+    assert filas[1:] == para_mute()
+
+
+def test_deshacer_mute():
+    assert deshacer_mute() == [[("🔔 Volver a avisar", "/unmute")]]
+
+
+def test_los_comandos_del_mute_caben():
+    for fila in para_mute(ya_callado=True):
+        for _, comando in fila:
+            assert len(comando.encode()) <= 64

@@ -12,6 +12,15 @@ MAX_CRIPTOS = 3
 
 CALLAR = ("🔕 Callar 1 h", "/mute 1h")
 
+VOLVER = ("🔔 Volver a avisar", "/unmute")
+
+# Lo que mas se usa: un rato, una tarde y hasta que te levantas.
+TIEMPOS = [
+    ("1 h", "/mute 1h"),
+    ("4 h", "/mute 4h"),
+    ("🌙 Hasta las 8:00", "/mute hasta 8:00"),
+]
+
 # En el movil, con mas de dos por fila los nombres se cortan.
 POR_FILA = 2
 
@@ -77,3 +86,13 @@ def para_alertas(alertas: list[Puntual]) -> list[list[tuple[str, str]]]:
         ultima.append(("🗑 Quitar todas", "/quitar todas"))
     filas.append(ultima)
     return filas
+
+
+def para_mute(ya_callado: bool = False) -> list[list[tuple[str, str]]]:
+    """Cuanto tiempo callar; si ya lo estaba, primero el boton para deshacerlo."""
+    filas = [TIEMPOS[i : i + POR_FILA] for i in range(0, len(TIEMPOS), POR_FILA)]
+    return [[VOLVER], *filas] if ya_callado else filas
+
+
+def deshacer_mute() -> list[list[tuple[str, str]]]:
+    return [[VOLVER]]

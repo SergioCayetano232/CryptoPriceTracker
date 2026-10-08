@@ -69,9 +69,6 @@ ESPERA_TELEGRAM = 30
 # no pinta nada esta mañana.
 ANTIGUEDAD_MAXIMA = 10 * 60
 
-# Lo que dura un /mute a secas, el mismo que el boton de callar de los avisos.
-MUTE_POR_DEFECTO = "1h"
-
 # El del bucle en marcha, para que /bot sepa como va. None fuera de --loop.
 _pulso: salud.Pulso | None = None
 
@@ -570,21 +567,24 @@ def responder(
             estaba = database.silenciado_hasta(config.database_path)
             if estaba:
                 cuando = estaba.astimezone()
-                return (
+                return comandos.ConBotones(
                     f"🔕 Ya estoy callado hasta las {cuando:%H:%M del %d/%m}.\n"
-                    "Para volver antes: /unmute · para cambiarlo: /mute 2h"
+                    "¿Vuelvo a avisar o lo cambio?",
+                    botones.para_mute(ya_callado=True),
                 )
-            argumento = MUTE_POR_DEFECTO
+            return comandos.ConBotones(
+                "🔕 ¿Cuánto tiempo me callo?", botones.para_mute()
+            )
         try:
             minutos = minutos_mute(argumento, datetime.now().astimezone())
         except ConfigError as e:
             return str(e)
         hasta = datetime.now(timezone.utc) + timedelta(minutes=minutos)
         database.silenciar_hasta(config.database_path, hasta)
-        return (
+        return comandos.ConBotones(
             f"🔕 Callado hasta las {hasta.astimezone():%H:%M del %d/%m} "
-            f"({salud.cuanto(timedelta(minutes=minutos))}).\n"
-            "Para volver antes: /unmute"
+            f"({salud.cuanto(timedelta(minutes=minutos))}).",
+            botones.deshacer_mute(),
         )
 
     if nombre == "unmute":
