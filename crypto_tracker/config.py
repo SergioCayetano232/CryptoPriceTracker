@@ -258,11 +258,14 @@ def minutos_mute(raw: str, ahora: datetime) -> int:
     if hora is None:
         raise ConfigError(f"No entiendo '{raw}'. Usa algo como hasta 8:00.")
 
-    hasta = ahora.replace(hour=hora.hour, minute=hora.minute, second=0, microsecond=0)
-    if hasta <= ahora:
+    # En hora de aqui y sin desfase fijo: la noche del cambio de hora, las 8:00
+    # con el de verano serian las 7:00 de verdad.
+    local = ahora.astimezone().replace(tzinfo=None)
+    hasta = local.replace(hour=hora.hour, minute=hora.minute, second=0, microsecond=0)
+    if hasta <= local:
         hasta += timedelta(days=1)
     # Hacia arriba: si no, con los segundos de ahora se quedaria en las 7:59
-    return math.ceil((hasta - ahora).total_seconds() / 60)
+    return math.ceil((hasta.astimezone() - ahora).total_seconds() / 60)
 
 
 def parse_hora(raw: str, nombre: str = "RESUMEN_DIARIO") -> time | None:

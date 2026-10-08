@@ -137,10 +137,10 @@ def test_duraciones_invalidas(entrada):
 
 
 def _a_las(hora, minuto=0):
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime
 
-    madrid = timezone(timedelta(hours=2))
-    return datetime(2026, 10, 6, hora, minuto, tzinfo=madrid)
+    # En la hora del sistema, que es la que usa el bot para el "hasta".
+    return datetime(2026, 10, 6, hora, minuto).astimezone()
 
 
 def test_mute_hasta_una_hora():
@@ -152,6 +152,38 @@ def test_mute_hasta_una_hora():
     # si ya ha pasado, la de mañana
     assert minutos_mute("hasta 8", _a_las(23)) == 9 * 60
     assert minutos_mute("hasta 7:30", _a_las(7, 30)) == 24 * 60
+
+
+@pytest.fixture
+def en_madrid(monkeypatch):
+    import time
+
+    if not hasattr(time, "tzset"):
+        pytest.skip("Sin tzset (Windows) no se puede cambiar la zona horaria")
+    monkeypatch.setenv("TZ", "Europe/Madrid")
+    time.tzset()
+    yield
+    monkeypatch.undo()
+    time.tzset()
+
+
+@pytest.mark.parametrize(
+    "ahora_utc,minutos",
+    [
+        # 25/10, 1:30 de verano; a las 3:00 vuelve a las 2:00. Hasta las 8 son 7,5 h.
+        ("2026-10-24T23:30:00+00:00", 7 * 60 + 30),
+        # 29/03, 1:30 de invierno; a las 2:00 salta a las 3:00. Son 5,5 h.
+        ("2026-03-29T00:30:00+00:00", 5 * 60 + 30),
+    ],
+)
+def test_mute_hasta_la_noche_del_cambio_de_hora(en_madrid, ahora_utc, minutos):
+    from datetime import datetime
+
+    from crypto_tracker.config import minutos_mute
+
+    ahora = datetime.fromisoformat(ahora_utc).astimezone()
+
+    assert minutos_mute("hasta 8:00", ahora) == minutos
 
 
 def test_mute_sigue_entendiendo_duraciones():
