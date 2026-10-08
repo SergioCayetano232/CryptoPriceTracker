@@ -17,6 +17,7 @@ COMANDOS = {
     "vigilar": "Ver o cambiar lo que vigilo (ej: /vigilar solana %5)",
     "dejar": "Dejar de vigilar una o varias (ej: /dejar solana o /dejar sol eth)",
     "convertir": "Cuánto es en dinero o en cripto (ej: /convertir 0.05 bitcoin)",
+    "si": "Cuánto tendrías si hubieras invertido (ej: /si 1000 bitcoin 30d)",
     "exportar": "Los precios guardados en un CSV (ej: /exportar bitcoin 30d)",
     "buscar": "Encuentra el id de una cripto (ej: /buscar btc)",
     "consultas": "Cuántas consultas a CoinGecko llevas este mes",

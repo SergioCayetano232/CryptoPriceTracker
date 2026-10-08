@@ -1886,6 +1886,59 @@ def test_exportar_si_falla_el_archivo_lo_dice(config, enviados, monkeypatch):
     assert "No he podido mandarte el archivo" in enviados[0]
 
 
+# --- /si ---
+
+
+def test_si(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    _precio_hace(config, 50000.0, 29 * 24 * 60)
+    _precio_hace(config, 55000.0, 10 * 24 * 60)
+    _precio_hace(config, 60000.0, 5)
+
+    main.atender(config, _mensaje("/si 1000 btc"))
+
+    assert "€1.000,00 en <b>Bitcoin</b> hace 30 días" in enviados[0]
+    assert "<b>€1.200,00</b>" in enviados[0]
+    assert "Solo tengo" not in enviados[0]
+
+
+def test_si_con_menos_historico(config, enviados):
+    _precio_hace(config, 50000.0, 3 * 24 * 60)
+    _precio_hace(config, 40000.0, 5)
+
+    main.atender(config, _mensaje("/si 1000 bitcoin 30d"))
+
+    assert "<b>€800,00</b>" in enviados[0]
+    assert "Solo tengo precios desde entonces, no de hace 30 días" in enviados[0]
+
+
+def test_si_sin_precios(config, enviados):
+    _precio_hace(config, 50000.0, 5)  # con uno solo no hay nada que comparar
+
+    main.atender(config, _mensaje("/si 1000 bitcoin"))
+    main.atender(config, _mensaje("/si 1000 solana"))
+
+    assert "No tengo precios guardados de <b>bitcoin</b>" in enviados[0]
+    assert "No tengo precios guardados de <b>solana</b>" in enviados[1]
+
+
+def test_si_mal_escrito(config, enviados):
+    main.atender(config, _mensaje("/si"))
+    main.atender(config, _mensaje("/si mucho bitcoin"))
+
+    assert "/si 1000 bitcoin 30d" in enviados[0]
+    assert "no es una cantidad" in enviados[1]
+
+
+def test_si_con_el_ultimo_precio_viejo(config, enviados):
+    _precio_hace(config, 50000.0, 6 * 24 * 60)
+    _precio_hace(config, 60000.0, 3 * 24 * 60)
+
+    main.atender(config, _mensaje("/si 1000 bitcoin 7d"))
+
+    assert "El último precio que tengo es del" in enviados[0]
+
+
 # --- /historico con tramo ---
 
 

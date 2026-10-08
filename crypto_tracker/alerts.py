@@ -459,6 +459,46 @@ def formatear_conversion(
     return f"💱 {linea}\n<i>1 {nombre} = {simbolo}{_num(precio)}</i>"
 
 
+def formatear_hubiera(
+    cantidad: float,
+    coin_id: str,
+    antes: float,
+    ahora: float,
+    horas: float,
+    desde: datetime | None,
+    currency: str,
+    ultimo: datetime | None = None,
+) -> str:
+    """Respuesta de /si. desde va si no hay precios de todo el tramo pedido,
+    y ultimo si el precio de "ahora" es viejo."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(coin_id.replace("-", " ").title())
+    valor = cantidad * ahora / antes
+    porcentaje = (ahora / antes - 1) * 100
+    cuando = f"el {desde.astimezone():%d/%m}" if desde else _hace(horas)
+
+    texto = (
+        f"🔮 Si hubieras metido {simbolo}{_num(cantidad)} en <b>{nombre}</b> "
+        f"{cuando}, hoy tendrías <b>{simbolo}{_num(valor)}</b>\n"
+        f"{_flecha(porcentaje)} {porcentaje:+.2f}% "
+        f"({_ganancia(valor - cantidad, simbolo)})\n"
+        f"<i>Entonces {simbolo}{_num(antes)} · ahora {simbolo}{_num(ahora)}</i>"
+    )
+    if desde:
+        texto += f"\n<i>Solo tengo precios desde entonces, no de {_hace(horas)}</i>"
+    if ultimo:
+        fecha = ultimo.astimezone()
+        texto += f"\n<i>El último precio que tengo es del {fecha:%d/%m a las %H:%M}</i>"
+    return texto
+
+
+def _hace(horas: float) -> str:
+    """'hace 30 días', 'hace 12 h'."""
+    if horas >= 48 and horas % 24 == 0:
+        return f"hace {int(horas // 24)} días"
+    return f"hace {horas:g} h".replace(".", ",")
+
+
 def formatear_precio(
     coin_id: str, precio: float, variacion: float | None, currency: str
 ) -> str:

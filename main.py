@@ -31,6 +31,7 @@ from crypto_tracker import (
     exportar,
     extremos,
     grafica,
+    hubiera,
     movimientos,
     periodo,
     proximo,
@@ -675,6 +676,9 @@ def responder(
     if nombre == "exportar":
         return _exportar(config, argumento)
 
+    if nombre == "si":
+        return _si(config, argumento)
+
     if nombre == "buscar":
         if not argumento:
             return "¿Qué busco? Por ejemplo: /buscar btc"
@@ -973,6 +977,41 @@ def _exportar(config: Config, argumento: str) -> str | comandos.Archivo:
         exportar.nombre_archivo(coin_id, horas, date.today()),
         alerts.con_fuente(pie),
         "No he podido mandarte el archivo. Prueba en un rato.",
+    )
+
+
+def _si(config: Config, argumento: str) -> str:
+    try:
+        pregunta = hubiera.interpretar(argumento, config.vs_currency)
+    except periodo.PeriodoError as e:
+        return telegram.escape(str(e))
+
+    coin_id, horas = pregunta.coin_id, pregunta.horas
+    # Con lo guardado y no con el precio de CoinGecko: asi no gasta consultas.
+    serie = database.get_serie(config.database_path, coin_id, horas, config.vs_currency)
+    if len(serie) < 2:
+        nombre = telegram.escape(coin_id)
+        return (
+            f"No tengo precios guardados de <b>{nombre}</b> ({periodo.nombre(horas)}). "
+            f"Solo sé de las que vigilo: míralas con /vigilar"
+        )
+
+    primero, ultimo = serie[0][0], serie[-1][0]
+    ahora = datetime.now(timezone.utc)
+    falta = periodo.falta_principio(primero, ahora, horas)
+    # Con el bot parado unos dias, el "ahora" seria un precio viejo.
+    viejo = ahora - ultimo > timedelta(hours=1)
+    return alerts.con_fuente(
+        alerts.formatear_hubiera(
+            pregunta.cantidad,
+            coin_id,
+            serie[0][1],
+            serie[-1][1],
+            horas,
+            primero if falta else None,
+            config.vs_currency,
+            ultimo if viejo else None,
+        )
     )
 
 

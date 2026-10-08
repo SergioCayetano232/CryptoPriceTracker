@@ -182,6 +182,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/historico` | Sin decir cuál, la primera que vigilas (también `/historico 7d`) |
 | `/convertir 0.05 bitcoin` | Cuánto es en euros al precio de ahora |
 | `/convertir 500 eur solana` | Al revés: cuánta solana compras con 500 € (vale `500€`) |
+| `/si 1000 bitcoin 30d` | Cuánto tendrías hoy si hubieras metido 1.000 € hace 30 días (sin tramo, 30 días) |
 | `/exportar bitcoin 30d` | Te manda un CSV con los precios guardados (sin tramo, 30 días) |
 | `/buscar btc` | Encuentra el id de CoinGecko de una cripto |
 | `/consultas` | Cuántas consultas a CoinGecko llevas este mes |
@@ -276,6 +277,13 @@ precios guardados de ese tramo, con la fecha en tu hora. Va con punto y coma y
 coma decimal, que es como lo abre bien Excel en español con doble clic. Solo
 tiene lo que el bot ha ido guardando, así que no llega más atrás de
 `HISTORY_DAYS` ni de cuando lo instalaste.
+
+**Saber cuánto tendrías si hubieras comprado:**
+
+`/si 1000 bitcoin 30d` te dice cuánto valdrían hoy 1.000 € metidos en Bitcoin
+hace 30 días, y cuánto habrías ganado o perdido. Sale de los precios que ya
+tiene guardados, así que no gasta consultas, pero solo vale con las criptos que
+vigila y no llega más atrás de cuando lo instalaste.
 
 **Apuntar compras y ventas desde el móvil:**
 
@@ -468,6 +476,7 @@ crypto_tracker/
   extremos.py    los máximos y mínimos de los últimos días
   convertir.py   entiende lo que le pides a /convertir
   exportar.py    el CSV de /exportar
+  hubiera.py     entiende lo que le pides a /si
   puntuales.py   las alertas de /alerta
   vigiladas.py   lo que cambias con /vigilar
   movimientos.py las compras y ventas de /compra y /venta
