@@ -11,7 +11,7 @@ COMANDOS = {
     "cartera": "Cuánto vale lo que tienes, con gráfica (ej: /cartera 30d)",
     "compra": "Apuntar una compra en la cartera (ej: /compra bitcoin 0.01 600)",
     "venta": "Apuntar una venta (ej: /venta bitcoin 0.005 o todo)",
-    "alerta": "Avísame una vez a un precio o un % (ej: /alerta bitcoin 70000 o +10%)",
+    "alerta": "Avísame una vez a un precio o un % (ej: /alerta btc 70000 o +10% 7d)",
     "alertas": "Las alertas que tienes puestas",
     "quitar": "Quitar alertas (ej: /quitar 3, /quitar 2 5 o /quitar todas)",
     "historico": "Cómo ha ido una cripto (ej: /historico bitcoin 7d)",

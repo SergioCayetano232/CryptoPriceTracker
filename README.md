@@ -171,6 +171,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/venta bitcoin 0.005` | Apunta una venta (`/venta bitcoin todo` la saca de la cartera) |
 | `/alerta bitcoin 70000` | Te avisa una vez cuando llegue a ese precio |
 | `/alerta bitcoin +10%` | Te avisa una vez cuando suba un 10% desde ahora |
+| `/alerta bitcoin 70000 7d` | Lo mismo, pero si en 7 días no ha llegado se borra sola y te lo dice |
 | `/alerta bitcoin` | Sin precio, te dice a cuánto está y te pone un ejemplo |
 | `/alerta cartera 5000` | Lo mismo con lo que vale tu cartera entera (también `-10%`) |
 | `/alertas` | Las alertas que tienes puestas y cuánto le falta a cada una, con un 🗑 para quitarlas |
@@ -233,6 +234,11 @@ Si no quieres hacer cuentas, ponlo en porcentaje: `/alerta bitcoin +10%` o
 `/alerta solana -5%`. Calcula el precio con lo que vale en ese momento y te
 contesta a cuánto ha quedado. El signo es obligatorio, que un `10%` a secas no
 dice si esperar a que suba o a que baje.
+
+Para que no se te acumulen alertas viejas, ponles caducidad al final:
+`/alerta bitcoin 70000 7d` o `/alerta solana +10% 12h`. Si en ese tiempo no
+llega, se borra sola y te manda un ⌛ sin sonido para que lo sepas. `/alertas`
+te enseña cuándo caduca cada una. Las que pongas sin tramo no caducan nunca.
 
 Con `cartera` en vez de una cripto, mira lo que vale todo lo que tienes junto:
 `/alerta cartera 5000` o `/alerta cartera -10%`. Si en un ciclo falta el precio

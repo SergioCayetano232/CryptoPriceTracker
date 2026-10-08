@@ -537,3 +537,43 @@ def test_ultimo_guardado(db):
 
     cuando = database.ultimo_guardado(db)
     assert antes <= cuando <= datetime.now(timezone.utc)
+
+
+# --- caducidad de /alerta ---
+
+
+def test_puntual_con_caducidad_va_y_vuelve(db):
+    caduca = datetime(2026, 10, 15, 12, 0, tzinfo=timezone.utc)
+
+    creada = database.crear_puntual(db, "bitcoin", 70000.0, True, "eur", caduca)
+
+    assert database.get_puntuales(db, "eur") == [creada]
+    assert database.get_puntuales(db, "eur")[0].caduca == caduca
+
+
+def test_base_de_datos_vieja_gana_la_columna_sin_perder_alertas(tmp_path):
+    import sqlite3
+
+    ruta = str(tmp_path / "vieja.db")
+    conn = sqlite3.connect(ruta)
+    conn.execute(
+        "CREATE TABLE alertas_puntuales (id INTEGER PRIMARY KEY AUTOINCREMENT, "
+        "coin_id TEXT NOT NULL, objetivo REAL NOT NULL, sube INTEGER NOT NULL, "
+        "currency TEXT NOT NULL, created_at TEXT NOT NULL)"
+    )
+    conn.execute(
+        "INSERT INTO alertas_puntuales (coin_id, objetivo, sube, currency, created_at) "
+        "VALUES ('bitcoin', 70000, 1, 'eur', '2026-10-01T10:00:00+00:00')"
+    )
+    conn.commit()
+    conn.close()
+
+    database.init_db(ruta)
+    database.init_db(ruta)  # la segunda vez ya la tiene y no la vuelve a añadir
+
+    antigua = database.get_puntuales(ruta, "eur")
+    assert [(a.coin_id, a.caduca) for a in antigua] == [("bitcoin", None)]
+    database.crear_puntual(
+        ruta, "solana", 200.0, True, "eur", datetime.now(timezone.utc)
+    )
+    assert database.get_puntuales(ruta, "eur")[1].caduca is not None

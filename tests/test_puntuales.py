@@ -1,5 +1,7 @@
 """Tests de las alertas de una sola vez."""
 
+from datetime import datetime, timedelta, timezone
+
 import pytest
 
 from crypto_tracker.alerts import (
@@ -13,12 +15,15 @@ from crypto_tracker.alerts import (
 from crypto_tracker.puntuales import (
     Puntual,
     PuntualError,
+    caducadas,
+    caducidad,
     cumplidas,
     interpretar,
     interpretar_relativa,
     numero,
     numeros,
     objetivo_relativo,
+    separar_caducidad,
     sube,
 )
 
@@ -250,3 +255,44 @@ def test_ejemplo_redondo_por_encima(precio, esperado):
 
     assert ejemplo(precio) == esperado
     assert numero(ejemplo(precio)) > precio  # y /alerta lo entiende
+
+
+# --- caducidad ---
+
+
+@pytest.mark.parametrize(
+    "argumento,esperado",
+    [
+        ("bitcoin 70000 7d", ("bitcoin 70000", 168)),
+        ("bitcoin +10% 12h", ("bitcoin +10%", 12)),
+        ("bitcoin 70000 2sem", ("bitcoin 70000", 336)),
+        ("bitcoin 70000", ("bitcoin 70000", None)),
+        ("bitcoin 7d", ("bitcoin 7d", None)),  # sin precio, lo dira interpretar
+        ("bitcoin 70000 mucho", ("bitcoin 70000 mucho", None)),
+        ("bitcoin", ("bitcoin", None)),
+    ],
+)
+def test_separar_caducidad(argumento, esperado):
+    assert separar_caducidad(argumento) == esperado
+
+
+def test_separar_caducidad_demasiado_larga():
+    with pytest.raises(PuntualError, match="Como mucho un año"):
+        separar_caducidad("bitcoin 70000 500d")
+
+
+def test_caducidad():
+    ahora = datetime(2026, 10, 8, 12, 0, tzinfo=timezone.utc)
+
+    assert caducidad(ahora, 168) == datetime(2026, 10, 15, 12, 0, tzinfo=timezone.utc)
+    assert caducidad(ahora, None) is None
+
+
+def test_caducadas():
+    ahora = datetime(2026, 10, 8, 12, 0, tzinfo=timezone.utc)
+    vieja = Puntual(1, "bitcoin", 70000, True, ahora - timedelta(minutes=1))
+    justa = Puntual(2, "bitcoin", 70000, True, ahora)
+    viva = Puntual(3, "bitcoin", 70000, True, ahora + timedelta(minutes=1))
+    sin = Puntual(4, "bitcoin", 70000, True)
+
+    assert caducadas([vieja, justa, viva, sin], ahora) == [vieja, justa]

@@ -93,7 +93,7 @@ def ejecutar_ciclo(
     """
     config = _con_cambios(config)
     coin_ids = [w.coin_id for w in config.watchlist]
-    pendientes = _puntuales(config)
+    pendientes = _caducar(config, _puntuales(config))
     # Las de /alerta y la cartera pueden ser de criptos que no vigilas. Van en
     # la misma consulta, y asi la cartera tiene historico para su grafica.
     extra = [p.coin_id for p in (*pendientes, *config.cartera)]
@@ -251,6 +251,29 @@ def _puntuales(config: Config) -> list[puntuales.Puntual]:
     except database.DatabaseError as e:
         logger.error("No se pudieron leer las alertas de /alerta: %s", e)
         return []
+
+
+def _caducar(
+    config: Config, pendientes: list[puntuales.Puntual]
+) -> list[puntuales.Puntual]:
+    """Quita las de /alerta que han caducado sin saltar, y te lo dice."""
+    # Callado no: como las que saltan, que esperen a que vuelvas.
+    if _silenciado(config):
+        return pendientes
+    viejas = puntuales.caducadas(pendientes, datetime.now(timezone.utc))
+    if not viejas:
+        return pendientes
+
+    if telegram.send_message(
+        config.telegram_token,
+        config.telegram_chat_id,
+        alerts.formatear_caducadas(viejas, config.vs_currency),
+        sin_sonido=True,
+    ):
+        logger.info("Caducadas: %s", ", ".join(str(p.id) for p in viejas))
+        _borrar_puntuales(config, viejas)
+    # Si no ha llegado el mensaje, el siguiente ciclo lo vuelve a intentar.
+    return [p for p in pendientes if p not in viejas]
 
 
 def _borrar_puntuales(config: Config, hechas: list[puntuales.Puntual]) -> None:
@@ -842,6 +865,10 @@ def _vender(config: Config, argumento: str) -> str:
 
 
 def _crear_alerta(config: Config, argumento: str) -> str:
+    try:
+        argumento, horas = puntuales.separar_caducidad(argumento)
+    except puntuales.PuntualError as e:
+        return telegram.escape(str(e))
     # Solo la cripto: le digo a cuanto esta para que sepa que poner.
     sin_objetivo = (
         len(argumento.split()) == 1 and puntuales.numero(argumento.rstrip("%")) is None
@@ -896,7 +923,12 @@ def _crear_alerta(config: Config, argumento: str) -> str:
             return telegram.escape(str(e))
 
     alerta = database.crear_puntual(
-        config.database_path, coin_id, objetivo, sube, config.vs_currency
+        config.database_path,
+        coin_id,
+        objetivo,
+        sube,
+        config.vs_currency,
+        puntuales.caducidad(datetime.now(timezone.utc), horas),
     )
     logger.info("Alerta %d creada: %s a %s", alerta.id, coin_id, objetivo)
     return alerts.con_fuente(

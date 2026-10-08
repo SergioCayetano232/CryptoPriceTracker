@@ -3,7 +3,9 @@
 import math
 import re
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 
+from .periodo import PeriodoError, es_tramo, leer
 from .simbolos import a_id
 
 # 70.000 es setenta mil, que es como lo escribe uno aqui. 0.5 sigue siendo medio.
@@ -27,6 +29,28 @@ class Puntual:
     coin_id: str
     objetivo: float
     sube: bool  # True si espera a que suba hasta el objetivo
+    caduca: datetime | None = None  # None, las de antes y las que no lo pidieron
+
+
+def separar_caducidad(argumento: str) -> tuple[str, float | None]:
+    """'bitcoin 70000 7d' -> ('bitcoin 70000', 168). Sin caducidad, None."""
+    partes = argumento.split()
+    # Con dos partes no: "bitcoin 70000" tambien pareceria un tramo.
+    if len(partes) != 3 or not es_tramo(partes[2]):
+        return argumento, None
+    try:
+        horas = leer(partes[2])
+    except PeriodoError as e:
+        raise PuntualError(str(e)) from None
+    return " ".join(partes[:2]), horas
+
+
+def caducidad(ahora: datetime, horas: float | None) -> datetime | None:
+    return ahora + timedelta(hours=horas) if horas else None
+
+
+def caducadas(alertas: list[Puntual], ahora: datetime) -> list[Puntual]:
+    return [a for a in alertas if a.caduca and a.caduca <= ahora]
 
 
 def interpretar(argumento: str) -> tuple[str, float]:

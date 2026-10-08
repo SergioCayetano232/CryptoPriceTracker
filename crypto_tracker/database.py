@@ -42,13 +42,15 @@ CREATE TABLE IF NOT EXISTS ajustes (
 );
 
 -- Las de /alerta: avisan una vez y se borran. sube = 1 si espera a que suba.
+-- caduca_at NULL es que no caduca.
 CREATE TABLE IF NOT EXISTS alertas_puntuales (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     coin_id    TEXT    NOT NULL,
     objetivo   REAL    NOT NULL,
     sube       INTEGER NOT NULL,
     currency   TEXT    NOT NULL,
-    created_at TEXT    NOT NULL
+    created_at TEXT    NOT NULL,
+    caduca_at  TEXT
 );
 
 -- Lo que cambias por Telegram encima del WATCHLIST del .env. regla va con el
@@ -115,8 +117,22 @@ def init_db(db_path: str) -> None:
 
     with _connect(db_path) as conn:
         conn.executescript(SCHEMA)
+        _columnas_nuevas(conn)
 
     logger.debug("Base de datos lista en %s", db_path)
+
+
+# Las que se han añadido despues: el CREATE TABLE no las mete en una tabla
+# que ya existia, asi que se añaden aqui al arrancar.
+COLUMNAS_NUEVAS = [("alertas_puntuales", "caduca_at", "TEXT")]
+
+
+def _columnas_nuevas(conn: sqlite3.Connection) -> None:
+    for tabla, columna, tipo in COLUMNAS_NUEVAS:
+        tiene = {f["name"] for f in conn.execute(f"PRAGMA table_info({tabla})")}
+        if columna not in tiene:
+            conn.execute(f"ALTER TABLE {tabla} ADD COLUMN {columna} {tipo}")
+            logger.info("Añadida la columna %s a %s", columna, tabla)
 
 
 def save_prices(db_path: str, prices: dict[str, float], currency: str) -> int:
@@ -416,29 +432,43 @@ def guardar_brusco(db_path: str, coin_id: str, cuando: datetime) -> None:
 
 
 def crear_puntual(
-    db_path: str, coin_id: str, objetivo: float, sube: bool, currency: str
+    db_path: str,
+    coin_id: str,
+    objetivo: float,
+    sube: bool,
+    currency: str,
+    caduca: datetime | None = None,
 ) -> Puntual:
     ahora = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    caduca_at = caduca.isoformat(timespec="seconds") if caduca else None
     with _connect(db_path) as conn:
         cursor = conn.execute(
             "INSERT INTO alertas_puntuales "
-            "(coin_id, objetivo, sube, currency, created_at) VALUES (?, ?, ?, ?, ?)",
-            (coin_id, objetivo, int(sube), currency, ahora),
+            "(coin_id, objetivo, sube, currency, created_at, caduca_at) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (coin_id, objetivo, int(sube), currency, ahora, caduca_at),
         )
-    return Puntual(cursor.lastrowid, coin_id, objetivo, sube)
+    return Puntual(cursor.lastrowid, coin_id, objetivo, sube, caduca)
 
 
 def get_puntuales(db_path: str, currency: str) -> list[Puntual]:
     """Las alertas pendientes. Las de otra moneda no cuentan, saltarian mal."""
     with _connect(db_path) as conn:
         filas = conn.execute(
-            "SELECT id, coin_id, objetivo, sube FROM alertas_puntuales "
+            "SELECT id, coin_id, objetivo, sube, caduca_at FROM alertas_puntuales "
             "WHERE currency = ? ORDER BY id",
             (currency,),
         ).fetchall()
 
     return [
-        Puntual(f["id"], f["coin_id"], f["objetivo"], bool(f["sube"])) for f in filas
+        Puntual(
+            f["id"],
+            f["coin_id"],
+            f["objetivo"],
+            bool(f["sube"]),
+            datetime.fromisoformat(f["caduca_at"]) if f["caduca_at"] else None,
+        )
+        for f in filas
     ]
 
 

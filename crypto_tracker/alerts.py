@@ -732,18 +732,24 @@ def formatear_puntual(alerta: Puntual, precio: float, currency: str) -> str:
     """Respuesta al crear una /alerta."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
     verbo = "suba" if alerta.sube else "baje"
+    una_vez = "Solo te aviso una vez."
+    if alerta.caduca:
+        una_vez = (
+            f"Solo te aviso una vez, y si no llega, se borra el "
+            f"{alerta.caduca.astimezone():%d/%m a las %H:%M}."
+        )
     if alerta.coin_id == CARTERA:
         return (
             f"🎯 Te aviso cuando <b>tu cartera</b> {verbo} a "
             f"<b>{simbolo}{_num(alerta.objetivo)}</b>.\n"
-            f"Ahora vale {simbolo}{_num(precio)}. Solo te aviso una vez."
+            f"Ahora vale {simbolo}{_num(precio)}. {una_vez}"
         )
 
     nombre = escape(alerta.coin_id.replace("-", " ").title())
     return (
         f"🎯 Te aviso cuando <b>{nombre}</b> {verbo} a "
         f"<b>{simbolo}{_num(alerta.objetivo)}</b>.\n"
-        f"Ahora está a {simbolo}{_num(precio)}. Solo te aviso una vez."
+        f"Ahora está a {simbolo}{_num(precio)}. {una_vez}"
     )
 
 
@@ -781,11 +787,30 @@ def formatear_puntuales(
         linea = (
             f"<code>{a.id}</code>  <b>{nombre}</b> {flecha} {simbolo}{_num(a.objetivo)}"
         )
+        if a.caduca:
+            linea += f"  ⌛ {a.caduca.astimezone():%d/%m}"
         falta = _falta((precios or {}).get(a.coin_id), a)
         lineas.append(f"{linea}  <i>{falta}</i>" if falta else linea)
     lineas.append(f"\nPara quitar una: /quitar {alertas[0].id}")
     if len(alertas) > 1:
         lineas[-1] += " · todas: /quitar todas"
+    return "\n".join(lineas)
+
+
+def formatear_caducadas(alertas: list[Puntual], currency: str) -> str:
+    """Las de /alerta que se han borrado por tiempo sin llegar a su precio."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    titulo = "Ha caducado" if len(alertas) == 1 else "Han caducado"
+    lineas = [f"⌛ <b>{titulo} sin llegar</b>", ""]
+    for a in alertas:
+        nombre = (
+            "Tu cartera"
+            if a.coin_id == CARTERA
+            else escape(a.coin_id.replace("-", " ").title())
+        )
+        flecha = "🔺" if a.sube else "🔻"
+        lineas.append(f"<b>{nombre}</b> {flecha} {simbolo}{_num(a.objetivo)}")
+    lineas.append("\n<i>Si te sigue interesando, vuelve a ponerla con /alerta</i>")
     return "\n".join(lineas)
 
 

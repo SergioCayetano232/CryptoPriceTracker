@@ -1139,6 +1139,116 @@ def test_quitar_con_algo_que_no_es_numero_no_borra_nada(config, enviados):
     assert database.get_puntuales(config.database_path, "eur") == [a]
 
 
+# --- caducidad de /alerta ---
+
+
+def test_alerta_con_caducidad(config, enviados, monkeypatch):
+    from datetime import timedelta
+
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+
+    main.atender(config, _mensaje("/alerta btc 70000 7d"))
+    main.atender(config, _mensaje("/alerta btc +10% 12h"))
+    main.atender(config, _mensaje("/alertas"))
+
+    a, b = database.get_puntuales(config.database_path, "eur")
+    falta = a.caduca - datetime.now(timezone.utc)
+    assert timedelta(days=6, hours=23) < falta <= timedelta(days=7)
+    assert b.objetivo == pytest.approx(66000)
+    assert b.caduca - a.caduca < timedelta(days=7)
+    assert f"se borra el {a.caduca.astimezone():%d/%m a las %H:%M}" in enviados[0]
+    assert f"⌛ {a.caduca.astimezone():%d/%m}" in enviados[2]
+
+
+def test_alerta_sin_caducidad_como_siempre(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+
+    main.atender(config, _mensaje("/alerta btc 70000"))
+
+    assert database.get_puntuales(config.database_path, "eur")[0].caduca is None
+    assert "Solo te aviso una vez." in enviados[0]
+
+
+def test_alerta_con_caducidad_mal_escrita(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+
+    main.atender(config, _mensaje("/alerta btc 70000 500d"))
+
+    assert "Como mucho un año" in enviados[0]
+    assert database.get_puntuales(config.database_path, "eur") == []
+
+
+def _caducada(config, coin_id="bitcoin", objetivo=70000):
+    from datetime import timedelta
+
+    hace_rato = datetime.now(timezone.utc) - timedelta(minutes=1)
+    return database.crear_puntual(
+        config.database_path, coin_id, objetivo, True, "eur", hace_rato
+    )
+
+
+def test_el_ciclo_borra_las_caducadas_y_avisa_sin_sonido(config, monkeypatch):
+    mandados = []
+    monkeypatch.setattr(
+        telegram,
+        "send_message",
+        lambda token, chat, texto, **kw: mandados.append((texto, kw)) or True,
+    )
+    _caducada(config)
+    viva = database.crear_puntual(config.database_path, "bitcoin", 80000, True, "eur")
+    _precio(monkeypatch, {"bitcoin": 69000.0})
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%69000.0"})
+
+    texto, kw = mandados[0]
+    assert "⌛ <b>Ha caducado sin llegar</b>" in texto
+    assert "<b>Bitcoin</b> 🔺 €70.000,00" in texto
+    assert kw["sin_sonido"] is True
+    assert database.get_puntuales(config.database_path, "eur") == [viva]
+
+
+def test_la_caducada_no_salta_aunque_llegue(config, enviados, monkeypatch):
+    _caducada(config)
+    _precio(monkeypatch, {"bitcoin": 70500.0})
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%70000.0"})
+
+    assert len(enviados) == 1
+    assert "caducado" in enviados[0]
+    assert "Era tu /alerta" not in enviados[0]
+
+
+def test_callado_no_caduca_hasta_que_vuelves(config, enviados, monkeypatch):
+    from datetime import timedelta
+
+    _caducada(config)
+    _precio(monkeypatch, {"bitcoin": 69000.0})
+    database.silenciar_hasta(
+        config.database_path, datetime.now(timezone.utc) + timedelta(hours=1)
+    )
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%69000.0"})
+
+    assert enviados == []
+    assert len(database.get_puntuales(config.database_path, "eur")) == 1
+
+    database.silenciar_hasta(config.database_path, None)
+    main.ejecutar_ciclo(config, {"bitcoin": "%69000.0"})
+
+    assert "caducado" in enviados[0]
+    assert database.get_puntuales(config.database_path, "eur") == []
+
+
+def test_si_no_llega_el_aviso_de_caducada_no_la_borra(config, monkeypatch):
+    monkeypatch.setattr(telegram, "send_message", lambda *a, **k: False)
+    _caducada(config)
+    _precio(monkeypatch, {"bitcoin": 69000.0})
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%69000.0"})
+
+    assert len(database.get_puntuales(config.database_path, "eur")) == 1
+
+
 def test_la_alerta_salta_una_vez_y_se_borra(config, enviados, monkeypatch):
     database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
     estado = {"bitcoin": "%69000.0"}  # que el aviso de % no salte
