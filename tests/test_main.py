@@ -2016,6 +2016,77 @@ def test_tendencias_sin_conexion(config, enviados, monkeypatch):
     assert "No he podido mirarlo ahora mismo: Sin conexion" in enviados[0]
 
 
+# --- /mercado ---
+
+
+def test_mercado(config, monkeypatch):
+    from crypto_tracker.mercado import Mercado
+
+    mandados = []
+    monkeypatch.setattr(
+        telegram,
+        "send_message",
+        lambda token, chat, texto, **kw: mandados.append((texto, kw)) or True,
+    )
+    monkeypatch.setattr(
+        coingecko,
+        "mercado_global",
+        lambda currency: Mercado(2.51e12, -4.31, 58.83, 11.0, 9.16),
+    )
+
+    main.atender(config, _mensaje("/mercado"))
+
+    texto, kw = mandados[0]
+    assert "🌍 <b>Mercado cripto</b>  €2,51 billones\n🔻 -4.31% en 24 h" in texto
+    assert "<b>Bitcoin</b>  58.8% del total" in texto
+    assert "<b>Ethereum</b>  11.0% del total" in texto
+    assert "<b>Estables</b>  9.2% del total" in texto
+    assert "CoinGecko" in texto
+    assert kw["botones"] == [[("🔄 Actualizar", "/mercado")]]
+
+
+def test_mercado_a_medias(config, enviados, monkeypatch):
+    from crypto_tracker.mercado import Mercado
+
+    monkeypatch.setattr(
+        coingecko,
+        "mercado_global",
+        lambda currency: Mercado(None, None, 58.83, None, None),
+    )
+
+    main.atender(config, _mensaje("/global"))
+
+    assert "<b>Bitcoin</b>  58.8% del total" in enviados[0]
+    assert "Ethereum" not in enviados[0]
+    assert "en 24 h" not in enviados[0]
+    assert "USDT" not in enviados[0]
+
+
+def test_mercado_sin_datos(config, enviados, monkeypatch):
+    from crypto_tracker.mercado import Mercado
+
+    monkeypatch.setattr(
+        coingecko,
+        "mercado_global",
+        lambda currency: Mercado(None, None, None, None, None),
+    )
+
+    main.atender(config, _mensaje("/mercado"))
+
+    assert "no me ha dado los datos del mercado" in enviados[0]
+
+
+def test_mercado_sin_conexion(config, enviados, monkeypatch):
+    def falla(*a, **k):
+        raise coingecko.CoinGeckoError("Sin conexion con CoinGecko")
+
+    monkeypatch.setattr(coingecko, "mercado_global", falla)
+
+    main.atender(config, _mensaje("/mercado"))
+
+    assert "No he podido mirarlo ahora mismo: Sin conexion" in enviados[0]
+
+
 # --- /si ---
 
 

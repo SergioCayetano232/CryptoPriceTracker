@@ -7,7 +7,7 @@ import time
 
 import requests
 
-from . import tendencias
+from . import mercado, tendencias
 from .maximo import Maximo, leer
 
 logger = logging.getLogger(__name__)
@@ -16,6 +16,7 @@ API_URL = "https://api.coingecko.com/api/v3/simple/price"
 SEARCH_URL = "https://api.coingecko.com/api/v3/search"
 MARKETS_URL = "https://api.coingecko.com/api/v3/coins/markets"
 TRENDING_URL = "https://api.coingecko.com/api/v3/search/trending"
+GLOBAL_URL = "https://api.coingecko.com/api/v3/global"
 
 # Si la API tarda mas que esto, cortamos. Sin timeout una peticion puede
 # quedarse colgada para siempre y congelar el bucle entero.
@@ -81,6 +82,11 @@ def tendencias_hoy(vs_currency: str = "eur") -> list[tendencias.Tendencia]:
     return tendencias.leer(
         _con_reintentos(lambda: _pedir(TRENDING_URL, {})), vs_currency
     )
+
+
+def mercado_global(vs_currency: str = "eur") -> mercado.Mercado:
+    """Lo que vale todo el mercado y cuanto es de cada una de las grandes."""
+    return mercado.leer(_con_reintentos(lambda: _pedir(GLOBAL_URL, {})), vs_currency)
 
 
 def mejores(monedas: list, texto: str, maximo: int = 5) -> list[dict]:

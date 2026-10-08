@@ -434,3 +434,18 @@ def test_tendencias_hoy(monkeypatch):
 
     assert pedido["url"].endswith("/search/trending")
     assert [t.coin_id for t in lista] == ["pepe"]
+
+
+def test_mercado_global(monkeypatch):
+    pedido = {}
+
+    def get(url, params=None, headers=None, timeout=None):
+        pedido["url"] = url
+        return RespuestaFalsa({"data": {"total_market_cap": {"eur": 2.5e12}}})
+
+    monkeypatch.setattr(requests, "get", get)
+
+    mercado = coingecko.mercado_global("eur")
+
+    assert pedido["url"].endswith("/global")
+    assert mercado.total == 2.5e12

@@ -8,6 +8,7 @@ from datetime import datetime
 from .cartera import Valor, peso
 from .config import Posicion, Watch
 from .maximo import Maximo, hace
+from .mercado import Mercado, grande
 from .movimientos import texto_cantidad
 from .periodo import nombre as nombre_periodo
 from .puntuales import CARTERA, Puntual, cumplidas, ejemplo
@@ -579,6 +580,37 @@ def formatear_tendencias(lista: list[Tendencia]) -> str:
         texto.append(linea)
 
     texto += ["", "<i>Toca una para ver su precio y ponerle una alerta</i>"]
+    return "\n".join(texto)
+
+
+def formatear_mercado(m: Mercado, currency: str) -> str:
+    """/mercado: el total, como va y cuanto es de Bitcoin, Ethereum y las estables."""
+    if m.total is None and m.bitcoin is None:
+        return "CoinGecko no me ha dado los datos del mercado. Prueba en un rato."
+
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["🌍 <b>Mercado cripto</b>"]
+    if m.total is not None:
+        texto[0] += f"  {simbolo}{grande(m.total)}"
+    if m.variacion is not None:
+        texto.append(f"{_flecha(m.variacion)} {m.variacion:+.2f}% en 24 h")
+
+    partes = [
+        (nombre, valor)
+        for nombre, valor in (
+            ("Bitcoin", m.bitcoin),
+            ("Ethereum", m.ethereum),
+            ("Estables", m.estables),
+        )
+        if valor is not None
+    ]
+    if partes:
+        texto.append("")
+        texto += [
+            f"<b>{nombre}</b>  {valor:.1f}% del total" for nombre, valor in partes
+        ]
+    if m.estables is not None:
+        texto.append("<i>Estables son USDT y USDC: dinero aparcado esperando</i>")
     return "\n".join(texto)
 
 
