@@ -2087,6 +2087,84 @@ def test_mercado_sin_conexion(config, enviados, monkeypatch):
     assert "No he podido mirarlo ahora mismo: Sin conexion" in enviados[0]
 
 
+# --- /comparar ---
+
+
+def _precio_de(config, coin_id, precio, minutos):
+    import sqlite3
+    from datetime import timedelta
+
+    cuando = datetime.now(timezone.utc) - timedelta(minutes=minutos)
+    conn = sqlite3.connect(config.database_path)
+    conn.execute(
+        "INSERT INTO prices (coin_id, price, currency, created_at) VALUES (?,?,?,?)",
+        (coin_id, precio, "eur", cuando.isoformat(timespec="seconds")),
+    )
+    conn.commit()
+    conn.close()
+
+
+def test_comparar(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    for coin_id, antes, ahora in [
+        ("bitcoin", 100.0, 110.0),
+        ("ethereum", 100.0, 80.0),
+        ("solana", 100.0, 150.0),
+        ("cardano", 100.0, 100.0),
+    ]:
+        _precio_de(config, coin_id, antes, 6 * 24 * 60 + 23 * 60)
+        _precio_de(config, coin_id, ahora, 5)
+
+    main.atender(config, _mensaje("/comparar btc eth sol ada pepe"))
+
+    texto = enviados[0]
+    assert "📊 <b>Cómo les ha ido</b> · <i>últimos 7 días</i>" in texto
+    assert texto.index("Solana") < texto.index("Bitcoin") < texto.index("Ethereum")
+    assert "🥇 <b>Solana</b>  🔺 +50.00%" in texto
+    assert "🥈 <b>Bitcoin</b>  🔺 +10.00%" in texto
+    assert "🥉 <b>Cardano</b>  ➖ +0.00%" in texto
+    assert "4. <b>Ethereum</b>  🔻 -20.00%" in texto
+    assert "No tengo precios guardados de <b>pepe</b>" in texto
+    assert "desde el" not in texto
+
+
+def test_comparar_a_secas_las_que_vigilas(config, enviados):
+    _precio_de(config, "bitcoin", 100.0, 2 * 24 * 60)
+    _precio_de(config, "bitcoin", 120.0, 5)
+    _precio_de(config, "solana", 100.0, 2 * 24 * 60)  # no la vigila
+    _precio_de(config, "solana", 200.0, 5)
+
+    main.atender(config, _mensaje("/comparar 30d"))
+
+    assert "últimos 30 días" in enviados[0]
+    assert "🥇 <b>Bitcoin</b>  🔺 +20.00% <i>(desde el" in enviados[0]
+    assert "Solana" not in enviados[0]
+
+
+def test_comparar_con_precios_viejos(config, enviados):
+    _precio_de(config, "bitcoin", 100.0, 20 * 24 * 60)
+    _precio_de(config, "bitcoin", 120.0, 3 * 24 * 60)
+    _precio_de(config, "solana", 100.0, 29 * 24 * 60)  # todo el tramo
+    _precio_de(config, "solana", 90.0, 3 * 24 * 60)
+
+    main.atender(config, _mensaje("/comparar btc sol 30d"))
+
+    assert "+20.00% <i>(del " in enviados[0]
+    assert "-10.00% <i>(hasta el " in enviados[0]
+
+
+def test_comparar_sin_precios(config, enviados):
+    main.atender(config, _mensaje("/comparar btc eth"))
+
+    assert "No tengo precios guardados de ninguna (últimos 7 días)" in enviados[0]
+
+
+def test_comparar_mal_escrito(config, enviados):
+    main.atender(config, _mensaje("/comparar btc 500d"))
+
+    assert "Como mucho un año" in enviados[0]
+
+
 # --- /si ---
 
 

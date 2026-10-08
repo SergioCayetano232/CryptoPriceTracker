@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from .cartera import Valor, peso
+from .comparar import Resultado
 from .config import Posicion, Watch
 from .maximo import Maximo, hace
 from .mercado import Mercado, grande
@@ -611,6 +612,35 @@ def formatear_mercado(m: Mercado, currency: str) -> str:
         ]
     if m.estables is not None:
         texto.append("<i>Estables son USDT y USDC: dinero aparcado esperando</i>")
+    return "\n".join(texto)
+
+
+def formatear_comparar(
+    resultados: list[Resultado], sin_datos: list[str], horas: float
+) -> str:
+    """/comparar: de mejor a peor, las tres primeras con medalla."""
+    medallas = ["🥇", "🥈", "🥉"]
+    texto = [f"📊 <b>Cómo les ha ido</b> · <i>{nombre_periodo(horas)}</i>", ""]
+    for n, r in enumerate(resultados):
+        puesto = medallas[n] if n < len(medallas) else f"{n + 1}."
+        nombre = escape(r.coin_id.replace("-", " ").title())
+        linea = (
+            f"{puesto} <b>{nombre}</b>  {_flecha(r.porcentaje)} {r.porcentaje:+.2f}%"
+        )
+        if r.desde and r.hasta:
+            linea += (
+                f" <i>(del {r.desde.astimezone():%d/%m} "
+                f"al {r.hasta.astimezone():%d/%m})</i>"
+            )
+        elif r.desde:
+            linea += f" <i>(desde el {r.desde.astimezone():%d/%m})</i>"
+        elif r.hasta:
+            linea += f" <i>(hasta el {r.hasta.astimezone():%d/%m})</i>"
+        texto.append(linea)
+
+    if sin_datos:
+        nombres = ", ".join(f"<b>{escape(c)}</b>" for c in sin_datos)
+        texto += ["", f"<i>No tengo precios guardados de {nombres}.</i>"]
     return "\n".join(texto)
 
 

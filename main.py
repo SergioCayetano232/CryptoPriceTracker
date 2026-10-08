@@ -24,6 +24,7 @@ from crypto_tracker import (
     cartera,
     coingecko,
     comandos,
+    comparar,
     convertir,
     cuota,
     database,
@@ -688,6 +689,9 @@ def responder(
     if nombre == "mercado":
         return _mercado(config)
 
+    if nombre == "comparar":
+        return _comparar(config, argumento)
+
     if nombre == "buscar":
         if not argumento:
             return "¿Qué busco? Por ejemplo: /buscar btc"
@@ -982,6 +986,30 @@ def _mercado(config: Config) -> str | comandos.ConBotones:
     if datos.total is None and datos.bitcoin is None:
         return texto
     return comandos.ConBotones(alerts.con_fuente(texto), botones.actualizar("/mercado"))
+
+
+def _comparar(config: Config, argumento: str) -> str:
+    try:
+        coin_ids, horas = comparar.interpretar(argumento)
+    except periodo.PeriodoError as e:
+        return telegram.escape(str(e))
+    if not coin_ids:
+        vigiladas = _con_cambios(config).watchlist
+        coin_ids = [w.coin_id for w in vigiladas][: simbolos.MAX_VARIAS]
+    if not coin_ids:
+        return "¿Cuáles? Por ejemplo: /comparar btc eth sol 7d"
+
+    series = {
+        c: database.get_serie(config.database_path, c, horas, config.vs_currency)
+        for c in coin_ids
+    }
+    resultados, sin_datos = comparar.comparar(series, horas, datetime.now(timezone.utc))
+    if not resultados:
+        return (
+            f"No tengo precios guardados de ninguna ({periodo.nombre(horas)}). "
+            "Solo sé de las que vigilo: míralas con /vigilar"
+        )
+    return alerts.con_fuente(alerts.formatear_comparar(resultados, sin_datos, horas))
 
 
 def _convertir(config: Config, argumento: str) -> str:

@@ -181,6 +181,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/historico bitcoin` | Imagen con la gráfica de las últimas 24 h, máximo y mínimo |
 | `/historico bitcoin 7d` | Lo mismo, del tramo que digas (`12h`, `7d`, `30d`...) |
 | `/historico` | Sin decir cuál, la primera que vigilas (también `/historico 7d`) |
+| `/comparar btc eth sol 7d` | Qué tal le ha ido a cada una en ese tramo, de la mejor a la peor (sin tramo, 7 días; sin criptos, las que vigilas) |
 | `/convertir 0.05 bitcoin` | Cuánto es en euros al precio de ahora |
 | `/convertir 500 eur solana` | Al revés: cuánta solana compras con 500 € (vale `500€`) |
 | `/si 1000 bitcoin 30d` | Cuánto tendrías hoy si hubieras metido 1.000 € hace 30 días (sin tramo, 30 días) |
@@ -477,6 +478,7 @@ crypto_tracker/
   alerts.py      decide cuándo avisar y escribe los avisos
   brusco.py      los movimientos bruscos
   extremos.py    los máximos y mínimos de los últimos días
+  comparar.py    el ranking de /comparar
   convertir.py   entiende lo que le pides a /convertir
   exportar.py    el CSV de /exportar
   hubiera.py     entiende lo que le pides a /si

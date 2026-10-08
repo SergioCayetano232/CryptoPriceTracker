@@ -27,13 +27,17 @@ def interpretar(argumento: str) -> tuple[str, float]:
     if len(partes) > 2:
         raise PeriodoError("Escríbelo así: /historico bitcoin 7d")
 
-    if len(partes) == 1 and _TRAMO.fullmatch(partes[0].lower()):
+    if len(partes) == 1 and es_tramo(partes[0]):
         return "", leer(partes[0])
 
     coin_id = a_id(partes[0])
     if len(partes) == 1:
         return coin_id, POR_DEFECTO
     return coin_id, leer(partes[1])
+
+
+def es_tramo(texto: str) -> bool:
+    return bool(_TRAMO.fullmatch(texto.lower()))
 
 
 def leer(texto: str) -> float:
