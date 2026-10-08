@@ -2,6 +2,7 @@
 
 from .alerts import SIMBOLOS, Alert, _num
 from .puntuales import CARTERA, Puntual
+from .tendencias import Tendencia
 
 # Telegram no deja meter mas de 64 bytes en cada boton.
 MAX_DATOS = 64
@@ -51,6 +52,16 @@ def para_avisos(avisos: list[Alert], currency: str) -> list[list[tuple[str, str]
 def actualizar(comando: str) -> list[list[tuple[str, str]]]:
     """Un solo boton que repite el comando, para ver los precios de ahora."""
     return [[("🔄 Actualizar", comando)]]
+
+
+def para_tendencias(lista: list[Tendencia]) -> list[list[tuple[str, str]]]:
+    """Un boton por cripto: /alerta a secas dice el precio y pone un ejemplo."""
+    botones = [
+        (f"🎯 {t.simbolo or t.nombre}", f"/alerta {t.coin_id}")
+        for t in lista
+        if len(f"/alerta {t.coin_id}".encode()) <= MAX_DATOS
+    ]
+    return [botones[i : i + POR_FILA] for i in range(0, len(botones), POR_FILA)]
 
 
 def para_alertas(alertas: list[Puntual]) -> list[list[tuple[str, str]]]:

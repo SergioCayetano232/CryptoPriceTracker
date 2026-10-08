@@ -419,3 +419,18 @@ def test_maximos_vacio_no_llama(monkeypatch):
     monkeypatch.setattr(requests, "get", lambda *a, **k: pytest.fail())
 
     assert coingecko.maximos([]) == {}
+
+
+def test_tendencias_hoy(monkeypatch):
+    pedido = {}
+
+    def get(url, params=None, headers=None, timeout=None):
+        pedido["url"] = url
+        return RespuestaFalsa({"coins": [{"item": {"id": "pepe", "symbol": "pepe"}}]})
+
+    monkeypatch.setattr(requests, "get", get)
+
+    lista = coingecko.tendencias_hoy("eur")
+
+    assert pedido["url"].endswith("/search/trending")
+    assert [t.coin_id for t in lista] == ["pepe"]

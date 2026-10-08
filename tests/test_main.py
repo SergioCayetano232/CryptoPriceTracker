@@ -1965,6 +1965,57 @@ def test_ath_sin_conexion(config, enviados, monkeypatch):
     assert "No he podido mirarlo ahora mismo: Sin conexion" in enviados[0]
 
 
+# --- /tendencias ---
+
+
+def test_tendencias(config, monkeypatch):
+    from crypto_tracker.tendencias import Tendencia
+
+    mandados = []
+    monkeypatch.setattr(
+        telegram,
+        "send_message",
+        lambda token, chat, texto, **kw: mandados.append((texto, kw)) or True,
+    )
+    monkeypatch.setattr(
+        coingecko,
+        "tendencias_hoy",
+        lambda currency: [
+            Tendencia("pepe", "Pepe", "PEPE", 30, 12.5),
+            Tendencia("nueva", "Nueva <3", "", None, None),
+        ],
+    )
+
+    main.atender(config, _mensaje("/trending"))
+
+    texto, kw = mandados[0]
+    assert "1. <b>Pepe</b> PEPE <i>#30</i>  🔺 +12.50%" in texto
+    assert "2. <b>Nueva &lt;3</b>\n" in texto
+    assert "CoinGecko" in texto
+    assert kw["botones"] == [
+        [("🎯 PEPE", "/alerta pepe"), ("🎯 Nueva <3", "/alerta nueva")]
+    ]
+
+
+def test_tendencias_vacias(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "tendencias_hoy", lambda currency: [])
+
+    main.atender(config, _mensaje("/tendencias"))
+
+    assert "no me ha dado tendencias" in enviados[0]
+
+
+def test_tendencias_sin_conexion(config, enviados, monkeypatch):
+    def falla(*a, **k):
+        raise coingecko.CoinGeckoError("Sin conexion con CoinGecko")
+
+    monkeypatch.setattr(coingecko, "tendencias_hoy", falla)
+
+    main.atender(config, _mensaje("/tendencias"))
+
+    assert "No he podido mirarlo ahora mismo: Sin conexion" in enviados[0]
+
+
 # --- /si ---
 
 

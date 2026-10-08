@@ -13,6 +13,7 @@ from .periodo import nombre as nombre_periodo
 from .puntuales import CARTERA, Puntual, cumplidas, ejemplo
 from .semanal import Semana
 from .telegram import escape
+from .tendencias import Tendencia
 
 logger = logging.getLogger(__name__)
 
@@ -558,6 +559,26 @@ def formatear_maximos(maximos: list[Maximo], faltan: list[str], currency: str) -
 
     if faltan:
         texto += ["", formatear_no_encuentro(faltan)]
+    return "\n".join(texto)
+
+
+def formatear_tendencias(lista: list[Tendencia]) -> str:
+    """/tendencias: una por linea, con su puesto y como va en 24 h."""
+    if not lista:
+        return "CoinGecko no me ha dado tendencias ahora mismo. Prueba en un rato."
+
+    texto = ["🔥 <b>Lo que más se busca hoy</b> · <i>en 24 h</i>", ""]
+    for n, t in enumerate(lista, 1):
+        linea = f"{n}. <b>{escape(t.nombre)}</b>"
+        if t.simbolo:
+            linea += f" {escape(t.simbolo)}"
+        if t.puesto:
+            linea += f" <i>#{t.puesto}</i>"
+        if t.variacion is not None:
+            linea += f"  {_flecha(t.variacion)} {t.variacion:+.2f}%"
+        texto.append(linea)
+
+    texto += ["", "<i>Toca una para ver su precio y ponerle una alerta</i>"]
     return "\n".join(texto)
 
 

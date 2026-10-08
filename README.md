@@ -185,6 +185,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/convertir 500 eur solana` | Al revés: cuánta solana compras con 500 € (vale `500€`) |
 | `/si 1000 bitcoin 30d` | Cuánto tendrías hoy si hubieras metido 1.000 € hace 30 días (sin tramo, 30 días) |
 | `/exportar bitcoin 30d` | Te manda un CSV con los precios guardados (sin tramo, 30 días) |
+| `/tendencias` | Las 7 criptos que más se buscan hoy en CoinGecko, con un botón en cada una para ver su precio y ponerle una alerta |
 | `/buscar btc` | Encuentra el id de CoinGecko de una cripto |
 | `/consultas` | Cuántas consultas a CoinGecko llevas este mes |
 | `/bot` | Si sigue funcionando: desde cuándo está encendido, cuándo fue el último ciclo y las consultas del mes |
@@ -479,6 +480,7 @@ crypto_tracker/
   exportar.py    el CSV de /exportar
   hubiera.py     entiende lo que le pides a /si
   maximo.py      el máximo histórico de /ath
+  tendencias.py  lo que más se busca, para /tendencias
   puntuales.py   las alertas de /alerta
   vigiladas.py   lo que cambias con /vigilar
   movimientos.py las compras y ventas de /compra y /venta

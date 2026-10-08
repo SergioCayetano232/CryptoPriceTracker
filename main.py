@@ -682,6 +682,9 @@ def responder(
     if nombre == "ath":
         return _ath(config, argumento)
 
+    if nombre == "tendencias":
+        return _tendencias(config)
+
     if nombre == "buscar":
         if not argumento:
             return "¿Qué busco? Por ejemplo: /buscar btc"
@@ -952,6 +955,18 @@ def _ath(config: Config, argumento: str) -> str:
     return alerts.con_fuente(
         alerts.formatear_maximos(encontrados, faltan, config.vs_currency)
     )
+
+
+def _tendencias(config: Config) -> str | comandos.ConBotones:
+    try:
+        lista = coingecko.tendencias_hoy(config.vs_currency)
+    except coingecko.CoinGeckoError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+
+    texto = alerts.formatear_tendencias(lista)
+    if not lista:
+        return texto
+    return comandos.ConBotones(alerts.con_fuente(texto), botones.para_tendencias(lista))
 
 
 def _convertir(config: Config, argumento: str) -> str:

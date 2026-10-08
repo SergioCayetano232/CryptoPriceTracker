@@ -2,7 +2,14 @@
 
 from crypto_tracker import comandos, puntuales
 from crypto_tracker.alerts import ALTO, BAJO, Alert
-from crypto_tracker.botones import CALLAR, MAX_ALERTAS, para_alertas, para_avisos
+from crypto_tracker.botones import (
+    CALLAR,
+    MAX_ALERTAS,
+    para_alertas,
+    para_avisos,
+    para_tendencias,
+)
+from crypto_tracker.tendencias import Tendencia
 
 
 def test_un_aviso():
@@ -134,3 +141,22 @@ def test_cada_boton_de_alerta_es_un_comando_que_se_entiende():
     for fila in para_alertas(alertas):
         for _, datos in fila:
             assert comandos.interpretar(datos)[0] in ("quitar", "alertas")
+
+
+def test_tendencias_de_dos_en_dos():
+    lista = [
+        Tendencia(f"moneda-{i}", f"Moneda {i}", f"M{i}", None, None) for i in range(3)
+    ]
+
+    assert para_tendencias(lista) == [
+        [("🎯 M0", "/alerta moneda-0"), ("🎯 M1", "/alerta moneda-1")],
+        [("🎯 M2", "/alerta moneda-2")],
+    ]
+
+
+def test_tendencias_con_id_larguisimo():
+    larga = Tendencia("x" * 60, "Larga", "L", None, None)
+    corta = Tendencia("pepe", "Pepe", "", None, None)
+
+    # Telegram no admite mas de 64 bytes; sin simbolo va el nombre.
+    assert para_tendencias([larga, corta]) == [[("🎯 Pepe", "/alerta pepe")]]
