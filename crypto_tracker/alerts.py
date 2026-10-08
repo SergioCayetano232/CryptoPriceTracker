@@ -7,6 +7,7 @@ from datetime import datetime
 
 from .cartera import Valor, peso
 from .config import Posicion, Watch
+from .maximo import Maximo, hace
 from .movimientos import texto_cantidad
 from .periodo import nombre as nombre_periodo
 from .puntuales import CARTERA, Puntual, cumplidas, ejemplo
@@ -523,6 +524,37 @@ def formatear_precios(
         if variacion is not None:
             linea += f"  {_flecha(variacion)} {variacion:+.2f}%"
         texto.append(linea)
+
+    if faltan:
+        texto += ["", formatear_no_encuentro(faltan)]
+    return "\n".join(texto)
+
+
+def formatear_maximo(m: Maximo, currency: str, ahora: datetime) -> str:
+    """/ath de una: el maximo, cuando fue y cuanto le falta para volver."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(m.coin_id.replace("-", " ").title())
+    texto = (
+        f"🏔 <b>{nombre}</b>  máximo histórico {simbolo}{_num(m.maximo)}\n"
+        f"<i>El {m.fecha.astimezone():%d/%m/%Y}, {hace(m.fecha, ahora)}</i>\n"
+        f"Ahora {simbolo}{_num(m.precio)} · "
+    )
+    if not m.falta():
+        return texto + "🎉 está en máximos"
+    return texto + f"le falta +{m.falta():.2f}% para volver"
+
+
+def formatear_maximos(maximos: list[Maximo], faltan: list[str], currency: str) -> str:
+    """/ath de varias, una por linea."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["🏔 <b>Máximo histórico</b> · <i>lo que le falta</i>", ""]
+    for m in maximos:
+        nombre = escape(m.coin_id.replace("-", " ").title())
+        falta = f"+{m.falta():.2f}%" if m.falta() else "🎉 en máximos"
+        texto.append(
+            f"<b>{nombre}</b>  {simbolo}{_num(m.maximo)} "
+            f"<i>({m.fecha.astimezone():%m/%Y})</i>  {falta}"
+        )
 
     if faltan:
         texto += ["", formatear_no_encuentro(faltan)]

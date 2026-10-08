@@ -387,3 +387,35 @@ def test_si_deja_de_venir_se_olvida_la_vieja(monkeypatch):
     coingecko.get_prices(["bitcoin"], "eur")
 
     assert coingecko.cambio_24h("bitcoin") is None
+
+
+def test_maximos(monkeypatch):
+    pedido = {}
+
+    def get(url, params=None, headers=None, timeout=None):
+        pedido.update(url=url, params=params)
+        return RespuestaFalsa(
+            [
+                {
+                    "id": "bitcoin",
+                    "current_price": 75000,
+                    "ath": 100000,
+                    "ath_date": "2026-03-14T10:00:00.000Z",
+                }
+            ]
+        )
+
+    monkeypatch.setattr(requests, "get", get)
+
+    maximos = coingecko.maximos(["bitcoin", "bitcion"], "eur")
+
+    assert pedido["url"].endswith("/coins/markets")
+    assert pedido["params"] == {"ids": "bitcoin,bitcion", "vs_currency": "eur"}
+    assert list(maximos) == ["bitcoin"]
+    assert maximos["bitcoin"].maximo == 100000
+
+
+def test_maximos_vacio_no_llama(monkeypatch):
+    monkeypatch.setattr(requests, "get", lambda *a, **k: pytest.fail())
+
+    assert coingecko.maximos([]) == {}

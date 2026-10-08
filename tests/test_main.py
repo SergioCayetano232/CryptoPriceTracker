@@ -1,6 +1,7 @@
 """Tests de como contesta el bot a lo que le escriben."""
 
 import time
+from datetime import datetime, timezone
 
 import pytest
 
@@ -1884,6 +1885,84 @@ def test_exportar_si_falla_el_archivo_lo_dice(config, enviados, monkeypatch):
     main.atender(config, _mensaje("/exportar bitcoin"))
 
     assert "No he podido mandarte el archivo" in enviados[0]
+
+
+# --- /ath ---
+
+
+def _maximos(monkeypatch, maximos):
+    from crypto_tracker.maximo import Maximo
+
+    pedidas = []
+
+    def maximos_falsos(coin_ids, currency):
+        pedidas.append(coin_ids)
+        return {
+            c: Maximo(c, precio, maximo, datetime(2026, 3, 14, tzinfo=timezone.utc))
+            for c, (precio, maximo) in maximos.items()
+            if c in coin_ids
+        }
+
+    monkeypatch.setattr(coingecko, "maximos", maximos_falsos)
+    return pedidas
+
+
+def test_ath(config, enviados, monkeypatch):
+    pedidas = _maximos(monkeypatch, {"bitcoin": (75000.0, 100000.0)})
+
+    main.atender(config, _mensaje("/ath btc"))
+
+    assert pedidas == [["bitcoin"]]
+    assert "🏔 <b>Bitcoin</b>  máximo histórico €100.000,00" in enviados[0]
+    assert "El 14/03/2026, hace" in enviados[0]
+    assert "Ahora €75.000,00 · le falta +33.33% para volver" in enviados[0]
+    assert "CoinGecko" in enviados[0]
+
+
+def test_ath_en_maximos(config, enviados, monkeypatch):
+    _maximos(monkeypatch, {"bitcoin": (100000.0, 100000.0)})
+
+    main.atender(config, _mensaje("/maximo bitcoin"))
+
+    assert "🎉 está en máximos" in enviados[0]
+
+
+def test_ath_de_varias(config, enviados, monkeypatch):
+    _maximos(monkeypatch, {"bitcoin": (75000.0, 100000.0), "solana": (250.0, 250.0)})
+
+    main.atender(config, _mensaje("/ath btc sol bitcion"))
+
+    assert "<b>Bitcoin</b>  €100.000,00 <i>(03/2026)</i>  +33.33%" in enviados[0]
+    assert "<b>Solana</b>  €250,00 <i>(03/2026)</i>  🎉 en máximos" in enviados[0]
+    assert "No encuentro <b>bitcion</b>" in enviados[0]
+
+
+def test_ath_a_secas_las_que_vigilas(config, enviados, monkeypatch):
+    pedidas = _maximos(monkeypatch, {"bitcoin": (75000.0, 100000.0)})
+
+    main.atender(config, _mensaje("/ath"))
+
+    assert pedidas == [["bitcoin"]]
+    assert "máximo histórico" in enviados[0]
+
+
+def test_ath_que_no_existe(config, enviados, monkeypatch):
+    _maximos(monkeypatch, {})
+
+    main.atender(config, _mensaje("/ath bitcion"))
+
+    assert "No encuentro <b>bitcion</b>" in enviados[0]
+
+
+def test_ath_sin_conexion(config, enviados, monkeypatch):
+    def falla(*a, **k):
+        raise coingecko.CoinGeckoError("Sin conexion con CoinGecko")
+
+    monkeypatch.setattr(coingecko, "maximos", falla)
+
+    main.atender(config, _mensaje("/ath bitcoin"))
+
+    assert "No he podido mirarlo ahora mismo: Sin conexion" in enviados[0]
 
 
 # --- /si ---

@@ -679,6 +679,9 @@ def responder(
     if nombre == "si":
         return _si(config, argumento)
 
+    if nombre == "ath":
+        return _ath(config, argumento)
+
     if nombre == "buscar":
         if not argumento:
             return "¿Qué busco? Por ejemplo: /buscar btc"
@@ -918,6 +921,36 @@ def _precio(config: Config, argumento: str) -> str:
         )
     return alerts.con_fuente(
         alerts.formatear_precios(lineas, faltan, config.vs_currency)
+    )
+
+
+def _ath(config: Config, argumento: str) -> str:
+    coin_ids = simbolos.varias(argumento)
+    if not argumento:
+        vigiladas = _con_cambios(config).watchlist
+        coin_ids = [w.coin_id for w in vigiladas][: simbolos.MAX_VARIAS]
+    if not coin_ids:
+        return "¿De cuál? Por ejemplo: /ath bitcoin o /ath btc eth sol"
+    if len(coin_ids) > simbolos.MAX_VARIAS:
+        return f"Como mucho {simbolos.MAX_VARIAS} a la vez."
+
+    try:
+        maximos = coingecko.maximos(coin_ids, config.vs_currency)
+    except coingecko.CoinGeckoError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+
+    encontrados = [maximos[c] for c in coin_ids if c in maximos]
+    faltan = [c for c in coin_ids if c not in maximos]
+    if not encontrados:
+        return alerts.formatear_no_encuentro(faltan)
+
+    if len(coin_ids) == 1:
+        ahora = datetime.now(timezone.utc)
+        return alerts.con_fuente(
+            alerts.formatear_maximo(encontrados[0], config.vs_currency, ahora)
+        )
+    return alerts.con_fuente(
+        alerts.formatear_maximos(encontrados, faltan, config.vs_currency)
     )
 
 

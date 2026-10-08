@@ -7,6 +7,7 @@ from dataclasses import dataclass
 COMANDOS = {
     "status": "Cómo van tus criptos ahora",
     "precio": "Lo que vale una cripto, varias o, a secas, las que vigilo",
+    "ath": "El máximo histórico y cuánto le falta (ej: /ath bitcoin)",
     "cartera": "Cuánto vale lo que tienes, con gráfica (ej: /cartera 30d)",
     "compra": "Apuntar una compra en la cartera (ej: /compra bitcoin 0.01 600)",
     "venta": "Apuntar una venta (ej: /venta bitcoin 0.005 o todo)",
@@ -46,6 +47,8 @@ ALIAS = {
     "watch": "vigilar",
     "estado": "status",
     "p": "precio",
+    "maximo": "ath",
+    "máximo": "ath",
     "silencio": "mute",
     "callar": "mute",
 }
