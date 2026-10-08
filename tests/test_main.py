@@ -485,8 +485,10 @@ def con_extremos(config):
     from dataclasses import replace
 
     config = replace(config, extremos_dias=30)
-    # Un mes guardado: de 60.000 a 70.000, con el primero de hace 30 dias
-    _precio_hace(config, 60000.0, 30 * 24 * 60)
+    # Un mes guardado: de 60.000 a 70.000, con el primero de hace 30 dias.
+    # Un minuto dentro: justo en el borde, si cambiaba el segundo antes de
+    # mirar, se quedaba fuera y el test fallaba de vez en cuando.
+    _precio_hace(config, 60000.0, 30 * 24 * 60 - 1)
     _precio_hace(config, 70000.0, 10 * 24 * 60)
     _precio_hace(config, 55000.0, 5 * 24 * 60)
     return config
