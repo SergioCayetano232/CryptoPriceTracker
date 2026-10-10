@@ -916,6 +916,18 @@ def test_la_nota_sale_en_el_aviso(config, enviados, monkeypatch):
     assert "Era tu /alerta" in enviados[0]
 
 
+def test_no_crea_dos_veces_la_misma_alerta(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 63000.0})
+
+    main.atender(config, _mensaje("/alerta bitcoin 70.000"))
+    main.atender(config, _mensaje("/alerta btc 70000,0"))  # como la manda el boton
+    main.atender(config, _mensaje("/alerta bitcoin 70500"))
+
+    [primera, otra] = database.get_puntuales(config.database_path, "eur")
+    assert f"Ya tienes esa alerta, es la número {primera.id}" in enviados[1]
+    assert otra.objetivo == 70500
+
+
 def test_crear_alerta_hacia_abajo(config, enviados, monkeypatch):
     _precio(monkeypatch, {"bitcoin": 63000.0})
 

@@ -159,6 +159,23 @@ def sube(objetivo: float, precio: float) -> bool:
     return objetivo > precio
 
 
+def repetida(
+    alertas: list[Puntual], coin_id: str, objetivo: float, sube: bool
+) -> Puntual | None:
+    """La que ya tienes igual: misma cripto, mismo precio y hacia el mismo lado."""
+    # isclose: el 70000,0 del boton y el 70.000 escrito a mano son la misma.
+    return next(
+        (
+            a
+            for a in alertas
+            if a.coin_id == coin_id
+            and a.sube == sube
+            and math.isclose(a.objetivo, objetivo, rel_tol=1e-9)
+        ),
+        None,
+    )
+
+
 def cumplidas(alertas: list[Puntual], precios: dict[str, float]) -> list[Puntual]:
     """Las que ya han llegado. Pasarse tambien cuenta: entre ciclo y ciclo salta."""
     hechas = []

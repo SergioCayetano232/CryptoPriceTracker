@@ -23,6 +23,7 @@ from crypto_tracker.puntuales import (
     numero,
     numeros,
     objetivo_relativo,
+    repetida,
     separar_caducidad,
     separar_nota,
     sube,
@@ -319,3 +320,22 @@ def test_separar_nota(argumento, esperado):
 def test_nota_demasiado_larga():
     with pytest.raises(PuntualError, match="muy larga"):
         separar_nota("bitcoin 70000 " + "a" * 101)
+
+
+# --- repetidas ---
+
+
+def test_repetida():
+    tienes = [Puntual(1, "bitcoin", 70000.0, True), Puntual(2, "solana", 100.0, False)]
+
+    assert repetida(tienes, "bitcoin", 70000.0, True).id == 1
+    assert repetida(tienes, "solana", 100.0, False).id == 2
+
+
+def test_no_es_repetida_si_cambia_algo():
+    tienes = [Puntual(1, "bitcoin", 70000.0, True)]
+
+    assert repetida(tienes, "bitcoin", 70001.0, True) is None
+    assert repetida(tienes, "bitcoin", 70000.0, False) is None
+    assert repetida(tienes, "ethereum", 70000.0, True) is None
+    assert repetida([], "bitcoin", 70000.0, True) is None

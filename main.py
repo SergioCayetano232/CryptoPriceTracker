@@ -982,6 +982,13 @@ def _crear_alerta(config: Config, argumento: str) -> str:
         except puntuales.PuntualError as e:
             return telegram.escape(str(e))
 
+    # Con los botones 🎯 y 🔁 es facil pedir dos veces la misma, y luego llegan
+    # dos avisos iguales.
+    pendientes = database.get_puntuales(config.database_path, config.vs_currency)
+    igual = puntuales.repetida(pendientes, coin_id, objetivo, sube)
+    if igual:
+        return f"Ya tienes esa alerta, es la número {igual.id}. Mira /alertas"
+
     alerta = database.crear_puntual(
         config.database_path,
         coin_id,
