@@ -33,6 +33,7 @@ from crypto_tracker import (
     extremos,
     grafica,
     hubiera,
+    miedo,
     movimientos,
     periodo,
     proximo,
@@ -724,6 +725,9 @@ def responder(
     if nombre == "top":
         return _top(config)
 
+    if nombre == "miedo":
+        return _miedo()
+
     if nombre == "comparar":
         return _comparar(config, argumento)
 
@@ -1080,6 +1084,18 @@ def _top(config: Config) -> str | comandos.ConBotones:
     if not suben and not bajan:
         return texto
     return comandos.ConBotones(alerts.con_fuente(texto), botones.actualizar("/top"))
+
+
+def _miedo() -> str | comandos.ConBotones:
+    try:
+        lista = miedo.pedir()
+    except miedo.MiedoError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+
+    texto = alerts.formatear_miedo(lista)
+    if not lista:
+        return texto
+    return comandos.ConBotones(texto, botones.actualizar("/miedo"))
 
 
 def _mercado(config: Config) -> str | comandos.ConBotones:

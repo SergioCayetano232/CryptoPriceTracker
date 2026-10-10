@@ -10,6 +10,9 @@ from .comparar import Resultado
 from .config import Posicion, Watch
 from .maximo import Maximo, hace
 from .mercado import Mercado, grande
+from .miedo import Indice
+from .miedo import hace as dia_miedo
+from .miedo import nombre as nombre_miedo
 from .movimientos import Movimiento, texto_cantidad
 from .periodo import nombre as nombre_periodo
 from .puntuales import CARTERA, Puntual, cumplidas, ejemplo
@@ -644,6 +647,34 @@ def formatear_top(suben: list[Movida], bajan: list[Movida], currency: str) -> st
                 f"<b>{nombre}</b>  {m.variacion:+.2f}%  "
                 f"<i>{simbolo}{_num(m.precio)}</i>"
             )
+    return "\n".join(texto)
+
+
+def formatear_miedo(lista: list[Indice]) -> str:
+    """/miedo: el de hoy con una barra, y ayer y hace una semana para comparar."""
+    if not lista:
+        return "No me han dado el índice ahora mismo. Prueba en un rato."
+
+    hoy = lista[0]
+    emoji, nombre = nombre_miedo(hoy)
+    llenas = round(hoy.valor / 10)
+    texto = [
+        f"{emoji} <b>Miedo y codicia: {hoy.valor}</b> · {escape(nombre)}",
+        f"{'▰' * llenas}{'▱' * (10 - llenas)}",
+    ]
+    antes = []
+    for dias, cuando in ((1, "Ayer"), (7, "Hace una semana")):
+        i = dia_miedo(lista, dias)
+        if i is not None:
+            antes.append(f"{cuando} {i.valor} {nombre_miedo(i)[0]}")
+    if antes:
+        texto.append(" · ".join(antes))
+    texto += [
+        "",
+        "<i>0 es pánico y 100 euforia. Datos de "
+        '<a href="https://alternative.me/crypto/fear-and-greed-index/">'
+        "alternative.me</a></i>",
+    ]
     return "\n".join(texto)
 
 

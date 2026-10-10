@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 import pytest
 
 import main
-from crypto_tracker import coingecko, database, grafica, telegram
+from crypto_tracker import coingecko, database, grafica, miedo, telegram
 from crypto_tracker.config import Config, Posicion, Watch
 
 
@@ -2341,6 +2341,61 @@ def test_top_sin_conexion(config, enviados, monkeypatch):
     main.atender(config, _mensaje("/top"))
 
     assert "No he podido mirarlo ahora mismo: Sin conexion" in enviados[0]
+
+
+# --- /miedo ---
+
+
+def test_miedo(config, monkeypatch):
+    from datetime import date
+
+    from crypto_tracker.miedo import Indice
+
+    mandados = _con_botones(monkeypatch)
+    monkeypatch.setattr(
+        miedo,
+        "pedir",
+        lambda: [
+            Indice(64, "Greed", date(2026, 10, 10)),
+            Indice(59, "Greed", date(2026, 10, 9)),
+            Indice(20, "Extreme Fear", date(2026, 10, 3)),
+        ],
+    )
+
+    main.atender(config, _mensaje("/miedo"))
+
+    texto, teclado = mandados[0]
+    assert "😏 <b>Miedo y codicia: 64</b> · Codicia" in texto
+    assert "▰▰▰▰▰▰▱▱▱▱" in texto
+    assert "Ayer 59 😏 · Hace una semana 20 😱" in texto
+    assert "alternative.me" in texto
+    assert teclado == [[("🔄 Actualizar", "/miedo")]]
+
+
+def test_miedo_sin_ayer(config, enviados, monkeypatch):
+    from datetime import date
+
+    from crypto_tracker.miedo import Indice
+
+    monkeypatch.setattr(
+        miedo, "pedir", lambda: [Indice(8, "Extreme Fear", date(2026, 10, 10))]
+    )
+
+    main.atender(config, _mensaje("/miedo"))
+
+    assert "▰▱▱▱▱▱▱▱▱▱" in enviados[0]
+    assert "Ayer" not in enviados[0]
+
+
+def test_miedo_sin_conexion(config, enviados, monkeypatch):
+    def falla():
+        raise miedo.MiedoError("alternative.me no contesta")
+
+    monkeypatch.setattr(miedo, "pedir", falla)
+
+    main.atender(config, _mensaje("/miedo"))
+
+    assert "No he podido mirarlo ahora mismo: alternative.me" in enviados[0]
 
 
 # --- /mercado ---
