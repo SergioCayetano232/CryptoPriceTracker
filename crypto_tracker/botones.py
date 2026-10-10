@@ -1,6 +1,6 @@
 """Los botones que van debajo de cada aviso."""
 
-from .alerts import SIMBOLOS, Alert, _num
+from .alerts import ALTO, SIMBOLOS, Alert, _num
 from .puntuales import CARTERA, Puntual
 from .tendencias import Tendencia
 
@@ -11,6 +11,9 @@ MAX_DATOS = 64
 MAX_CRIPTOS = 3
 
 CALLAR = ("🔕 Callar 1 h", "/mute 1h")
+
+# Cuando salta una /alerta, la siguiente se ofrece un 5 % mas alla.
+OTRA = 5
 
 VOLVER = ("🔔 Volver a avisar", "/unmute")
 
@@ -52,10 +55,23 @@ def para_avisos(avisos: list[Alert], currency: str) -> list[list[tuple[str, str]
                 f"/alerta {a.coin_id} {precio}",
             ),
         ]
-        filas.append([b for b in fila if len(b[1].encode()) <= MAX_DATOS])
+        filas.append([b for b in fila if _cabe(b)])
+        if a.puntual:
+            filas.append([b for b in [_otra(a, nombre, solo_una)] if _cabe(b)])
 
     filas.append([CALLAR])
     return [f for f in filas if f]
+
+
+def _otra(a: Alert, nombre: str, solo_una: bool) -> tuple[str, str]:
+    """Otra /alerta un poco mas alla, en la misma direccion en que ha saltado."""
+    signo = "+" if a.estado == ALTO else "-"
+    texto = f"🔁 Otra a {signo}{OTRA}%" if solo_una else f"🔁 {nombre} {signo}{OTRA}%"
+    return texto, f"/alerta {a.coin_id} {signo}{OTRA}%"
+
+
+def _cabe(boton: tuple[str, str]) -> bool:
+    return len(boton[1].encode()) <= MAX_DATOS
 
 
 def actualizar(comando: str) -> list[list[tuple[str, str]]]:

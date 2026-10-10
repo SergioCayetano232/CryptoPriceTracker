@@ -215,6 +215,8 @@ Cada aviso lleva debajo unos botones para reaccionar de un toque:
 - **📈 Gráfica**: la de las últimas 24 h, como `/historico`.
 - **🎯 Si vuelve a 64.000**: te avisa una vez si vuelve al precio que acaba de
   cruzar, como `/alerta`.
+- **🔁 Otra a +5%**: solo cuando salta una `/alerta`. Te pone otra un 5 % más
+  allá del precio de ahora, hacia donde iba (si bajaba, `-5%`).
 - **🔕 Callar 1 h**: como `/mute 1h`.
 
 Si en un mensaje vienen varias criptos, salen los botones de las tres primeras.

@@ -186,3 +186,32 @@ def test_los_comandos_del_mute_caben():
     for fila in para_mute(ya_callado=True):
         for _, comando in fila:
             assert len(comando.encode()) <= 64
+
+
+def test_una_alerta_que_salta_ofrece_otra_mas_alla():
+    filas = para_avisos([Alert("bitcoin", 71000.0, 70000.0, ALTO, puntual=True)], "eur")
+
+    assert filas[1] == [("🔁 Otra a +5%", "/alerta bitcoin +5%")]
+    assert filas[-1] == [CALLAR]
+
+
+def test_si_salta_bajando_la_otra_es_mas_abajo():
+    filas = para_avisos(
+        [
+            Alert("bitcoin", 59000.0, 60000.0, BAJO, puntual=True),
+            Alert("ethereum", 3100.0, 3000.0, ALTO),
+        ],
+        "eur",
+    )
+
+    assert filas[1] == [("🔁 Bitcoin -5%", "/alerta bitcoin -5%")]
+    # La de ethereum no era de /alerta: sin boton de otra
+    assert all("🔁" not in b[0] for fila in filas[2:] for b in fila)
+
+
+def test_el_boton_de_otra_se_entiende_como_alerta_relativa():
+    filas = para_avisos([Alert("cartera", 5100.0, 5000.0, ALTO, puntual=True)], "eur")
+    nombre, argumento = comandos.interpretar(filas[1][0][1])
+
+    assert nombre == "alerta"
+    assert puntuales.interpretar_relativa(argumento) == ("cartera", 5.0)
