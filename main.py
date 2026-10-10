@@ -1009,22 +1009,27 @@ def _precio(config: Config, argumento: str) -> str:
         return f"Como mucho {simbolos.MAX_VARIAS} a la vez."
 
     try:
-        precios = coingecko.get_prices(coin_ids, config.vs_currency)
+        precios = coingecko.precios_semana(coin_ids, config.vs_currency)
     except coingecko.CoinGeckoError as e:
         return f"No he podido mirar el precio ahora mismo: {telegram.escape(str(e))}"
 
-    lineas = [
-        (c, precios[c], _variacion(config, c, precios[c]))
-        for c in coin_ids
-        if c in precios
-    ]
+    lineas = []
+    for c in coin_ids:
+        p = precios.get(c)
+        if p is None:
+            continue
+        en_24h = p.en_24h
+        if en_24h is None:
+            en_24h = _variacion(config, c, p.precio)
+        lineas.append((c, p.precio, en_24h, p.en_7d))
     faltan = [c for c in coin_ids if c not in precios]
     if not lineas:
         return alerts.formatear_no_encuentro(faltan)
 
     if len(coin_ids) == 1:
+        coin_id, precio, en_24h, en_7d = lineas[0]
         return alerts.con_fuente(
-            alerts.formatear_precio(*lineas[0], config.vs_currency)
+            alerts.formatear_precio(coin_id, precio, en_24h, config.vs_currency, en_7d)
         )
     return alerts.con_fuente(
         alerts.formatear_precios(lineas, faltan, config.vs_currency)

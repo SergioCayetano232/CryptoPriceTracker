@@ -7,7 +7,7 @@ import time
 
 import requests
 
-from . import mercado, tendencias, top
+from . import mercado, precio, tendencias, top
 from .maximo import Maximo, leer
 
 logger = logging.getLogger(__name__)
@@ -66,6 +66,21 @@ def buscar(texto: str, maximo: int = 5) -> list[dict]:
     data = _con_reintentos(lambda: _pedir(SEARCH_URL, {"query": texto}))
     monedas = data.get("coins", []) if isinstance(data, dict) else []
     return mejores(monedas, texto, maximo)
+
+
+def precios_semana(
+    coin_ids: list[str], vs_currency: str = "eur"
+) -> dict[str, precio.Precio]:
+    """Precio y variacion en 24 h y 7 dias de cada una, en una sola peticion."""
+    if not coin_ids:
+        return {}
+
+    params = {
+        "ids": ",".join(coin_ids),
+        "vs_currency": vs_currency,
+        "price_change_percentage": "24h,7d",
+    }
+    return precio.leer(_con_reintentos(lambda: _pedir(MARKETS_URL, params)))
 
 
 def maximos(coin_ids: list[str], vs_currency: str = "eur") -> dict[str, Maximo]:

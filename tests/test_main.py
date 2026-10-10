@@ -8,6 +8,7 @@ import pytest
 import main
 from crypto_tracker import coingecko, database, grafica, miedo, telegram
 from crypto_tracker.config import Config, Posicion, Watch
+from crypto_tracker.precio import Precio
 
 
 @pytest.fixture
@@ -870,7 +871,13 @@ def _precio(monkeypatch, precios):
         pedidas.append(list(ids))
         return {c: p for c, p in precios.items() if c in ids}
 
+    # /precio va por /coins/markets; sin variaciones, como si no vinieran.
+    def precios_semana(ids, cur):
+        pedidas.append(list(ids))
+        return {c: Precio(c, p, None, None) for c, p in precios.items() if c in ids}
+
     monkeypatch.setattr(coingecko, "get_prices", get_prices)
+    monkeypatch.setattr(coingecko, "precios_semana", precios_semana)
     return pedidas
 
 
@@ -1927,6 +1934,35 @@ def test_precio_de_una_que_no_vigilas(config, enviados, monkeypatch):
     assert "CoinGecko" in enviados[0]
 
 
+def test_precio_con_la_semana(config, enviados, monkeypatch):
+    monkeypatch.setattr(
+        coingecko,
+        "precios_semana",
+        lambda ids, cur: {"bitcoin": Precio("bitcoin", 63000.0, 2.5, -4.25)},
+    )
+
+    main.atender(config, _mensaje("/precio btc"))
+
+    assert "🔺 +2.50% en 24 h\n🔻 -4.25% en 7 días" in enviados[0]
+
+
+def test_precio_de_varias_con_la_semana(config, enviados, monkeypatch):
+    monkeypatch.setattr(
+        coingecko,
+        "precios_semana",
+        lambda ids, cur: {
+            "bitcoin": Precio("bitcoin", 63000.0, 2.5, -4.25),
+            "solana": Precio("solana", 150.0, None, 8.0),
+        },
+    )
+    monkeypatch.setattr(coingecko, "_cambios", {})
+
+    main.atender(config, _mensaje("/precio btc sol"))
+
+    assert "<b>Bitcoin</b>  €63.000,00  🔺 +2.50% · -4.25%" in enviados[0]
+    assert "<b>Solana</b>  €150,00 · +8.00% 7d" in enviados[0]
+
+
 def test_precio_con_el_simbolo(config, enviados, monkeypatch):
     pedidas = _precio(monkeypatch, {"bitcoin": 63000.0})
 
@@ -2043,7 +2079,7 @@ def test_precio_sin_conexion(config, enviados, monkeypatch):
     def falla(ids, cur):
         raise coingecko.CoinGeckoError("Sin conexion con CoinGecko")
 
-    monkeypatch.setattr(coingecko, "get_prices", falla)
+    monkeypatch.setattr(coingecko, "precios_semana", falla)
 
     main.atender(config, _mensaje("/precio solana"))
 

@@ -547,28 +547,43 @@ def _hace(horas: float) -> str:
 
 
 def formatear_precio(
-    coin_id: str, precio: float, variacion: float | None, currency: str
+    coin_id: str,
+    precio: float,
+    variacion: float | None,
+    currency: str,
+    en_7d: float | None = None,
 ) -> str:
-    """Respuesta de /precio: lo que vale ahora y cómo va en 24 h."""
+    """Respuesta de /precio: lo que vale ahora y cómo va en 24 h y en 7 días."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
     nombre = escape(coin_id.replace("-", " ").title())
     texto = f"💰 <b>{nombre}</b>  {simbolo}{_num(precio)}"
     if variacion is None:
-        return texto + "\n<i>Sin datos de las últimas 24 h</i>"
-    return texto + f"\n{_flecha(variacion)} {variacion:+.2f}% en 24 h"
+        texto += "\n<i>Sin datos de las últimas 24 h</i>"
+    else:
+        texto += f"\n{_flecha(variacion)} {variacion:+.2f}% en 24 h"
+    if en_7d is not None:
+        texto += f"\n{_flecha(en_7d)} {en_7d:+.2f}% en 7 días"
+    return texto
 
 
 def formatear_precios(
-    lineas: list[tuple[str, float, float | None]], faltan: list[str], currency: str
+    lineas: list[tuple[str, float, float | None, float | None]],
+    faltan: list[str],
+    currency: str,
 ) -> str:
-    """/precio de varias: (cripto, precio, variacion en 24 h), una por linea."""
+    """/precio de varias: (cripto, precio, en 24 h, en 7 dias), una por linea."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
-    texto = ["💰 <b>Precio ahora</b> · <i>en 24 h</i>", ""]
-    for coin_id, precio, variacion in lineas:
+    texto = ["💰 <b>Precio ahora</b> · <i>en 24 h y en 7 días</i>", ""]
+    for coin_id, precio, variacion, en_7d in lineas:
         nombre = escape(coin_id.replace("-", " ").title())
         linea = f"<b>{nombre}</b>  {simbolo}{_num(precio)}"
         if variacion is not None:
             linea += f"  {_flecha(variacion)} {variacion:+.2f}%"
+        if en_7d is not None:
+            # Sin el de 24 h, el que queda podria pasar por el de hoy.
+            linea += (
+                f" · {en_7d:+.2f}% 7d" if variacion is None else f" · {en_7d:+.2f}%"
+            )
         texto.append(linea)
 
     if faltan:

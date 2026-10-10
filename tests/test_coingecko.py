@@ -436,6 +436,37 @@ def test_tendencias_hoy(monkeypatch):
     assert [t.coin_id for t in lista] == ["pepe"]
 
 
+def test_precios_semana(monkeypatch):
+    pedido = {}
+
+    def get(url, params=None, headers=None, timeout=None):
+        pedido.update(url=url, params=params)
+        return RespuestaFalsa(
+            [
+                {
+                    "id": "bitcoin",
+                    "current_price": 63000,
+                    "price_change_percentage_7d_in_currency": -4.25,
+                }
+            ]
+        )
+
+    monkeypatch.setattr(requests, "get", get)
+
+    precios = coingecko.precios_semana(["bitcoin", "solana"], "eur")
+
+    assert pedido["url"].endswith("/coins/markets")
+    assert pedido["params"]["ids"] == "bitcoin,solana"
+    assert pedido["params"]["price_change_percentage"] == "24h,7d"
+    assert precios["bitcoin"].en_7d == -4.25
+
+
+def test_precios_semana_vacio_no_llama(monkeypatch):
+    monkeypatch.setattr(requests, "get", lambda *a, **k: pytest.fail())
+
+    assert coingecko.precios_semana([]) == {}
+
+
 def test_top_hoy(monkeypatch):
     pedido = {}
 

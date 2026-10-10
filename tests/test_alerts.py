@@ -680,3 +680,10 @@ def test_aviso_de_una_cripto_de_centimos():
     texto = formatear(aviso, "eur")
 
     assert "De €0,00001234 a <b>€0,0000129</b>" in texto
+
+
+def test_formatear_precio_con_la_semana():
+    texto = formatear_precio("bitcoin", 62000.0, None, "eur", -4.25)
+
+    assert "Sin datos de las últimas 24 h" in texto
+    assert "🔻 -4.25% en 7 días" in texto

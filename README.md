@@ -160,7 +160,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | Comando | Qué hace |
 |---|---|
 | `/status` | Cómo van tus criptos ahora |
-| `/precio solana` | Lo que vale una cripto ahora y cómo va en 24 h, aunque no la vigiles |
+| `/precio solana` | Lo que vale una cripto ahora y cómo va en 24 h y en 7 días, aunque no la vigiles |
 | `/precio btc eth sol` | Lo mismo de varias a la vez, una por línea (hasta 10) |
 | `/precio` | Sin decir cuál, todas las que vigilas |
 | `/ath bitcoin` | Su máximo histórico, cuándo fue y cuánto le falta para volver (vale `/ath btc eth`, y a secas, las que vigilas) |
