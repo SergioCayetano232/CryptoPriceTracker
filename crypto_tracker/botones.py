@@ -96,3 +96,10 @@ def para_mute(ya_callado: bool = False) -> list[list[tuple[str, str]]]:
 
 def deshacer_mute() -> list[list[tuple[str, str]]]:
     return [[VOLVER]]
+
+
+def deshacer_movimiento(
+    movimiento_id: int, texto: str = "↩️ Deshacer"
+) -> list[list[tuple[str, str]]]:
+    # Con el numero: si luego apuntas otra, este boton ya no deshace la nueva.
+    return [[(texto, f"/deshacer {movimiento_id}")]]

@@ -631,6 +631,12 @@ def responder(
     if nombre == "venta":
         return _vender(config, argumento)
 
+    if nombre == "movimientos":
+        return _movimientos(config)
+
+    if nombre == "deshacer":
+        return _deshacer(config, argumento)
+
     if nombre == "historico":
         return _historico(config, argumento)
 
@@ -823,7 +829,7 @@ def _en_negrita(nombres: list[str], ultimo: str) -> str:
     return f"{', '.join(partes[:-1])} {ultimo} {partes[-1]}"
 
 
-def _comprar(config: Config, argumento: str) -> str:
+def _comprar(config: Config, argumento: str) -> str | comandos.ConBotones:
     try:
         coin_id, cantidad, coste = movimientos.interpretar_compra(argumento)
     except movimientos.MovimientoError as e:
@@ -845,12 +851,17 @@ def _comprar(config: Config, argumento: str) -> str:
             coste = cantidad * precios[coin_id]
 
     ahora = movimientos.comprar(antes, coin_id, cantidad, coste)
-    database.guardar_posicion(config.database_path, coin_id, ahora)
+    numero = database.apuntar_movimiento(
+        config.database_path, coin_id, "compra", cantidad, coste, antes, ahora
+    )
     logger.info("Cartera: compra %s de %s por %s", cantidad, coin_id, coste)
-    return alerts.formatear_compra(cantidad, coste, ahora, config.vs_currency)
+    return comandos.ConBotones(
+        alerts.formatear_compra(cantidad, coste, ahora, config.vs_currency),
+        botones.deshacer_movimiento(numero),
+    )
 
 
-def _vender(config: Config, argumento: str) -> str:
+def _vender(config: Config, argumento: str) -> str | comandos.ConBotones:
     try:
         coin_id, cantidad = movimientos.interpretar_venta(argumento)
         antes = movimientos.buscar(_con_cambios(config).cartera, coin_id)
@@ -859,9 +870,48 @@ def _vender(config: Config, argumento: str) -> str:
         return telegram.escape(str(e))
 
     vendido = antes.cantidad if cantidad is None else cantidad
-    database.guardar_posicion(config.database_path, coin_id, queda)
+    numero = database.apuntar_movimiento(
+        config.database_path, coin_id, "venta", vendido, None, antes, queda
+    )
     logger.info("Cartera: vende %s de %s", vendido, coin_id)
-    return alerts.formatear_venta(coin_id, vendido, queda, config.vs_currency)
+    return comandos.ConBotones(
+        alerts.formatear_venta(coin_id, vendido, queda, config.vs_currency),
+        botones.deshacer_movimiento(numero),
+    )
+
+
+def _deshacer(config: Config, argumento: str) -> str:
+    try:
+        numero = movimientos.interpretar_deshacer(argumento)
+    except movimientos.MovimientoError as e:
+        return telegram.escape(str(e))
+
+    ultimos = database.get_movimientos(config.database_path, 1)
+    # Los numeros no se repiten, asi que uno mayor que el ultimo ya se deshizo.
+    if numero is not None and (not ultimos or numero > ultimos[0].id):
+        return "Esa ya está deshecha. Mira /movimientos"
+    if not ultimos:
+        return "No hay ninguna compra ni venta que deshacer. Mira /movimientos"
+    # Solo la ultima: deshacer una de en medio dejaria mal las que van detras.
+    if numero is not None and ultimos[0].id != numero:
+        return (
+            "Esa ya no es la última, has apuntado otras después. "
+            "Mira /movimientos y deshaz primero la de arriba."
+        )
+
+    hecho = database.deshacer_ultimo(config.database_path)
+    logger.info("Cartera: deshace la %s de %s", hecho.tipo, hecho.coin_id)
+    return alerts.formatear_deshecho(hecho, config.vs_currency)
+
+
+def _movimientos(config: Config) -> str | comandos.ConBotones:
+    lista = database.get_movimientos(config.database_path)
+    texto = alerts.formatear_movimientos(lista, config.vs_currency)
+    if not lista:
+        return texto
+    return comandos.ConBotones(
+        texto, botones.deshacer_movimiento(lista[0].id, "↩️ Deshacer la última")
+    )
 
 
 def _crear_alerta(config: Config, argumento: str) -> str:

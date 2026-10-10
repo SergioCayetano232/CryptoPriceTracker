@@ -9,6 +9,7 @@ from crypto_tracker.movimientos import (
     combinar,
     comprar,
     interpretar_compra,
+    interpretar_deshacer,
     interpretar_venta,
     texto_cantidad,
     vender,
@@ -170,3 +171,20 @@ def test_buscar():
 )
 def test_texto_cantidad(valor, texto):
     assert texto_cantidad(valor) == texto
+
+
+# --- /deshacer ---
+
+
+def test_deshacer_a_secas_es_la_ultima():
+    assert interpretar_deshacer("") is None
+
+
+def test_deshacer_con_el_numero_del_boton():
+    assert interpretar_deshacer("12") == 12
+
+
+@pytest.mark.parametrize("argumento", ["bitcoin", "-1", "1.5"])
+def test_deshacer_mal_escrito(argumento):
+    with pytest.raises(MovimientoError):
+        interpretar_deshacer(argumento)

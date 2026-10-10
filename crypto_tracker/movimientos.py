@@ -1,5 +1,8 @@
 """Compras y ventas apuntadas por Telegram, encima del PORTFOLIO del .env."""
 
+from dataclasses import dataclass
+from datetime import datetime
+
 from .config import Posicion
 from .puntuales import numero
 from .simbolos import a_id
@@ -13,6 +16,30 @@ RESTO = 1e-9
 
 class MovimientoError(Exception):
     """La compra o la venta no se entiende o no se puede hacer."""
+
+
+@dataclass(frozen=True)
+class Movimiento:
+    """Un /compra o un /venta. antes es como estaba la cripto, None si no la tenias."""
+
+    id: int
+    coin_id: str
+    tipo: str  # "compra" o "venta"
+    cantidad: float
+    coste: float | None
+    antes: Posicion | None
+    cuando: datetime
+
+
+def interpretar_deshacer(argumento: str) -> int | None:
+    """'' -> None (la ultima). '12' -> 12, el numero que lleva el boton."""
+    if not argumento:
+        return None
+    if not argumento.isdigit():
+        raise MovimientoError(
+            "Escribe /deshacer a secas para quitar la última compra o venta."
+        )
+    return int(argumento)
 
 
 def interpretar_compra(argumento: str) -> tuple[str, float, float | None]:

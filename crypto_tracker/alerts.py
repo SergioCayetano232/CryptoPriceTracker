@@ -10,7 +10,7 @@ from .comparar import Resultado
 from .config import Posicion, Watch
 from .maximo import Maximo, hace
 from .mercado import Mercado, grande
-from .movimientos import texto_cantidad
+from .movimientos import Movimiento, texto_cantidad
 from .periodo import nombre as nombre_periodo
 from .puntuales import CARTERA, Puntual, cumplidas, ejemplo
 from .semanal import Semana
@@ -440,6 +440,42 @@ def formatear_venta(
     texto += f"Te quedan {texto_cantidad(queda.cantidad)}"
     if queda.invertido is not None:
         texto += f", que te costaron {simbolo}{_num(queda.invertido)}"
+    return texto + ". Mira /cartera"
+
+
+def formatear_movimientos(lista: list[Movimiento], currency: str) -> str:
+    """Respuesta de /movimientos: los ultimos, el mas reciente arriba."""
+    if not lista:
+        return (
+            "No has apuntado ninguna compra ni venta por aquí. "
+            "Lo del PORTFOLIO del .env no sale."
+        )
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    lineas = ["📒 <b>Tus últimas compras y ventas</b>"]
+    for m in lista:
+        nombre = escape(m.coin_id.replace("-", " ").title())
+        cuando = m.cuando.astimezone()
+        if m.tipo == "compra":
+            linea = f"🛒 Compra de {texto_cantidad(m.cantidad)} de {nombre}"
+            if m.coste is not None:
+                linea += f" por {simbolo}{_num(m.coste)}"
+        else:
+            linea = f"💸 Venta de {texto_cantidad(m.cantidad)} de {nombre}"
+        lineas.append(f"{linea}  <i>{cuando:%d/%m %H:%M}</i>")
+    return "\n".join(lineas)
+
+
+def formatear_deshecho(m: Movimiento, currency: str) -> str:
+    """Lo que se contesta a un /deshacer: lo quitado y como vuelve a quedar."""
+    nombre = escape(m.coin_id.replace("-", " ").title())
+    texto = f"↩️ Quito la {m.tipo} de <b>{texto_cantidad(m.cantidad)}</b> de {nombre}.\n"
+    if m.antes is None:
+        return texto + f"No te queda nada de {nombre}."
+
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto += f"Vuelves a tener {texto_cantidad(m.antes.cantidad)}"
+    if m.antes.invertido is not None:
+        texto += f", que te costaron {simbolo}{_num(m.antes.invertido)}"
     return texto + ". Mira /cartera"
 
 

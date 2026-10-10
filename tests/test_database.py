@@ -577,3 +577,67 @@ def test_base_de_datos_vieja_gana_la_columna_sin_perder_alertas(tmp_path):
         ruta, "solana", 200.0, True, "eur", datetime.now(timezone.utc)
     )
     assert database.get_puntuales(ruta, "eur")[1].caduca is not None
+
+
+# --- movimientos ---
+
+
+def test_apuntar_movimiento_guarda_la_posicion_y_el_movimiento(db):
+    antes = Posicion("bitcoin", 0.016, 1000)
+    ahora = Posicion("bitcoin", 0.026, 1600)
+
+    numero = database.apuntar_movimiento(
+        db, "bitcoin", "compra", 0.01, 600, antes, ahora
+    )
+
+    assert database.get_cambios_cartera(db) == {"bitcoin": ahora}
+    [m] = database.get_movimientos(db)
+    assert (m.id, m.tipo, m.cantidad, m.coste, m.antes) == (
+        numero,
+        "compra",
+        0.01,
+        600,
+        antes,
+    )
+
+
+def test_movimientos_el_mas_reciente_primero(db):
+    database.apuntar_movimiento(
+        db, "bitcoin", "compra", 1, 10, None, Posicion("bitcoin", 1, 10)
+    )
+    database.apuntar_movimiento(
+        db, "solana", "compra", 2, 20, None, Posicion("solana", 2, 20)
+    )
+    database.apuntar_movimiento(
+        db, "ethereum", "compra", 3, 30, None, Posicion("ethereum", 3, 30)
+    )
+
+    assert [m.coin_id for m in database.get_movimientos(db, 2)] == [
+        "ethereum",
+        "solana",
+    ]
+
+
+def test_deshacer_vuelve_a_como_estaba_y_lo_borra(db):
+    antes = Posicion("bitcoin", 0.02, 1000)
+    database.apuntar_movimiento(db, "bitcoin", "venta", 0.02, None, antes, None)
+
+    hecho = database.deshacer_ultimo(db)
+
+    assert hecho.tipo == "venta"
+    assert database.get_cambios_cartera(db) == {"bitcoin": antes}
+    assert database.get_movimientos(db) == []
+
+
+def test_deshacer_varias_seguidas_vuelve_al_principio(db):
+    uno = Posicion("solana", 5, 700)
+    dos = Posicion("solana", 8, 1150)
+    database.apuntar_movimiento(db, "solana", "compra", 5, 700, None, uno)
+    database.apuntar_movimiento(db, "solana", "compra", 3, 450, uno, dos)
+
+    database.deshacer_ultimo(db)
+    assert database.get_cambios_cartera(db) == {"solana": uno}
+    database.deshacer_ultimo(db)
+    # Sin nada antes: queda como vendida, que para la cartera es no tenerla.
+    assert database.get_cambios_cartera(db) == {"solana": None}
+    assert database.deshacer_ultimo(db) is None

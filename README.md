@@ -169,6 +169,8 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/compra bitcoin 0.01 600` | Apunta en la cartera que has comprado 0,01 por 600 € |
 | `/compra bitcoin 0.01 @60000` | Lo mismo, con el precio de cada una en vez del total |
 | `/venta bitcoin 0.005` | Apunta una venta (`/venta bitcoin todo` la saca de la cartera) |
+| `/movimientos` | Tus últimas compras y ventas, con un botón para deshacer la última |
+| `/deshacer` | Quita la última compra o venta y deja la cripto como estaba |
 | `/alerta bitcoin 70000` | Te avisa una vez cuando llegue a ese precio |
 | `/alerta bitcoin +10%` | Te avisa una vez cuando suba un 10% desde ahora |
 | `/alerta bitcoin 70000 7d` | Lo mismo, pero si en 7 días no ha llegado se borra sola y te lo dice |
@@ -311,6 +313,10 @@ exchange, va con `@`: `/compra bitcoin 0.01 @60000`.
 `/venta bitcoin 0.005` lo resta, y lo que te costó baja en la misma proporción:
 si vendes la mitad, se va la mitad de lo invertido. `/venta bitcoin todo` la
 saca de la cartera.
+
+Si te equivocas, cada respuesta lleva un **↩️ Deshacer** que la deja como
+estaba. `/movimientos` te enseña las últimas que has apuntado, y `/deshacer`
+quita la última (repítelo para ir más atrás).
 
 Como con `/vigilar`, el `.env` es la base y lo de Telegram va encima. Si una
 cripto la cambias por Telegram, deja de mirar lo que ponga de ella `PORTFOLIO`.

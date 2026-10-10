@@ -7,6 +7,7 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 from .config import Posicion
+from .movimientos import Movimiento
 from .puntuales import Puntual
 
 logger = logging.getLogger(__name__)
@@ -70,6 +71,19 @@ CREATE TABLE IF NOT EXISTS cartera_cambios (
     cantidad   REAL,
     invertido  REAL,
     updated_at TEXT NOT NULL
+);
+
+-- Cada /compra y /venta con como estaba la cripto justo antes, que es lo que
+-- se vuelve a poner al deshacerla. antes_cantidad NULL es que no la tenias.
+CREATE TABLE IF NOT EXISTS movimientos (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    coin_id         TEXT NOT NULL,
+    tipo            TEXT NOT NULL,
+    cantidad        REAL NOT NULL,
+    coste           REAL,
+    antes_cantidad  REAL,
+    antes_invertido REAL,
+    created_at      TEXT NOT NULL
 );
 """
 
@@ -525,17 +539,93 @@ def tomar_de_cero(db_path: str) -> set[str]:
 
 def guardar_posicion(db_path: str, coin_id: str, posicion: Posicion | None) -> None:
     """Apunta como queda una cripto tras un /compra o /venta. None, vendida."""
+    with _connect(db_path) as conn:
+        _escribir_posicion(conn, coin_id, posicion)
+
+
+def _escribir_posicion(
+    conn: sqlite3.Connection, coin_id: str, posicion: Posicion | None
+) -> None:
     cantidad = invertido = None
     if posicion is not None:
         cantidad, invertido = posicion.cantidad, posicion.invertido
 
     ahora = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    conn.execute(
+        "INSERT OR REPLACE INTO cartera_cambios "
+        "(coin_id, cantidad, invertido, updated_at) VALUES (?, ?, ?, ?)",
+        (coin_id, cantidad, invertido, ahora),
+    )
+
+
+def apuntar_movimiento(
+    db_path: str,
+    coin_id: str,
+    tipo: str,
+    cantidad: float,
+    coste: float | None,
+    antes: Posicion | None,
+    ahora: Posicion | None,
+) -> int:
+    """Guarda como queda la cripto y el movimiento. Devuelve su numero."""
+    # En la misma transaccion: si uno se guardara sin el otro, deshacer
+    # pondria la cripto como estaba antes de algo que no llego a pasar.
+    cuando = datetime.now(timezone.utc).isoformat(timespec="seconds")
     with _connect(db_path) as conn:
-        conn.execute(
-            "INSERT OR REPLACE INTO cartera_cambios "
-            "(coin_id, cantidad, invertido, updated_at) VALUES (?, ?, ?, ?)",
-            (coin_id, cantidad, invertido, ahora),
+        _escribir_posicion(conn, coin_id, ahora)
+        cursor = conn.execute(
+            "INSERT INTO movimientos (coin_id, tipo, cantidad, coste, "
+            "antes_cantidad, antes_invertido, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (
+                coin_id,
+                tipo,
+                cantidad,
+                coste,
+                antes.cantidad if antes else None,
+                antes.invertido if antes else None,
+                cuando,
+            ),
         )
+    return cursor.lastrowid
+
+
+def get_movimientos(db_path: str, limite: int = 10) -> list[Movimiento]:
+    """Los ultimos, el mas reciente primero."""
+    with _connect(db_path) as conn:
+        filas = conn.execute(
+            "SELECT * FROM movimientos ORDER BY id DESC LIMIT ?", (limite,)
+        ).fetchall()
+    return [_movimiento(f) for f in filas]
+
+
+def deshacer_ultimo(db_path: str) -> Movimiento | None:
+    """Deja la cripto como estaba antes del ultimo y lo borra. None si no hay."""
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT * FROM movimientos ORDER BY id DESC LIMIT 1"
+        ).fetchone()
+        if fila is None:
+            return None
+        movimiento = _movimiento(fila)
+        _escribir_posicion(conn, movimiento.coin_id, movimiento.antes)
+        conn.execute("DELETE FROM movimientos WHERE id = ?", (movimiento.id,))
+    return movimiento
+
+
+def _movimiento(f: sqlite3.Row) -> Movimiento:
+    antes = None
+    if f["antes_cantidad"] is not None:
+        antes = Posicion(f["coin_id"], f["antes_cantidad"], f["antes_invertido"])
+    return Movimiento(
+        f["id"],
+        f["coin_id"],
+        f["tipo"],
+        f["cantidad"],
+        f["coste"],
+        antes,
+        datetime.fromisoformat(f["created_at"]),
+    )
 
 
 def get_cambios_cartera(db_path: str) -> dict[str, Posicion | None]:

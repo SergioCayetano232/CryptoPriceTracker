@@ -1579,6 +1579,99 @@ def test_vender_mas_de_lo_que_tienes(config, enviados):
     assert database.get_cambios_cartera(config.database_path) == {}
 
 
+def test_compra_lleva_boton_para_deshacerla(config, monkeypatch):
+    mandados = _con_botones(monkeypatch)
+    _precio(monkeypatch, {"solana": 150.0})
+
+    main.atender(config, _mensaje("/compra solana 5 700"))
+
+    [m] = database.get_movimientos(config.database_path)
+    assert mandados[0][1] == [[("↩️ Deshacer", f"/deshacer {m.id}")]]
+
+
+def test_deshacer_una_compra_mal_apuntada(config, enviados, monkeypatch):
+    def no_llamar(*a):
+        raise AssertionError("no hace falta el precio")
+
+    monkeypatch.setattr(coingecko, "get_prices", no_llamar)
+    config = _con_cartera(config, Posicion("bitcoin", 0.016, 1000))
+
+    main.atender(config, _mensaje("/compra bitcoin 10 600"))
+    main.atender(config, _mensaje("/deshacer"))
+
+    assert "Quito la compra de <b>10</b> de Bitcoin" in enviados[1]
+    assert "Vuelves a tener 0,016, que te costaron €1.000,00" in enviados[1]
+    assert database.get_cambios_cartera(config.database_path) == {
+        "bitcoin": Posicion("bitcoin", 0.016, 1000)
+    }
+
+
+def test_deshacer_una_venta_de_todo_la_devuelve(config, enviados, monkeypatch):
+    config = _con_cartera(config, Posicion("ethereum", 0.4, 1000))
+    _precio(monkeypatch, {"ethereum": 2000.0})
+
+    main.atender(config, _mensaje("/venta ethereum todo"))
+    main.atender(config, _mensaje("/deshacer"))
+    main.atender(config, _mensaje("/cartera"))
+
+    assert "Quito la venta de <b>0,4</b> de Ethereum" in enviados[1]
+    assert "Ethereum" in enviados[2]
+
+
+def test_un_boton_viejo_no_deshace_la_nueva(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"solana": 150.0})
+    main.atender(config, _mensaje("/compra solana 5 700"))
+    main.atender(config, _mensaje("/compra solana 1 150"))
+    viejo, nuevo = sorted(m.id for m in database.get_movimientos(config.database_path))
+
+    main.atender(config, _mensaje(f"/deshacer {viejo}"))
+
+    assert "ya no es la última" in enviados[2]
+    assert len(database.get_movimientos(config.database_path)) == 2
+
+
+def test_pulsar_dos_veces_el_mismo_boton(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"solana": 150.0})
+    main.atender(config, _mensaje("/compra solana 5 700"))
+    main.atender(config, _mensaje("/compra solana 1 150"))
+    nuevo = database.get_movimientos(config.database_path)[0].id
+
+    main.atender(config, _mensaje(f"/deshacer {nuevo}"))
+    main.atender(config, _mensaje(f"/deshacer {nuevo}"))
+
+    assert "ya está deshecha" in enviados[3]
+    assert len(database.get_movimientos(config.database_path)) == 1
+
+
+def test_deshacer_sin_nada(config, enviados):
+    main.atender(config, _mensaje("/deshacer"))
+
+    assert "No hay ninguna compra ni venta" in enviados[0]
+
+
+def test_movimientos_lista_y_boton_de_la_ultima(config, monkeypatch):
+    mandados = _con_botones(monkeypatch)
+    _precio(monkeypatch, {"solana": 150.0})
+    config = _con_cartera(config, Posicion("solana", 5, 700))
+    main.atender(config, _mensaje("/compra solana 1 150"))
+    main.atender(config, _mensaje("/venta solana 2"))
+
+    main.atender(config, _mensaje("/movimientos"))
+
+    texto, teclado = mandados[2]
+    assert texto.index("Venta de 2 de Solana") < texto.index(
+        "Compra de 1 de Solana por €150,00"
+    )
+    ultima = database.get_movimientos(config.database_path)[0]
+    assert teclado == [[("↩️ Deshacer la última", f"/deshacer {ultima.id}")]]
+
+
+def test_movimientos_sin_nada(config, enviados):
+    main.atender(config, _mensaje("/movimientos"))
+
+    assert "No has apuntado ninguna compra ni venta" in enviados[0]
+
+
 def test_cartera_sin_nada_explica_compra(config, enviados):
     main.atender(config, _mensaje("/cartera"))
 
