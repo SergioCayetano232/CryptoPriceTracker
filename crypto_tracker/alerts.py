@@ -16,6 +16,7 @@ from .puntuales import CARTERA, Puntual, cumplidas, ejemplo
 from .semanal import Semana
 from .telegram import escape
 from .tendencias import Tendencia
+from .top import ENTRE, Movida
 
 logger = logging.getLogger(__name__)
 
@@ -620,6 +621,29 @@ def formatear_tendencias(lista: list[Tendencia]) -> str:
         texto.append(linea)
 
     texto += ["", "<i>Toca una para ver su precio y ponerle una alerta</i>"]
+    return "\n".join(texto)
+
+
+def formatear_top(suben: list[Movida], bajan: list[Movida], currency: str) -> str:
+    """/top: las que mas suben y las que mas bajan, cada una con su precio."""
+    if not suben and not bajan:
+        return "CoinGecko no me ha dado los precios ahora mismo. Prueba en un rato."
+
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = [f"🏆 <b>Lo que más se mueve hoy</b> · <i>de las {ENTRE} más grandes</i>"]
+    for titulo, lista, vacia in (
+        ("🔺 <b>Suben</b>", suben, "Hoy no sube ninguna."),
+        ("🔻 <b>Bajan</b>", bajan, "Hoy no baja ninguna."),
+    ):
+        texto += ["", titulo]
+        if not lista:
+            texto.append(f"<i>{vacia}</i>")
+        for m in lista:
+            nombre = escape(m.simbolo or m.nombre)
+            texto.append(
+                f"<b>{nombre}</b>  {m.variacion:+.2f}%  "
+                f"<i>{simbolo}{_num(m.precio)}</i>"
+            )
     return "\n".join(texto)
 
 

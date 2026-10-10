@@ -2283,6 +2283,66 @@ def test_tendencias_sin_conexion(config, enviados, monkeypatch):
     assert "No he podido mirarlo ahora mismo: Sin conexion" in enviados[0]
 
 
+# --- /top ---
+
+
+def test_top(config, monkeypatch):
+    from crypto_tracker.top import Movida
+
+    mandados = _con_botones(monkeypatch)
+    monkeypatch.setattr(
+        coingecko,
+        "top_hoy",
+        lambda currency: [
+            Movida("solana", "Solana", "SOL", 150.0, 12.5),
+            Movida("pepe", "Pepe <3", "", 0.00001, -9.1),
+            Movida("tether", "Tether", "USDT", 0.92, 0.0),
+        ],
+    )
+
+    main.atender(config, _mensaje("/top"))
+
+    texto, teclado = mandados[0]
+    assert texto.index("Suben") < texto.index("SOL") < texto.index("Bajan")
+    assert "<b>SOL</b>  +12.50%" in texto
+    assert "Pepe &lt;3" in texto  # sin simbolo, el nombre, escapado
+    assert "USDT" not in texto
+    assert teclado == [[("🔄 Actualizar", "/top")]]
+
+
+def test_top_todo_en_verde(config, enviados, monkeypatch):
+    from crypto_tracker.top import Movida
+
+    monkeypatch.setattr(
+        coingecko,
+        "top_hoy",
+        lambda currency: [Movida("solana", "Solana", "SOL", 150.0, 2.0)],
+    )
+
+    main.atender(config, _mensaje("/top"))
+
+    assert "Hoy no baja ninguna" in enviados[0]
+
+
+def test_top_sin_datos(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "top_hoy", lambda currency: [])
+
+    main.atender(config, _mensaje("/top"))
+
+    assert "no me ha dado los precios" in enviados[0]
+
+
+def test_top_sin_conexion(config, enviados, monkeypatch):
+    def falla(*a, **k):
+        raise coingecko.CoinGeckoError("Sin conexion con CoinGecko")
+
+    monkeypatch.setattr(coingecko, "top_hoy", falla)
+
+    main.atender(config, _mensaje("/top"))
+
+    assert "No he podido mirarlo ahora mismo: Sin conexion" in enviados[0]
+
+
 # --- /mercado ---
 
 

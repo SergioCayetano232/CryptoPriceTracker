@@ -436,6 +436,32 @@ def test_tendencias_hoy(monkeypatch):
     assert [t.coin_id for t in lista] == ["pepe"]
 
 
+def test_top_hoy(monkeypatch):
+    pedido = {}
+
+    def get(url, params=None, headers=None, timeout=None):
+        pedido.update(url=url, params=params)
+        return RespuestaFalsa(
+            [
+                {
+                    "id": "solana",
+                    "symbol": "sol",
+                    "current_price": 150,
+                    "price_change_percentage_24h": 12.5,
+                }
+            ]
+        )
+
+    monkeypatch.setattr(requests, "get", get)
+
+    lista = coingecko.top_hoy("eur")
+
+    assert pedido["url"].endswith("/coins/markets")
+    assert pedido["params"]["per_page"] == 100
+    assert pedido["params"]["order"] == "market_cap_desc"
+    assert [(m.coin_id, m.variacion) for m in lista] == [("solana", 12.5)]
+
+
 def test_mercado_global(monkeypatch):
     pedido = {}
 

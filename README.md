@@ -193,6 +193,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/exportar bitcoin 30d` | Te manda un CSV con los precios guardados (sin tramo, 30 días) |
 | `/mercado` | Lo que vale todo el mercado cripto, cómo va en 24 h y qué parte es de Bitcoin, Ethereum y las estables |
 | `/tendencias` | Las 7 criptos que más se buscan hoy en CoinGecko, con un botón en cada una para ver su precio y ponerle una alerta |
+| `/top` | Las 5 que más suben y las 5 que más bajan hoy de las 100 más grandes, con su precio |
 | `/buscar btc` | Encuentra el id de CoinGecko de una cripto |
 | `/consultas` | Cuántas consultas a CoinGecko llevas este mes |
 | `/bot` | Si sigue funcionando: desde cuándo está encendido, cuándo fue el último ciclo y las consultas del mes |

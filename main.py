@@ -41,6 +41,7 @@ from crypto_tracker import (
     semanal,
     simbolos,
     telegram,
+    top,
     vigiladas,
     volatilidad,
 )
@@ -720,6 +721,9 @@ def responder(
     if nombre == "mercado":
         return _mercado(config)
 
+    if nombre == "top":
+        return _top(config)
+
     if nombre == "comparar":
         return _comparar(config, argumento)
 
@@ -1063,6 +1067,19 @@ def _tendencias(config: Config) -> str | comandos.ConBotones:
     if not lista:
         return texto
     return comandos.ConBotones(alerts.con_fuente(texto), botones.para_tendencias(lista))
+
+
+def _top(config: Config) -> str | comandos.ConBotones:
+    try:
+        lista = coingecko.top_hoy(config.vs_currency)
+    except coingecko.CoinGeckoError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+
+    suben, bajan = top.separar(lista)
+    texto = alerts.formatear_top(suben, bajan, config.vs_currency)
+    if not suben and not bajan:
+        return texto
+    return comandos.ConBotones(alerts.con_fuente(texto), botones.actualizar("/top"))
 
 
 def _mercado(config: Config) -> str | comandos.ConBotones:

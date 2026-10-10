@@ -7,7 +7,7 @@ import time
 
 import requests
 
-from . import mercado, tendencias
+from . import mercado, tendencias, top
 from .maximo import Maximo, leer
 
 logger = logging.getLogger(__name__)
@@ -82,6 +82,17 @@ def tendencias_hoy(vs_currency: str = "eur") -> list[tendencias.Tendencia]:
     return tendencias.leer(
         _con_reintentos(lambda: _pedir(TRENDING_URL, {})), vs_currency
     )
+
+
+def top_hoy(vs_currency: str = "eur") -> list[top.Movida]:
+    """Las mas grandes con su variacion de 24 h, en una sola peticion."""
+    params = {
+        "vs_currency": vs_currency,
+        "order": "market_cap_desc",
+        "per_page": top.ENTRE,
+        "page": 1,
+    }
+    return top.leer(_con_reintentos(lambda: _pedir(MARKETS_URL, params)))
 
 
 def mercado_global(vs_currency: str = "eur") -> mercado.Mercado:
