@@ -693,6 +693,19 @@ def formatear_miedo(lista: list[Indice]) -> str:
     return "\n".join(texto)
 
 
+def linea_miedo(lista: list[Indice]) -> str | None:
+    """El indice en una linea, para el resumen del dia. None si no vino."""
+    if not lista:
+        return None
+    hoy = lista[0]
+    emoji, nombre = nombre_miedo(hoy)
+    linea = f"{emoji} Miedo y codicia: <b>{hoy.valor}</b> · {escape(nombre)}"
+    ayer = dia_miedo(lista, 1)
+    if ayer is not None:
+        linea += f"  <i>(ayer {ayer.valor})</i>"
+    return linea
+
+
 def formatear_mercado(m: Mercado, currency: str) -> str:
     """/mercado: el total, como va y cuanto es de Bitcoin, Ethereum y las estables."""
     if m.total is None and m.bitcoin is None:

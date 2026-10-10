@@ -1378,7 +1378,9 @@ def resumen_diario(config: Config, ahora: datetime | None = None) -> None:
         logger.info("Toca el resumen diario, pero esta silenciado")
         return
 
-    texto = montar_resumen(config, titulo="☀️ <b>Tu resumen del día</b>")
+    texto = montar_resumen(
+        config, titulo="☀️ <b>Tu resumen del día</b>", pie=_linea_miedo()
+    )
     if texto is None:
         return
 
@@ -1396,6 +1398,15 @@ def resumen_diario(config: Config, ahora: datetime | None = None) -> None:
         database.guardar_resumen(config.database_path, ahora.date())
     except database.DatabaseError as e:
         logger.error("No se pudo apuntar el resumen, puede que llegue repetido: %s", e)
+
+
+def _linea_miedo() -> str | None:
+    # Es un extra: si alternative.me no contesta, el resumen sale igual.
+    try:
+        return alerts.linea_miedo(miedo.pedir())
+    except miedo.MiedoError as e:
+        logger.warning("Sin indice de miedo en el resumen: %s", e)
+        return None
 
 
 def resumen_semanal(config: Config, ahora: datetime | None = None) -> None:
@@ -1585,7 +1596,9 @@ def enviar_resumen(config: Config) -> int:
     return 1
 
 
-def montar_resumen(config: Config, titulo: str | None = None) -> str | None:
+def montar_resumen(
+    config: Config, titulo: str | None = None, pie: str | None = None
+) -> str | None:
     """El texto del resumen con los precios de ahora. None si no hay precios."""
     config = _con_cambios(config)
     coin_ids = [w.coin_id for w in config.watchlist]
@@ -1614,6 +1627,8 @@ def montar_resumen(config: Config, titulo: str | None = None) -> str | None:
 
     if config.cartera:
         texto += "\n\n" + _bloque_cartera(config, precios)
+    if pie:
+        texto += "\n\n" + pie
 
     return alerts.con_fuente(texto)
 

@@ -446,7 +446,7 @@ Todo lo que va haciendo queda apuntado en `data/tracker.log`.
 | `CHECK_INTERVAL` | Segundos entre consulta y consulta | `300` (5 min) |
 | `HISTORY_DAYS` | Días de histórico que se guardan | `90` |
 | `DATABASE_PATH` | Dónde se guardan los datos | `data/prices.db` |
-| `RESUMEN_DIARIO` | Hora del resumen de cada día (`09:00`). Vacío, sin resumen | vacío |
+| `RESUMEN_DIARIO` | Hora del resumen de cada día (`09:00`), que acaba con el índice de miedo y codicia. Vacío, sin resumen | vacío |
 | `MOVIMIENTO_BRUSCO` | Aviso si se mueve mucho en poco tiempo (`8%/1h`). Vacío, sin aviso | vacío |
 | `MAXIMOS_MINIMOS` | Aviso al marcar el máximo o mínimo de esos días (`30d`). Vacío, sin aviso | vacío |
 | `HORAS_TRANQUILAS` | Tramo en que los avisos llegan sin sonar (`23-8`) | vacío |

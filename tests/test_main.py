@@ -50,6 +50,12 @@ def sin_fotos_de_verdad(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def sin_miedo_de_verdad(monkeypatch):
+    """El resumen diario lo pide; sin esto los tests irian a alternative.me."""
+    monkeypatch.setattr(miedo, "pedir", lambda: [])
+
+
+@pytest.fixture(autouse=True)
 def sin_cambios_de_coingecko(monkeypatch):
     """Sin esto, la variacion de 24 h de un test aparece en el siguiente."""
     monkeypatch.setattr(coingecko, "_cambios", {})
@@ -356,6 +362,50 @@ def test_resumen_diario_a_su_hora(con_resumen, enviados):
     assert len(enviados) == 1
     assert "resumen del día" in enviados[0]
     assert "63.000,00" in enviados[0]
+
+
+def test_resumen_diario_lleva_el_miedo(con_resumen, enviados, monkeypatch):
+    from datetime import date
+
+    from crypto_tracker.miedo import Indice
+
+    monkeypatch.setattr(
+        miedo,
+        "pedir",
+        lambda: [
+            Indice(20, "Extreme Fear", date(2026, 9, 29)),
+            Indice(31, "Fear", date(2026, 9, 28)),
+        ],
+    )
+
+    main.resumen_diario(con_resumen, _dia(9, 0))
+
+    linea = "😱 Miedo y codicia: <b>20</b> · Miedo extremo  <i>(ayer 31)</i>"
+    assert linea in enviados[0]
+    assert enviados[0].index(linea) < enviados[0].index("CoinGecko")
+
+
+def test_resumen_diario_sale_aunque_falle_el_miedo(con_resumen, enviados, monkeypatch):
+    def falla():
+        raise miedo.MiedoError("alternative.me no contesta")
+
+    monkeypatch.setattr(miedo, "pedir", falla)
+
+    main.resumen_diario(con_resumen, _dia(9, 0))
+
+    assert "resumen del día" in enviados[0]
+    assert "Miedo y codicia" not in enviados[0]
+
+
+def test_el_status_no_lleva_el_miedo(con_resumen, enviados, monkeypatch):
+    def no_llamar():
+        raise AssertionError("/status no tiene que esperar a alternative.me")
+
+    monkeypatch.setattr(miedo, "pedir", no_llamar)
+
+    main.atender(con_resumen, _mensaje("/status"))
+
+    assert "Miedo y codicia" not in enviados[0]
 
 
 def test_resumen_diario_una_vez_al_dia(con_resumen, enviados):
