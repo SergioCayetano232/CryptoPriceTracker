@@ -24,6 +24,7 @@ from crypto_tracker.puntuales import (
     numeros,
     objetivo_relativo,
     separar_caducidad,
+    separar_nota,
     sube,
 )
 
@@ -296,3 +297,25 @@ def test_caducadas():
     sin = Puntual(4, "bitcoin", 70000, True)
 
     assert caducadas([vieja, justa, viva, sin], ahora) == [vieja, justa]
+
+
+# --- la nota ---
+
+
+@pytest.mark.parametrize(
+    "argumento, esperado",
+    [
+        ("bitcoin 70000", ("bitcoin 70000", None)),
+        ("bitcoin 70000 7d", ("bitcoin 70000 7d", None)),
+        ("bitcoin 70000 vender la mitad", ("bitcoin 70000", "vender la mitad")),
+        ("bitcoin +10% 7d vender la mitad", ("bitcoin +10% 7d", "vender la mitad")),
+        ("bitcoin", ("bitcoin", None)),
+    ],
+)
+def test_separar_nota(argumento, esperado):
+    assert separar_nota(argumento) == esperado
+
+
+def test_nota_demasiado_larga():
+    with pytest.raises(PuntualError, match="muy larga"):
+        separar_nota("bitcoin 70000 " + "a" * 101)

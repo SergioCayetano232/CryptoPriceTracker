@@ -14,6 +14,9 @@ _MILES = re.compile(r"[1-9]\d{0,2}(\.\d{3})+")
 EJEMPLO = "/alerta bitcoin 70000"
 EJEMPLO_RELATIVA = "/alerta bitcoin +10%"
 
+# Es para acordarte de por que la pusiste, no para escribir un diario.
+MAX_NOTA = 100
+
 # Con este nombre la alerta es del valor de toda la cartera, no de una cripto.
 # Va en la misma tabla, asi no hace falta otra.
 CARTERA = "cartera"
@@ -30,6 +33,22 @@ class Puntual:
     objetivo: float
     sube: bool  # True si espera a que suba hasta el objetivo
     caduca: datetime | None = None  # None, las de antes y las que no lo pidieron
+    nota: str | None = None
+
+
+def separar_nota(argumento: str) -> tuple[str, str | None]:
+    """'bitcoin 70000 7d vender la mitad' -> ('bitcoin 70000 7d', 'vender la mitad')."""
+    partes = argumento.split()
+    if len(partes) <= 2:
+        return argumento, None
+    corte = 3 if es_tramo(partes[2]) else 2
+    if len(partes) <= corte:
+        return argumento, None
+
+    nota = " ".join(partes[corte:])
+    if len(nota) > MAX_NOTA:
+        raise PuntualError(f"La nota es muy larga, como mucho {MAX_NOTA} letras.")
+    return " ".join(partes[:corte]), nota
 
 
 def separar_caducidad(argumento: str) -> tuple[str, float | None]:

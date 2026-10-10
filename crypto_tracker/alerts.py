@@ -53,6 +53,7 @@ class Alert:
     puntual: bool = False  # de /alerta, se borra al avisar
     variacion_24h: float | None = None  # None si aun no hay historico de un dia
     extremo_dias: int | None = None  # solo en los de maximo o minimo de N dias
+    nota: str | None = None  # la que escribiste en la /alerta
 
 
 def clasificar(price: float, watch: Watch) -> str:
@@ -257,6 +258,8 @@ def formatear(alerta: Alert, currency: str) -> str:
     if alerta.variacion_24h is not None:
         v = alerta.variacion_24h
         texto += f"\n<i>En 24 h: {_flecha(v)} {v:+.2f}%</i>"
+    if alerta.nota:
+        texto += f"\n📝 {escape(alerta.nota)}"
     if alerta.puntual:
         texto += "\n<i>Era tu /alerta, ya la he quitado.</i>"
     return texto
@@ -775,18 +778,21 @@ def formatear_puntual(alerta: Puntual, precio: float, currency: str) -> str:
             f"{alerta.caduca.astimezone():%d/%m a las %H:%M}."
         )
     if alerta.coin_id == CARTERA:
-        return (
+        texto = (
             f"🎯 Te aviso cuando <b>tu cartera</b> {verbo} a "
             f"<b>{simbolo}{_num(alerta.objetivo)}</b>.\n"
             f"Ahora vale {simbolo}{_num(precio)}. {una_vez}"
         )
-
-    nombre = escape(alerta.coin_id.replace("-", " ").title())
-    return (
-        f"🎯 Te aviso cuando <b>{nombre}</b> {verbo} a "
-        f"<b>{simbolo}{_num(alerta.objetivo)}</b>.\n"
-        f"Ahora está a {simbolo}{_num(precio)}. {una_vez}"
-    )
+    else:
+        nombre = escape(alerta.coin_id.replace("-", " ").title())
+        texto = (
+            f"🎯 Te aviso cuando <b>{nombre}</b> {verbo} a "
+            f"<b>{simbolo}{_num(alerta.objetivo)}</b>.\n"
+            f"Ahora está a {simbolo}{_num(precio)}. {una_vez}"
+        )
+    if alerta.nota:
+        texto += f"\n📝 {escape(alerta.nota)}"
+    return texto
 
 
 def formatear_sin_objetivo(coin_id: str, precio: float, currency: str) -> str:
@@ -827,6 +833,8 @@ def formatear_puntuales(
             linea += f"  ⌛ {a.caduca.astimezone():%d/%m}"
         falta = _falta((precios or {}).get(a.coin_id), a)
         lineas.append(f"{linea}  <i>{falta}</i>" if falta else linea)
+        if a.nota:
+            lineas.append(f"      📝 {escape(a.nota)}")
     lineas.append(f"\nPara quitar una: /quitar {alertas[0].id}")
     if len(alertas) > 1:
         lineas[-1] += " · todas: /quitar todas"
@@ -845,7 +853,8 @@ def formatear_caducadas(alertas: list[Puntual], currency: str) -> str:
             else escape(a.coin_id.replace("-", " ").title())
         )
         flecha = "🔺" if a.sube else "🔻"
-        lineas.append(f"<b>{nombre}</b> {flecha} {simbolo}{_num(a.objetivo)}")
+        linea = f"<b>{nombre}</b> {flecha} {simbolo}{_num(a.objetivo)}"
+        lineas.append(f"{linea}  📝 {escape(a.nota)}" if a.nota else linea)
     lineas.append("\n<i>Si te sigue interesando, vuelve a ponerla con /alerta</i>")
     return "\n".join(lineas)
 

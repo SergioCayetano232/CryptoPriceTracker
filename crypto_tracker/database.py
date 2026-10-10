@@ -51,7 +51,8 @@ CREATE TABLE IF NOT EXISTS alertas_puntuales (
     sube       INTEGER NOT NULL,
     currency   TEXT    NOT NULL,
     created_at TEXT    NOT NULL,
-    caduca_at  TEXT
+    caduca_at  TEXT,
+    nota       TEXT
 );
 
 -- Lo que cambias por Telegram encima del WATCHLIST del .env. regla va con el
@@ -138,7 +139,10 @@ def init_db(db_path: str) -> None:
 
 # Las que se han añadido despues: el CREATE TABLE no las mete en una tabla
 # que ya existia, asi que se añaden aqui al arrancar.
-COLUMNAS_NUEVAS = [("alertas_puntuales", "caduca_at", "TEXT")]
+COLUMNAS_NUEVAS = [
+    ("alertas_puntuales", "caduca_at", "TEXT"),
+    ("alertas_puntuales", "nota", "TEXT"),
+]
 
 
 def _columnas_nuevas(conn: sqlite3.Connection) -> None:
@@ -452,25 +456,26 @@ def crear_puntual(
     sube: bool,
     currency: str,
     caduca: datetime | None = None,
+    nota: str | None = None,
 ) -> Puntual:
     ahora = datetime.now(timezone.utc).isoformat(timespec="seconds")
     caduca_at = caduca.isoformat(timespec="seconds") if caduca else None
     with _connect(db_path) as conn:
         cursor = conn.execute(
             "INSERT INTO alertas_puntuales "
-            "(coin_id, objetivo, sube, currency, created_at, caduca_at) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (coin_id, objetivo, int(sube), currency, ahora, caduca_at),
+            "(coin_id, objetivo, sube, currency, created_at, caduca_at, nota) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (coin_id, objetivo, int(sube), currency, ahora, caduca_at, nota),
         )
-    return Puntual(cursor.lastrowid, coin_id, objetivo, sube, caduca)
+    return Puntual(cursor.lastrowid, coin_id, objetivo, sube, caduca, nota)
 
 
 def get_puntuales(db_path: str, currency: str) -> list[Puntual]:
     """Las alertas pendientes. Las de otra moneda no cuentan, saltarian mal."""
     with _connect(db_path) as conn:
         filas = conn.execute(
-            "SELECT id, coin_id, objetivo, sube, caduca_at FROM alertas_puntuales "
-            "WHERE currency = ? ORDER BY id",
+            "SELECT id, coin_id, objetivo, sube, caduca_at, nota "
+            "FROM alertas_puntuales WHERE currency = ? ORDER BY id",
             (currency,),
         ).fetchall()
 
@@ -481,6 +486,7 @@ def get_puntuales(db_path: str, currency: str) -> list[Puntual]:
             f["objetivo"],
             bool(f["sube"]),
             datetime.fromisoformat(f["caduca_at"]) if f["caduca_at"] else None,
+            f["nota"],
         )
         for f in filas
     ]

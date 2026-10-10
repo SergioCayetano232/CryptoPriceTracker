@@ -572,7 +572,7 @@ def test_base_de_datos_vieja_gana_la_columna_sin_perder_alertas(tmp_path):
     database.init_db(ruta)  # la segunda vez ya la tiene y no la vuelve a añadir
 
     antigua = database.get_puntuales(ruta, "eur")
-    assert [(a.coin_id, a.caduca) for a in antigua] == [("bitcoin", None)]
+    assert [(a.coin_id, a.caduca, a.nota) for a in antigua] == [("bitcoin", None, None)]
     database.crear_puntual(
         ruta, "solana", 200.0, True, "eur", datetime.now(timezone.utc)
     )

@@ -156,6 +156,7 @@ def ejecutar_ciclo(
             p.objetivo,
             alerts.ALTO if p.sube else alerts.BAJO,
             puntual=True,
+            nota=p.nota,
         )
         for p in hechas
     ]
@@ -916,6 +917,7 @@ def _movimientos(config: Config) -> str | comandos.ConBotones:
 
 def _crear_alerta(config: Config, argumento: str) -> str:
     try:
+        argumento, nota = puntuales.separar_nota(argumento)
         argumento, horas = puntuales.separar_caducidad(argumento)
     except puntuales.PuntualError as e:
         return telegram.escape(str(e))
@@ -979,6 +981,7 @@ def _crear_alerta(config: Config, argumento: str) -> str:
         sube,
         config.vs_currency,
         puntuales.caducidad(datetime.now(timezone.utc), horas),
+        nota,
     )
     logger.info("Alerta %d creada: %s a %s", alerta.id, coin_id, objetivo)
     return alerts.con_fuente(

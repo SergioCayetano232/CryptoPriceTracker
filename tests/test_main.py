@@ -884,6 +884,31 @@ def test_crear_alerta(config, enviados, monkeypatch):
     assert (alerta.coin_id, alerta.objetivo, alerta.sube) == ("bitcoin", 70000, True)
 
 
+def test_crear_alerta_con_nota(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 63000.0})
+
+    main.atender(config, _mensaje("/alerta bitcoin 70000 7d vender <la mitad>"))
+    main.atender(config, _mensaje("/alertas"))
+
+    [alerta] = database.get_puntuales(config.database_path, "eur")
+    assert alerta.nota == "vender <la mitad>"
+    assert alerta.caduca is not None
+    assert "📝 vender &lt;la mitad&gt;" in enviados[0]
+    assert "📝 vender &lt;la mitad&gt;" in enviados[1]
+
+
+def test_la_nota_sale_en_el_aviso(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 71000.0})
+    database.crear_puntual(
+        config.database_path, "bitcoin", 70000, True, "eur", nota="vender la mitad"
+    )
+
+    main.ejecutar_ciclo(config, {})
+
+    assert "📝 vender la mitad" in enviados[0]
+    assert "Era tu /alerta" in enviados[0]
+
+
 def test_crear_alerta_hacia_abajo(config, enviados, monkeypatch):
     _precio(monkeypatch, {"bitcoin": 63000.0})
 
