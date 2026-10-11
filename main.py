@@ -613,7 +613,7 @@ def responder(
 ) -> str | comandos.Foto | comandos.Archivo | comandos.ConBotones:
     """El texto con el que se contesta a cada comando."""
     if nombre == "ayuda":
-        return comandos.AYUDA
+        return comandos.ayuda(argumento)
 
     if nombre == "status":
         texto = montar_resumen(config)

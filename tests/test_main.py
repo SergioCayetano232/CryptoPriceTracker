@@ -225,6 +225,27 @@ def test_hola_a_secas_no_pide_precios(config, enviados, monkeypatch):
     assert enviados[0] == comandos.NO_ENTIENDO
 
 
+@pytest.mark.parametrize(
+    "ejemplo",
+    [e for ejemplos in comandos.EJEMPLOS.values() for e, _ in ejemplos],
+)
+def test_los_ejemplos_de_la_ayuda_se_entienden(
+    config, enviados, sin_fotos_de_verdad, monkeypatch, ejemplo
+):
+    from dataclasses import replace
+
+    from crypto_tracker.config import parse_cartera
+
+    _precio(monkeypatch, {"bitcoin": 63000.0, "solana": 150.0, "ethereum": 3000.0})
+    con_cartera = replace(config, cartera=parse_cartera("bitcoin:0.1:5000"))
+
+    main.contestar(con_cartera, ejemplo)
+
+    [respuesta] = enviados + [pie for _, pie in sin_fotos_de_verdad]
+    for error in ("Escríbelo así", "No entiendo", "no es un", "No te entiendo"):
+        assert error not in respuesta
+
+
 def test_status_sin_coingecko(config, enviados, monkeypatch):
     def falla(ids, cur):
         raise coingecko.CoinGeckoError("Sin conexion")

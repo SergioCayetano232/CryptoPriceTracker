@@ -5,7 +5,9 @@ import pytest
 from crypto_tracker.comandos import (
     AYUDA,
     COMANDOS,
+    EJEMPLOS,
     NO_ENTIENDO,
+    ayuda,
     interpretar,
     no_entiendo,
 )
@@ -74,3 +76,39 @@ def test_no_entiendo_sugiere_el_parecido(nombre, argumento, esperado):
 @pytest.mark.parametrize("nombre", ["xyzzy", "bailar", "borrar", "hola"])
 def test_no_entiendo_sin_nada_parecido(nombre):
     assert no_entiendo(nombre) == NO_ENTIENDO
+
+
+def test_ayuda_a_secas_es_la_lista():
+    assert ayuda() == AYUDA
+    assert "/ayuda alerta" in AYUDA
+
+
+@pytest.mark.parametrize("pedido", ["alerta", "/alerta", "ALERTA", "alert"])
+def test_ayuda_de_un_comando(pedido):
+    texto = ayuda(pedido)
+
+    assert texto.startswith("<b>/alerta</b> — ")
+    assert "<code>/alerta bitcoin +10%</code>" in texto
+
+
+def test_ayuda_de_uno_sin_ejemplos_da_su_linea():
+    assert ayuda("miedo") == f"<b>/miedo</b> — {COMANDOS['miedo']}"
+
+
+def test_ayuda_de_uno_mal_escrito_sugiere():
+    assert ayuda("alertaa").endswith("¿Querías decir /ayuda alerta?")
+    assert ayuda("histroy").endswith("¿Querías decir /ayuda historico?")
+
+
+def test_ayuda_de_uno_que_no_existe():
+    assert (
+        ayuda("<b>bailar") == "No conozco /&lt;b&gt;bailar. Con /ayuda te salen todos."
+    )
+
+
+def test_los_ejemplos_son_de_comandos_que_existen():
+    assert set(EJEMPLOS) <= set(COMANDOS)
+    for nombre, ejemplos in EJEMPLOS.items():
+        for ejemplo, _ in ejemplos:
+            orden = interpretar(ejemplo)
+            assert orden and orden[0] in (nombre, "precio")

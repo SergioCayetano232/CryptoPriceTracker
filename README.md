@@ -210,6 +210,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/unmute` | Vuelve a avisar, también de las que callaste una a una |
 | `/unmute bitcoin` | Vuelve a avisar solo de esa |
 | `/ayuda` | La lista de comandos |
+| `/ayuda alerta` | Ese comando con ejemplos de todo lo que admite |
 
 En los comandos vale el símbolo de las más conocidas en vez del id: `/precio btc`,
 `/alerta eth 3000`, `/compra sol 2`. Para las demás, el id de `/buscar`.

@@ -1,6 +1,7 @@
 """Entiende los comandos que le escribes al bot por Telegram."""
 
 import difflib
+import html
 from dataclasses import dataclass
 
 from . import simbolos
@@ -81,9 +82,88 @@ ALIAS = {
     "callar": "mute",
 }
 
-AYUDA = "🤖 <b>Esto es lo que sé hacer</b>\n\n" + "\n".join(
-    f"/{nombre} — {texto}" for nombre, texto in COMANDOS.items()
+AYUDA = (
+    "🤖 <b>Esto es lo que sé hacer</b>\n\n"
+    + "\n".join(f"/{nombre} — {texto}" for nombre, texto in COMANDOS.items())
+    + "\n\nCon ejemplos de uno: /ayuda alerta"
 )
+
+# Para /ayuda alerta. Solo los que tienen varias formas; el resto con su linea basta.
+EJEMPLOS = {
+    "precio": [
+        ("/precio solana", "lo que vale, y cómo va en 24 h y 7 días"),
+        ("/precio btc eth sol", "varias a la vez (hasta 10)"),
+        ("/precio", "a secas, las que vigilo"),
+        ("btc", "sin barra, lo mismo"),
+    ],
+    "alerta": [
+        ("/alerta bitcoin 70000", "te aviso una vez cuando llegue"),
+        ("/alerta bitcoin +10%", "cuando suba un 10% desde ahora"),
+        ("/alerta bitcoin 70000 7d", "si en 7 días no llega, se borra sola"),
+        ("/alerta bitcoin 70000 vender la mitad", "con una nota para el aviso"),
+        ("/alerta cartera 5000", "con lo que vale tu cartera entera"),
+        ("/alerta bitcoin", "sin precio, te digo a cuánto está"),
+    ],
+    "quitar": [
+        ("/quitar 3", "la número 3 de /alertas"),
+        ("/quitar 2 5", "varias"),
+        ("/quitar todas", "todas"),
+    ],
+    "vigilar": [
+        ("/vigilar", "lo que vigilo y cómo"),
+        ("/vigilar solana %5", "aviso cada vez que se mueva un 5%"),
+        ("/vigilar bitcoin 1000", "aviso cada 1.000 de subida o bajada"),
+        ("/vigilar bitcoin 55000 75000", "aviso si sale de ese rango"),
+    ],
+    "cartera": [
+        ("/cartera", "cuánto vale, con la gráfica de 7 días"),
+        ("/cartera 30d", "con la gráfica del tramo que digas"),
+    ],
+    "compra": [
+        ("/compra bitcoin 0.01 600", "0,01 por 600 € en total"),
+        ("/compra bitcoin 0.01 @60000", "con el precio de cada una"),
+    ],
+    "venta": [
+        ("/venta bitcoin 0.005", "una parte"),
+        ("/venta bitcoin todo", "la saca de la cartera"),
+    ],
+    "historico": [
+        ("/historico bitcoin", "gráfica de las últimas 24 h"),
+        ("/historico bitcoin 7d", "del tramo que digas (12h, 7d, 30d...)"),
+        ("/historico", "a secas, la primera que vigilo"),
+    ],
+    "comparar": [
+        ("/comparar btc eth sol 7d", "de la que mejor ha ido a la peor"),
+        ("/comparar", "a secas, las que vigilo en 7 días"),
+    ],
+    "convertir": [
+        ("/convertir 0.05 bitcoin", "cuánto es en dinero"),
+        ("/convertir 500 eur solana", "cuánta compras con 500 €"),
+    ],
+    "si": [
+        ("/si 1000 bitcoin 30d", "si hubieras metido 1.000 € hace 30 días"),
+        ("/si 1000 btc", "sin tramo, 30 días"),
+    ],
+    "dca": [
+        ("/dca 50 bitcoin", "50 € cada semana durante 90 días"),
+        ("/dca 50 bitcoin diario 30d", "también diario o mensual"),
+    ],
+    "mute": [
+        ("/mute", "te pregunto cuánto, con botones"),
+        ("/mute 2h", "me callo ese rato"),
+        ("/mute hasta 8:00", "hasta esa hora"),
+        ("/mute bitcoin 2h", "solo esa, las demás siguen"),
+    ],
+    "unmute": [
+        ("/unmute", "vuelvo a avisar de todo"),
+        ("/unmute bitcoin", "solo de esa"),
+    ],
+    "horario": [
+        ("/horario", "a qué hora te mando el resumen"),
+        ("/horario 8:30", "cambiarla"),
+        ("/horario no", "quitarlo"),
+    ],
+}
 
 NO_ENTIENDO = "No te entiendo. Escribe /ayuda para ver lo que sé hacer."
 
@@ -96,6 +176,31 @@ def no_entiendo(nombre: str, argumento: str = "") -> str:
         return NO_ENTIENDO
     sugerencia = f"/{ALIAS.get(parecidos[0], parecidos[0])} {argumento}".strip()
     return f"No te entiendo. ¿Querías decir {sugerencia}?"
+
+
+def ayuda(argumento: str = "") -> str:
+    """/ayuda a secas, la lista. /ayuda alerta, ese con sus ejemplos."""
+    if not argumento.strip():
+        return AYUDA
+
+    pedido = argumento.split()[0].lstrip("/").lower()
+    nombre = ALIAS.get(pedido, pedido)
+    if nombre not in COMANDOS:
+        parecidos = difflib.get_close_matches(
+            nombre, [*COMANDOS, *ALIAS], n=1, cutoff=0.75
+        )
+        pedido = html.escape(pedido)
+        if parecidos:
+            sugerencia = ALIAS.get(parecidos[0], parecidos[0])
+            return f"No conozco /{pedido}. ¿Querías decir /ayuda {sugerencia}?"
+        return f"No conozco /{pedido}. Con /ayuda te salen todos."
+
+    texto = f"<b>/{nombre}</b> — {COMANDOS[nombre]}"
+    if nombre in EJEMPLOS:
+        texto += "\n\n" + "\n".join(
+            f"<code>{ejemplo}</code> — {que}" for ejemplo, que in EJEMPLOS[nombre]
+        )
+    return texto
 
 
 @dataclass(frozen=True)
