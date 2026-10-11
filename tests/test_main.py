@@ -3381,6 +3381,50 @@ def test_semanal_avisa_si_no_hay_semana_entera(con_semana, sin_fotos_de_verdad):
     assert "Solo tengo precios desde" in sin_fotos_de_verdad[0][1]
 
 
+def test_semana_cuando_la_pides(con_semana, enviados, sin_fotos_de_verdad):
+    _semana_guardada(con_semana)
+
+    main.atender(con_semana, _mensaje("/semana"))
+
+    [(png, pie)] = sin_fotos_de_verdad
+    assert png
+    assert "+3.57% (+€250,00) en la semana" in pie
+    assert enviados == []
+
+
+def test_semana_a_mano_no_quita_la_del_domingo(con_semana, sin_fotos_de_verdad):
+    _semana_guardada(con_semana)
+
+    main.atender(con_semana, _mensaje("/semana"))
+    main.resumen_semanal(con_semana, DOMINGO)
+
+    assert len(sin_fotos_de_verdad) == 2
+
+
+def test_semana_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/semana"))
+
+    assert enviados[0] == main.SIN_CARTERA
+
+
+def test_semana_sin_precios(con_semana, enviados):
+    main.atender(con_semana, _mensaje("/semana"))
+
+    assert "Aún no tengo precios" in enviados[0]
+
+
+def test_semana_sin_imagen_manda_texto(con_semana, enviados, monkeypatch):
+    def falla(*a, **k):
+        raise grafica.GraficaError("Falta matplotlib")
+
+    monkeypatch.setattr(grafica, "dibujar", falla)
+    _semana_guardada(con_semana)
+
+    main.atender(con_semana, _mensaje("/semana"))
+
+    assert "Tu semana" in enviados[0]
+
+
 # --- boton de actualizar ---
 
 

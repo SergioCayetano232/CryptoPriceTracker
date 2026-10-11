@@ -574,6 +574,13 @@ def contestar(config: Config, texto: str) -> None:
     )
 
 
+SIN_CARTERA = (
+    "No tienes cartera puesta. Apunta lo que tienes con "
+    "/compra bitcoin 0.016 1000, o añade al .env algo como:\n"
+    "<code>PORTFOLIO=bitcoin:0.016:1000</code>"
+)
+
+
 def responder(
     config: Config, nombre: str, argumento: str
 ) -> str | comandos.Foto | comandos.Archivo | comandos.ConBotones:
@@ -625,14 +632,13 @@ def responder(
         database.silenciar_hasta(config.database_path, None)
         return "🔔 Vuelvo a avisar." if estaba else "No estaba callado."
 
+    if nombre == "semana":
+        return _semana(config)
+
     if nombre == "cartera":
         config = _con_cambios(config)
         if not config.cartera:
-            return (
-                "No tienes cartera puesta. Apunta lo que tienes con "
-                "/compra bitcoin 0.016 1000, o añade al .env algo como:\n"
-                "<code>PORTFOLIO=bitcoin:0.016:1000</code>"
-            )
+            return SIN_CARTERA
         return _cartera(config, argumento)
 
     if nombre == "compra":
@@ -1435,18 +1441,11 @@ def resumen_semanal(config: Config, ahora: datetime | None = None) -> None:
 
     # Con lo ya guardado: el ciclo de justo antes acaba de apuntar los precios
     # de ahora, asi que no hace falta gastar otra consulta.
-    posiciones = list(config.cartera)
     try:
-        filas = database.get_series(
-            config.database_path,
-            [p.coin_id for p in posiciones],
-            semanal.HORAS,
-            config.vs_currency,
-        )
+        semana = _leer_semana(config)
     except database.DatabaseError as e:
         logger.error("No se pudieron leer los precios de la semana: %s", e)
         return
-    semana = semanal.semana(posiciones, filas)
     if semana is None:
         logger.info("Toca el resumen semanal, pero aun no hay precios de la semana")
     elif not _mandar_semana(config, semana):
@@ -1463,7 +1462,18 @@ def resumen_semanal(config: Config, ahora: datetime | None = None) -> None:
         logger.error("No se pudo apuntar el resumen semanal: %s", e)
 
 
-def _mandar_semana(config: Config, semana: semanal.Semana) -> bool:
+def _leer_semana(config: Config) -> semanal.Semana | None:
+    posiciones = list(config.cartera)
+    filas = database.get_series(
+        config.database_path,
+        [p.coin_id for p in posiciones],
+        semanal.HORAS,
+        config.vs_currency,
+    )
+    return semanal.semana(posiciones, filas)
+
+
+def _foto_semana(config: Config, semana: semanal.Semana) -> str | comandos.Foto:
     primero = semana.serie[0][0]
     # Contra la hora de verdad, que es con la que se leyeron los precios.
     ahora = datetime.now(timezone.utc)
@@ -1471,7 +1481,6 @@ def _mandar_semana(config: Config, semana: semanal.Semana) -> bool:
     texto = alerts.con_fuente(
         alerts.formatear_semana(semana, config.vs_currency, desde)
     )
-    sin_sonido = _sin_sonido(config)
 
     invertidos = [p.invertido for p in config.cartera]
     invertido = None if None in invertidos else sum(invertidos)
@@ -1485,20 +1494,41 @@ def _mandar_semana(config: Config, semana: semanal.Semana) -> bool:
             invertido=invertido,
         )
     except Exception as e:
-        logger.warning("Mando el resumen semanal sin imagen: %s", e)
-    else:
+        logger.warning("Resumen semanal sin imagen: %s", e)
+        return texto
+    return comandos.Foto(png, texto, texto)
+
+
+def _mandar_semana(config: Config, semana: semanal.Semana) -> bool:
+    respuesta = _foto_semana(config, semana)
+    sin_sonido = _sin_sonido(config)
+    if isinstance(respuesta, comandos.Foto):
         if telegram.send_photo(
             config.telegram_token,
             config.telegram_chat_id,
-            png,
-            texto,
+            respuesta.png,
+            respuesta.pie,
             sin_sonido=sin_sonido,
         ):
             return True
+        respuesta = respuesta.texto
 
     return telegram.send_message(
-        config.telegram_token, config.telegram_chat_id, texto, sin_sonido=sin_sonido
+        config.telegram_token,
+        config.telegram_chat_id,
+        respuesta,
+        sin_sonido=sin_sonido,
     )
+
+
+def _semana(config: Config) -> str | comandos.Foto:
+    config = _con_cambios(config)
+    if not config.cartera:
+        return SIN_CARTERA
+    semana = _leer_semana(config)
+    if semana is None:
+        return "Aún no tengo precios de esta semana. Vuelve a preguntar en un rato."
+    return _foto_semana(config, semana)
 
 
 def _avisar_salud(config: Config, texto: str) -> bool:

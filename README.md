@@ -168,6 +168,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/ath bitcoin` | Su máximo histórico, cuándo fue y cuánto le falta para volver (vale `/ath btc eth`, y a secas, las que vigilas) |
 | `/cartera` | Tu cartera: cuánto vale, cuánto ganas o pierdes y la gráfica de 7 días |
 | `/cartera 30d` | Lo mismo, con la gráfica del tramo que digas |
+| `/semana` | El resumen de tu semana sin esperar al domingo. No gasta consultas |
 | `/compra bitcoin 0.01 600` | Apunta en la cartera que has comprado 0,01 por 600 € |
 | `/compra bitcoin 0.01 @60000` | Lo mismo, con el precio de cada una en vez del total |
 | `/venta bitcoin 0.005` | Apunta una venta (`/venta bitcoin todo` la saca de la cartera) |
@@ -386,7 +387,7 @@ Si además tienes `PORTFOLIO`, los domingos a esa misma hora te llega **tu
 semana**: cuánto ha ganado o perdido la cartera en 7 días, cada cripto de la que
 mejor ha ido a la que peor y la gráfica de la semana. Sale de los precios que ya
 tiene guardados, así que no gasta consultas, pero necesita que el bot lleve
-unos días en `--loop`.
+unos días en `--loop`. Con `/semana` lo pides cuando quieras.
 
 **Que no te despierte:**
 ```
