@@ -3,6 +3,8 @@
 import difflib
 from dataclasses import dataclass
 
+from . import simbolos
+
 # Lo que sale en el menu de Telegram al escribir "/".
 COMANDOS = {
     "status": "Cómo van tus criptos ahora",
@@ -105,13 +107,25 @@ class Foto:
 def interpretar(texto: str) -> tuple[str, str] | None:
     """'/mute@MiBot 2h' -> ('mute', '2h'). None si no es un comando."""
     partes = texto.strip().split(maxsplit=1)
-    if not partes or not partes[0].startswith("/"):
+    if not partes:
         return None
+    if not partes[0].startswith("/"):
+        return ("precio", texto.strip()) if _son_criptos(texto) else None
 
     # En los grupos Telegram le pega el nombre del bot: /status@MiBot
     nombre = partes[0][1:].split("@")[0].lower()
     argumento = partes[1].strip() if len(partes) > 1 else ""
     return ALIAS.get(nombre, nombre), argumento
+
+
+def _son_criptos(texto: str) -> bool:
+    """'btc' o 'btc eth' a secas, que es lo que mas se escribe."""
+    # Solo las conocidas: con cualquier palabra, un "hola" acabaria en /precio hola.
+    conocidas = {*simbolos.IDS, *simbolos.IDS.values()}
+    palabras = texto.lower().replace(",", " ").split()
+    return 0 < len(palabras) <= simbolos.MAX_VARIAS and all(
+        p in conocidas for p in palabras
+    )
 
 
 @dataclass(frozen=True)

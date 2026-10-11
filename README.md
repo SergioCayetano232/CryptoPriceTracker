@@ -164,6 +164,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/precio solana` | Lo que vale una cripto ahora y cómo va en 24 h y en 7 días, aunque no la vigiles |
 | `/precio btc eth sol` | Lo mismo de varias a la vez, una por línea (hasta 10) |
 | `/precio` | Sin decir cuál, todas las que vigilas |
+| `btc` o `btc eth` | Sin barra, lo mismo que `/precio`. Solo con las conocidas, para que un "hola" no se lo tome como una cripto |
 | `/ath bitcoin` | Su máximo histórico, cuándo fue y cuánto le falta para volver (vale `/ath btc eth`, y a secas, las que vigilas) |
 | `/cartera` | Tu cartera: cuánto vale, cuánto ganas o pierdes y la gráfica de 7 días |
 | `/cartera 30d` | Lo mismo, con la gráfica del tramo que digas |

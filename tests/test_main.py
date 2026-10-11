@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 import pytest
 
 import main
-from crypto_tracker import coingecko, database, grafica, miedo, telegram
+from crypto_tracker import coingecko, comandos, database, grafica, miedo, telegram
 from crypto_tracker.config import Config, Posicion, Watch
 from crypto_tracker.precio import Precio
 
@@ -206,6 +206,23 @@ def test_status(config, enviados, monkeypatch):
     main.atender(config, _mensaje("/status"))
 
     assert "63.000,00" in enviados[0]
+
+
+def test_btc_a_secas_da_el_precio(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 63000.0})
+
+    main.atender(config, _mensaje("btc"))
+
+    assert "63.000,00" in enviados[0]
+
+
+def test_hola_a_secas_no_pide_precios(config, enviados, monkeypatch):
+    pedidas = _precio(monkeypatch, {"bitcoin": 63000.0})
+
+    main.atender(config, _mensaje("hola"))
+
+    assert pedidas == []
+    assert enviados[0] == comandos.NO_ENTIENDO
 
 
 def test_status_sin_coingecko(config, enviados, monkeypatch):

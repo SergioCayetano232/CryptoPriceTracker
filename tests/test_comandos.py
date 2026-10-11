@@ -33,9 +33,24 @@ def test_interpretar(texto, esperado):
     assert interpretar(texto) == esperado
 
 
-@pytest.mark.parametrize("texto", ["", "   ", "hola", "status", "precio /status"])
+@pytest.mark.parametrize(
+    "texto", ["", "   ", "hola", "status", "precio /status", "btc hola", "btc " * 11]
+)
 def test_lo_que_no_es_comando(texto):
     assert interpretar(texto) is None
+
+
+@pytest.mark.parametrize(
+    "texto,esperado",
+    [
+        ("btc", ("precio", "btc")),
+        ("  BTC ", ("precio", "BTC")),
+        ("bitcoin", ("precio", "bitcoin")),
+        ("btc eth, sol", ("precio", "btc eth, sol")),
+    ],
+)
+def test_criptos_a_secas_son_precio(texto, esperado):
+    assert interpretar(texto) == esperado
 
 
 def test_la_ayuda_lista_todos_los_comandos():
