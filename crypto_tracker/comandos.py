@@ -27,6 +27,7 @@ COMANDOS = {
     "comparar": "Qué tal les ha ido, de mejor a peor (ej: /comparar btc eth 7d)",
     "convertir": "Cuánto es en dinero o en cripto (ej: /convertir 0.05 bitcoin)",
     "si": "Cuánto tendrías si hubieras invertido (ej: /si 1000 bitcoin 30d)",
+    "dca": "Lo mismo, metiendo un poco cada semana (ej: /dca 50 bitcoin 90d)",
     "exportar": "Los precios guardados en un CSV (ej: /exportar bitcoin 30d)",
     "mercado": "Lo que vale todo el mercado y cuánto es de Bitcoin",
     "tendencias": "Las criptos que más se buscan hoy",

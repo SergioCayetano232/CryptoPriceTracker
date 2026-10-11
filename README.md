@@ -193,6 +193,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/convertir 0.05 bitcoin` | Cuánto es en euros al precio de ahora |
 | `/convertir 500 eur solana` | Al revés: cuánta solana compras con 500 € (vale `500€`) |
 | `/si 1000 bitcoin 30d` | Cuánto tendrías hoy si hubieras metido 1.000 € hace 30 días (sin tramo, 30 días) |
+| `/dca 50 bitcoin semanal 90d` | Lo mismo metiendo 50 € cada semana, con lo invertido y el precio medio. También `diario` o `mensual`; sin decirlo, semanal y 90 días |
 | `/exportar bitcoin 30d` | Te manda un CSV con los precios guardados (sin tramo, 30 días) |
 | `/mercado` | Lo que vale todo el mercado cripto, cómo va en 24 h y qué parte es de Bitcoin, Ethereum y las estables |
 | `/tendencias` | Las 7 criptos que más se buscan hoy en CoinGecko, con un botón en cada una para ver su precio y ponerle una alerta |
@@ -511,6 +512,7 @@ crypto_tracker/
   convertir.py   entiende lo que le pides a /convertir
   exportar.py    el CSV de /exportar
   hubiera.py     entiende lo que le pides a /si
+  dca.py         las compras periódicas de /dca
   maximo.py      el máximo histórico de /ath
   tendencias.py  lo que más se busca, para /tendencias
   mercado.py     el mercado entero, para /mercado

@@ -2799,6 +2799,35 @@ def test_si_con_el_ultimo_precio_viejo(config, enviados):
     assert "El último precio que tengo es del" in enviados[0]
 
 
+# --- /dca ---
+
+
+def test_dca(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    # Compra a 50.000 y a 25.000, y ahora esta a 60.000
+    _precio_hace(config, 50000.0, 14 * 24 * 60 - 10)
+    _precio_hace(config, 25000.0, 6 * 24 * 60)
+    _precio_hace(config, 60000.0, 5)
+
+    main.atender(config, _mensaje("/dca 100 btc 14d"))
+
+    assert "€100,00 en <b>Bitcoin</b> cada semana hace 14 días" in enviados[0]
+    assert "<b>€360,00</b>" in enviados[0]
+    assert "2 compras, €200,00 en total" in enviados[0]
+
+
+def test_dca_sin_precios(config, enviados):
+    main.atender(config, _mensaje("/dca 50 solana"))
+
+    assert "No tengo precios guardados de <b>solana</b>" in enviados[0]
+
+
+def test_dca_mal_escrito(config, enviados):
+    main.atender(config, _mensaje("/dca"))
+
+    assert "/dca 50 bitcoin semanal 90d" in enviados[0]
+
+
 # --- /historico con tramo ---
 
 

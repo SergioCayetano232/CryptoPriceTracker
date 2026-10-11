@@ -539,6 +539,42 @@ def formatear_hubiera(
     return texto
 
 
+def formatear_dca(
+    cantidad: float,
+    coin_id: str,
+    cada: str,
+    compras: int,
+    cripto: float,
+    valor: float,
+    horas: float,
+    desde: datetime | None,
+    currency: str,
+    ultimo: datetime | None = None,
+) -> str:
+    """Respuesta de /dca. desde y ultimo, como en /si."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(coin_id.replace("-", " ").title())
+    invertido = cantidad * compras
+    porcentaje = (valor / invertido - 1) * 100
+    cuando = f"desde el {desde.astimezone():%d/%m}" if desde else _hace(horas)
+    veces = "1 compra" if compras == 1 else f"{compras} compras"
+
+    texto = (
+        f"🔁 Metiendo {simbolo}{_num(cantidad)} en <b>{nombre}</b> {cada} "
+        f"{cuando}, hoy tendrías <b>{simbolo}{_num(valor)}</b>\n"
+        f"{_flecha(porcentaje)} {porcentaje:+.2f}% "
+        f"({_ganancia(valor - invertido, simbolo)})\n"
+        f"<i>{veces}, {simbolo}{_num(invertido)} en total · "
+        f"precio medio {simbolo}{_num(invertido / cripto)}</i>"
+    )
+    if desde:
+        texto += f"\n<i>Solo tengo precios desde entonces, no de {_hace(horas)}</i>"
+    if ultimo:
+        fecha = ultimo.astimezone()
+        texto += f"\n<i>El último precio que tengo es del {fecha:%d/%m a las %H:%M}</i>"
+    return texto
+
+
 def _hace(horas: float) -> str:
     """'hace 30 días', 'hace 12 h'."""
     if horas >= 48 and horas % 24 == 0:
