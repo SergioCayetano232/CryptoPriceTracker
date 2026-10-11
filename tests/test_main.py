@@ -452,6 +452,53 @@ def test_resumen_sin_coingecko(config, enviados, monkeypatch):
     assert "No he podido" in enviados[0]
 
 
+def test_horario_cambia_la_hora_del_resumen(con_resumen, enviados):
+    main.atender(con_resumen, _mensaje("/horario 8:30"))
+
+    assert "a las <b>08:30</b>" in enviados[0]
+    main.resumen_diario(con_resumen, _dia(8, 35))
+    assert "resumen del día" in enviados[1]
+
+
+def test_horario_a_las_9_ya_no_toca(con_resumen, enviados):
+    main.atender(con_resumen, _mensaje("/horario 20:00"))
+
+    main.resumen_diario(con_resumen, _dia(9, 0))
+
+    assert len(enviados) == 1
+
+
+def test_horario_no_quita_el_resumen(con_resumen, enviados):
+    main.atender(con_resumen, _mensaje("/horario no"))
+    main.resumen_diario(con_resumen, _dia(9, 0))
+
+    assert "Ya no te mando el resumen" in enviados[0]
+    assert len(enviados) == 1
+
+
+def test_horario_lo_pone_aunque_el_env_no_lo_tenga(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 63000.0})
+    main.atender(config, _mensaje("/horario"))
+    main.atender(config, _mensaje("/horario 7"))
+    main.resumen_diario(config, _dia(7, 0))
+
+    assert "Ahora no te mando resumen" in enviados[0]
+    assert "resumen del día" in enviados[2]
+
+
+def test_horario_a_secas_dice_la_hora(con_resumen, enviados):
+    main.atender(con_resumen, _mensaje("/horario"))
+
+    assert "a las <b>09:00</b>" in enviados[0]
+
+
+def test_horario_mal_escrito(con_resumen, enviados):
+    main.atender(con_resumen, _mensaje("/horario mañana"))
+
+    assert "No entiendo 'mañana'" in enviados[0]
+    assert database.hora_resumen(con_resumen.database_path) == (False, None)
+
+
 def test_el_status_no_lleva_el_miedo(con_resumen, enviados, monkeypatch):
     def no_llamar():
         raise AssertionError("/status no tiene que esperar a alternative.me")
@@ -3493,6 +3540,19 @@ def test_semanal_reintenta_si_telegram_falla(con_semana, monkeypatch):
         database.ultimo_resumen(con_semana.database_path, database.ULTIMO_SEMANAL)
         is None
     )
+
+
+def test_semanal_a_la_hora_de_horario(con_semana, sin_fotos_de_verdad):
+    from datetime import time
+
+    _semana_guardada(con_semana)
+    database.guardar_hora_resumen(con_semana.database_path, time(20, 0))
+
+    main.resumen_semanal(con_semana, DOMINGO)  # a las 9:30 ya no toca
+    assert sin_fotos_de_verdad == []
+
+    main.resumen_semanal(con_semana, _dia(20, 0, dia=27))
+    assert len(sin_fotos_de_verdad) == 1
 
 
 def test_semanal_avisa_si_no_hay_semana_entera(con_semana, sin_fotos_de_verdad):

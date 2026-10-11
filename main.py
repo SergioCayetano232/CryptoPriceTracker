@@ -229,7 +229,7 @@ def _calladas(config: Config) -> set[str]:
 
 
 def _con_cambios(config: Config) -> Config:
-    """La config de verdad: lo que vigilas y tu cartera, el .env mas lo de Telegram."""
+    """La config de verdad: el .env mas lo que cambias por Telegram."""
     try:
         cambios = database.get_cambios(config.database_path)
     except database.DatabaseError as e:
@@ -249,6 +249,14 @@ def _con_cambios(config: Config) -> Config:
         config = replace(
             config, cartera=movimientos.combinar(config.cartera, de_cartera)
         )
+
+    try:
+        cambiada, hora = database.hora_resumen(config.database_path)
+    except database.DatabaseError as e:
+        logger.error("No se pudo leer la hora del resumen: %s", e)
+        cambiada = False
+    if cambiada:
+        config = replace(config, resumen_diario=hora)
     return config
 
 
@@ -668,6 +676,9 @@ def responder(
         database.descallar_todas(config.database_path)
         return "🔔 Vuelvo a avisar." if estaba or calladas else "No estaba callado."
 
+    if nombre == "horario":
+        return _horario(config, argumento)
+
     if nombre == "semana":
         return _semana(config)
 
@@ -798,6 +809,26 @@ def responder(
         return alerts.con_fuente(alerts.formatear_busqueda(argumento, resultados))
 
     return comandos.no_entiendo(nombre, telegram.escape(argumento))
+
+
+def _horario(config: Config, argumento: str) -> str:
+    if not argumento:
+        hora = _con_cambios(config).resumen_diario
+        if hora is None:
+            return "Ahora no te mando resumen. Para ponerlo: /horario 9:00"
+        return (
+            f"☀️ Te mando el resumen cada día a las <b>{hora:%H:%M}</b>.\n"
+            "Para cambiarla: /horario 8:30. Para quitarlo: /horario no"
+        )
+
+    try:
+        hora = diario.leer_hora(argumento)
+    except ConfigError as e:
+        return telegram.escape(str(e))
+    database.guardar_hora_resumen(config.database_path, hora)
+    if hora is None:
+        return "🔕 Ya no te mando el resumen del día. Para volver: /horario 9:00"
+    return f"☀️ Hecho, te mando el resumen cada día a las <b>{hora:%H:%M}</b>."
 
 
 def _alertas(config: Config) -> str | comandos.ConBotones:
@@ -1451,6 +1482,7 @@ TITULO_DIARIO = "☀️ <b>Tu resumen del día</b>"
 
 def resumen_diario(config: Config, ahora: datetime | None = None) -> None:
     """Manda el resumen del dia si toca. Si falla, lo reintenta el siguiente ciclo."""
+    config = _con_cambios(config)
     if config.resumen_diario is None:
         return
 

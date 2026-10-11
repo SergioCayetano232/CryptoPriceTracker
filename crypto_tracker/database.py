@@ -3,7 +3,7 @@
 import logging
 import sqlite3
 from contextlib import contextmanager
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
 
 from .config import Posicion
@@ -94,6 +94,9 @@ SILENCIO = "silenciado_hasta"
 # Dia del ultimo resumen diario, para no mandarlo dos veces si se reinicia.
 ULTIMO_RESUMEN = "ultimo_resumen"
 ULTIMO_SEMANAL = "ultimo_semanal"
+
+# La hora del resumen puesta con /horario, encima de la del .env. Vacio es sin resumen.
+HORA_RESUMEN = "hora_resumen"
 
 
 class DatabaseError(Exception):
@@ -399,6 +402,34 @@ def descallar_todas(db_path: str) -> int:
     with _connect(db_path) as conn:
         cursor = conn.execute("DELETE FROM ajustes WHERE clave LIKE 'callada:%'")
     return cursor.rowcount
+
+
+def guardar_hora_resumen(db_path: str, hora: time | None) -> None:
+    """La hora de /horario. None es que no quieres resumen."""
+    valor = hora.strftime("%H:%M") if hora is not None else ""
+    with _connect(db_path) as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (HORA_RESUMEN, valor),
+        )
+
+
+def hora_resumen(db_path: str) -> tuple[bool, time | None]:
+    """(si la cambiaste con /horario, la hora). Sin cambiar, manda la del .env."""
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT valor FROM ajustes WHERE clave = ?", (HORA_RESUMEN,)
+        ).fetchone()
+
+    if not fila:
+        return False, None
+    if not fila["valor"]:
+        return True, None
+    try:
+        return True, time.fromisoformat(fila["valor"])
+    except ValueError:
+        logger.warning("La hora del resumen no se entiende: %r", fila["valor"])
+        return False, None
 
 
 def ultimo_resumen(db_path: str, clave: str = ULTIMO_RESUMEN) -> date | None:

@@ -161,6 +161,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 |---|---|
 | `/status` | Cómo van tus criptos ahora |
 | `/resumen` | El resumen del día cuando lo pidas, con el índice de miedo y codicia. No quita el de la hora de siempre |
+| `/horario 8:30` | Cambia la hora del resumen del día (y del de los domingos). `/horario no` lo quita; a secas, te dice cuál tienes |
 | `/precio solana` | Lo que vale una cripto ahora y cómo va en 24 h y en 7 días, aunque no la vigiles |
 | `/precio btc eth sol` | Lo mismo de varias a la vez, una por línea (hasta 10) |
 | `/precio` | Sin decir cuál, todas las que vigilas |
@@ -385,6 +386,9 @@ RESUMEN_DIARIO=09:00
 Mientras esté en modo `--loop`, te manda cada día a esa hora lo mismo que
 `--status`. Si a esa hora estaba apagado, te lo manda al volver, pero solo hasta
 dos horas tarde. Con `--mute` tampoco llega.
+
+Desde Telegram puedes cambiar la hora con `/horario 8:30` o quitarlo con
+`/horario no`, sin tocar el `.env`. Lo que pongas ahí manda sobre el `.env`.
 
 Si además tienes `PORTFOLIO`, los domingos a esa misma hora te llega **tu
 semana**: cuánto ha ganado o perdido la cartera en 7 días, cada cripto de la que

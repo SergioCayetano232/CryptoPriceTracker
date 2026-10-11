@@ -4,7 +4,8 @@ from datetime import date, datetime, time
 
 import pytest
 
-from crypto_tracker.diario import es_hora_tranquila, toca_resumen
+from crypto_tracker.config import ConfigError
+from crypto_tracker.diario import es_hora_tranquila, leer_hora, toca_resumen
 
 NUEVE = time(9, 0)
 HOY = date(2026, 9, 29)
@@ -70,3 +71,24 @@ def test_tramo_de_noche(ahora, tranquila):
 def test_tramo_de_dia(ahora, tranquila):
     # la siesta: sin cruzar la medianoche
     assert es_hora_tranquila(ahora, time(14, 0), time(16, 0)) is tranquila
+
+
+@pytest.mark.parametrize(
+    "texto,esperado",
+    [
+        ("8:30", time(8, 30)),
+        ("9", time(9, 0)),
+        ("a las 21:00", time(21, 0)),
+        ("0:00", time(0, 0)),
+        ("no", None),
+        ("Nunca", None),
+    ],
+)
+def test_leer_hora(texto, esperado):
+    assert leer_hora(texto) == esperado
+
+
+@pytest.mark.parametrize("texto", ["mañana", "25:00", "8:75"])
+def test_leer_hora_mal(texto):
+    with pytest.raises(ConfigError, match="/horario 8:30"):
+        leer_hora(texto)

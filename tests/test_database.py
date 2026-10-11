@@ -223,6 +223,18 @@ def test_callar_una_cripto(db):
     assert database.criptos_calladas(db) == {}
 
 
+def test_hora_del_resumen(db):
+    from datetime import time
+
+    assert database.hora_resumen(db) == (False, None)  # manda la del .env
+
+    database.guardar_hora_resumen(db, time(8, 30))
+    assert database.hora_resumen(db) == (True, time(8, 30))
+
+    database.guardar_hora_resumen(db, None)
+    assert database.hora_resumen(db) == (True, None)  # sin resumen, aunque el .env diga
+
+
 def test_descallar_todas(db):
     from datetime import datetime, timedelta, timezone
 
