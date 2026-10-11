@@ -1390,6 +1390,101 @@ def test_callado_no_caduca_hasta_que_vuelves(config, enviados, monkeypatch):
     assert database.get_puntuales(config.database_path, "eur") == []
 
 
+# --- /mute de una sola cripto ---
+
+
+@pytest.fixture
+def dos_vigiladas(config):
+    from dataclasses import replace
+
+    return replace(
+        config, watchlist=[Watch("bitcoin", percent=5), Watch("solana", percent=5)]
+    )
+
+
+def _callar(config, coin_id, horas=1):
+    from datetime import timedelta
+
+    hasta = datetime.now(timezone.utc) + timedelta(hours=horas)
+    database.callar_cripto(config.database_path, coin_id, hasta)
+
+
+def test_la_callada_no_avisa_y_las_demas_si(dos_vigiladas, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 90000.0, "solana": 300.0})
+    _callar(dos_vigiladas, "bitcoin")
+
+    main.ejecutar_ciclo(dos_vigiladas, {"bitcoin": "%60000.0", "solana": "%150.0"})
+
+    assert "Solana" in enviados[0]
+    assert "Bitcoin" not in enviados[0]
+
+
+def test_solo_la_callada_no_manda_nada(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 90000.0})
+    _callar(config, "bitcoin")
+
+    estado, _ = main.ejecutar_ciclo(config, {"bitcoin": "%60000.0"})
+
+    assert enviados == []
+    # Como el mute de todas: al volver no llega de golpe lo que paso mientras
+    assert estado == {"bitcoin": "%90000.0"}
+
+
+def test_la_alerta_de_una_callada_espera(config, enviados, monkeypatch):
+    database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
+    _caducada(config, objetivo=95000)
+    _precio(monkeypatch, {"bitcoin": 71000.0})
+    _callar(config, "bitcoin")
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%71000.0"})
+
+    assert enviados == []
+    assert len(database.get_puntuales(config.database_path, "eur")) == 2
+
+    database.callar_cripto(config.database_path, "bitcoin", None)
+    main.ejecutar_ciclo(config, {"bitcoin": "%71000.0"})
+
+    assert any("Era tu /alerta" in t for t in enviados)
+    assert database.get_puntuales(config.database_path, "eur") == []
+
+
+def test_mute_de_una_cripto(config, enviados):
+    main.atender(config, _mensaje("/mute btc 2h"))
+
+    assert "No te aviso de <b>bitcoin</b> hasta las" in enviados[0]
+    assert "/unmute bitcoin" in enviados[0]
+    assert set(database.criptos_calladas(config.database_path)) == {"bitcoin"}
+    assert database.silenciado_hasta(config.database_path) is None
+
+
+def test_mute_de_una_cripto_sin_tiempo(config, enviados):
+    main.atender(config, _mensaje("/mute btc"))
+
+    assert "¿Cuánto tiempo?" in enviados[0]
+    assert database.criptos_calladas(config.database_path) == {}
+
+
+def test_unmute_de_una_cripto(config, enviados):
+    _callar(config, "bitcoin")
+    _callar(config, "solana")
+
+    main.atender(config, _mensaje("/unmute btc"))
+    main.atender(config, _mensaje("/unmute btc"))
+
+    assert "Vuelvo a avisar de <b>bitcoin</b>" in enviados[0]
+    assert "No tenía callada <b>bitcoin</b>" in enviados[1]
+    assert set(database.criptos_calladas(config.database_path)) == {"solana"}
+
+
+def test_unmute_a_secas_quita_tambien_las_de_una_cripto(config, enviados):
+    _callar(config, "bitcoin")
+
+    main.atender(config, _mensaje("/unmute"))
+
+    assert enviados[0] == "🔔 Vuelvo a avisar."
+    assert database.criptos_calladas(config.database_path) == {}
+
+
 def test_si_no_llega_el_aviso_de_caducada_no_la_borra(config, monkeypatch):
     monkeypatch.setattr(telegram, "send_message", lambda *a, **k: False)
     _caducada(config)

@@ -209,6 +209,33 @@ def test_quitar_el_silencio(db):
     assert database.silenciado_hasta(db) is None
 
 
+def test_callar_una_cripto(db):
+    from datetime import datetime, timedelta, timezone
+
+    ahora = datetime.now(timezone.utc)
+    database.callar_cripto(db, "bitcoin", ahora + timedelta(hours=2))
+    database.callar_cripto(db, "solana", ahora - timedelta(minutes=1))  # ya paso
+
+    assert set(database.criptos_calladas(db)) == {"bitcoin"}
+    assert database.silenciado_hasta(db) is None  # las demas siguen avisando
+
+    database.callar_cripto(db, "bitcoin", None)
+    assert database.criptos_calladas(db) == {}
+
+
+def test_descallar_todas(db):
+    from datetime import datetime, timedelta, timezone
+
+    hasta = datetime.now(timezone.utc) + timedelta(hours=2)
+    database.callar_cripto(db, "bitcoin", hasta)
+    database.callar_cripto(db, "solana", hasta)
+    database.silenciar_hasta(db, hasta)
+
+    assert database.descallar_todas(db) == 2
+    assert database.criptos_calladas(db) == {}
+    assert database.silenciado_hasta(db) is not None  # ese va aparte
+
+
 def test_silenciar_pisa_lo_anterior(db):
     from datetime import datetime, timedelta, timezone
 

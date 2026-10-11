@@ -21,6 +21,7 @@ from crypto_tracker import (
     alerts,
     botones,
     brusco,
+    callar,
     cartera,
     coingecko,
     comandos,
@@ -170,6 +171,12 @@ def ejecutar_ciclo(
     except database.DatabaseError as e:
         logger.error("No se pudo guardar el estado de las alertas: %s", e)
 
+    # Como con el /mute de todas: las de /alerta no se borran y saltan al volver.
+    calladas = _calladas(config)
+    if calladas:
+        avisos = [a for a in avisos if a.coin_id not in calladas]
+        hechas = [p for p in hechas if p.coin_id not in calladas]
+
     if not avisos:
         logger.info("Ningun umbral cruzado")
         return estado_nuevo, None
@@ -210,6 +217,15 @@ def ejecutar_ciclo(
         logger.error("No se pudo avisar de: %s", cruzadas)
 
     return estado_nuevo, None
+
+
+def _calladas(config: Config) -> set[str]:
+    try:
+        return set(database.criptos_calladas(config.database_path))
+    except database.DatabaseError as e:
+        # Mejor algun aviso de mas que quedarse sin ninguno.
+        logger.error("No se pudo leer que criptos estan calladas: %s", e)
+        return set()
 
 
 def _con_cambios(config: Config) -> Config:
@@ -265,6 +281,8 @@ def _caducar(
     if _silenciado(config):
         return pendientes
     viejas = puntuales.caducadas(pendientes, datetime.now(timezone.utc))
+    calladas = _calladas(config)
+    viejas = [p for p in viejas if p.coin_id not in calladas]
     if not viejas:
         return pendientes
 
@@ -617,10 +635,18 @@ def responder(
                 "🔕 ¿Cuánto tiempo me callo?", botones.para_mute()
             )
         try:
-            minutos = minutos_mute(argumento, datetime.now().astimezone())
+            cripto, minutos = callar.interpretar(argumento, datetime.now().astimezone())
         except ConfigError as e:
             return str(e)
         hasta = datetime.now(timezone.utc) + timedelta(minutes=minutos)
+        if cripto:
+            database.callar_cripto(config.database_path, cripto, hasta)
+            return (
+                f"🔕 No te aviso de <b>{telegram.escape(cripto)}</b> hasta las "
+                f"{hasta.astimezone():%H:%M del %d/%m} "
+                f"({salud.cuanto(timedelta(minutes=minutos))}). "
+                f"Las demás siguen avisando. Para deshacerlo, /unmute {cripto}"
+            )
         database.silenciar_hasta(config.database_path, hasta)
         return comandos.ConBotones(
             f"🔕 Callado hasta las {hasta.astimezone():%H:%M del %d/%m} "
@@ -629,9 +655,18 @@ def responder(
         )
 
     if nombre == "unmute":
+        if argumento:
+            cripto = simbolos.a_id(argumento)
+            if cripto not in database.criptos_calladas(config.database_path):
+                return f"No tenía callada <b>{telegram.escape(cripto)}</b>."
+            database.callar_cripto(config.database_path, cripto, None)
+            return f"🔔 Vuelvo a avisar de <b>{telegram.escape(cripto)}</b>."
+
         estaba = database.silenciado_hasta(config.database_path)
+        calladas = database.criptos_calladas(config.database_path)
         database.silenciar_hasta(config.database_path, None)
-        return "🔔 Vuelvo a avisar." if estaba else "No estaba callado."
+        database.descallar_todas(config.database_path)
+        return "🔔 Vuelvo a avisar." if estaba or calladas else "No estaba callado."
 
     if nombre == "semana":
         return _semana(config)

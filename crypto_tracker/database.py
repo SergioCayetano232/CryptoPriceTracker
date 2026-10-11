@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS alert_state (
     updated_at TEXT NOT NULL
 );
 
--- Ajustes sueltos, de momento solo hasta cuando estan silenciados los avisos.
+-- Ajustes sueltos: el silencio, la de cada cripto callada, el ultimo resumen...
 -- Una tabla de clave/valor evita tener que migrar cada vez que anada algo.
 CREATE TABLE IF NOT EXISTS ajustes (
     clave TEXT PRIMARY KEY,
@@ -360,6 +360,45 @@ def silenciado_hasta(db_path: str) -> datetime | None:
         return None
 
     return cuando
+
+
+def callar_cripto(db_path: str, coin_id: str, cuando: datetime | None) -> None:
+    """Hasta cuando no se avisa de esta. None la vuelve a activar."""
+    with _connect(db_path) as conn:
+        if cuando is None:
+            conn.execute("DELETE FROM ajustes WHERE clave = ?", (f"callada:{coin_id}",))
+            return
+
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (f"callada:{coin_id}", cuando.isoformat(timespec="seconds")),
+        )
+
+
+def criptos_calladas(db_path: str) -> dict[str, datetime]:
+    """Las que tienen su propio /mute, con hasta cuando. Las ya pasadas no salen."""
+    with _connect(db_path) as conn:
+        filas = conn.execute(
+            "SELECT clave, valor FROM ajustes WHERE clave LIKE 'callada:%'"
+        ).fetchall()
+
+    ahora = datetime.now(timezone.utc)
+    calladas = {}
+    for fila in filas:
+        try:
+            cuando = datetime.fromisoformat(fila["valor"])
+        except ValueError:
+            continue
+        if cuando > ahora:
+            calladas[fila["clave"].removeprefix("callada:")] = cuando
+    return calladas
+
+
+def descallar_todas(db_path: str) -> int:
+    """Quita el /mute de todas las criptos. Devuelve cuantas lo tenian."""
+    with _connect(db_path) as conn:
+        cursor = conn.execute("DELETE FROM ajustes WHERE clave LIKE 'callada:%'")
+    return cursor.rowcount
 
 
 def ultimo_resumen(db_path: str, clave: str = ULTIMO_RESUMEN) -> date | None:

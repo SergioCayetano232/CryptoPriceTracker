@@ -35,7 +35,7 @@ COMANDOS = {
     "miedo": "El índice de miedo y codicia del mercado",
     "buscar": "Encuentra el id de una cripto (ej: /buscar btc)",
     "consultas": "Cuántas consultas a CoinGecko llevas este mes",
-    "mute": "Callar los avisos un rato (ej: /mute 2h o /mute hasta 8:00)",
+    "mute": "Callar los avisos un rato (ej: /mute 2h o /mute bitcoin hasta 8:00)",
     "unmute": "Volver a avisar",
     "bot": "Si sigo funcionando: desde cuándo y el último ciclo",
     "ayuda": "Lo que sé hacer",

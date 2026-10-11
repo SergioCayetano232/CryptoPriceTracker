@@ -205,7 +205,9 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/mute` | Te pregunta cuánto tiempo callarse, con botones: 1 h, 4 h o hasta las 8:00 (si ya está callado, te dice hasta cuándo) |
 | `/mute 2h` | Calla los avisos ese rato, con un botón para deshacerlo |
 | `/mute hasta 8:00` | Calla los avisos hasta esa hora (si ya ha pasado, la de mañana) |
-| `/unmute` | Vuelve a avisar |
+| `/mute bitcoin 2h` | Calla solo esa cripto; las demás siguen avisando. Sus `/alerta` esperan a que vuelva |
+| `/unmute` | Vuelve a avisar, también de las que callaste una a una |
+| `/unmute bitcoin` | Vuelve a avisar solo de esa |
 | `/ayuda` | La lista de comandos |
 
 En los comandos vale el símbolo de las más conocidas en vez del id: `/precio btc`,
@@ -512,6 +514,7 @@ crypto_tracker/
   convertir.py   entiende lo que le pides a /convertir
   exportar.py    el CSV de /exportar
   hubiera.py     entiende lo que le pides a /si
+  callar.py      entiende /mute con una sola cripto
   dca.py         las compras periódicas de /dca
   maximo.py      el máximo histórico de /ath
   tendencias.py  lo que más se busca, para /tendencias
