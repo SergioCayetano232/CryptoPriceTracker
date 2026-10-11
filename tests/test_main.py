@@ -397,6 +397,44 @@ def test_resumen_diario_sale_aunque_falle_el_miedo(con_resumen, enviados, monkey
     assert "Miedo y codicia" not in enviados[0]
 
 
+def test_resumen_cuando_lo_pides(con_resumen, enviados, monkeypatch):
+    from datetime import date
+
+    from crypto_tracker.miedo import Indice
+
+    monkeypatch.setattr(
+        miedo, "pedir", lambda: [Indice(20, "Extreme Fear", date(2026, 9, 29))]
+    )
+
+    main.atender(con_resumen, _mensaje("/resumen"))
+
+    assert "resumen del día" in enviados[0]
+    assert "63.000,00" in enviados[0]
+    assert "Miedo y codicia: <b>20</b>" in enviados[0]
+
+
+def test_resumen_a_mano_no_quita_el_de_las_9(con_resumen, enviados, monkeypatch):
+    monkeypatch.setattr(miedo, "pedir", lambda: [])
+
+    main.atender(con_resumen, _mensaje("/resumen"))
+    main.resumen_diario(con_resumen, _dia(9, 0))
+
+    assert len(enviados) == 2
+    assert "resumen del día" in enviados[1]
+
+
+def test_resumen_sin_coingecko(config, enviados, monkeypatch):
+    def falla(ids, cur):
+        raise coingecko.CoinGeckoError("Sin conexion")
+
+    monkeypatch.setattr(coingecko, "get_prices", falla)
+    monkeypatch.setattr(miedo, "pedir", lambda: [])
+
+    main.atender(config, _mensaje("/resumen"))
+
+    assert "No he podido" in enviados[0]
+
+
 def test_el_status_no_lleva_el_miedo(con_resumen, enviados, monkeypatch):
     def no_llamar():
         raise AssertionError("/status no tiene que esperar a alternative.me")
@@ -3354,6 +3392,15 @@ def test_status_lleva_boton_de_actualizar(config, con_teclado, monkeypatch):
     texto, kw = con_teclado[0]
     assert "63.000,00" in texto
     assert kw["botones"] == [[("🔄 Actualizar", "/status")]]
+
+
+def test_resumen_lleva_boton_de_actualizar(config, con_teclado, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 63000.0})
+    monkeypatch.setattr(miedo, "pedir", lambda: [])
+
+    main.atender(config, _mensaje("/resumen"))
+
+    assert con_teclado[0][1]["botones"] == [[("🔄 Actualizar", "/resumen")]]
 
 
 def test_pulsar_actualizar_vuelve_a_consultar(config, con_teclado, monkeypatch):

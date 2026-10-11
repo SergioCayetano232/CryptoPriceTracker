@@ -160,6 +160,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | Comando | Qué hace |
 |---|---|
 | `/status` | Cómo van tus criptos ahora |
+| `/resumen` | El resumen del día cuando lo pidas, con el índice de miedo y codicia. No quita el de la hora de siempre |
 | `/precio solana` | Lo que vale una cripto ahora y cómo va en 24 h y en 7 días, aunque no la vigiles |
 | `/precio btc eth sol` | Lo mismo de varias a la vez, una por línea (hasta 10) |
 | `/precio` | Sin decir cuál, todas las que vigilas |
@@ -226,8 +227,8 @@ Si en un mensaje vienen varias criptos, salen los botones de las tres primeras.
 `/mute` a secas te deja elegir cuánto con un toque, y al callarlo sale un
 **🔔 Volver a avisar** por si te arrepientes.
 
-`/status`, `/cartera` y `/alertas` llevan un **🔄 Actualizar** para volver a pedirlos
-de un toque.
+`/status`, `/resumen`, `/cartera` y `/alertas` llevan un **🔄 Actualizar** para
+volver a pedirlos de un toque.
 
 **Alertas de una sola vez:**
 

@@ -587,6 +587,13 @@ def responder(
             return "No he podido consultar los precios. Prueba en un rato."
         return comandos.ConBotones(texto, botones.actualizar("/status"))
 
+    if nombre == "resumen":
+        # No lo apunto como enviado: el de las 9 tiene que llegar igual.
+        texto = montar_resumen(config, titulo=TITULO_DIARIO, pie=_linea_miedo())
+        if texto is None:
+            return "No he podido consultar los precios. Prueba en un rato."
+        return comandos.ConBotones(texto, botones.actualizar("/resumen"))
+
     if nombre == "mute":
         if not argumento:
             # A secas, si ya estaba callado, mejor decirlo que alargarlo sin querer.
@@ -1358,6 +1365,9 @@ def _historico(config: Config, argumento: str) -> str | comandos.Foto:
     return comandos.Foto(png, mensaje(con_linea=False), mensaje(con_linea=True))
 
 
+TITULO_DIARIO = "☀️ <b>Tu resumen del día</b>"
+
+
 def resumen_diario(config: Config, ahora: datetime | None = None) -> None:
     """Manda el resumen del dia si toca. Si falla, lo reintenta el siguiente ciclo."""
     if config.resumen_diario is None:
@@ -1378,9 +1388,7 @@ def resumen_diario(config: Config, ahora: datetime | None = None) -> None:
         logger.info("Toca el resumen diario, pero esta silenciado")
         return
 
-    texto = montar_resumen(
-        config, titulo="☀️ <b>Tu resumen del día</b>", pie=_linea_miedo()
-    )
+    texto = montar_resumen(config, titulo=TITULO_DIARIO, pie=_linea_miedo())
     if texto is None:
         return
 
