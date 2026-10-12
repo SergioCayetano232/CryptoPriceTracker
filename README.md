@@ -190,6 +190,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/historico bitcoin` | Imagen con la gráfica de las últimas 24 h, máximo y mínimo |
 | `/historico bitcoin 7d` | Lo mismo, del tramo que digas (`12h`, `7d`, `30d`...) |
 | `/historico` | Sin decir cuál, la primera que vigilas (también `/historico 7d`) |
+| `/media bitcoin` | Su media de 7, 30 y 90 días y si el precio de ahora está por encima o por debajo de cada una (`/media bitcoin 14d`, solo la de esos días). Sale de lo guardado y no gasta consultas |
 | `/racha bitcoin` | Cuántos días seguidos lleva subiendo o bajando y cuánto lleva en esa racha. Sale de lo guardado y no gasta consultas |
 | `/rango bitcoin 30d` | Su máximo, su mínimo y su media en ese tramo, y en qué punto del rango está hoy (sin tramo, 7 días). Sale de lo guardado y no gasta consultas |
 | `/comparar btc eth sol 7d` | Qué tal le ha ido a cada una en ese tramo, de la mejor a la peor (sin tramo, 7 días; sin criptos, las que vigilas) |
@@ -542,6 +543,7 @@ crypto_tracker/
   proximo.py     a qué precio salta el siguiente aviso
   cartera.py     cuánto vale lo que tienes
   grafica.py     las imágenes de /historico y /cartera
+  media.py       las medias de 7, 30 y 90 días, para /media
   racha.py       los días seguidos subiendo o bajando, para /racha
   rango.py       el máximo, el mínimo y la media de /rango
   periodo.py     lee tramos como 7d

@@ -3952,3 +3952,35 @@ def test_racha_de_varias(config, enviados):
     main.atender(config, _mensaje("/racha btc eth"))
 
     assert "De una en una" in enviados[0]
+
+
+# --- /media ---
+
+
+def test_media(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    for dias in range(7):
+        _precio_de(config, "bitcoin", 100.0 + dias * 10, (6 - dias) * 24 * 60 + 5)
+
+    main.atender(config, _mensaje("/media btc"))
+
+    texto = enviados[0]
+    assert "ahora €160,00" in texto
+    assert "Media de 7 días  €130,00  🔺 +23.08% por encima" in texto
+    assert "Media de 30 días  <i>no tengo tantos días guardados</i>" in texto
+
+
+def test_media_con_tramo(config, enviados):
+    _precio_de(config, "bitcoin", 100.0, 24 * 60 + 5)
+    _precio_de(config, "bitcoin", 110.0, 5)
+
+    main.atender(config, _mensaje("/media 2d"))
+
+    assert "Media de 2 días  €105,00" in enviados[0]
+    assert "30 días" not in enviados[0]
+
+
+def test_media_sin_precios(config, enviados):
+    main.atender(config, _mensaje("/media sol"))
+
+    assert "No tengo precios guardados de <b>solana</b>" in enviados[0]

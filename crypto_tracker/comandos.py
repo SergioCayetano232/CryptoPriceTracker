@@ -23,6 +23,7 @@ COMANDOS = {
     "alertas": "Las alertas que tienes puestas",
     "quitar": "Quitar alertas (ej: /quitar 3, /quitar 2 5 o /quitar todas)",
     "historico": "Cómo ha ido una cripto (ej: /historico bitcoin 7d)",
+    "media": "Las medias de 7, 30 y 90 días y si está por encima (ej: /media btc)",
     "racha": "Cuántos días seguidos lleva subiendo o bajando (ej: /racha btc)",
     "rango": "Entre qué precios se ha movido y dónde está hoy (ej: /rango btc 30d)",
     "volatilidad": "Cuánto se mueve, para elegir el % (ej: /volatilidad btc 30d)",
@@ -81,6 +82,7 @@ ALIAS = {
     "volatility": "volatilidad",
     "range": "rango",
     "streak": "racha",
+    "average": "media",
     "ranking": "comparar",
     "global": "mercado",
     "máximo": "ath",
@@ -153,6 +155,11 @@ EJEMPLOS = {
     "dca": [
         ("/dca 50 bitcoin", "50 € cada semana durante 90 días"),
         ("/dca 50 bitcoin diario 30d", "también diario o mensual"),
+    ],
+    "media": [
+        ("/media bitcoin", "la de 7, 30 y 90 días, y si está por encima o debajo"),
+        ("/media bitcoin 14d", "solo la de esos días"),
+        ("/media", "a secas, la primera que vigilo"),
     ],
     "racha": [
         ("/racha bitcoin", "cuántos días seguidos lleva subiendo o bajando"),

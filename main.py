@@ -35,6 +35,7 @@ from crypto_tracker import (
     extremos,
     grafica,
     hubiera,
+    media,
     miedo,
     movimientos,
     objetivo,
@@ -811,6 +812,9 @@ def responder(
     if nombre == "racha":
         return _racha(config, argumento)
 
+    if nombre == "media":
+        return _media(config, argumento)
+
     if nombre == "buscar":
         if not argumento:
             return "¿Qué busco? Por ejemplo: /buscar btc"
@@ -1312,6 +1316,31 @@ def _rango(config: Config, argumento: str) -> str:
     return alerts.formatear_rango(
         coin_id, resultado, horas, config.vs_currency, primero if falta else None
     )
+
+
+def _media(config: Config, argumento: str) -> str:
+    try:
+        coin_id, ventanas = media.interpretar(argumento)
+    except periodo.PeriodoError as e:
+        return telegram.escape(str(e))
+    if not coin_id:
+        vigiladas = _con_cambios(config).watchlist
+        if not vigiladas:
+            return f"¿De cuál? Por ejemplo: {media.EJEMPLO}"
+        coin_id = vigiladas[0].coin_id
+
+    # El "ahora" es el último guardado, asi no gasta consultas.
+    serie = database.get_serie(
+        config.database_path, coin_id, max(ventanas) * 24, config.vs_currency
+    )
+    dias = volatilidad.por_dias(serie)
+    if not dias:
+        return (
+            f"No tengo precios guardados de <b>{telegram.escape(coin_id)}</b>. "
+            "Solo sé de las que vigilo: míralas con /vigilar"
+        )
+    medias = {v: media.calcular(dias, v) for v in ventanas}
+    return alerts.formatear_media(coin_id, dias[-1][1], medias, config.vs_currency)
 
 
 def _racha(config: Config, argumento: str) -> str:

@@ -509,6 +509,29 @@ def formatear_conversion(
     return f"💱 {linea}\n<i>1 {nombre} = {simbolo}{_num(precio)}</i>"
 
 
+def formatear_media(
+    coin_id: str, ahora: float, medias: dict[int, float | None], currency: str
+) -> str:
+    """Respuesta de /media. medias va de los días de la ventana a su media."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(coin_id.replace("-", " ").title())
+    lineas = [f"📐 <b>{nombre}</b>  ahora {simbolo}{_num(ahora)}", ""]
+    for dias, media in medias.items():
+        if media is None:
+            lineas.append(
+                f"Media de {dias} días  <i>no tengo tantos días guardados</i>"
+            )
+            continue
+        diferencia = (ahora / media - 1) * 100
+        lado = "por encima" if diferencia >= 0 else "por debajo"
+        lineas.append(
+            f"Media de {dias} días  {simbolo}{_num(media)}  "
+            f"{_flecha(diferencia)} {diferencia:+.2f}% {lado}"
+        )
+    lineas.append("\n<i>Con el precio del final de cada día</i>")
+    return "\n".join(lineas)
+
+
 def formatear_racha(coin_id: str, r: Racha, currency: str) -> str:
     """Respuesta de /racha."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
