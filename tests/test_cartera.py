@@ -7,6 +7,7 @@ import pytest
 from crypto_tracker.alerts import formatear_cartera
 from crypto_tracker.cartera import (
     Valor,
+    de,
     peso,
     serie_valor,
     total,
@@ -262,3 +263,13 @@ def test_serie_valor_no_tira_de_precios_viejos():
 
 def test_serie_valor_sin_cartera():
     assert serie_valor([], [(_h(0), "bitcoin", 60000.0)]) == []
+
+
+def test_de_una_sola():
+    posiciones = parse_cartera("bitcoin:0.016:1000,solana:7")
+
+    btc = de(posiciones, "bitcoin", 70000.0)
+    assert btc.valor == pytest.approx(1120)
+    assert btc.ganancia == pytest.approx(120)
+    assert de(posiciones, "solana", 150.0).porcentaje is None  # sin lo invertido
+    assert de(posiciones, "ethereum", 3000.0) is None

@@ -2239,6 +2239,31 @@ def test_precio_con_la_ultima_hora(config, enviados, monkeypatch):
     assert "€63.000,00\n🔻 -0.40% en 1 h\n🔺 +2.50% en 24 h" in enviados[0]
 
 
+def test_precio_con_lo_que_tienes(con_cartera, enviados, monkeypatch):
+    monkeypatch.setattr(
+        coingecko,
+        "precios_semana",
+        lambda ids, cur: {"bitcoin": Precio("bitcoin", 70000.0, 2.5, -4.25)},
+    )
+
+    main.atender(con_cartera, _mensaje("/precio btc"))
+
+    assert "💼 Tienes 0,016, que valen <b>€1.120,00</b>" in enviados[0]
+    assert "+€120,00" in enviados[0]
+
+
+def test_precio_de_una_que_no_tienes(con_cartera, enviados, monkeypatch):
+    monkeypatch.setattr(
+        coingecko,
+        "precios_semana",
+        lambda ids, cur: {"ethereum": Precio("ethereum", 2500.0, 2.5, -4.25)},
+    )
+
+    main.atender(con_cartera, _mensaje("/precio eth"))
+
+    assert "Tienes" not in enviados[0]
+
+
 def test_precio_de_varias_con_la_semana(config, enviados, monkeypatch):
     monkeypatch.setattr(
         coingecko,

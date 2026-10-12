@@ -1127,7 +1127,13 @@ def _precio(config: Config, argumento: str) -> str:
         coin_id, precio, en_24h, en_7d = lineas[0]
         return alerts.con_fuente(
             alerts.formatear_precio(
-                coin_id, precio, en_24h, config.vs_currency, en_7d, en_1h.get(coin_id)
+                coin_id,
+                precio,
+                en_24h,
+                config.vs_currency,
+                en_7d,
+                en_1h.get(coin_id),
+                cartera.de(list(_con_cambios(config).cartera), coin_id, precio),
             )
         )
     return alerts.con_fuente(

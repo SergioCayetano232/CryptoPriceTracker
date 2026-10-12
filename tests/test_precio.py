@@ -1,5 +1,7 @@
 """Tests de leer el precio con las variaciones de 1 h, 24 h y 7 dias."""
 
+from crypto_tracker.alerts import formatear_precio
+from crypto_tracker.cartera import Valor
 from crypto_tracker.precio import Precio, leer
 
 
@@ -41,3 +43,19 @@ def test_leer_sin_precio_no_vale():
 def test_leer_ignora_basura():
     assert list(leer([None, {"current_price": 1}, _moneda()])) == ["bitcoin"]
     assert leer({"status": {"error_code": 429}}) == {}
+
+
+def test_formatear_con_lo_que_tienes():
+    tuyo = Valor("bitcoin", 1120.0, 1000.0, 0.016)
+
+    texto = formatear_precio("bitcoin", 70000.0, 2.5, "eur", tuyo=tuyo)
+
+    assert "💼 Tienes 0,016, que valen <b>€1.120,00</b>  🔺 +12.00% (+€120,00)" in texto
+
+
+def test_formatear_con_lo_que_tienes_sin_invertido():
+    tuyo = Valor("bitcoin", 1120.0, None, 0.016)
+
+    texto = formatear_precio("bitcoin", 70000.0, 2.5, "eur", tuyo=tuyo)
+
+    assert texto.endswith("que valen <b>€1.120,00</b>")

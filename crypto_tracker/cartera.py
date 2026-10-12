@@ -56,6 +56,14 @@ def valorar(
     return valores, faltan
 
 
+def de(posiciones: list[Posicion], coin_id: str, precio: float) -> Valor | None:
+    """Lo que tienes de una sola, a ese precio. None si no la tienes."""
+    valores, _ = valorar(
+        [p for p in posiciones if p.coin_id == coin_id], {coin_id: precio}
+    )
+    return valores[0] if valores else None
+
+
 def total(valores: list[Valor]) -> Valor:
     """La suma. Si alguna no dice lo que costo, el total tampoco puede."""
     invertido = None

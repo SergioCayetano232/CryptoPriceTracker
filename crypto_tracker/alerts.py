@@ -615,8 +615,11 @@ def formatear_precio(
     currency: str,
     en_7d: float | None = None,
     en_1h: float | None = None,
+    tuyo: Valor | None = None,
 ) -> str:
-    """Respuesta de /precio: lo que vale ahora y cómo va en 1 h, 24 h y 7 días."""
+    """Respuesta de /precio: lo que vale ahora y cómo va en 1 h, 24 h y 7 días.
+
+    tuyo es lo que tienes de ella, si esta en la cartera."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
     nombre = escape(coin_id.replace("-", " ").title())
     texto = f"💰 <b>{nombre}</b>  {simbolo}{_num(precio)}"
@@ -628,6 +631,16 @@ def formatear_precio(
         texto += f"\n{_flecha(variacion)} {variacion:+.2f}% en 24 h"
     if en_7d is not None:
         texto += f"\n{_flecha(en_7d)} {en_7d:+.2f}% en 7 días"
+    if tuyo is not None:
+        texto += (
+            f"\n\n💼 Tienes {texto_cantidad(tuyo.cantidad)}, "
+            f"que valen <b>{simbolo}{_num(tuyo.valor)}</b>"
+        )
+        if tuyo.porcentaje is not None:
+            texto += (
+                f"  {_flecha(tuyo.porcentaje)} {tuyo.porcentaje:+.2f}% "
+                f"({_ganancia(tuyo.ganancia, simbolo)})"
+            )
     return texto
 
 
