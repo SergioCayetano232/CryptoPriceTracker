@@ -17,6 +17,7 @@ from .movimientos import Movimiento, texto_cantidad
 from .objetivo import Escenario
 from .periodo import nombre as nombre_periodo
 from .puntuales import CARTERA, Puntual, cumplidas, ejemplo
+from .racha import Racha
 from .rango import Rango, barra
 from .semanal import Semana
 from .telegram import escape
@@ -506,6 +507,23 @@ def formatear_conversion(
     else:
         linea = f"{lado_cripto} = <b>{lado_dinero}</b>"
     return f"💱 {linea}\n<i>1 {nombre} = {simbolo}{_num(precio)}</i>"
+
+
+def formatear_racha(coin_id: str, r: Racha, currency: str) -> str:
+    """Respuesta de /racha."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(coin_id.replace("-", " ").title())
+    hacia = "subiendo" if r.sube else "bajando"
+    dias = "1 día" if r.dias == 1 else f"{r.dias} días"
+    # Si los datos se acaban antes que la racha, puede ser más larga.
+    cuantos = dias if r.entera else f"al menos {dias}"
+    return (
+        f"{_flecha(r.cambio)} <b>{nombre}</b> lleva <b>{cuantos}</b> "
+        f"{'' if r.dias == 1 else 'seguidos '}{hacia}, contando hoy\n"
+        f"{r.cambio:+.2f}% desde el {r.desde:%d/%m}: "
+        f"{simbolo}{_num(r.antes)} → {simbolo}{_num(r.ahora)}\n"
+        "<i>Con el precio del final de cada día</i>"
+    )
 
 
 def formatear_rango(

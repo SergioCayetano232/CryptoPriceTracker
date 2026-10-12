@@ -3926,3 +3926,29 @@ def test_rango_mal_escrito(config, enviados):
     main.atender(config, _mensaje("/rango btc eth"))
 
     assert "/rango bitcoin 7d" in enviados[0]
+
+
+# --- /racha ---
+
+
+def test_racha(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    for dias, precio in [(3, 120.0), (2, 100.0), (1, 105.0), (0, 110.0)]:
+        _precio_de(config, "bitcoin", precio, dias * 24 * 60 + 5)
+
+    main.atender(config, _mensaje("/racha btc"))
+
+    assert "lleva <b>2 días</b> seguidos subiendo" in enviados[0]
+    assert "+10.00%" in enviados[0]
+
+
+def test_racha_sin_precios(config, enviados):
+    main.atender(config, _mensaje("/racha sol"))
+
+    assert "No tengo precios guardados de <b>solana</b>" in enviados[0]
+
+
+def test_racha_de_varias(config, enviados):
+    main.atender(config, _mensaje("/racha btc eth"))
+
+    assert "De una en una" in enviados[0]

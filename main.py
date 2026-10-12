@@ -41,6 +41,7 @@ from crypto_tracker import (
     periodo,
     proximo,
     puntuales,
+    racha,
     rango,
     salud,
     semanal,
@@ -807,6 +808,9 @@ def responder(
     if nombre == "rango":
         return _rango(config, argumento)
 
+    if nombre == "racha":
+        return _racha(config, argumento)
+
     if nombre == "buscar":
         if not argumento:
             return "¿Qué busco? Por ejemplo: /buscar btc"
@@ -1299,7 +1303,8 @@ def _rango(config: Config, argumento: str) -> str:
     if resultado is None:
         return (
             f"No tengo precios guardados de <b>{telegram.escape(coin_id)}</b> "
-            f"({periodo.nombre(horas)}). Solo sé de las que vigilo: míralas con /vigilar"
+            f"({periodo.nombre(horas)}). Solo sé de las que vigilo: míralas "
+            "con /vigilar"
         )
 
     primero = serie[0][0]
@@ -1307,6 +1312,30 @@ def _rango(config: Config, argumento: str) -> str:
     return alerts.formatear_rango(
         coin_id, resultado, horas, config.vs_currency, primero if falta else None
     )
+
+
+def _racha(config: Config, argumento: str) -> str:
+    if len(argumento.split()) > 1:
+        return "De una en una. Por ejemplo: /racha bitcoin"
+    if argumento:
+        coin_id = simbolos.a_id(argumento)
+    else:
+        vigiladas = _con_cambios(config).watchlist
+        if not vigiladas:
+            return "¿De cuál? Por ejemplo: /racha bitcoin"
+        coin_id = vigiladas[0].coin_id
+
+    serie = database.get_serie(
+        config.database_path, coin_id, racha.HORAS, config.vs_currency
+    )
+    resultado = racha.calcular(volatilidad.por_dias(serie))
+    if resultado is None:
+        return (
+            f"No tengo precios guardados de <b>{telegram.escape(coin_id)}</b> de dos "
+            "días seguidos que hayan cambiado. Solo sé de las que vigilo: míralas "
+            "con /vigilar"
+        )
+    return alerts.formatear_racha(coin_id, resultado, config.vs_currency)
 
 
 def _convertir(config: Config, argumento: str) -> str:
