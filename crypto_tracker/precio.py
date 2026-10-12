@@ -1,4 +1,4 @@
-"""/precio: lo que vale una cripto y como va en 24 h y en una semana."""
+"""/precio: lo que vale una cripto y como va en 1 h, en 24 h y en una semana."""
 
 import math
 from dataclasses import dataclass
@@ -10,10 +10,11 @@ class Precio:
     precio: float
     en_24h: float | None  # en %
     en_7d: float | None
+    en_1h: float | None = None
 
 
 def leer(datos) -> dict[str, Precio]:
-    """Saca lo de /coins/markets con price_change_percentage=24h,7d."""
+    """Saca lo de /coins/markets con price_change_percentage=1h,24h,7d."""
     precios = {}
     for d in datos if isinstance(datos, list) else []:
         if not isinstance(d, dict) or not d.get("id"):
@@ -27,6 +28,7 @@ def leer(datos) -> dict[str, Precio]:
             precio,
             _numero(d.get("price_change_percentage_24h_in_currency")),
             _numero(d.get("price_change_percentage_7d_in_currency")),
+            _numero(d.get("price_change_percentage_1h_in_currency")),
         )
     return precios
 

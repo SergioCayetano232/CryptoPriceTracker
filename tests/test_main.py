@@ -2224,6 +2224,19 @@ def test_precio_con_la_semana(config, enviados, monkeypatch):
     main.atender(config, _mensaje("/precio btc"))
 
     assert "🔺 +2.50% en 24 h\n🔻 -4.25% en 7 días" in enviados[0]
+    assert "en 1 h" not in enviados[0]  # si CoinGecko no lo da, no sale
+
+
+def test_precio_con_la_ultima_hora(config, enviados, monkeypatch):
+    monkeypatch.setattr(
+        coingecko,
+        "precios_semana",
+        lambda ids, cur: {"bitcoin": Precio("bitcoin", 63000.0, 2.5, -4.25, -0.4)},
+    )
+
+    main.atender(config, _mensaje("/precio btc"))
+
+    assert "€63.000,00\n🔻 -0.40% en 1 h\n🔺 +2.50% en 24 h" in enviados[0]
 
 
 def test_precio_de_varias_con_la_semana(config, enviados, monkeypatch):

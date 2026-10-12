@@ -162,7 +162,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/status` | Cómo van tus criptos ahora |
 | `/resumen` | El resumen del día cuando lo pidas, con el índice de miedo y codicia. No quita el de la hora de siempre |
 | `/horario 8:30` | Cambia la hora del resumen del día (y del de los domingos). `/horario no` lo quita; a secas, te dice cuál tienes |
-| `/precio solana` | Lo que vale una cripto ahora y cómo va en 24 h y en 7 días, aunque no la vigiles |
+| `/precio solana` | Lo que vale una cripto ahora y cómo va en la última hora, en 24 h y en 7 días, aunque no la vigiles |
 | `/precio btc eth sol` | Lo mismo de varias a la vez, una por línea (hasta 10) |
 | `/precio` | Sin decir cuál, todas las que vigilas |
 | `btc` o `btc eth` | Sin barra, lo mismo que `/precio`. Solo con las conocidas, para que un "hola" no se lo tome como una cripto |

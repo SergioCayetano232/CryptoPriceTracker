@@ -1118,6 +1118,7 @@ def _precio(config: Config, argumento: str) -> str:
         if en_24h is None:
             en_24h = _variacion(config, c, p.precio)
         lineas.append((c, p.precio, en_24h, p.en_7d))
+    en_1h = {c: p.en_1h for c, p in precios.items()}
     faltan = [c for c in coin_ids if c not in precios]
     if not lineas:
         return alerts.formatear_no_encuentro(faltan)
@@ -1125,7 +1126,9 @@ def _precio(config: Config, argumento: str) -> str:
     if len(coin_ids) == 1:
         coin_id, precio, en_24h, en_7d = lineas[0]
         return alerts.con_fuente(
-            alerts.formatear_precio(coin_id, precio, en_24h, config.vs_currency, en_7d)
+            alerts.formatear_precio(
+                coin_id, precio, en_24h, config.vs_currency, en_7d, en_1h.get(coin_id)
+            )
         )
     return alerts.con_fuente(
         alerts.formatear_precios(lineas, faltan, config.vs_currency)

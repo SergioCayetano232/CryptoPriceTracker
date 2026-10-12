@@ -93,7 +93,7 @@ AYUDA = (
 # Para /ayuda alerta. Solo los que tienen varias formas; el resto con su linea basta.
 EJEMPLOS = {
     "precio": [
-        ("/precio solana", "lo que vale, y cómo va en 24 h y 7 días"),
+        ("/precio solana", "lo que vale, y cómo va en 1 h, 24 h y 7 días"),
         ("/precio btc eth sol", "varias a la vez (hasta 10)"),
         ("/precio", "a secas, las que vigilo"),
         ("btc", "sin barra, lo mismo"),

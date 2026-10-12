@@ -614,11 +614,14 @@ def formatear_precio(
     variacion: float | None,
     currency: str,
     en_7d: float | None = None,
+    en_1h: float | None = None,
 ) -> str:
-    """Respuesta de /precio: lo que vale ahora y cómo va en 24 h y en 7 días."""
+    """Respuesta de /precio: lo que vale ahora y cómo va en 1 h, 24 h y 7 días."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
     nombre = escape(coin_id.replace("-", " ").title())
     texto = f"💰 <b>{nombre}</b>  {simbolo}{_num(precio)}"
+    if en_1h is not None:
+        texto += f"\n{_flecha(en_1h)} {en_1h:+.2f}% en 1 h"
     if variacion is None:
         texto += "\n<i>Sin datos de las últimas 24 h</i>"
     else:

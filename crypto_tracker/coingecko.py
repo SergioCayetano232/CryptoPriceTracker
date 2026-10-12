@@ -71,14 +71,14 @@ def buscar(texto: str, maximo: int = 5) -> list[dict]:
 def precios_semana(
     coin_ids: list[str], vs_currency: str = "eur"
 ) -> dict[str, precio.Precio]:
-    """Precio y variacion en 24 h y 7 dias de cada una, en una sola peticion."""
+    """Precio y variacion en 1 h, 24 h y 7 dias de cada una, en una sola peticion."""
     if not coin_ids:
         return {}
 
     params = {
         "ids": ",".join(coin_ids),
         "vs_currency": vs_currency,
-        "price_change_percentage": "24h,7d",
+        "price_change_percentage": "1h,24h,7d",
     }
     return precio.leer(_con_reintentos(lambda: _pedir(MARKETS_URL, params)))
 

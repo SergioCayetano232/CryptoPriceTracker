@@ -457,7 +457,7 @@ def test_precios_semana(monkeypatch):
 
     assert pedido["url"].endswith("/coins/markets")
     assert pedido["params"]["ids"] == "bitcoin,solana"
-    assert pedido["params"]["price_change_percentage"] == "24h,7d"
+    assert pedido["params"]["price_change_percentage"] == "1h,24h,7d"
     assert precios["bitcoin"].en_7d == -4.25
 
 
