@@ -14,6 +14,7 @@ from .miedo import Indice
 from .miedo import hace as dia_miedo
 from .miedo import nombre as nombre_miedo
 from .movimientos import Movimiento, texto_cantidad
+from .objetivo import Escenario
 from .periodo import nombre as nombre_periodo
 from .puntuales import CARTERA, Puntual, cumplidas, ejemplo
 from .semanal import Semana
@@ -504,6 +505,31 @@ def formatear_conversion(
     else:
         linea = f"{lado_cripto} = <b>{lado_dinero}</b>"
     return f"💱 {linea}\n<i>1 {nombre} = {simbolo}{_num(precio)}</i>"
+
+
+def formatear_objetivo(e: Escenario, currency: str) -> str:
+    """Respuesta de /objetivo."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(e.coin_id.replace("-", " ").title())
+    diferencia = e.despues - e.ahora
+
+    texto = (
+        f"🎯 Si <b>{nombre}</b> llega a <b>{simbolo}{_num(e.objetivo)}</b> "
+        f"({e.cambio:+.2f}%), tu cartera valdría <b>{simbolo}{_num(e.despues)}</b>\n"
+        f"{_flecha(diferencia)} {_ganancia(diferencia, simbolo)} respecto a hoy "
+        f"({simbolo}{_num(e.ahora)})"
+    )
+    if e.invertido:
+        ganancia = e.despues - e.invertido
+        texto += (
+            f"\nSobre lo invertido, {_ganancia(ganancia, simbolo)} "
+            f"({ganancia / e.invertido * 100:+.2f}%)"
+        )
+    return texto + (
+        f"\n<i>Tus {texto_cantidad(e.cantidad)} {nombre} pasarían de "
+        f"{simbolo}{_num(e.cantidad * e.precio)} a "
+        f"{simbolo}{_num(e.cantidad * e.objetivo)}</i>"
+    )
 
 
 def formatear_hubiera(

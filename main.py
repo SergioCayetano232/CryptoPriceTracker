@@ -37,6 +37,7 @@ from crypto_tracker import (
     hubiera,
     miedo,
     movimientos,
+    objetivo,
     periodo,
     proximo,
     puntuales,
@@ -776,6 +777,9 @@ def responder(
     if nombre == "dca":
         return _dca(config, argumento)
 
+    if nombre == "objetivo":
+        return _objetivo(config, argumento)
+
     if nombre == "ath":
         return _ath(config, argumento)
 
@@ -1391,6 +1395,34 @@ def _dca(config: Config, argumento: str) -> str:
             ultimo if viejo else None,
         )
     )
+
+
+def _objetivo(config: Config, argumento: str) -> str:
+    config = _con_cambios(config)
+    if not config.cartera:
+        return SIN_CARTERA
+    try:
+        coin_id, precio = objetivo.interpretar(argumento)
+    except objetivo.ObjetivoError as e:
+        return telegram.escape(str(e))
+    # Antes de gastar una consulta, que si no la tienes no hay nada que calcular.
+    if coin_id not in {p.coin_id for p in config.cartera}:
+        return (
+            f"No tienes <b>{telegram.escape(coin_id)}</b> en la cartera. "
+            "Mira lo que tienes con /cartera"
+        )
+
+    precios = _consultar(config, [p.coin_id for p in config.cartera])
+    if precios is None:
+        return "No he podido consultar los precios. Prueba en un rato."
+    valores, faltan = cartera.valorar(list(config.cartera), precios)
+    escenario = objetivo.calcular(valores, coin_id, precio)
+    # Sin el precio de alguna, el total saldria mas bajo de lo que es.
+    if faltan or escenario is None:
+        return (
+            "Ahora mismo no tengo el precio de todo lo que tienes. Prueba en un rato."
+        )
+    return alerts.con_fuente(alerts.formatear_objetivo(escenario, config.vs_currency))
 
 
 def _precios_alertas(

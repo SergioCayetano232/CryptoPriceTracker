@@ -195,6 +195,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/convertir 500 eur solana` | Al revés: cuánta solana compras con 500 € (vale `500€`) |
 | `/si 1000 bitcoin 30d` | Cuánto tendrías hoy si hubieras metido 1.000 € hace 30 días (sin tramo, 30 días) |
 | `/dca 50 bitcoin semanal 90d` | Lo mismo metiendo 50 € cada semana, con lo invertido y el precio medio. También `diario` o `mensual`; sin decirlo, semanal y 90 días |
+| `/objetivo bitcoin 100000` | Cuánto valdría tu cartera si bitcoin llegara a ese precio, y cuánto ganarías sobre lo invertido. Vale `100k`, y también para ver una bajada |
 | `/exportar bitcoin 30d` | Te manda un CSV con los precios guardados (sin tramo, 30 días) |
 | `/mercado` | Lo que vale todo el mercado cripto, cómo va en 24 h y qué parte es de Bitcoin, Ethereum y las estables |
 | `/tendencias` | Las 7 criptos que más se buscan hoy en CoinGecko, con un botón en cada una para ver su precio y ponerle una alerta |
@@ -318,6 +319,13 @@ tiene lo que el bot ha ido guardando, así que no llega más atrás de
 hace 30 días, y cuánto habrías ganado o perdido. Sale de los precios que ya
 tiene guardados, así que no gasta consultas, pero solo vale con las criptos que
 vigila y no llega más atrás de cuando lo instalaste.
+
+**Saber cuánto valdría tu cartera a un precio:**
+
+`/objetivo bitcoin 100000` te dice cuánto valdría todo lo que tienes si Bitcoin
+llegara a 100.000 €, cuánto es respecto a hoy y, si apuntaste lo que pagaste,
+cuánto ganarías. Las demás criptos las deja a su precio de ahora. Solo vale con
+las que tienes en la cartera.
 
 **Apuntar compras y ventas desde el móvil:**
 
@@ -519,6 +527,7 @@ crypto_tracker/
   convertir.py   entiende lo que le pides a /convertir
   exportar.py    el CSV de /exportar
   hubiera.py     entiende lo que le pides a /si
+  objetivo.py    lo que valdría tu cartera, para /objetivo
   callar.py      entiende /mute con una sola cripto
   dca.py         las compras periódicas de /dca
   maximo.py      el máximo histórico de /ath

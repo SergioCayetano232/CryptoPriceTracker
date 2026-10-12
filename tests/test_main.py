@@ -3739,3 +3739,51 @@ def test_si_la_foto_no_pasa_el_texto_lleva_el_boton(
     texto, kw = con_teclado[0]
     assert "Tu cartera" in texto
     assert kw["botones"] == [[("🔄 Actualizar", "/cartera")]]
+
+
+# --- /objetivo ---
+
+
+def test_objetivo(con_cartera, enviados, monkeypatch):
+    monkeypatch.setattr(
+        coingecko, "get_prices", lambda ids, cur: {"bitcoin": 70000.0, "solana": 150.0}
+    )
+
+    main.atender(con_cartera, _mensaje("/objetivo btc 100k"))
+
+    assert "valdría <b>€2.650,00</b>" in enviados[0]
+    assert "+€480,00 respecto a hoy" in enviados[0]
+    assert "coingecko.com" in enviados[0]
+
+
+def test_objetivo_de_una_que_no_tienes_no_gasta_consulta(
+    con_cartera, enviados, monkeypatch
+):
+    def no_llamar(*a):
+        raise AssertionError("no deberia consultar precios")
+
+    monkeypatch.setattr(coingecko, "get_prices", no_llamar)
+
+    main.atender(con_cartera, _mensaje("/objetivo eth 3000"))
+
+    assert "No tienes <b>ethereum</b>" in enviados[0]
+
+
+def test_objetivo_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/objetivo btc 100000"))
+
+    assert "PORTFOLIO" in enviados[0]
+
+
+def test_objetivo_si_falta_un_precio(con_cartera, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 70000.0})
+
+    main.atender(con_cartera, _mensaje("/objetivo btc 100000"))
+
+    assert "no tengo el precio de todo" in enviados[0]
+
+
+def test_objetivo_mal_escrito(con_cartera, enviados):
+    main.atender(con_cartera, _mensaje("/objetivo bitcoin"))
+
+    assert "/objetivo bitcoin 100000" in enviados[0]

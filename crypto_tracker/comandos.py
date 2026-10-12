@@ -30,6 +30,7 @@ COMANDOS = {
     "convertir": "Cuánto es en dinero o en cripto (ej: /convertir 0.05 bitcoin)",
     "si": "Cuánto tendrías si hubieras invertido (ej: /si 1000 bitcoin 30d)",
     "dca": "Lo mismo, metiendo un poco cada semana (ej: /dca 50 bitcoin 90d)",
+    "objetivo": "Cuánto valdría tu cartera a ese precio (ej: /objetivo btc 100000)",
     "exportar": "Los precios guardados en un CSV (ej: /exportar bitcoin 30d)",
     "mercado": "Lo que vale todo el mercado y cuánto es de Bitcoin",
     "tendencias": "Las criptos que más se buscan hoy",
@@ -65,6 +66,7 @@ ALIAS = {
     "watch": "vigilar",
     "estado": "status",
     "p": "precio",
+    "target": "objetivo",
     "maximo": "ath",
     "trending": "tendencias",
     "moda": "tendencias",
@@ -147,6 +149,10 @@ EJEMPLOS = {
     "dca": [
         ("/dca 50 bitcoin", "50 € cada semana durante 90 días"),
         ("/dca 50 bitcoin diario 30d", "también diario o mensual"),
+    ],
+    "objetivo": [
+        ("/objetivo bitcoin 100000", "lo que valdría tu cartera si llega a 100.000"),
+        ("/objetivo eth 1500", "también vale para ver qué pasa si baja"),
     ],
     "mute": [
         ("/mute", "te pregunto cuánto, con botones"),
