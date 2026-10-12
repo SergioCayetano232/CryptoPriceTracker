@@ -3787,3 +3787,64 @@ def test_objetivo_mal_escrito(con_cartera, enviados):
     main.atender(con_cartera, _mensaje("/objetivo bitcoin"))
 
     assert "/objetivo bitcoin 100000" in enviados[0]
+
+
+# --- alertas a punto en el resumen ---
+
+
+def test_resumen_lleva_las_alertas_a_punto(con_resumen, enviados, monkeypatch):
+    pedidas = []
+
+    def precios(ids, cur):
+        pedidas.extend(ids)
+        return {"bitcoin": 63000.0, "solana": 150.0}
+
+    monkeypatch.setattr(coingecko, "get_prices", precios)
+    ruta = con_resumen.database_path
+    database.crear_puntual(ruta, "bitcoin", 64000, True, "eur")  # +1,59%
+    database.crear_puntual(ruta, "bitcoin", 80000, True, "eur")  # lejos
+    database.crear_puntual(ruta, "solana", 146, False, "eur")  # no la vigila
+
+    main.atender(con_resumen, _mensaje("/resumen"))
+
+    assert pedidas == ["bitcoin", "solana"]  # todo en una consulta
+    assert "A punto de saltar" in enviados[0]
+    assert "€64.000,00  <i>(falta +1.59%)</i>" in enviados[0]
+    assert "€146,00  <i>(falta -2.67%)</i>" in enviados[0]
+    assert "80.000" not in enviados[0]
+
+
+def test_resumen_sin_alertas_a_punto_como_antes(con_resumen, enviados):
+    database.crear_puntual(con_resumen.database_path, "bitcoin", 80000, True, "eur")
+
+    main.resumen_diario(con_resumen, _dia(9, 5))
+
+    assert "resumen del día" in enviados[0]
+    assert "A punto de saltar" not in enviados[0]
+
+
+def test_resumen_diario_lleva_las_alertas_a_punto(con_resumen, enviados):
+    database.crear_puntual(con_resumen.database_path, "bitcoin", 62000, False, "eur")
+
+    main.resumen_diario(con_resumen, _dia(9, 5))
+
+    assert "A punto de saltar" in enviados[0]
+
+
+def test_resumen_con_alerta_de_la_cartera_a_punto(con_cartera, enviados, monkeypatch):
+    monkeypatch.setattr(
+        coingecko, "get_prices", lambda ids, cur: {"bitcoin": 70000.0, "solana": 150.0}
+    )
+    database.crear_puntual(con_cartera.database_path, "cartera", 2200, True, "eur")
+
+    main.atender(con_cartera, _mensaje("/resumen"))
+
+    assert "<b>Tu cartera</b> 🔺 €2.200,00  <i>(falta +1.38%)</i>" in enviados[0]
+
+
+def test_el_status_no_lleva_las_alertas_a_punto(con_resumen, enviados):
+    database.crear_puntual(con_resumen.database_path, "bitcoin", 64000, True, "eur")
+
+    main.atender(con_resumen, _mensaje("/status"))
+
+    assert "A punto de saltar" not in enviados[0]

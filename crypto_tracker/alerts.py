@@ -986,6 +986,26 @@ def formatear_puntuales(
     return "\n".join(lineas)
 
 
+def formatear_cerca(cerca: list[tuple[Puntual, float]], currency: str) -> str:
+    """Las /alerta que estan a punto, para el resumen del dia."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    lineas = ["🎯 <b>A punto de saltar</b>"]
+    for a, falta in cerca:
+        nombre = (
+            "Tu cartera"
+            if a.coin_id == CARTERA
+            else escape(a.coin_id.replace("-", " ").title())
+        )
+        flecha = "🔺" if a.sube else "🔻"
+        lineas.append(
+            f"<b>{nombre}</b> {flecha} {simbolo}{_num(a.objetivo)}  "
+            f"<i>(falta {falta:+.2f}%)</i>"
+        )
+        if a.nota:
+            lineas.append(f"      📝 {escape(a.nota)}")
+    return "\n".join(lineas)
+
+
 def formatear_caducadas(alertas: list[Puntual], currency: str) -> str:
     """Las de /alerta que se han borrado por tiempo sin llegar a su precio."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")

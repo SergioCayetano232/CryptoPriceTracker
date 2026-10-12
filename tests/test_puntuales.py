@@ -8,6 +8,7 @@ from crypto_tracker.alerts import (
     ALTO,
     Alert,
     formatear,
+    formatear_cerca,
     formatear_puntual,
     formatear_puntuales,
     formatear_quitadas,
@@ -17,6 +18,7 @@ from crypto_tracker.puntuales import (
     PuntualError,
     caducadas,
     caducidad,
+    cerca,
     cumplidas,
     interpretar,
     interpretar_relativa,
@@ -339,3 +341,37 @@ def test_no_es_repetida_si_cambia_algo():
     assert repetida(tienes, "bitcoin", 70000.0, False) is None
     assert repetida(tienes, "ethereum", 70000.0, True) is None
     assert repetida([], "bitcoin", 70000.0, True) is None
+
+
+def test_cerca():
+    lejos = Puntual(1, "bitcoin", 80000, True)
+    justo = Puntual(2, "bitcoin", 71000, True)
+    bajando = Puntual(3, "solana", 147, False)
+    ya_llego = Puntual(4, "solana", 160, False)
+    sin_precio = Puntual(5, "dogecoin", 1, True)
+    precios = {"bitcoin": 70000.0, "solana": 150.0}
+
+    hay = cerca([lejos, justo, bajando, ya_llego, sin_precio], precios)
+
+    assert [(a.id, round(f, 2)) for a, f in hay] == [(2, 1.43), (3, -2.0)]
+
+
+def test_cerca_con_otro_margen():
+    alerta = Puntual(1, "bitcoin", 75000, True)
+
+    assert cerca([alerta], {"bitcoin": 70000.0}) == []
+    assert len(cerca([alerta], {"bitcoin": 70000.0}, margen=10)) == 1
+
+
+def test_formatear_cerca():
+    hay = [
+        (Puntual(2, "bitcoin", 71000, True, nota="vender la mitad"), 1.43),
+        (Puntual(3, "cartera", 2000, False), -2.5),
+    ]
+
+    texto = formatear_cerca(hay, "eur")
+
+    assert "A punto de saltar" in texto
+    assert "<b>Bitcoin</b> 🔺 €71.000,00  <i>(falta +1.43%)</i>" in texto
+    assert "📝 vender la mitad" in texto
+    assert "<b>Tu cartera</b> 🔻 €2.000,00  <i>(falta -2.50%)</i>" in texto

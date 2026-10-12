@@ -17,6 +17,9 @@ EJEMPLO_RELATIVA = "/alerta bitcoin +10%"
 # Es para acordarte de por que la pusiste, no para escribir un diario.
 MAX_NOTA = 100
 
+# En el resumen del dia, las que estan a menos de esto de saltar.
+CERCA = 3.0
+
 # Con este nombre la alerta es del valor de toda la cartera, no de una cripto.
 # Va en la misma tabla, asi no hace falta otra.
 CARTERA = "cartera"
@@ -186,3 +189,20 @@ def cumplidas(alertas: list[Puntual], precios: dict[str, float]) -> list[Puntual
         if (a.sube and precio >= a.objetivo) or (not a.sube and precio <= a.objetivo):
             hechas.append(a)
     return hechas
+
+
+def cerca(
+    alertas: list[Puntual], precios: dict[str, float], margen: float = CERCA
+) -> list[tuple[Puntual, float]]:
+    """Las que estan a punto, con lo que les falta en %. La mas cercana primero."""
+    hechas = cumplidas(alertas, precios)
+    proximas = []
+    for a in alertas:
+        precio = precios.get(a.coin_id)
+        # Las que ya han llegado saltan solas en el siguiente ciclo.
+        if not precio or a in hechas:
+            continue
+        falta = (a.objetivo - precio) / precio * 100
+        if abs(falta) <= margen:
+            proximas.append((a, falta))
+    return sorted(proximas, key=lambda x: abs(x[1]))

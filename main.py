@@ -624,7 +624,9 @@ def responder(
 
     if nombre == "resumen":
         # No lo apunto como enviado: el de las 9 tiene que llegar igual.
-        texto = montar_resumen(config, titulo=TITULO_DIARIO, pie=_linea_miedo())
+        texto = montar_resumen(
+            config, titulo=TITULO_DIARIO, pie=_linea_miedo(), con_cerca=True
+        )
         if texto is None:
             return "No he podido consultar los precios. Prueba en un rato."
         return comandos.ConBotones(texto, botones.actualizar("/resumen"))
@@ -1533,7 +1535,9 @@ def resumen_diario(config: Config, ahora: datetime | None = None) -> None:
         logger.info("Toca el resumen diario, pero esta silenciado")
         return
 
-    texto = montar_resumen(config, titulo=TITULO_DIARIO, pie=_linea_miedo())
+    texto = montar_resumen(
+        config, titulo=TITULO_DIARIO, pie=_linea_miedo(), con_cerca=True
+    )
     if texto is None:
         return
 
@@ -1774,16 +1778,24 @@ def enviar_resumen(config: Config) -> int:
 
 
 def montar_resumen(
-    config: Config, titulo: str | None = None, pie: str | None = None
+    config: Config,
+    titulo: str | None = None,
+    pie: str | None = None,
+    con_cerca: bool = False,
 ) -> str | None:
-    """El texto del resumen con los precios de ahora. None si no hay precios."""
+    """El texto del resumen con los precios de ahora. None si no hay precios.
+
+    con_cerca añade las /alerta que estan a punto de saltar.
+    """
     config = _con_cambios(config)
     coin_ids = [w.coin_id for w in config.watchlist]
-    # Lo de la cartera puede no estar en la lista de vigiladas, pero tambien
-    # necesita precio. Una sola consulta para todo.
-    extra = [p.coin_id for p in config.cartera if p.coin_id not in coin_ids]
+    pendientes = _puntuales(config) if con_cerca else []
+    # Lo de la cartera y lo de las alertas puede no estar en la lista de
+    # vigiladas, pero tambien necesita precio. Una sola consulta para todo.
+    extra = [p.coin_id for p in (*config.cartera, *pendientes)]
+    extra = [c for c in extra if c not in coin_ids and c != puntuales.CARTERA]
 
-    precios = _consultar(config, coin_ids + extra)
+    precios = _consultar(config, coin_ids + list(dict.fromkeys(extra)))
     if precios is None:
         return None
 
@@ -1804,6 +1816,14 @@ def montar_resumen(
 
     if config.cartera:
         texto += "\n\n" + _bloque_cartera(config, precios)
+    if pendientes:
+        con_valor = dict(precios)
+        valor = cartera.valor_total(list(config.cartera), precios)
+        if valor is not None:
+            con_valor[puntuales.CARTERA] = valor
+        hay = puntuales.cerca(pendientes, con_valor)
+        if hay:
+            texto += "\n\n" + alerts.formatear_cerca(hay, config.vs_currency)
     if pie:
         texto += "\n\n" + pie
 
