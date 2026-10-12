@@ -17,6 +17,7 @@ from .movimientos import Movimiento, texto_cantidad
 from .objetivo import Escenario
 from .periodo import nombre as nombre_periodo
 from .puntuales import CARTERA, Puntual, cumplidas, ejemplo
+from .rango import Rango, barra
 from .semanal import Semana
 from .telegram import escape
 from .tendencias import Tendencia
@@ -505,6 +506,37 @@ def formatear_conversion(
     else:
         linea = f"{lado_cripto} = <b>{lado_dinero}</b>"
     return f"💱 {linea}\n<i>1 {nombre} = {simbolo}{_num(precio)}</i>"
+
+
+def formatear_rango(
+    coin_id: str, r: Rango, horas: float, currency: str, desde: datetime | None = None
+) -> str:
+    """Respuesta de /rango. desde va si no hay precios de todo el tramo."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(coin_id.replace("-", " ").title())
+    del_maximo = (r.ahora / r.maximo - 1) * 100
+    del_minimo = (r.ahora / r.minimo - 1) * 100
+
+    texto = (
+        f"📏 <b>{nombre}</b>, {nombre_periodo(horas)}\n\n"
+        f"Máximo {simbolo}{_num(r.maximo)}  <i>el {r.cuando_maximo.astimezone():%d/%m}"
+        f" · ahora {del_maximo:+.2f}%</i>\n"
+        f"Mínimo {simbolo}{_num(r.minimo)}  <i>el {r.cuando_minimo.astimezone():%d/%m}"
+        f" · ahora {del_minimo:+.2f}%</i>\n"
+        f"Media {simbolo}{_num(r.media)}\n\n"
+        f"Ahora <b>{simbolo}{_num(r.ahora)}</b>"
+    )
+    if r.posicion is None:
+        texto += "\n<i>No se ha movido nada en este tramo</i>"
+    else:
+        texto += (
+            f", al {r.posicion:.0f}% del rango\n"
+            f"<code>mín {barra(r.posicion)} máx</code>"
+        )
+    if desde is not None:
+        cuando = desde.astimezone()
+        texto += f"\n<i>Solo tengo precios desde el {cuando:%d/%m a las %H:%M}.</i>"
+    return texto
 
 
 def formatear_objetivo(e: Escenario, currency: str) -> str:

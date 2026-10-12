@@ -3886,3 +3886,43 @@ def test_el_status_no_lleva_las_alertas_a_punto(con_resumen, enviados):
     main.atender(con_resumen, _mensaje("/status"))
 
     assert "A punto de saltar" not in enviados[0]
+
+
+# --- /rango ---
+
+
+def test_rango(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    for horas, precio in [(167, 100.0), (100, 120.0), (50, 80.0), (1, 110.0)]:
+        _precio_de(config, "bitcoin", precio, horas * 60)
+
+    main.atender(config, _mensaje("/rango btc"))
+
+    texto = enviados[0]
+    assert "📏 <b>Bitcoin</b>, últimos 7 días" in texto
+    assert "Máximo €120,00" in texto
+    assert "Mínimo €80,00" in texto
+    assert "Ahora <b>€110,00</b>, al 75% del rango" in texto
+    assert "Solo tengo precios desde el" not in texto
+
+
+def test_rango_a_secas_la_primera_que_vigilas(config, enviados):
+    _precio_de(config, "bitcoin", 100.0, 60)
+    _precio_de(config, "bitcoin", 101.0, 5)
+
+    main.atender(config, _mensaje("/rango"))
+
+    assert "<b>Bitcoin</b>, últimos 7 días" in enviados[0]
+    assert "Solo tengo precios desde el" in enviados[0]
+
+
+def test_rango_sin_precios(config, enviados):
+    main.atender(config, _mensaje("/rango sol 30d"))
+
+    assert "No tengo precios guardados de <b>solana</b>" in enviados[0]
+
+
+def test_rango_mal_escrito(config, enviados):
+    main.atender(config, _mensaje("/rango btc eth"))
+
+    assert "/rango bitcoin 7d" in enviados[0]

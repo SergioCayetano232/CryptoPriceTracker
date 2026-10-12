@@ -23,6 +23,7 @@ COMANDOS = {
     "alertas": "Las alertas que tienes puestas",
     "quitar": "Quitar alertas (ej: /quitar 3, /quitar 2 5 o /quitar todas)",
     "historico": "Cómo ha ido una cripto (ej: /historico bitcoin 7d)",
+    "rango": "Entre qué precios se ha movido y dónde está hoy (ej: /rango btc 30d)",
     "volatilidad": "Cuánto se mueve, para elegir el % (ej: /volatilidad btc 30d)",
     "vigilar": "Ver o cambiar lo que vigilo (ej: /vigilar solana %5)",
     "dejar": "Dejar de vigilar una o varias (ej: /dejar solana o /dejar sol eth)",
@@ -77,6 +78,7 @@ ALIAS = {
     "market": "mercado",
     "compare": "comparar",
     "volatility": "volatilidad",
+    "range": "rango",
     "ranking": "comparar",
     "global": "mercado",
     "máximo": "ath",
@@ -149,6 +151,11 @@ EJEMPLOS = {
     "dca": [
         ("/dca 50 bitcoin", "50 € cada semana durante 90 días"),
         ("/dca 50 bitcoin diario 30d", "también diario o mensual"),
+    ],
+    "rango": [
+        ("/rango bitcoin", "máximo, mínimo y media de los últimos 7 días"),
+        ("/rango bitcoin 30d", "del tramo que digas"),
+        ("/rango", "a secas, la primera que vigilo"),
     ],
     "objetivo": [
         ("/objetivo bitcoin 100000", "lo que valdría tu cartera si llega a 100.000"),
