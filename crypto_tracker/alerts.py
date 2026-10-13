@@ -665,6 +665,16 @@ def formatear_dia(coin_id: str, d: Dia, currency: str, hoy: date | None = None) 
     return texto
 
 
+def formatear_copia(lineas: list[str]) -> str:
+    """Respuesta de /copia."""
+    return (
+        "📋 <b>Cómo está ahora, para pegar en el .env</b>\n\n"
+        f"<code>{escape(chr(10).join(lineas))}</code>\n\n"
+        "<i>Ya incluye lo que has cambiado por Telegram. Guárdalo por si cambias de "
+        "servidor o se pierde la base de datos.</i>"
+    )
+
+
 def formatear_rango(
     coin_id: str, r: Rango, horas: float, currency: str, desde: datetime | None = None
 ) -> str:

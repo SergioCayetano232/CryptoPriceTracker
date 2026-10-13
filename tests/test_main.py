@@ -3981,6 +3981,23 @@ def test_caida_sin_precios(config, enviados):
     assert "No tengo precios guardados de <b>solana</b>" in enviados[0]
 
 
+# --- /copia ---
+
+
+def test_copia_con_lo_de_telegram(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"solana": 150.0, "bitcoin": 60000.0})
+    main.atender(config, _mensaje("/vigilar solana 10"))
+    main.atender(config, _mensaje("/compra bitcoin 0.01 600"))
+    main.atender(config, _mensaje("/horario 8:30"))
+
+    main.atender(config, _mensaje("/copia"))
+
+    texto = enviados[-1]
+    assert "WATCHLIST=bitcoin:%5,solana:10\n" in texto
+    assert "PORTFOLIO=bitcoin:0.01:600\n" in texto
+    assert "RESUMEN_DIARIO=08:30</code>" in texto
+
+
 # --- /dia ---
 
 

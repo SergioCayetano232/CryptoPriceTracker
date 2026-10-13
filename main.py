@@ -28,6 +28,7 @@ from crypto_tracker import (
     comandos,
     comparar,
     convertir,
+    copia,
     cuando,
     cuota,
     database,
@@ -827,6 +828,12 @@ def responder(
 
     if nombre == "dia":
         return _dia(config, argumento)
+
+    if nombre == "copia":
+        actual = _con_cambios(config)
+        return alerts.formatear_copia(
+            copia.lineas(actual.watchlist, actual.cartera, actual.resumen_diario)
+        )
 
     if nombre == "media":
         return _media(config, argumento)

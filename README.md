@@ -210,6 +210,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/top` | Las 5 que más suben y las 5 que más bajan hoy de las 100 más grandes, con su precio |
 | `/miedo` | El índice de miedo y codicia del mercado (0 pánico, 100 euforia), con el de ayer y el de hace una semana. Viene de alternative.me y no gasta consultas de CoinGecko |
 | `/buscar btc` | Encuentra el id de CoinGecko de una cripto |
+| `/copia` | Las líneas `WATCHLIST`, `PORTFOLIO` y `RESUMEN_DIARIO` como están ahora, con lo cambiado por Telegram, listas para pegar en el `.env`. Para guardarlo por si cambias de servidor |
 | `/consultas` | Cuántas consultas a CoinGecko llevas este mes |
 | `/bot` | Si sigue funcionando: desde cuándo está encendido, cuándo fue el último ciclo y las consultas del mes |
 | `/mute` | Te pregunta cuánto tiempo callarse, con botones: 1 h, 4 h o hasta las 8:00 (si ya está callado, te dice hasta cuándo) |
@@ -560,6 +561,7 @@ crypto_tracker/
   diario.py      el resumen diario y las horas tranquilas
   semanal.py     el resumen de la semana de la cartera
   salud.py       avisa si el bot deja de funcionar
+  copia.py       lo de ahora escrito como va en el .env, para /copia
   cuota.py       cuenta las consultas a CoinGecko
   comandos.py    entiende lo que le escribes
 main.py          junta todo
