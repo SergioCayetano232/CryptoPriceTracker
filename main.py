@@ -45,6 +45,7 @@ from crypto_tracker import (
     puntuales,
     racha,
     rango,
+    rsi,
     salud,
     semanal,
     simbolos,
@@ -816,6 +817,9 @@ def responder(
     if nombre == "caida":
         return _caida(config, argumento)
 
+    if nombre == "rsi":
+        return _rsi(config, argumento)
+
     if nombre == "media":
         return _media(config, argumento)
 
@@ -1396,6 +1400,30 @@ def _racha(config: Config, argumento: str) -> str:
             "con /vigilar"
         )
     return alerts.formatear_racha(coin_id, resultado, config.vs_currency)
+
+
+def _rsi(config: Config, argumento: str) -> str:
+    if len(argumento.split()) > 1:
+        return "De una en una. Por ejemplo: /rsi bitcoin"
+    if argumento:
+        coin_id = simbolos.a_id(argumento)
+    else:
+        vigiladas = _con_cambios(config).watchlist
+        if not vigiladas:
+            return "¿De cuál? Por ejemplo: /rsi bitcoin"
+        coin_id = vigiladas[0].coin_id
+
+    serie = database.get_serie(
+        config.database_path, coin_id, rsi.HORAS, config.vs_currency
+    )
+    resultado = rsi.calcular(volatilidad.por_dias(serie))
+    if resultado is None:
+        return (
+            f"Necesito {rsi.PERIODO + 1} días seguidos de precios de "
+            f"<b>{telegram.escape(coin_id)}</b> y no los tengo. Solo sé de las que "
+            "vigilo, y desde que las vigilo: míralas con /vigilar"
+        )
+    return alerts.formatear_rsi(coin_id, resultado, config.vs_currency)
 
 
 def _convertir(config: Config, argumento: str) -> str:

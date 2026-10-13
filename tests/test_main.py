@@ -3962,6 +3962,35 @@ def test_caida_sin_precios(config, enviados):
     assert "No tengo precios guardados de <b>solana</b>" in enviados[0]
 
 
+# --- /rsi ---
+
+
+def test_rsi(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    # 20 días subiendo: RSI 100
+    for dias in range(20):
+        _precio_de(config, "bitcoin", 100.0 - dias, dias * 24 * 60)
+
+    main.atender(config, _mensaje("/rsi btc"))
+
+    assert "📊 <b>Bitcoin</b>, RSI de 14 días: <b>100</b>" in enviados[0]
+    assert "Sobrecomprada" in enviados[0]
+
+
+def test_rsi_sin_dias_suficientes(config, enviados):
+    _precio_de(config, "bitcoin", 100.0, 60)
+
+    main.atender(config, _mensaje("/rsi"))
+
+    assert "Necesito 15 días seguidos de precios de <b>bitcoin</b>" in enviados[0]
+
+
+def test_rsi_de_varias(config, enviados):
+    main.atender(config, _mensaje("/rsi btc eth"))
+
+    assert "De una en una" in enviados[0]
+
+
 # --- /racha ---
 
 

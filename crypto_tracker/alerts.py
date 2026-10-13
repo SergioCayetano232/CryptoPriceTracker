@@ -20,6 +20,7 @@ from .periodo import nombre as nombre_periodo
 from .puntuales import CARTERA, Puntual, cumplidas, ejemplo
 from .racha import Racha
 from .rango import Rango, barra
+from .rsi import PERIODO, SOBRECOMPRA, SOBREVENTA, Rsi
 from .semanal import Semana
 from .telegram import escape
 from .tendencias import Tendencia
@@ -548,6 +549,34 @@ def formatear_racha(coin_id: str, r: Racha, currency: str) -> str:
         f"{simbolo}{_num(r.antes)} → {simbolo}{_num(r.ahora)}\n"
         "<i>Con el precio del final de cada día</i>"
     )
+
+
+def formatear_rsi(coin_id: str, r: Rsi, currency: str) -> str:
+    """Respuesta de /rsi."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(coin_id.replace("-", " ").title())
+    if r.valor >= SOBRECOMPRA:
+        zona = "🔥 <b>Sobrecomprada</b>: ha subido mucho y rápido, suele frenar"
+    elif r.valor <= SOBREVENTA:
+        zona = "🧊 <b>Sobrevendida</b>: ha bajado mucho y rápido, suele rebotar"
+    else:
+        zona = "😐 <b>Neutral</b>: ni pasada de subidas ni de bajadas"
+
+    texto = (
+        f"📊 <b>{nombre}</b>, RSI de {PERIODO} días: <b>{r.valor:.0f}</b>\n"
+        f"<code>0 {barra(r.valor)} 100</code>\n"
+        f"{zona}\n\n"
+        f"Ahora {simbolo}{_num(r.ahora)}\n"
+        f"<i>Por encima de {SOBRECOMPRA} se dice sobrecomprada; por debajo de "
+        f"{SOBREVENTA}, sobrevendida. Con el precio del final de cada día</i>"
+    )
+    # El suavizado tarda en asentarse: con pocos días no cuadra con las webs.
+    if r.dias < 30:
+        texto += (
+            f"\n<i>Con solo {r.dias} días puede salir algo distinto que en otras "
+            "webs.</i>"
+        )
+    return texto
 
 
 def formatear_rango(
