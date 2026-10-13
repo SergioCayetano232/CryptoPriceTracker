@@ -23,6 +23,7 @@ from .periodo import nombre as nombre_periodo
 from .puntuales import CARTERA, Puntual, cumplidas, ejemplo
 from .racha import Racha
 from .rango import Rango, barra
+from .reparto import Trozo
 from .rsi import PERIODO, SOBRECOMPRA, SOBREVENTA, Rsi
 from .semanal import Semana
 from .telegram import escape
@@ -695,6 +696,16 @@ def formatear_correlacion(una: str, otra: str, c: Correlacion, horas: float) -> 
         f"<i>Con {c.dias} días. +1 es que se mueven igual, 0 que no tienen nada que "
         "ver y -1 que una sube cuando la otra baja</i>"
     )
+
+
+def formatear_reparto(trozos: list[Trozo], total: float, currency: str) -> str:
+    """Respuesta de /reparto, y el pie de su imagen."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    lineas = [f"🥧 <b>Tu cartera</b>: {simbolo}{_num(total)}", ""]
+    for t in trozos:
+        nombre = escape(t.coin_id.replace("-", " ").title())
+        lineas.append(f"<b>{nombre}</b> {t.peso:.0f}% · {simbolo}{_num(t.valor)}")
+    return "\n".join(lineas)
 
 
 def formatear_rango(

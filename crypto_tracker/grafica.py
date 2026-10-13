@@ -5,6 +5,7 @@ from datetime import datetime
 
 from .alerts import SIMBOLOS, _num
 from .periodo import nombre as nombre_periodo
+from .reparto import Trozo
 
 VERDE = "#16a34a"
 ROJO = "#dc2626"
@@ -12,6 +13,11 @@ TEXTO = "#0f172a"
 SUAVE = "#64748b"
 REJILLA = "#e2e8f0"
 FONDO = "#ffffff"
+
+
+# Para /reparto. Comprobados para daltonismo; el orden es fijo, no se reparten al azar.
+PALETA = ("#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300")
+GRIS = "#94a3b8"
 
 
 class GraficaError(Exception):
@@ -146,6 +152,89 @@ def dibujar(
         color=color,
         ha="right",
     )
+
+    salida = io.BytesIO()
+    fig.savefig(salida, format="png", facecolor=FONDO)
+    return salida.getvalue()
+
+
+def dibujar_reparto(trozos: list[Trozo], total: float, currency: str) -> bytes:
+    """Una barra repartida entre las criptos y, debajo, una fila por cada una."""
+    try:
+        from matplotlib.figure import Figure
+        from matplotlib.patches import Rectangle
+    except ImportError as e:
+        raise GraficaError(
+            "Falta matplotlib. Ejecuta: pip install -r requirements.txt"
+        ) from e
+
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    alto = 2.05 + 0.42 * len(trozos)
+    fig = Figure(figsize=(8, alto), dpi=150, facecolor=FONDO)
+
+    # Todo en pulgadas desde arriba, para que no dependa de cuántas filas haya.
+    def y(pulgadas: float) -> float:
+        return 1 - pulgadas / alto
+
+    fig.text(0.06, y(0.55), "Tu cartera", fontsize=16, weight="bold", color=TEXTO)
+    fig.text(
+        0.94,
+        y(0.55),
+        f"{simbolo}{_num(total)}",
+        fontsize=16,
+        weight="bold",
+        color=TEXTO,
+        ha="right",
+    )
+
+    ax = fig.add_axes((0.06, y(1.35), 0.88, 0.45 / alto))
+    ax.set_xlim(0, 100)
+    ax.set_ylim(0, 1)
+    ax.axis("off")
+    inicio = 0.0
+    for t in trozos:
+        color = GRIS if t.color is None else PALETA[t.color]
+        # El borde blanco deja un hueco entre trozos, que se distingan sin color.
+        ax.add_patch(
+            Rectangle((inicio, 0), t.peso, 1, facecolor=color, edgecolor=FONDO, lw=2)
+        )
+        inicio += t.peso
+
+    for i, t in enumerate(trozos):
+        fila = y(1.85 + 0.42 * i)
+        color = GRIS if t.color is None else PALETA[t.color]
+        nombre = t.coin_id.replace("-", " ").title()
+        # Un cuadrado de 0,16 pulgadas, centrado en la fila
+        fig.patches.append(
+            Rectangle(
+                (0.06, fila - 0.08 / alto),
+                0.16 / 8,
+                0.16 / alto,
+                facecolor=color,
+                transform=fig.transFigure,
+                figure=fig,
+            )
+        )
+        fig.text(0.09, fila, nombre, fontsize=11, color=TEXTO, va="center")
+        fig.text(
+            0.72,
+            fila,
+            f"{t.peso:.0f}%",
+            fontsize=11,
+            weight="bold",
+            color=TEXTO,
+            va="center",
+            ha="right",
+        )
+        fig.text(
+            0.94,
+            fila,
+            f"{simbolo}{_num(t.valor)}",
+            fontsize=11,
+            color=SUAVE,
+            va="center",
+            ha="right",
+        )
 
     salida = io.BytesIO()
     fig.savefig(salida, format="png", facecolor=FONDO)

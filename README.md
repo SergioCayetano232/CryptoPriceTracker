@@ -169,6 +169,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/ath bitcoin` | Su máximo histórico, cuándo fue y cuánto le falta para volver (vale `/ath btc eth`, y a secas, las que vigilas) |
 | `/cartera` | Tu cartera: cuánto vale, cuánto ganas o pierdes y la gráfica de 7 días |
 | `/cartera 30d` | Lo mismo, con la gráfica del tramo que digas |
+| `/reparto` | Qué parte de tu cartera es cada cripto, con una imagen de barras. Si tienes más de 6, las pequeñas van juntas en "Otras" |
 | `/semana` | El resumen de tu semana sin esperar al domingo. No gasta consultas |
 | `/compra bitcoin 0.01 600` | Apunta en la cartera que has comprado 0,01 por 600 € |
 | `/compra bitcoin 0.01 @60000` | Lo mismo, con el precio de cada una en vez del total |
@@ -553,6 +554,7 @@ crypto_tracker/
   grafica.py     las imágenes de /historico y /cartera
   media.py       las medias de 7, 30 y 90 días, para /media
   racha.py       los días seguidos subiendo o bajando, para /racha
+  reparto.py     qué parte de la cartera es cada una, para /reparto
   rango.py       el máximo, el mínimo y la media de /rango
   dia.py         a cuánto estaba un día concreto, para /dia
   cuando.py      la última vez que estuvo a un precio, para /cuando

@@ -3211,6 +3211,50 @@ def test_varios_avisos_cada_uno_con_lo_suyo(config, enviados, monkeypatch):
     assert enviados[0].count("En 24 h") == 1
 
 
+# --- /reparto ---
+
+
+def test_reparto(con_cartera, enviados, sin_fotos_de_verdad, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 70000.0, "solana": 160.0})
+
+    main.atender(con_cartera, _mensaje("/reparto"))
+
+    png, pie = sin_fotos_de_verdad[0]
+    assert png.startswith(b"\x89PNG")
+    # 0,016 BTC = 1.120 € y 7 SOL = 1.120 €: mitad y mitad
+    assert "🥧 <b>Tu cartera</b>: €2.240,00" in pie
+    assert "<b>Bitcoin</b> 50% · €1.120,00" in pie
+    assert "<b>Solana</b> 50% · €1.120,00" in pie
+    assert enviados == []
+
+
+def test_reparto_sin_un_precio(con_cartera, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 70000.0})
+
+    main.atender(con_cartera, _mensaje("/reparto"))
+
+    assert "No tengo el precio de <b>solana</b>" in enviados[0]
+
+
+def test_reparto_sin_imagen_manda_texto(con_cartera, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 70000.0, "solana": 160.0})
+
+    def falla(*a, **k):
+        raise grafica.GraficaError("Falta matplotlib")
+
+    monkeypatch.setattr(grafica, "dibujar_reparto", falla)
+
+    main.atender(con_cartera, _mensaje("/reparto"))
+
+    assert "<b>Bitcoin</b> 50%" in enviados[0]
+
+
+def test_reparto_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/reparto"))
+
+    assert "PORTFOLIO" in enviados[0]
+
+
 # --- grafica de la cartera ---
 
 

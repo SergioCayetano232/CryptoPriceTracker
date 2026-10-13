@@ -49,6 +49,7 @@ from crypto_tracker import (
     puntuales,
     racha,
     rango,
+    reparto,
     rsi,
     salud,
     semanal,
@@ -699,6 +700,12 @@ def responder(
         if not config.cartera:
             return SIN_CARTERA
         return _cartera(config, argumento)
+
+    if nombre == "reparto":
+        config = _con_cambios(config)
+        if not config.cartera:
+            return SIN_CARTERA
+        return _reparto(config)
 
     if nombre == "compra":
         return _comprar(config, argumento)
@@ -2159,6 +2166,34 @@ def _cartera(
         return comandos.ConBotones(texto, teclado)
 
     return comandos.Foto(png, texto, texto, teclado)
+
+
+def _reparto(config: Config) -> str | comandos.Foto:
+    precios = _consultar(config, [p.coin_id for p in config.cartera])
+    if precios is None:
+        return "No he podido consultar los precios. Prueba en un rato."
+    valores, faltan = cartera.valorar(list(config.cartera), precios)
+    # Sin una, los % de las demás saldrían inflados.
+    if faltan:
+        return (
+            "No tengo el precio de "
+            + ", ".join(f"<b>{telegram.escape(c)}</b>" for c in faltan)
+            + " y sin ella el reparto saldría mal. Prueba en un rato."
+        )
+
+    trozos = reparto.trozos(valores)
+    total = cartera.total(valores).valor
+    if not trozos:
+        return "Tu cartera ahora mismo no vale nada, no hay nada que repartir."
+    texto = alerts.con_fuente(
+        alerts.formatear_reparto(trozos, total, config.vs_currency)
+    )
+    try:
+        png = grafica.dibujar_reparto(trozos, total, config.vs_currency)
+    except Exception as e:
+        logger.warning("Mando /reparto sin imagen: %s", e)
+        return texto
+    return comandos.Foto(png, texto, texto)
 
 
 def montar_cartera(config: Config) -> str | None:
