@@ -199,6 +199,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/comparar btc eth sol 7d` | Qué tal le ha ido a cada una en ese tramo, de la mejor a la peor (sin tramo, 7 días; sin criptos, las que vigilas) |
 | `/convertir 0.05 bitcoin` | Cuánto es en euros al precio de ahora |
 | `/convertir 500 eur solana` | Al revés: cuánta solana compras con 500 € (vale `500€`) |
+| `/convertir 1 eth btc` | De una cripto a otra: cuánto bitcoin es 1 ethereum, y al revés |
 | `/si 1000 bitcoin 30d` | Cuánto tendrías hoy si hubieras metido 1.000 € hace 30 días (sin tramo, 30 días) |
 | `/dca 50 bitcoin semanal 90d` | Lo mismo metiendo 50 € cada semana, con lo invertido y el precio medio. También `diario` o `mensual`; sin decirlo, semanal y 90 días |
 | `/objetivo bitcoin 100000` | Cuánto valdría tu cartera si bitcoin llegara a ese precio, y cuánto ganarías sobre lo invertido. Vale `100k`, y también para ver una bajada |

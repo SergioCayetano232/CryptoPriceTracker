@@ -2425,6 +2425,25 @@ def test_convertir_dinero_a_cripto(config, enviados, monkeypatch):
     assert "💱 €500,00 = <b>3,33333333 Solana</b>" in enviados[0]
 
 
+def test_convertir_entre_criptos(config, enviados, monkeypatch):
+    pedidas = _precio(monkeypatch, {"ethereum": 3000.0, "bitcoin": 60000.0})
+
+    main.atender(config, _mensaje("/convertir 2 eth btc"))
+
+    assert "💱 2 Ethereum = <b>0,1 Bitcoin</b>" in enviados[0]
+    assert "1 Bitcoin = 20 Ethereum" in enviados[0]
+    assert "1 Ethereum = €3.000,00 · 1 Bitcoin = €60.000,00" in enviados[0]
+    assert len(pedidas) == 1  # una sola consulta para las dos
+
+
+def test_convertir_entre_criptos_si_una_no_existe(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"ethereum": 3000.0})
+
+    main.atender(config, _mensaje("/convertir 1 eth bitcion"))
+
+    assert "/buscar bitcion" in enviados[0]
+
+
 def test_convertir_algo_que_no_existe(config, enviados, monkeypatch):
     _precio(monkeypatch, {})
 

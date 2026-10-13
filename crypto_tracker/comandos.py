@@ -155,6 +155,7 @@ EJEMPLOS = {
     "convertir": [
         ("/convertir 0.05 bitcoin", "cuánto es en dinero"),
         ("/convertir 500 eur solana", "cuánta compras con 500 €"),
+        ("/convertir 1 eth btc", "de una cripto a otra"),
     ],
     "si": [
         ("/si 1000 bitcoin 30d", "si hubieras metido 1.000 € hace 30 días"),

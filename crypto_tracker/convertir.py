@@ -6,7 +6,7 @@ from .alerts import SIMBOLOS
 from .puntuales import numero
 from .simbolos import a_id
 
-EJEMPLOS = "/convertir 0.05 bitcoin o /convertir 500 eur solana"
+EJEMPLOS = "/convertir 0.05 bitcoin, /convertir 500 eur solana o /convertir 1 eth btc"
 
 # Como lo escribe uno, ademas del codigo y el simbolo.
 NOMBRES = {
@@ -28,9 +28,14 @@ class Conversion:
     cantidad: float
     coin_id: str
     desde_dinero: bool  # True si das dinero y quieres saber cuanta cripto es
+    hacia: str | None = None  # la otra cripto, en "1 eth btc"
 
     def resultado(self, precio: float) -> float:
         return self.cantidad / precio if self.desde_dinero else self.cantidad * precio
+
+    def entre(self, precio: float, precio_hacia: float) -> float:
+        """Cuánta de la otra cripto es, pasando por el dinero."""
+        return self.cantidad * precio / precio_hacia
 
 
 def interpretar(argumento: str, currency: str) -> Conversion:
@@ -51,13 +56,17 @@ def interpretar(argumento: str, currency: str) -> Conversion:
     elif len(partes) == 3 and partes[2] in monedas:
         partes.pop(2)  # "0.05 bitcoin en euros" es lo mismo que sin "en euros"
 
+    hacia = a_id(partes.pop()) if len(partes) == 3 and not desde_dinero else None
     if len(partes) != 2:
         raise ConvertirError(f"Escríbelo así: {EJEMPLOS}")
 
     cantidad = numero(partes[0])
     if cantidad is None or cantidad <= 0:
         raise ConvertirError(f"'{partes[0]}' no es una cantidad. Ej: {EJEMPLOS}")
-    return Conversion(cantidad, a_id(partes[1]), desde_dinero)
+    coin_id = a_id(partes[1])
+    if hacia == coin_id:
+        raise ConvertirError("Son la misma cripto, sale lo mismo que pones.")
+    return Conversion(cantidad, coin_id, desde_dinero, hacia)
 
 
 def _monedas(currency: str) -> set[str]:

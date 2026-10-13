@@ -29,7 +29,9 @@ def test_interpretar_en_dolares():
     assert interpretar("500 dólares solana", "usd") == Conversion(500, "solana", True)
 
 
-@pytest.mark.parametrize("argumento", ["", "bitcoin", "0.05", "1 2 3 4"])
+@pytest.mark.parametrize(
+    "argumento", ["", "bitcoin", "0.05", "1 2 3 4", "500 eur solana btc"]
+)
 def test_interpretar_formato_malo(argumento):
     with pytest.raises(ConvertirError, match="/convertir 0.05 bitcoin"):
         interpretar(argumento, "eur")
@@ -47,6 +49,22 @@ def test_interpretar_cantidad_mala(argumento):
 def test_otra_moneda(argumento):
     with pytest.raises(ConvertirError, match="en EUR, no en USD"):
         interpretar(argumento, "eur")
+
+
+@pytest.mark.parametrize(
+    "argumento", ["1 eth btc", "1 ETH a btc", "1 ethereum en bitcoin"]
+)
+def test_interpretar_entre_criptos(argumento):
+    assert interpretar(argumento, "eur") == Conversion(1, "ethereum", False, "bitcoin")
+
+
+def test_interpretar_la_misma_dos_veces():
+    with pytest.raises(ConvertirError, match="la misma"):
+        interpretar("1 btc bitcoin", "eur")
+
+
+def test_entre():
+    assert Conversion(2, "ethereum", False, "bitcoin").entre(3000, 60000) == 0.1
 
 
 def test_resultado():

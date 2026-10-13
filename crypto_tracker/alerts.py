@@ -512,6 +512,28 @@ def formatear_conversion(
     return f"💱 {linea}\n<i>1 {nombre} = {simbolo}{_num(precio)}</i>"
 
 
+def formatear_cambio(
+    cantidad: float,
+    coin_id: str,
+    resultado: float,
+    hacia: str,
+    precios: tuple[float, float],
+    currency: str,
+) -> str:
+    """Respuesta de /convertir de una cripto a otra."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(coin_id.replace("-", " ").title())
+    otra = escape(hacia.replace("-", " ").title())
+    # Al revés también, que "1 BTC son 32 ETH" se entiende mejor que 0,03.
+    return (
+        f"💱 {texto_cantidad(cantidad)} {nombre} = "
+        f"<b>{texto_cantidad(resultado)} {otra}</b>\n"
+        f"<i>1 {otra} = {texto_cantidad(precios[1] / precios[0])} {nombre}\n"
+        f"1 {nombre} = {simbolo}{_num(precios[0])} · "
+        f"1 {otra} = {simbolo}{_num(precios[1])}</i>"
+    )
+
+
 def formatear_media(
     coin_id: str, ahora: float, medias: dict[int, float | None], currency: str
 ) -> str:

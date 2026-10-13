@@ -1455,14 +1455,31 @@ def _convertir(config: Config, argumento: str) -> str:
         return telegram.escape(str(e))
 
     coin_id = conversion.coin_id
+    # Las dos en la misma consulta, que gasta lo mismo que una.
+    pedidas = [coin_id, conversion.hacia] if conversion.hacia else [coin_id]
     try:
-        precio = coingecko.get_prices([coin_id], config.vs_currency).get(coin_id)
+        precios = coingecko.get_prices(pedidas, config.vs_currency)
     except coingecko.CoinGeckoError as e:
         return f"No he podido mirar el precio ahora mismo: {telegram.escape(str(e))}"
-    if not precio:
-        return (
-            f"No encuentro <b>{telegram.escape(coin_id)}</b> en CoinGecko. "
-            f"Prueba con /buscar {telegram.escape(coin_id)}"
+    for pedida in pedidas:
+        if not precios.get(pedida):
+            return (
+                f"No encuentro <b>{telegram.escape(pedida)}</b> en CoinGecko. "
+                f"Prueba con /buscar {telegram.escape(pedida)}"
+            )
+
+    precio = precios[coin_id]
+    if conversion.hacia:
+        precio_hacia = precios[conversion.hacia]
+        return alerts.con_fuente(
+            alerts.formatear_cambio(
+                conversion.cantidad,
+                coin_id,
+                conversion.entre(precio, precio_hacia),
+                conversion.hacia,
+                (precio, precio_hacia),
+                config.vs_currency,
+            )
         )
 
     resultado = conversion.resultado(precio)
