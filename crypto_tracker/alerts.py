@@ -9,6 +9,7 @@ from .caida import Caida
 from .cartera import Valor, peso
 from .comparar import Resultado
 from .config import Posicion, Watch
+from .correlacion import Correlacion
 from .cuando import Cuando
 from .dia import Dia
 from .maximo import Maximo, hace
@@ -672,6 +673,27 @@ def formatear_copia(lineas: list[str]) -> str:
         f"<code>{escape(chr(10).join(lineas))}</code>\n\n"
         "<i>Ya incluye lo que has cambiado por Telegram. Guárdalo por si cambias de "
         "servidor o se pierde la base de datos.</i>"
+    )
+
+
+def formatear_correlacion(una: str, otra: str, c: Correlacion, horas: float) -> str:
+    """Respuesta de /correlacion."""
+    nombres = [escape(x.replace("-", " ").title()) for x in (una, otra)]
+    if c.valor >= 0.7:
+        como = "van muy juntas"
+    elif c.valor >= 0.4:
+        como = "suelen ir juntas"
+    elif c.valor > -0.4:
+        como = "cada una va a lo suyo"
+    else:
+        como = "suelen ir al revés"
+    valor = f"{c.valor:+.2f}".replace(".", ",")
+    return (
+        f"🔗 <b>{nombres[0]}</b> y <b>{nombres[1]}</b>, {nombre_periodo(horas)}\n\n"
+        f"Correlación <b>{valor}</b>: {como}\n"
+        f"<code>-1 {barra((c.valor + 1) * 50)} +1</code>\n\n"
+        f"<i>Con {c.dias} días. +1 es que se mueven igual, 0 que no tienen nada que "
+        "ver y -1 que una sube cuando la otra baja</i>"
     )
 
 

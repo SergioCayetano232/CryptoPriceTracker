@@ -198,6 +198,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/rsi bitcoin` | Su RSI de 14 días: por encima de 70 ha subido demasiado rápido (sobrecomprada) y por debajo de 30 ha bajado demasiado (sobrevendida). Necesita 15 días seguidos guardados y no gasta consultas |
 | `/caida bitcoin 30d` | Cuánto ha bajado desde el máximo del tramo y cuál fue su peor caída, de qué precio a cuál (sin tramo, 30 días). Sale de lo guardado y no gasta consultas |
 | `/comparar btc eth sol 7d` | Qué tal le ha ido a cada una en ese tramo, de la mejor a la peor (sin tramo, 7 días; sin criptos, las que vigilas) |
+| `/correlacion btc eth 30d` | Si dos criptos suben y bajan a la vez (de -1 a +1), para saber si tu cartera está repartida de verdad (sin tramo, 30 días; sin criptos, las dos primeras que vigilas). Sale de lo guardado y no gasta consultas |
 | `/convertir 0.05 bitcoin` | Cuánto es en euros al precio de ahora |
 | `/convertir 500 eur solana` | Al revés: cuánta solana compras con 500 € (vale `500€`) |
 | `/convertir 1 eth btc` | De una cripto a otra: cuánto bitcoin es 1 ethereum, y al revés |
@@ -533,6 +534,7 @@ crypto_tracker/
   brusco.py      los movimientos bruscos
   extremos.py    los máximos y mínimos de los últimos días
   comparar.py    el ranking de /comparar
+  correlacion.py si dos criptos se mueven juntas, para /correlacion
   convertir.py   entiende lo que le pides a /convertir
   exportar.py    el CSV de /exportar
   hubiera.py     entiende lo que le pides a /si

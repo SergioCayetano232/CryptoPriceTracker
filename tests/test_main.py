@@ -3981,6 +3981,33 @@ def test_caida_sin_precios(config, enviados):
     assert "No tengo precios guardados de <b>solana</b>" in enviados[0]
 
 
+# --- /correlacion ---
+
+
+def test_correlacion(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    for dias, precio in enumerate([100, 110, 99, 105, 120, 108, 112, 101, 115]):
+        _precio_de(config, "bitcoin", float(precio), (8 - dias) * 24 * 60)
+        _precio_de(config, "ethereum", precio / 20, (8 - dias) * 24 * 60)
+
+    main.atender(config, _mensaje("/correlacion btc eth"))
+
+    assert "🔗 <b>Bitcoin</b> y <b>Ethereum</b>, últimos 30 días" in enviados[0]
+    assert "Correlación <b>+1,00</b>: van muy juntas" in enviados[0]
+
+
+def test_correlacion_a_secas_con_una_sola_vigilada(config, enviados):
+    main.atender(config, _mensaje("/correlacion"))
+
+    assert "¿Cuáles?" in enviados[0]
+
+
+def test_correlacion_sin_precios(config, enviados):
+    main.atender(config, _mensaje("/correlación btc sol"))
+
+    assert "al menos 7 días seguidos con precios de <b>bitcoin</b> y" in enviados[0]
+
+
 # --- /copia ---
 
 

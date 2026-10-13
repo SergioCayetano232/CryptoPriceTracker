@@ -34,6 +34,7 @@ COMANDOS = {
     "vigilar": "Ver o cambiar lo que vigilo (ej: /vigilar solana %5)",
     "dejar": "Dejar de vigilar una o varias (ej: /dejar solana o /dejar sol eth)",
     "comparar": "Qué tal les ha ido, de mejor a peor (ej: /comparar btc eth 7d)",
+    "correlacion": "Si dos criptos se mueven a la vez (ej: /correlacion btc eth 30d)",
     "convertir": "Cuánto es en dinero o en cripto (ej: /convertir 0.05 bitcoin)",
     "si": "Cuánto tendrías si hubieras invertido (ej: /si 1000 bitcoin 30d)",
     "dca": "Lo mismo, metiendo un poco cada semana (ej: /dca 50 bitcoin 90d)",
@@ -94,6 +95,8 @@ ALIAS = {
     "día": "dia",
     "fecha": "dia",
     "backup": "copia",
+    "correlación": "correlacion",
+    "correlation": "correlacion",
     "env": "copia",
     "caída": "caida",
     "average": "media",
@@ -157,6 +160,11 @@ EJEMPLOS = {
     "comparar": [
         ("/comparar btc eth sol 7d", "de la que mejor ha ido a la peor"),
         ("/comparar", "a secas, las que vigilo en 7 días"),
+    ],
+    "correlacion": [
+        ("/correlacion btc eth", "si suben y bajan a la vez, en 30 días"),
+        ("/correlacion btc sol 90d", "del tramo que digas"),
+        ("/correlacion", "a secas, las dos primeras que vigilo"),
     ],
     "convertir": [
         ("/convertir 0.05 bitcoin", "cuánto es en dinero"),

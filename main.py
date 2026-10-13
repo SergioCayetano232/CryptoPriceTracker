@@ -29,6 +29,7 @@ from crypto_tracker import (
     comparar,
     convertir,
     copia,
+    correlacion,
     cuando,
     cuota,
     database,
@@ -829,6 +830,9 @@ def responder(
     if nombre == "dia":
         return _dia(config, argumento)
 
+    if nombre == "correlacion":
+        return _correlacion(config, argumento)
+
     if nombre == "copia":
         actual = _con_cambios(config)
         return alerts.formatear_copia(
@@ -1488,6 +1492,33 @@ def _dia(config: Config, argumento: str) -> str:
         f"No tengo precios de <b>{nombre}</b> del {fecha:%d/%m/%Y}. El día más "
         f"cercano que tengo es el {otro:%d/%m/%Y}: /dia {nombre} {otro:%d/%m/%Y}"
     )
+
+
+def _correlacion(config: Config, argumento: str) -> str:
+    try:
+        ids, horas = correlacion.interpretar(argumento)
+    except periodo.PeriodoError as e:
+        return telegram.escape(str(e))
+    if not ids:
+        ids = [w.coin_id for w in _con_cambios(config).watchlist[:2]]
+        if len(ids) < 2:
+            return f"¿Cuáles? Por ejemplo: {correlacion.EJEMPLO}"
+
+    una, otra = (
+        volatilidad.por_dias(
+            database.get_serie(config.database_path, c, horas, config.vs_currency)
+        )
+        for c in ids
+    )
+    resultado = correlacion.calcular(una, otra)
+    if resultado is None:
+        nombres = " y ".join(f"<b>{telegram.escape(c)}</b>" for c in ids)
+        return (
+            f"Necesito al menos {correlacion.MINIMO} días seguidos con precios de "
+            f"{nombres} ({periodo.nombre(horas)}) y no los tengo. Solo sé de las "
+            "que vigilo: míralas con /vigilar"
+        )
+    return alerts.formatear_correlacion(*ids, resultado, horas)
 
 
 def _convertir(config: Config, argumento: str) -> str:
