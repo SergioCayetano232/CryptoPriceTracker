@@ -26,6 +26,7 @@ COMANDOS = {
     "media": "Las medias de 7, 30 y 90 días y si está por encima (ej: /media btc)",
     "racha": "Cuántos días seguidos lleva subiendo o bajando (ej: /racha btc)",
     "rango": "Entre qué precios se ha movido y dónde está hoy (ej: /rango btc 30d)",
+    "caida": "Cuánto ha bajado desde el máximo (ej: /caida btc 30d)",
     "volatilidad": "Cuánto se mueve, para elegir el % (ej: /volatilidad btc 30d)",
     "vigilar": "Ver o cambiar lo que vigilo (ej: /vigilar solana %5)",
     "dejar": "Dejar de vigilar una o varias (ej: /dejar solana o /dejar sol eth)",
@@ -82,6 +83,8 @@ ALIAS = {
     "volatility": "volatilidad",
     "range": "rango",
     "streak": "racha",
+    "drawdown": "caida",
+    "caída": "caida",
     "average": "media",
     "ranking": "comparar",
     "global": "mercado",
@@ -169,6 +172,11 @@ EJEMPLOS = {
         ("/rango bitcoin", "máximo, mínimo y media de los últimos 7 días"),
         ("/rango bitcoin 30d", "del tramo que digas"),
         ("/rango", "a secas, la primera que vigilo"),
+    ],
+    "caida": [
+        ("/caida bitcoin", "cuánto ha bajado desde el máximo de 30 días"),
+        ("/caida bitcoin 7d", "del tramo que digas"),
+        ("/caida", "a secas, la primera que vigilo"),
     ],
     "objetivo": [
         ("/objetivo bitcoin 100000", "lo que valdría tu cartera si llega a 100.000"),

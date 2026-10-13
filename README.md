@@ -193,6 +193,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/media bitcoin` | Su media de 7, 30 y 90 días y si el precio de ahora está por encima o por debajo de cada una (`/media bitcoin 14d`, solo la de esos días). Sale de lo guardado y no gasta consultas |
 | `/racha bitcoin` | Cuántos días seguidos lleva subiendo o bajando y cuánto lleva en esa racha. Sale de lo guardado y no gasta consultas |
 | `/rango bitcoin 30d` | Su máximo, su mínimo y su media en ese tramo, y en qué punto del rango está hoy (sin tramo, 7 días). Sale de lo guardado y no gasta consultas |
+| `/caida bitcoin 30d` | Cuánto ha bajado desde el máximo del tramo y cuál fue su peor caída, de qué precio a cuál (sin tramo, 30 días). Sale de lo guardado y no gasta consultas |
 | `/comparar btc eth sol 7d` | Qué tal le ha ido a cada una en ese tramo, de la mejor a la peor (sin tramo, 7 días; sin criptos, las que vigilas) |
 | `/convertir 0.05 bitcoin` | Cuánto es en euros al precio de ahora |
 | `/convertir 500 eur solana` | Al revés: cuánta solana compras con 500 € (vale `500€`) |
@@ -546,6 +547,7 @@ crypto_tracker/
   media.py       las medias de 7, 30 y 90 días, para /media
   racha.py       los días seguidos subiendo o bajando, para /racha
   rango.py       el máximo, el mínimo y la media de /rango
+  caida.py       lo que ha bajado desde el máximo, para /caida
   periodo.py     lee tramos como 7d
   simbolos.py    btc, eth... a su id de CoinGecko
   diario.py      el resumen diario y las horas tranquilas

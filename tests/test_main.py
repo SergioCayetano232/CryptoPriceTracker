@@ -3928,6 +3928,40 @@ def test_rango_mal_escrito(config, enviados):
     assert "/rango bitcoin 7d" in enviados[0]
 
 
+# --- /caida ---
+
+
+def test_caida(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    for dias, precio in [(29, 100.0), (20, 120.0), (10, 90.0), (1, 108.0)]:
+        _precio_de(config, "bitcoin", precio, dias * 24 * 60)
+
+    main.atender(config, _mensaje("/caida btc"))
+
+    texto = enviados[0]
+    assert "📉 <b>Bitcoin</b>, últimos 30 días" in texto
+    assert "<b>-10.00%</b> desde el máximo" in texto
+    assert "Peor caída <b>-25.00%</b>" in texto
+    assert "Solo tengo precios desde el" not in texto
+
+
+def test_caida_a_secas_y_con_tilde(config, enviados):
+    _precio_de(config, "bitcoin", 100.0, 60)
+    _precio_de(config, "bitcoin", 101.0, 5)
+
+    main.atender(config, _mensaje("/caída"))
+
+    assert "<b>Bitcoin</b>, últimos 30 días" in enviados[0]
+    assert "está en su máximo del tramo" in enviados[0]
+    assert "Solo tengo precios desde el" in enviados[0]
+
+
+def test_caida_sin_precios(config, enviados):
+    main.atender(config, _mensaje("/caida sol 7d"))
+
+    assert "No tengo precios guardados de <b>solana</b>" in enviados[0]
+
+
 # --- /racha ---
 
 

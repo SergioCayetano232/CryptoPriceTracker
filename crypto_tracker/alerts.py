@@ -5,6 +5,7 @@ import math
 from dataclasses import dataclass
 from datetime import date, datetime
 
+from .caida import Caida
 from .cartera import Valor, peso
 from .comparar import Resultado
 from .config import Posicion, Watch
@@ -573,6 +574,37 @@ def formatear_rango(
         texto += (
             f", al {r.posicion:.0f}% del rango\n"
             f"<code>mín {barra(r.posicion)} máx</code>"
+        )
+    if desde is not None:
+        cuando = desde.astimezone()
+        texto += f"\n<i>Solo tengo precios desde el {cuando:%d/%m a las %H:%M}.</i>"
+    return texto
+
+
+def formatear_caida(
+    coin_id: str, c: Caida, horas: float, currency: str, desde: datetime | None = None
+) -> str:
+    """Respuesta de /caida. desde va si no hay precios de todo el tramo."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(coin_id.replace("-", " ").title())
+
+    texto = f"📉 <b>{nombre}</b>, {nombre_periodo(horas)}\n\n"
+    if c.desde_maximo == 0:
+        texto += f"Ahora <b>{simbolo}{_num(c.ahora)}</b>, está en su máximo del tramo\n"
+    else:
+        texto += (
+            f"Ahora <b>{simbolo}{_num(c.ahora)}</b>, "
+            f"<b>{c.desde_maximo:+.2f}%</b> desde el máximo\n"
+            f"<i>Máximo {simbolo}{_num(c.maximo)} el "
+            f"{c.cuando_maximo.astimezone():%d/%m}</i>\n"
+        )
+    if c.peor == 0:
+        texto += "\nNo ha tenido ninguna caída en este tramo"
+    else:
+        texto += (
+            f"\nPeor caída <b>{c.peor:+.2f}%</b>: de {simbolo}{_num(c.pico)} el "
+            f"{c.cuando_pico.astimezone():%d/%m} a {simbolo}{_num(c.valle)} el "
+            f"{c.cuando_valle.astimezone():%d/%m}"
         )
     if desde is not None:
         cuando = desde.astimezone()
