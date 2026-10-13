@@ -1,7 +1,7 @@
 """Tests de como contesta el bot a lo que le escriben."""
 
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -3979,6 +3979,40 @@ def test_caida_sin_precios(config, enviados):
     main.atender(config, _mensaje("/caida sol 7d"))
 
     assert "No tengo precios guardados de <b>solana</b>" in enviados[0]
+
+
+# --- /dia ---
+
+
+def test_dia(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    _precio_de(config, "bitcoin", 100.0, 3 * 24 * 60)
+    _precio_de(config, "bitcoin", 110.0, 0)
+    hace_tres = (datetime.now(timezone.utc) - timedelta(days=3)).astimezone()
+
+    main.atender(config, _mensaje(f"/dia btc {hace_tres:%d/%m/%Y}"))
+
+    assert "📅 <b>Bitcoin</b> el " in enviados[0]
+    assert "Cerró a <b>€100,00</b>" in enviados[0]
+    assert "Desde entonces +10.00%: ahora €110,00" in enviados[0]
+
+
+def test_dia_sin_ese_dia_sugiere_otro(config, enviados):
+    _precio_de(config, "bitcoin", 100.0, 0)
+    hoy = datetime.now(timezone.utc).astimezone()
+
+    main.atender(config, _mensaje("/dia anteayer"))
+
+    assert "No tengo precios de <b>bitcoin</b> del" in enviados[0]
+    assert f"/dia bitcoin {hoy:%d/%m/%Y}" in enviados[0]
+
+
+def test_dia_sin_precios_y_mal_escrito(config, enviados):
+    main.atender(config, _mensaje("/dia sol ayer"))
+    main.atender(config, _mensaje("/dia btc"))
+
+    assert "No tengo precios guardados de <b>solana</b>" in enviados[0]
+    assert "/dia bitcoin 01/09" in enviados[1]
 
 
 # --- /cuando ---

@@ -32,6 +32,7 @@ from crypto_tracker import (
     cuota,
     database,
     dca,
+    dia,
     diario,
     exportar,
     extremos,
@@ -824,6 +825,9 @@ def responder(
     if nombre == "cuando":
         return _cuando(config, argumento)
 
+    if nombre == "dia":
+        return _dia(config, argumento)
+
     if nombre == "media":
         return _media(config, argumento)
 
@@ -1446,6 +1450,37 @@ def _cuando(config: Config, argumento: str) -> str:
             "Solo sé de las que vigilo: míralas con /vigilar"
         )
     return alerts.formatear_cuando(coin_id, resultado, config.vs_currency)
+
+
+def _dia(config: Config, argumento: str) -> str:
+    try:
+        coin_id, fecha = dia.interpretar(argumento, date.today())
+    except dia.DiaError as e:
+        return telegram.escape(str(e))
+    if not coin_id:
+        vigiladas = _con_cambios(config).watchlist
+        if not vigiladas:
+            return f"¿De cuál? Por ejemplo: {dia.EJEMPLO}"
+        coin_id = vigiladas[0].coin_id
+
+    serie = database.get_serie(
+        config.database_path, coin_id, dia.HORAS, config.vs_currency
+    )
+    resultado = dia.calcular(serie, fecha)
+    if resultado is not None:
+        return alerts.formatear_dia(coin_id, resultado, config.vs_currency)
+
+    nombre = telegram.escape(coin_id)
+    otro = dia.cercano(serie, fecha)
+    if otro is None:
+        return (
+            f"No tengo precios guardados de <b>{nombre}</b>. Solo sé de las que "
+            "vigilo: míralas con /vigilar"
+        )
+    return (
+        f"No tengo precios de <b>{nombre}</b> del {fecha:%d/%m/%Y}. El día más "
+        f"cercano que tengo es el {otro:%d/%m/%Y}: /dia {nombre} {otro:%d/%m/%Y}"
+    )
 
 
 def _convertir(config: Config, argumento: str) -> str:

@@ -26,6 +26,7 @@ COMANDOS = {
     "media": "Las medias de 7, 30 y 90 días y si está por encima (ej: /media btc)",
     "racha": "Cuántos días seguidos lleva subiendo o bajando (ej: /racha btc)",
     "rango": "Entre qué precios se ha movido y dónde está hoy (ej: /rango btc 30d)",
+    "dia": "A cuánto estaba un día concreto (ej: /dia btc 01/09 o ayer)",
     "cuando": "La última vez que estuvo a un precio (ej: /cuando btc 60000)",
     "rsi": "Si ha subido o bajado demasiado rápido (ej: /rsi btc)",
     "caida": "Cuánto ha bajado desde el máximo (ej: /caida btc 30d)",
@@ -89,6 +90,8 @@ ALIAS = {
     "sobrecompra": "rsi",
     "cuándo": "cuando",
     "when": "cuando",
+    "día": "dia",
+    "fecha": "dia",
     "caída": "caida",
     "average": "media",
     "ranking": "comparar",
@@ -178,6 +181,11 @@ EJEMPLOS = {
         ("/rango bitcoin", "máximo, mínimo y media de los últimos 7 días"),
         ("/rango bitcoin 30d", "del tramo que digas"),
         ("/rango", "a secas, la primera que vigilo"),
+    ],
+    "dia": [
+        ("/dia bitcoin 01/09", "cómo cerró ese día, con su máximo y su mínimo"),
+        ("/dia bitcoin ayer", "también hoy, ayer y anteayer"),
+        ("/dia 01/09/2025", "con año; sin cripto, la primera que vigilo"),
     ],
     "rsi": [
         ("/rsi bitcoin", "el RSI de 14 días: por encima de 70 sobrecomprada"),

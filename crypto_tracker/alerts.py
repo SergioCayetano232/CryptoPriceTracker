@@ -10,6 +10,7 @@ from .cartera import Valor, peso
 from .comparar import Resultado
 from .config import Posicion, Watch
 from .cuando import Cuando
+from .dia import Dia
 from .maximo import Maximo, hace
 from .mercado import Mercado, grande
 from .miedo import Indice
@@ -635,6 +636,33 @@ def formatear_cuando(
         texto + f"\nEntonces {simbolo}{_num(c.precio)}, ahora {simbolo}{_num(c.ahora)} "
         f"({c.cambio:+.2f}%)"
     )
+
+
+def formatear_dia(coin_id: str, d: Dia, currency: str, hoy: date | None = None) -> str:
+    """Respuesta de /dia."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(coin_id.replace("-", " ").title())
+    hoy = hoy or date.today()
+    if d.fecha == hoy:
+        cuando, precio = "hoy", "Va por"
+    else:
+        formato = "%d/%m" if d.fecha.year == hoy.year else "%d/%m/%Y"
+        cuando, precio = f"el {d.fecha:{formato}}", "Cerró a"
+
+    texto = f"📅 <b>{nombre}</b> {cuando}\n\n{precio} <b>{simbolo}{_num(d.cierre)}</b>"
+    # Con un solo precio guardado ese día, ni cambio ni máximo que contar.
+    if d.maximo != d.minimo:
+        texto += (
+            f", {d.en_el_dia:+.2f}% en el día\n"
+            f"<i>Máximo {simbolo}{_num(d.maximo)} · "
+            f"mínimo {simbolo}{_num(d.minimo)}</i>"
+        )
+    if d.fecha != hoy:
+        texto += (
+            f"\n\n{_flecha(d.desde)} Desde entonces {d.desde:+.2f}%: "
+            f"ahora {simbolo}{_num(d.ahora)}"
+        )
+    return texto
 
 
 def formatear_rango(
