@@ -3962,6 +3962,33 @@ def test_caida_sin_precios(config, enviados):
     assert "No tengo precios guardados de <b>solana</b>" in enviados[0]
 
 
+# --- /cuando ---
+
+
+def test_cuando(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    for dias, precio in [(30, 55000.0), (20, 59000.0), (10, 70000.0), (0, 80000.0)]:
+        _precio_de(config, "bitcoin", precio, dias * 24 * 60)
+
+    main.atender(config, _mensaje("/cuando btc 60k"))
+
+    assert "estuvo a <b>€60.000,00</b> o menos" in enviados[0]
+    assert "hace 20 días" in enviados[0]
+    assert "Entonces €59.000,00, ahora €80.000,00" in enviados[0]
+
+
+def test_cuando_sin_precios(config, enviados):
+    main.atender(config, _mensaje("/cuando sol 100"))
+
+    assert "No tengo precios guardados de <b>solana</b>" in enviados[0]
+
+
+def test_cuando_mal_escrito(config, enviados):
+    main.atender(config, _mensaje("/cuando btc"))
+
+    assert "/cuando bitcoin 60000" in enviados[0]
+
+
 # --- /rsi ---
 
 

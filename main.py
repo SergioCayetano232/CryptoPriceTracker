@@ -28,6 +28,7 @@ from crypto_tracker import (
     comandos,
     comparar,
     convertir,
+    cuando,
     cuota,
     database,
     dca,
@@ -820,6 +821,9 @@ def responder(
     if nombre == "rsi":
         return _rsi(config, argumento)
 
+    if nombre == "cuando":
+        return _cuando(config, argumento)
+
     if nombre == "media":
         return _media(config, argumento)
 
@@ -1424,6 +1428,24 @@ def _rsi(config: Config, argumento: str) -> str:
             "vigilo, y desde que las vigilo: míralas con /vigilar"
         )
     return alerts.formatear_rsi(coin_id, resultado, config.vs_currency)
+
+
+def _cuando(config: Config, argumento: str) -> str:
+    try:
+        coin_id, objetivo = cuando.interpretar(argumento)
+    except cuando.CuandoError as e:
+        return telegram.escape(str(e))
+
+    serie = database.get_serie(
+        config.database_path, coin_id, cuando.HORAS, config.vs_currency
+    )
+    resultado = cuando.calcular(serie, objetivo)
+    if resultado is None:
+        return (
+            f"No tengo precios guardados de <b>{telegram.escape(coin_id)}</b>. "
+            "Solo sé de las que vigilo: míralas con /vigilar"
+        )
+    return alerts.formatear_cuando(coin_id, resultado, config.vs_currency)
 
 
 def _convertir(config: Config, argumento: str) -> str:

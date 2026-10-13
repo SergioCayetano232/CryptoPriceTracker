@@ -9,6 +9,7 @@ from .caida import Caida
 from .cartera import Valor, peso
 from .comparar import Resultado
 from .config import Posicion, Watch
+from .cuando import Cuando
 from .maximo import Maximo, hace
 from .mercado import Mercado, grande
 from .miedo import Indice
@@ -577,6 +578,41 @@ def formatear_rsi(coin_id: str, r: Rsi, currency: str) -> str:
             "webs.</i>"
         )
     return texto
+
+
+def formatear_cuando(
+    coin_id: str, c: Cuando, currency: str, ahora: datetime | None = None
+) -> str:
+    """Respuesta de /cuando."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(coin_id.replace("-", " ").title())
+    objetivo = f"{simbolo}{_num(c.objetivo)}"
+
+    if c.objetivo == c.ahora:
+        return f"🔎 <b>{nombre}</b> está justo a ese precio ahora, {objetivo}"
+    if c.cuando is None:
+        return (
+            f"🔎 <b>{nombre}</b> no ha {'bajado' if c.por_debajo else 'subido'} "
+            f"a {objetivo} desde el {c.desde.astimezone():%d/%m}, que es desde cuando "
+            f"tengo precios\n"
+            f"Lo más {'bajo' if c.por_debajo else 'alto'}, {simbolo}{_num(c.extremo)}. "
+            f"Ahora {simbolo}{_num(c.ahora)}"
+        )
+
+    momento = c.cuando.astimezone()
+    cuanto = hace(c.cuando, ahora or datetime.now(momento.tzinfo))
+    # Si fue hoy, la hora dice más que la fecha.
+    fecha = f"hoy a las {momento:%H:%M}" if cuanto == "hoy" else f"el {momento:%d/%m}"
+    texto = (
+        f"🔎 La última vez que <b>{nombre}</b> estuvo a <b>{objetivo}</b> o "
+        f"{'menos' if c.por_debajo else 'más'} fue <b>{fecha}</b>"
+    )
+    if cuanto != "hoy":
+        texto += f", {cuanto}"
+    return (
+        texto + f"\nEntonces {simbolo}{_num(c.precio)}, ahora {simbolo}{_num(c.ahora)} "
+        f"({c.cambio:+.2f}%)"
+    )
 
 
 def formatear_rango(
