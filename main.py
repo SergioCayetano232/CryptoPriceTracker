@@ -696,6 +696,11 @@ def responder(
         return _horario(config, argumento)
 
     if nombre == "semana":
+        # De una sola es lo mismo que su histórico de 7 días: no lo duplico.
+        if len(argumento.split()) > 1:
+            return "De una en una. Por ejemplo: /semana bitcoin"
+        if argumento:
+            return _historico(config, f"{argumento} 7d")
         return _semana(config)
 
     if nombre == "cartera":

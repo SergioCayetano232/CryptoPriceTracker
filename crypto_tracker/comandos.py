@@ -15,7 +15,7 @@ COMANDOS = {
     "ath": "El máximo histórico y cuánto le falta (ej: /ath bitcoin)",
     "cartera": "Cuánto vale lo que tienes, con gráfica (ej: /cartera 30d)",
     "reparto": "Qué parte de tu cartera es cada cripto, con gráfica",
-    "semana": "Cómo le ha ido a tu cartera esta semana, sin esperar al domingo",
+    "semana": "Cómo le ha ido a tu cartera esta semana, o a una (ej: /semana btc)",
     "compra": "Apuntar una compra en la cartera (ej: /compra bitcoin 0.01 600)",
     "venta": "Apuntar una venta (ej: /venta bitcoin 0.005 o todo)",
     "movimientos": "Tus últimas compras y ventas",

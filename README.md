@@ -172,6 +172,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/cartera 30d` | Lo mismo, con la gráfica del tramo que digas |
 | `/reparto` | Qué parte de tu cartera es cada cripto, con una imagen de barras. Si tienes más de 6, las pequeñas van juntas en "Otras" |
 | `/semana` | El resumen de tu semana sin esperar al domingo. No gasta consultas |
+| `/semana bitcoin` | La semana de una sola: lo mismo que `/historico bitcoin 7d` |
 | `/compra bitcoin 0.01 600` | Apunta en la cartera que has comprado 0,01 por 600 € |
 | `/compra bitcoin 0.01 @60000` | Lo mismo, con el precio de cada una en vez del total |
 | `/venta bitcoin 0.005` | Apunta una venta (`/venta bitcoin todo` la saca de la cartera) |

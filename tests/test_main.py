@@ -3788,6 +3788,23 @@ def test_semana_sin_cartera(config, enviados):
     assert enviados[0] == main.SIN_CARTERA
 
 
+def test_semana_de_una_es_su_historico(config, enviados, sin_fotos_de_verdad):
+    for precio in (60000.0, 62000.0):
+        database.save_prices(config.database_path, {"bitcoin": precio}, "eur")
+
+    main.atender(config, _mensaje("/semana btc"))
+
+    _, pie = sin_fotos_de_verdad[0]
+    assert "📈 <b>Bitcoin</b>, últimos 7 días" in pie
+    assert "62.000,00" in pie
+
+
+def test_semana_de_varias(config, enviados):
+    main.atender(config, _mensaje("/semana btc eth"))
+
+    assert "De una en una" in enviados[0]
+
+
 def test_semana_sin_precios(con_semana, enviados):
     main.atender(con_semana, _mensaje("/semana"))
 
