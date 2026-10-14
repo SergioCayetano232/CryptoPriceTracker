@@ -70,3 +70,30 @@ def test_entre():
 def test_resultado():
     assert Conversion(0.05, "bitcoin", False).resultado(62000.0) == 3100
     assert Conversion(300, "solana", True).resultado(150.0) == 2
+
+
+def test_interpretar_sats():
+    c = interpretar("100000 sats", "eur")
+
+    assert c == Conversion(0.001, "bitcoin", False, sats=True)
+    assert c.resultado(60000.0) == pytest.approx(60)
+
+
+def test_interpretar_dinero_a_sats():
+    c = interpretar("50 eur en satoshis", "eur")
+
+    assert c == Conversion(50, "bitcoin", True, sats=True)  # el dinero no se divide
+
+
+def test_interpretar_sats_entre_criptos():
+    assert interpretar("1 eth sats", "eur") == Conversion(
+        1, "ethereum", False, "bitcoin", hacia_sats=True
+    )
+    assert interpretar("1.000.000 sats a eth", "eur") == Conversion(
+        0.01, "bitcoin", False, "ethereum", sats=True
+    )
+
+
+def test_sats_y_bitcoin_son_lo_mismo():
+    with pytest.raises(ConvertirError, match="la misma"):
+        interpretar("1000 sats btc", "eur")

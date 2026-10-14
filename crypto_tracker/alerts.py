@@ -41,6 +41,9 @@ ALTO = "alto"  # por encima del maximo
 
 SIMBOLOS = {"eur": "€", "usd": "$", "gbp": "£"}
 
+# Satoshis en un bitcoin, para /convertir.
+POR_BTC = 100_000_000
+
 # El plan gratis de CoinGecko pide citarles, con enlace, junto a los datos.
 # La frase tiene que ser una de las suyas, por eso va en ingles.
 FUENTE = '<i>Price data by <a href="https://www.coingecko.com">CoinGecko</a></i>'
@@ -504,17 +507,29 @@ def formatear_conversion(
     precio: float,
     desde_dinero: bool,
     currency: str,
+    sats: bool = False,
 ) -> str:
     """Respuesta de /convertir. Lo que escribiste va primero."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
     nombre = escape(coin_id.replace("-", " ").title())
     lado_dinero = f"{simbolo}{_num(dinero)}"
-    lado_cripto = f"{texto_cantidad(cripto)} {nombre}"
+    lado_cripto = _cripto(cripto, nombre, sats)
     if desde_dinero:
         linea = f"{lado_dinero} = <b>{lado_cripto}</b>"
     else:
         linea = f"{lado_cripto} = <b>{lado_dinero}</b>"
-    return f"💱 {linea}\n<i>1 {nombre} = {simbolo}{_num(precio)}</i>"
+    texto = f"💱 {linea}\n<i>1 {nombre} = {simbolo}{_num(precio)}"
+    if sats:
+        texto += f" · 1 sat = {simbolo}{_num(precio / POR_BTC)}"
+        texto += f"\n{_cripto(cripto, nombre, False)}"
+    return texto + "</i>"
+
+
+def _cripto(cantidad: float, nombre: str, sats: bool) -> str:
+    """'0,05 Bitcoin', o '5.000.000 sats' si va en satoshis."""
+    if sats:
+        return f"{texto_cantidad(round(cantidad * POR_BTC))} sats"
+    return f"{texto_cantidad(cantidad)} {nombre}"
 
 
 def formatear_cambio(
@@ -524,6 +539,8 @@ def formatear_cambio(
     hacia: str,
     precios: tuple[float, float],
     currency: str,
+    sats: bool = False,
+    hacia_sats: bool = False,
 ) -> str:
     """Respuesta de /convertir de una cripto a otra."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
@@ -531,8 +548,8 @@ def formatear_cambio(
     otra = escape(hacia.replace("-", " ").title())
     # Al revés también, que "1 BTC son 32 ETH" se entiende mejor que 0,03.
     return (
-        f"💱 {texto_cantidad(cantidad)} {nombre} = "
-        f"<b>{texto_cantidad(resultado)} {otra}</b>\n"
+        f"💱 {_cripto(cantidad, nombre, sats)} = "
+        f"<b>{_cripto(resultado, otra, hacia_sats)}</b>\n"
         f"<i>1 {otra} = {texto_cantidad(precios[1] / precios[0])} {nombre}\n"
         f"1 {nombre} = {simbolo}{_num(precios[0])} · "
         f"1 {otra} = {simbolo}{_num(precios[1])}</i>"

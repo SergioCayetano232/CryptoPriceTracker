@@ -2,11 +2,13 @@
 
 from dataclasses import dataclass
 
-from .alerts import SIMBOLOS
+from .alerts import POR_BTC, SIMBOLOS
 from .puntuales import numero
 from .simbolos import a_id
 
 EJEMPLOS = "/convertir 0.05 bitcoin, /convertir 500 eur solana o /convertir 1 eth btc"
+
+SATS = {"sat", "sats", "satoshi", "satoshis"}
 
 # Como lo escribe uno, ademas del codigo y el simbolo.
 NOMBRES = {
@@ -29,6 +31,9 @@ class Conversion:
     coin_id: str
     desde_dinero: bool  # True si das dinero y quieres saber cuanta cripto es
     hacia: str | None = None  # la otra cripto, en "1 eth btc"
+    # Bitcoin, pero escrito y contestado en satoshis. La cantidad va en BTC.
+    sats: bool = False
+    hacia_sats: bool = False
 
     def resultado(self, precio: float) -> float:
         return self.cantidad / precio if self.desde_dinero else self.cantidad * precio
@@ -56,17 +61,26 @@ def interpretar(argumento: str, currency: str) -> Conversion:
     elif len(partes) == 3 and partes[2] in monedas:
         partes.pop(2)  # "0.05 bitcoin en euros" es lo mismo que sin "en euros"
 
-    hacia = a_id(partes.pop()) if len(partes) == 3 and not desde_dinero else None
+    hacia_sats = False
+    hacia = None
+    if len(partes) == 3 and not desde_dinero:
+        hacia_sats = partes[2] in SATS
+        hacia = "bitcoin" if hacia_sats else a_id(partes.pop())
+        if hacia_sats:
+            partes.pop()
     if len(partes) != 2:
         raise ConvertirError(f"Escríbelo así: {EJEMPLOS}")
 
     cantidad = numero(partes[0])
     if cantidad is None or cantidad <= 0:
         raise ConvertirError(f"'{partes[0]}' no es una cantidad. Ej: {EJEMPLOS}")
-    coin_id = a_id(partes[1])
+    sats = partes[1] in SATS
+    coin_id = "bitcoin" if sats else a_id(partes[1])
     if hacia == coin_id:
         raise ConvertirError("Son la misma cripto, sale lo mismo que pones.")
-    return Conversion(cantidad, coin_id, desde_dinero, hacia)
+    if sats and not desde_dinero:
+        cantidad /= POR_BTC
+    return Conversion(cantidad, coin_id, desde_dinero, hacia, sats, hacia_sats)
 
 
 def _monedas(currency: str) -> set[str]:

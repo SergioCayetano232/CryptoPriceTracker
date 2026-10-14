@@ -1623,6 +1623,8 @@ def _convertir(config: Config, argumento: str) -> str:
                 conversion.hacia,
                 (precio, precio_hacia),
                 config.vs_currency,
+                conversion.sats,
+                conversion.hacia_sats,
             )
         )
 
@@ -1634,7 +1636,13 @@ def _convertir(config: Config, argumento: str) -> str:
     )
     return alerts.con_fuente(
         alerts.formatear_conversion(
-            dinero, cripto, coin_id, precio, conversion.desde_dinero, config.vs_currency
+            dinero,
+            cripto,
+            coin_id,
+            precio,
+            conversion.desde_dinero,
+            config.vs_currency,
+            conversion.sats,
         )
     )
 

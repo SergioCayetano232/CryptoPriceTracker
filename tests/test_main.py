@@ -2485,6 +2485,32 @@ def test_convertir_entre_criptos(config, enviados, monkeypatch):
     assert len(pedidas) == 1  # una sola consulta para las dos
 
 
+def test_convertir_sats_a_dinero(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+
+    main.atender(config, _mensaje("/convertir 100000 sats"))
+
+    assert "💱 100.000 sats = <b>€60,00</b>" in enviados[0]
+    assert "1 sat = €0,0006" in enviados[0]
+    assert "0,001 Bitcoin</i>" in enviados[0]
+
+
+def test_convertir_dinero_a_sats(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+
+    main.atender(config, _mensaje("/convertir 50€ sats"))
+
+    assert "💱 €50,00 = <b>83.333 sats</b>" in enviados[0]
+
+
+def test_convertir_cripto_a_sats(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"ethereum": 3000.0, "bitcoin": 60000.0})
+
+    main.atender(config, _mensaje("/convertir 1 eth sats"))
+
+    assert "💱 1 Ethereum = <b>5.000.000 sats</b>" in enviados[0]
+
+
 def test_convertir_entre_criptos_si_una_no_existe(config, enviados, monkeypatch):
     _precio(monkeypatch, {"ethereum": 3000.0})
 
