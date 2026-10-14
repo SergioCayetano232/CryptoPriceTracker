@@ -165,6 +165,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/precio solana` | Lo que vale una cripto ahora y cómo va en la última hora, en 24 h y en 7 días, aunque no la vigiles. Si la tienes en la cartera, también lo que vale lo tuyo |
 | `/precio btc eth sol` | Lo mismo de varias a la vez, una por línea (hasta 10) |
 | `/precio` | Sin decir cuál, todas las que vigilas |
+| `/precio btc usd` | En otra moneda solo esa vez (`eur`, `usd` o `gbp`; también `$` o `dólares`). Vale con varias y con `/precio usd` a secas. No sale lo tuyo de la cartera, que va en la moneda del `.env` |
 | `btc` o `btc eth` | Sin barra, lo mismo que `/precio`. Solo con las conocidas, para que un "hola" no se lo tome como una cripto |
 | `/ath bitcoin` | Su máximo histórico, cuándo fue y cuánto le falta para volver (vale `/ath btc eth`, y a secas, las que vigilas) |
 | `/cartera` | Tu cartera: cuánto vale, cuánto ganas o pierdes y la gráfica de 7 días |
@@ -565,6 +566,7 @@ crypto_tracker/
   rsi.py         el RSI de 14 días, para /rsi
   caida.py       lo que ha bajado desde el máximo, para /caida
   periodo.py     lee tramos como 7d
+  moneda.py      la moneda que pides al final de /precio
   simbolos.py    btc, eth... a su id de CoinGecko
   diario.py      el resumen diario y las horas tranquilas
   semanal.py     el resumen de la semana de la cartera

@@ -127,6 +127,7 @@ EJEMPLOS = {
         ("/precio solana", "lo que vale, y cómo va en 1 h, 24 h y 7 días"),
         ("/precio btc eth sol", "varias a la vez (hasta 10)"),
         ("/precio", "a secas, las que vigilo"),
+        ("/precio btc usd", "en otra moneda: eur, usd o gbp"),
         ("btc", "sin barra, lo mismo"),
     ],
     "alerta": [

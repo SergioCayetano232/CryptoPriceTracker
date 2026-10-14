@@ -2290,6 +2290,55 @@ def test_precio_con_el_simbolo(config, enviados, monkeypatch):
     assert "💰 <b>Bitcoin</b>  €63.000,00" in enviados[0]
 
 
+def test_precio_en_otra_moneda(con_cartera, enviados, monkeypatch):
+    monedas = []
+
+    def semana(ids, cur):
+        monedas.append(cur)
+        return {"bitcoin": Precio("bitcoin", 75000.0, None, -4.25)}
+
+    monkeypatch.setattr(coingecko, "precios_semana", semana)
+    _precio_hace(con_cartera, 60000.0, 24 * 60 + 5)
+
+    main.atender(con_cartera, _mensaje("/precio btc usd"))
+
+    assert monedas == ["usd"]
+    assert "💰 <b>Bitcoin</b>  $75.000,00" in enviados[0]
+    # lo guardado y la cartera van en euros: mezclarlos daría cuentas falsas
+    assert "Sin datos de las últimas 24 h" in enviados[0]
+    assert "Tienes" not in enviados[0]
+
+
+def test_precio_de_varias_en_otra_moneda(config, enviados, monkeypatch):
+    monkeypatch.setattr(
+        coingecko,
+        "precios_semana",
+        lambda ids, cur: {
+            "bitcoin": Precio("bitcoin", 50000.0, 2.5, -4.25),
+            "ethereum": Precio("ethereum", 2000.0, 1.0, 3.0),
+        },
+    )
+
+    main.atender(config, _mensaje("/precio btc eth £"))
+
+    assert "<b>Bitcoin</b>  £50.000,00" in enviados[0]
+    assert "<b>Ethereum</b>  £2.000,00" in enviados[0]
+
+
+def test_precio_en_la_moneda_del_env_es_lo_de_siempre(
+    con_cartera, enviados, monkeypatch
+):
+    monkeypatch.setattr(
+        coingecko,
+        "precios_semana",
+        lambda ids, cur: {"bitcoin": Precio("bitcoin", 70000.0, 2.5, -4.25)},
+    )
+
+    main.atender(con_cartera, _mensaje("/precio btc euros"))
+
+    assert "💼 Tienes 0,016" in enviados[0]
+
+
 def test_precio_tira_del_historico_si_coingecko_no_da_el_24h(
     config, enviados, monkeypatch
 ):

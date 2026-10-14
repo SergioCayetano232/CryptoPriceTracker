@@ -43,6 +43,7 @@ from crypto_tracker import (
     media,
     mejor,
     miedo,
+    moneda,
     movimientos,
     objetivo,
     periodo,
@@ -1148,6 +1149,10 @@ def _crear_alerta(config: Config, argumento: str) -> str:
 
 
 def _precio(config: Config, argumento: str) -> str:
+    argumento, otra = moneda.separar(argumento)
+    currency = otra or config.vs_currency
+    # Lo guardado y lo que te costó la cartera van en la del .env: no se mezclan.
+    otra = currency != config.vs_currency
     coin_ids = simbolos.varias(argumento)
     if not argumento:
         # A secas, las que vigilas. Si son muchas, las primeras, que no caben.
@@ -1159,7 +1164,7 @@ def _precio(config: Config, argumento: str) -> str:
         return f"Como mucho {simbolos.MAX_VARIAS} a la vez."
 
     try:
-        precios = coingecko.precios_semana(coin_ids, config.vs_currency)
+        precios = coingecko.precios_semana(coin_ids, currency)
     except coingecko.CoinGeckoError as e:
         return f"No he podido mirar el precio ahora mismo: {telegram.escape(str(e))}"
 
@@ -1169,7 +1174,7 @@ def _precio(config: Config, argumento: str) -> str:
         if p is None:
             continue
         en_24h = p.en_24h
-        if en_24h is None:
+        if en_24h is None and not otra:
             en_24h = _variacion(config, c, p.precio)
         lineas.append((c, p.precio, en_24h, p.en_7d))
     en_1h = {c: p.en_1h for c, p in precios.items()}
@@ -1184,15 +1189,15 @@ def _precio(config: Config, argumento: str) -> str:
                 coin_id,
                 precio,
                 en_24h,
-                config.vs_currency,
+                currency,
                 en_7d,
                 en_1h.get(coin_id),
-                cartera.de(list(_con_cambios(config).cartera), coin_id, precio),
+                None
+                if otra
+                else cartera.de(list(_con_cambios(config).cartera), coin_id, precio),
             )
         )
-    return alerts.con_fuente(
-        alerts.formatear_precios(lineas, faltan, config.vs_currency)
-    )
+    return alerts.con_fuente(alerts.formatear_precios(lineas, faltan, currency))
 
 
 def _ath(config: Config, argumento: str) -> str:
