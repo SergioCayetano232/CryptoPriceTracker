@@ -4159,6 +4159,33 @@ def test_rsi_de_varias(config, enviados):
     assert "De una en una" in enviados[0]
 
 
+# --- /extremo ---
+
+
+def test_extremo(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    for dias, precio in [(3, 100.0), (2, 110.0), (1, 99.0), (0, 100.0)]:
+        _precio_de(config, "bitcoin", precio, dias * 24 * 60 + 5)
+
+    main.atender(config, _mensaje("/mejor btc"))
+
+    assert "Mejor día: <b>+10.00%</b>" in enviados[0]
+    assert "Peor día: <b>-10.00%</b>" in enviados[0]
+    assert "Solo tengo precios desde el" in enviados[0]
+
+
+def test_extremo_sin_precios(config, enviados):
+    main.atender(config, _mensaje("/extremo sol"))
+
+    assert "No tengo precios guardados de <b>solana</b>" in enviados[0]
+
+
+def test_extremo_de_varias(config, enviados):
+    main.atender(config, _mensaje("/extremo btc eth"))
+
+    assert "Escríbelo así: /extremo bitcoin 30d" in enviados[0]
+
+
 # --- /verdes ---
 
 

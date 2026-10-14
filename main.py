@@ -41,6 +41,7 @@ from crypto_tracker import (
     grafica,
     hubiera,
     media,
+    mejor,
     miedo,
     movimientos,
     objetivo,
@@ -832,6 +833,9 @@ def responder(
     if nombre == "verdes":
         return _verdes(config, argumento)
 
+    if nombre == "extremo":
+        return _extremo(config, argumento)
+
     if nombre == "rsi":
         return _rsi(config, argumento)
 
@@ -1405,6 +1409,33 @@ def _verdes(config: Config, argumento: str) -> str:
 
     falta = periodo.falta_principio(serie[0][0], datetime.now(timezone.utc), horas)
     return alerts.formatear_verdes(coin_id, resultado, horas, falta)
+
+
+def _extremo(config: Config, argumento: str) -> str:
+    try:
+        coin_id, horas = mejor.interpretar(argumento)
+    except periodo.PeriodoError as e:
+        return telegram.escape(str(e))
+    if not coin_id:
+        vigiladas = _con_cambios(config).watchlist
+        if not vigiladas:
+            return f"¿De cuál? Por ejemplo: {mejor.EJEMPLO}"
+        coin_id = vigiladas[0].coin_id
+
+    serie = database.get_serie(config.database_path, coin_id, horas, config.vs_currency)
+    dias = volatilidad.por_dias(serie)
+    resultado = mejor.calcular(dias)
+    if resultado is None:
+        return (
+            f"No tengo precios guardados de <b>{telegram.escape(coin_id)}</b> de dos "
+            f"días seguidos ({periodo.nombre(horas)}). Solo sé de las que vigilo: "
+            "míralas con /vigilar"
+        )
+
+    falta = periodo.falta_principio(serie[0][0], datetime.now(timezone.utc), horas)
+    return alerts.formatear_extremo(
+        coin_id, resultado, horas, config.vs_currency, dias[0][0] if falta else None
+    )
 
 
 def _media(config: Config, argumento: str) -> str:

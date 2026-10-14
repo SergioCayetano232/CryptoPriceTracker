@@ -193,6 +193,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/historico` | Sin decir cuál, la primera que vigilas (también `/historico 7d`) |
 | `/media bitcoin` | Su media de 7, 30 y 90 días y si el precio de ahora está por encima o por debajo de cada una (`/media bitcoin 14d`, solo la de esos días). Sale de lo guardado y no gasta consultas |
 | `/racha bitcoin` | Cuántos días seguidos lleva subiendo o bajando y cuánto lleva en esa racha. Sale de lo guardado y no gasta consultas |
+| `/extremo bitcoin 30d` | El día que más subió y el que más bajó en ese tramo, con la fecha, el % y de qué precio a cuál (sin tramo, 30 días). Sale de lo guardado y no gasta consultas |
 | `/verdes bitcoin 30d` | Cuántos días subió y cuántos bajó en ese tramo, y qué parte fue en verde (sin tramo, 30 días). Sale de lo guardado y no gasta consultas |
 | `/rango bitcoin 30d` | Su máximo, su mínimo y su media en ese tramo, y en qué punto del rango está hoy (sin tramo, 7 días). Sale de lo guardado y no gasta consultas |
 | `/dia bitcoin 01/09` | A cuánto cerró ese día, su máximo y su mínimo, y cuánto ha cambiado desde entonces. Vale `ayer` y con año (`01/09/2025`). Sale de lo guardado y no gasta consultas |
@@ -556,6 +557,7 @@ crypto_tracker/
   media.py       las medias de 7, 30 y 90 días, para /media
   racha.py       los días seguidos subiendo o bajando, para /racha
   verdes.py      los días que sube y los que baja, para /verdes
+  mejor.py       el mejor y el peor día, para /extremo
   reparto.py     qué parte de la cartera es cada una, para /reparto
   rango.py       el máximo, el mínimo y la media de /rango
   dia.py         a cuánto estaba un día concreto, para /dia

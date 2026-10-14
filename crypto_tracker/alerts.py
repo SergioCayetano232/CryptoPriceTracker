@@ -13,6 +13,7 @@ from .correlacion import Correlacion
 from .cuando import Cuando
 from .dia import Dia
 from .maximo import Maximo, hace
+from .mejor import Extremo
 from .mercado import Mercado, grande
 from .miedo import Indice
 from .miedo import hace as dia_miedo
@@ -768,6 +769,34 @@ def formatear_caida(
     if desde is not None:
         cuando = desde.astimezone()
         texto += f"\n<i>Solo tengo precios desde el {cuando:%d/%m a las %H:%M}.</i>"
+    return texto
+
+
+def formatear_extremo(
+    coin_id: str, e: Extremo, horas: float, currency: str, desde: date | None = None
+) -> str:
+    """Respuesta de /extremo. desde va si no hay precios de todo el tramo."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(coin_id.replace("-", " ").title())
+    texto = f"🎢 <b>{nombre}</b>, {nombre_periodo(horas)}\n"
+
+    # Si todos los días bajaron, el "mejor" sería una bajada: queda raro.
+    for titulo, d, vale, nada in (
+        ("Mejor día", e.mejor, e.mejor.cambio > 0, "No ha subido ningún día"),
+        ("Peor día", e.peor, e.peor.cambio < 0, "No ha bajado ningún día"),
+    ):
+        if vale:
+            texto += (
+                f"\n{_flecha(d.cambio)} {titulo}: <b>{d.cambio:+.2f}%</b> "
+                f"el {d.dia:%d/%m}\n"
+                f"<i>{simbolo}{_num(d.antes)} → {simbolo}{_num(d.precio)}</i>\n"
+            )
+        else:
+            texto += f"\n{nada}\n"
+
+    texto += "\n<i>Con el precio del final de cada día</i>"
+    if desde is not None:
+        texto += f"\n<i>Solo tengo precios desde el {desde:%d/%m}.</i>"
     return texto
 
 

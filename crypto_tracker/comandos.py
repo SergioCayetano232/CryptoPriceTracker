@@ -26,6 +26,7 @@ COMANDOS = {
     "historico": "Cómo ha ido una cripto (ej: /historico bitcoin 7d)",
     "media": "Las medias de 7, 30 y 90 días y si está por encima (ej: /media btc)",
     "racha": "Cuántos días seguidos lleva subiendo o bajando (ej: /racha btc)",
+    "extremo": "Su mejor y su peor día del tramo (ej: /extremo btc 30d)",
     "verdes": "Cuántos días ha subido y cuántos ha bajado (ej: /verdes btc 30d)",
     "rango": "Entre qué precios se ha movido y dónde está hoy (ej: /rango btc 30d)",
     "dia": "A cuánto estaba un día concreto (ej: /dia btc 01/09 o ayer)",
@@ -91,6 +92,8 @@ ALIAS = {
     "range": "rango",
     "streak": "racha",
     "rojos": "verdes",
+    "mejor": "extremo",
+    "peor": "extremo",
     "drawdown": "caida",
     "sobrecompra": "rsi",
     "cuándo": "cuando",
@@ -192,6 +195,11 @@ EJEMPLOS = {
     "racha": [
         ("/racha bitcoin", "cuántos días seguidos lleva subiendo o bajando"),
         ("/racha", "a secas, la primera que vigilo"),
+    ],
+    "extremo": [
+        ("/extremo bitcoin", "el día que más subió y el que más bajó en 30 días"),
+        ("/extremo bitcoin 7d", "del tramo que digas"),
+        ("/extremo", "a secas, la primera que vigilo"),
     ],
     "verdes": [
         ("/verdes bitcoin", "cuántos días subió y cuántos bajó en 30 días"),
