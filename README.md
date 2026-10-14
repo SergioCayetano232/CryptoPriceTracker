@@ -251,6 +251,9 @@ Si en un mensaje vienen varias criptos, salen los botones de las tres primeras.
 `/mute` a secas te deja elegir cuánto con un toque, y al callarlo sale un
 **🔔 Volver a avisar** por si te arrepientes.
 
+`/precio` de una sola lleva **🔔 Si sube un 5%** y **🔔 Si baja un 5%**, que
+te ponen esa `/alerta` desde lo que vale ahora.
+
 `/status`, `/resumen`, `/cartera` y `/alertas` llevan un **🔄 Actualizar** para
 volver a pedirlos de un toque.
 

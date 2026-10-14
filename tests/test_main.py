@@ -2339,6 +2339,31 @@ def test_precio_en_la_moneda_del_env_es_lo_de_siempre(
     assert "💼 Tienes 0,016" in enviados[0]
 
 
+def test_precio_de_una_lleva_botones_de_alerta(config, monkeypatch):
+    mandados = _con_botones(monkeypatch)
+    _precio(monkeypatch, {"bitcoin": 63000.0})
+
+    main.atender(config, _mensaje("/precio btc"))
+
+    texto, filas = mandados[0]
+    assert "💰 <b>Bitcoin</b>  €63.000,00" in texto
+    assert filas == [
+        [
+            ("🔔 Si sube un 5%", "/alerta bitcoin +5%"),
+            ("🔔 Si baja un 5%", "/alerta bitcoin -5%"),
+        ]
+    ]
+
+
+def test_precio_de_varias_sin_botones(config, monkeypatch):
+    mandados = _con_botones(monkeypatch)
+    _precio(monkeypatch, {"bitcoin": 63000.0, "ethereum": 2500.0})
+
+    main.atender(config, _mensaje("/precio btc eth"))
+
+    assert mandados[0][1] is None
+
+
 def test_precio_tira_del_historico_si_coingecko_no_da_el_24h(
     config, enviados, monkeypatch
 ):
@@ -3515,6 +3540,17 @@ def test_boton_de_callar(config, enviados, contestados):
     assert contestados == ["q1"]
     assert database.silenciado_hasta(config.database_path) is not None
     assert "Callado" in enviados[0]
+
+
+def test_boton_del_precio_crea_la_alerta(config, enviados, contestados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+
+    main.atender_boton(config, _boton("/alerta bitcoin -5%"))
+
+    [alerta] = database.get_puntuales(config.database_path, "eur")
+    assert alerta.objetivo == pytest.approx(57000.0)
+    assert alerta.sube is False
+    assert "baje a <b>€57.000,00</b>" in enviados[0]
 
 
 def test_boton_si_vuelve_crea_la_alerta(config, enviados, contestados, monkeypatch):

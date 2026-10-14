@@ -1153,7 +1153,7 @@ def _crear_alerta(config: Config, argumento: str) -> str:
     )
 
 
-def _precio(config: Config, argumento: str) -> str:
+def _precio(config: Config, argumento: str) -> str | comandos.ConBotones:
     argumento, otra = moneda.separar(argumento)
     currency = otra or config.vs_currency
     # Lo guardado y lo que te costó la cartera van en la del .env: no se mezclan.
@@ -1189,7 +1189,7 @@ def _precio(config: Config, argumento: str) -> str:
 
     if len(coin_ids) == 1:
         coin_id, precio, en_24h, en_7d = lineas[0]
-        return alerts.con_fuente(
+        texto = alerts.con_fuente(
             alerts.formatear_precio(
                 coin_id,
                 precio,
@@ -1202,6 +1202,8 @@ def _precio(config: Config, argumento: str) -> str:
                 else cartera.de(list(_con_cambios(config).cartera), coin_id, precio),
             )
         )
+        teclado = botones.para_precio(coin_id)
+        return comandos.ConBotones(texto, teclado) if teclado else texto
     return alerts.con_fuente(alerts.formatear_precios(lineas, faltan, currency))
 
 
