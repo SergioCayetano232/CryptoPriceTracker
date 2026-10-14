@@ -4159,6 +4159,32 @@ def test_rsi_de_varias(config, enviados):
     assert "De una en una" in enviados[0]
 
 
+# --- /verdes ---
+
+
+def test_verdes(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    for dias, precio in [(3, 100.0), (2, 105.0), (1, 103.0), (0, 110.0)]:
+        _precio_de(config, "bitcoin", precio, dias * 24 * 60 + 5)
+
+    main.atender(config, _mensaje("/verdes btc 30d"))
+
+    assert "<b>2</b> en verde y <b>1</b> en rojo" in enviados[0]
+    assert "Solo tengo precios desde el" in enviados[0]
+
+
+def test_verdes_sin_cripto_usa_la_primera(config, enviados):
+    main.atender(config, _mensaje("/verdes"))
+
+    assert "No tengo precios guardados de <b>bitcoin</b>" in enviados[0]
+
+
+def test_verdes_de_varias(config, enviados):
+    main.atender(config, _mensaje("/verdes btc eth"))
+
+    assert "Escríbelo así: /verdes bitcoin 30d" in enviados[0]
+
+
 # --- /racha ---
 
 

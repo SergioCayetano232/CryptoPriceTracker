@@ -56,6 +56,7 @@ from crypto_tracker import (
     simbolos,
     telegram,
     top,
+    verdes,
     vigiladas,
     volatilidad,
 )
@@ -828,6 +829,9 @@ def responder(
     if nombre == "caida":
         return _caida(config, argumento)
 
+    if nombre == "verdes":
+        return _verdes(config, argumento)
+
     if nombre == "rsi":
         return _rsi(config, argumento)
 
@@ -1377,6 +1381,30 @@ def _caida(config: Config, argumento: str) -> str:
     return alerts.formatear_caida(
         coin_id, resultado, horas, config.vs_currency, primero if falta else None
     )
+
+
+def _verdes(config: Config, argumento: str) -> str:
+    try:
+        coin_id, horas = verdes.interpretar(argumento)
+    except periodo.PeriodoError as e:
+        return telegram.escape(str(e))
+    if not coin_id:
+        vigiladas = _con_cambios(config).watchlist
+        if not vigiladas:
+            return f"¿De cuál? Por ejemplo: {verdes.EJEMPLO}"
+        coin_id = vigiladas[0].coin_id
+
+    serie = database.get_serie(config.database_path, coin_id, horas, config.vs_currency)
+    resultado = verdes.calcular(volatilidad.por_dias(serie))
+    if resultado is None:
+        return (
+            f"No tengo precios guardados de <b>{telegram.escape(coin_id)}</b> de dos "
+            f"días seguidos ({periodo.nombre(horas)}). Solo sé de las que vigilo: "
+            "míralas con /vigilar"
+        )
+
+    falta = periodo.falta_principio(serie[0][0], datetime.now(timezone.utc), horas)
+    return alerts.formatear_verdes(coin_id, resultado, horas, falta)
 
 
 def _media(config: Config, argumento: str) -> str:

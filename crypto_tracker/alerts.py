@@ -29,6 +29,7 @@ from .semanal import Semana
 from .telegram import escape
 from .tendencias import Tendencia
 from .top import ENTRE, Movida
+from .verdes import Verdes
 
 logger = logging.getLogger(__name__)
 
@@ -767,6 +768,31 @@ def formatear_caida(
     if desde is not None:
         cuando = desde.astimezone()
         texto += f"\n<i>Solo tengo precios desde el {cuando:%d/%m a las %H:%M}.</i>"
+    return texto
+
+
+def formatear_verdes(
+    coin_id: str, v: Verdes, horas: float, incompleto: bool = False
+) -> str:
+    """Respuesta de /verdes. incompleto si no hay precios de todo el tramo."""
+    nombre = escape(coin_id.replace("-", " ").title())
+    pct = v.porcentaje
+    icono = "🟢" if pct > 50 else "🔴" if pct < 50 else "⚪"
+    verdes = round(pct / 10)
+
+    texto = (
+        f"{icono} <b>{nombre}</b>, {nombre_periodo(horas)}\n\n"
+        f"<b>{v.suben}</b> en verde y <b>{v.bajan}</b> en rojo"
+    )
+    if v.iguales:
+        texto += f" ({v.iguales} sin cambios)"
+    texto += (
+        f"\n{'🟩' * verdes}{'🟥' * (10 - verdes)} sube el <b>{pct:.0f}%</b> "
+        "de los días\n"
+        "<i>Con el precio del final de cada día</i>"
+    )
+    if incompleto:
+        texto += f"\n<i>Solo tengo precios desde el {v.desde:%d/%m}.</i>"
     return texto
 
 
