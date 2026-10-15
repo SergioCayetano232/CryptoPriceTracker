@@ -13,6 +13,7 @@ from .correlacion import Correlacion
 from .cuando import Cuando
 from .dia import Dia
 from .diasemana import DiasSemana
+from .horas import Horas
 from .maximo import Maximo, hace
 from .mejor import Extremo
 from .mercado import Mercado, grande
@@ -861,6 +862,26 @@ def formatear_diasemana(
     texto += "<i>Lo que cambia de media ese día y cuántas veces lo he visto</i>"
     if incompleto:
         texto += f"\n<i>Solo tengo precios desde el {s.desde:%d/%m}.</i>"
+    return texto
+
+
+def formatear_horas(coin_id: str, h: Horas, horas: float) -> str:
+    """Respuesta de /horas."""
+    nombre = escape(coin_id.replace("-", " ").title())
+    barata, cara = h.medias[h.barata], h.medias[h.cara]
+    texto = (
+        f"🕐 <b>{nombre}</b> por horas, {nombre_periodo(horas)}\n\n"
+        f"🟢 Más barata sobre las <b>{h.barata:02d}:00</b> ({barata:+.2f}%)\n"
+        f"🔴 Más cara sobre las <b>{h.cara:02d}:00</b> ({cara:+.2f}%)\n"
+    )
+    # Si falta alguna hora, las etiquetas de los lados mentirían.
+    if len(h.medias) == 24:
+        texto += f"\n<code>00h {sparkline(list(h.medias.values()))} 23h</code>\n"
+
+    dias = "1 día completo" if h.dias == 1 else f"{h.dias} días completos"
+    texto += f"\n<i>Comparado con la media de cada día, en {dias}</i>"
+    if cara - barata < 0.5:
+        texto += "\n<i>La diferencia es pequeña: no lo tomes como una regla.</i>"
     return texto
 
 

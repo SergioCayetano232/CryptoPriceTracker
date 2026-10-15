@@ -4367,6 +4367,33 @@ def test_diasemana_de_varias(config, enviados):
     assert "Escríbelo así: /diasemana bitcoin 90d" in enviados[0]
 
 
+# --- /horas ---
+
+
+def test_horas(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    # Dos días y pico de un precio cada hora: al menos uno sale entero.
+    for horas in range(60):
+        _precio_de(config, "bitcoin", 100.0 + horas % 24, horas * 60 + 5)
+
+    main.atender(config, _mensaje("/horas btc 7d"))
+
+    assert "<b>Bitcoin</b> por horas, últimos 7 días" in enviados[0]
+    assert "Más barata sobre las" in enviados[0]
+
+
+def test_horas_sin_precios(config, enviados):
+    main.atender(config, _mensaje("/horas"))
+
+    assert "No tengo ningún día entero de precios de <b>bitcoin</b>" in enviados[0]
+
+
+def test_horas_de_varias(config, enviados):
+    main.atender(config, _mensaje("/horas btc eth"))
+
+    assert "Escríbelo así: /horas bitcoin 30d" in enviados[0]
+
+
 # --- /racha ---
 
 

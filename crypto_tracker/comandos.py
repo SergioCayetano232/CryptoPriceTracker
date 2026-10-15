@@ -29,6 +29,7 @@ COMANDOS = {
     "extremo": "Su mejor y su peor día del tramo (ej: /extremo btc 30d)",
     "verdes": "Cuántos días ha subido y cuántos ha bajado (ej: /verdes btc 30d)",
     "diasemana": "Qué día de la semana suele subir más (ej: /diasemana btc 90d)",
+    "horas": "A qué hora suele estar más barata (ej: /horas btc 30d)",
     "rango": "Entre qué precios se ha movido y dónde está hoy (ej: /rango btc 30d)",
     "dia": "A cuánto estaba un día concreto (ej: /dia btc 01/09 o ayer)",
     "cuando": "La última vez que estuvo a un precio (ej: /cuando btc 60000)",
@@ -213,6 +214,11 @@ EJEMPLOS = {
         ("/diasemana bitcoin", "lo que cambia de media cada día en 90 días"),
         ("/diasemana bitcoin 30d", "del tramo que digas"),
         ("/diasemana", "a secas, la primera que vigilo"),
+    ],
+    "horas": [
+        ("/horas bitcoin", "a qué hora suele estar más barata y más cara en 30 días"),
+        ("/horas bitcoin 7d", "del tramo que digas"),
+        ("/horas", "a secas, la primera que vigilo"),
     ],
     "rango": [
         ("/rango bitcoin", "máximo, mínimo y media de los últimos 7 días"),
