@@ -114,6 +114,10 @@ ALIAS = {
     "env": "copia",
     "caída": "caida",
     "subida": "sube",
+    "today": "hoy",
+    "hours": "horas",
+    "weekday": "diasemana",
+    "breakeven": "equilibrio",
     # /maximo ya es /ath; el mínimo del tramo sale en lo primero de /sube.
     "minimo": "sube",
     "mínimo": "sube",

@@ -28,6 +28,10 @@ from crypto_tracker.comandos import (
         ("/estado", ("status", "")),
         ("/p btc eth", ("precio", "btc eth")),
         ("/callar 2h", ("mute", "2h")),
+        ("/today", ("hoy", "")),
+        ("/hours btc", ("horas", "btc")),
+        ("/weekday btc", ("diasemana", "btc")),
+        ("/breakeven", ("equilibrio", "")),
         ("/inventado", ("inventado", "")),  # se decide luego que no existe
     ],
 )
