@@ -1,6 +1,6 @@
 [project]
 name = "crypto-price-tracker"
-version = "0.1.0"
+version = "0.2.0"
 description = "Avisa por Telegram cuando una cripto cruza un precio"
 readme = "README.md"
 license = { file = "LICENSE" }
