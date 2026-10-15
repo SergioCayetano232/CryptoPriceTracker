@@ -41,6 +41,7 @@ from crypto_tracker import (
     extremos,
     grafica,
     horas,
+    hoy,
     hubiera,
     media,
     mejor,
@@ -854,6 +855,9 @@ def responder(
     if nombre == "ratio":
         return _ratio(config, argumento)
 
+    if nombre == "hoy":
+        return _hoy(config, argumento)
+
     if nombre == "rsi":
         return _rsi(config, argumento)
 
@@ -1661,6 +1665,37 @@ def _correlacion(config: Config, argumento: str) -> str:
             "que vigilo: míralas con /vigilar"
         )
     return alerts.formatear_correlacion(*ids, resultado, horas)
+
+
+def _hoy(config: Config, argumento: str) -> str:
+    coin_ids = simbolos.varias(argumento)
+    if not argumento:
+        coin_ids = [w.coin_id for w in _con_cambios(config).watchlist]
+    if not coin_ids:
+        return "¿De cuáles? Por ejemplo: /hoy o /hoy btc eth"
+    if len(coin_ids) > simbolos.MAX_VARIAS:
+        return f"Como mucho {simbolos.MAX_VARIAS} a la vez."
+
+    ahora = datetime.now(timezone.utc)
+    desde = hoy.medianoche(ahora)
+    # Una hora antes de las 00:00, para tener el último precio de ayer.
+    horas_atras = (ahora - desde).total_seconds() / 3600 + 1
+    lineas = []
+    ultimo = None
+    for c in coin_ids:
+        serie = database.get_serie(
+            config.database_path, c, horas_atras, config.vs_currency
+        )
+        lineas.append((c, hoy.calcular(serie, desde)))
+        if serie and (ultimo is None or serie[-1][0] > ultimo):
+            ultimo = serie[-1][0]
+
+    if all(h is None for _, h in lineas):
+        return (
+            "No tengo precios guardados de hoy. Solo sé de las que vigilo, y "
+            "mientras estoy encendido: míralas con /vigilar"
+        )
+    return alerts.formatear_hoy(lineas, config.vs_currency, ultimo)
 
 
 def _ratio(config: Config, argumento: str) -> str:

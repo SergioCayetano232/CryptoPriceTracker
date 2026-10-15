@@ -160,6 +160,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | Comando | Qué hace |
 |---|---|
 | `/status` | Cómo van tus criptos ahora |
+| `/hoy` | Cómo van desde las 00:00 en vez de en las últimas 24 h, con el máximo y el mínimo de hoy (`/hoy btc eth`, solo esas). Sale de lo guardado y no gasta consultas |
 | `/resumen` | El resumen del día cuando lo pidas, con el índice de miedo y codicia. No quita el de la hora de siempre |
 | `/horario 8:30` | Cambia la hora del resumen del día (y del de los domingos). `/horario no` lo quita; a secas, te dice cuál tienes |
 | `/precio solana` | Lo que vale una cripto ahora y cómo va en la última hora, en 24 h y en 7 días, aunque no la vigiles. Debajo, unas barritas `▁▃▅▇` con la forma de las últimas 24 h, si tiene precios guardados. Si la tienes en la cartera, también lo que vale lo tuyo |
@@ -580,6 +581,7 @@ crypto_tracker/
   moneda.py      la moneda que pides al final de /precio
   simbolos.py    btc, eth... a su id de CoinGecko
   diario.py      el resumen diario y las horas tranquilas
+  hoy.py         cómo van desde las 00:00, para /hoy
   semanal.py     el resumen de la semana de la cartera
   salud.py       avisa si el bot deja de funcionar
   copia.py       lo de ahora escrito como va en el .env, para /copia

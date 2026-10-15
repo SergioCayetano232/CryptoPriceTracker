@@ -9,6 +9,7 @@ from . import simbolos
 # Lo que sale en el menu de Telegram al escribir "/".
 COMANDOS = {
     "status": "Cómo van tus criptos ahora",
+    "hoy": "Cómo van desde las 00:00, no en 24 h (ej: /hoy o /hoy btc eth)",
     "resumen": "El resumen del día sin esperar, con el índice de miedo",
     "horario": "A qué hora te mando el resumen (ej: /horario 8:30 o /horario no)",
     "precio": "Lo que vale una cripto, varias o, a secas, las que vigilo",
@@ -220,6 +221,10 @@ EJEMPLOS = {
         ("/horas bitcoin", "a qué hora suele estar más barata y más cara en 30 días"),
         ("/horas bitcoin 7d", "del tramo que digas"),
         ("/horas", "a secas, la primera que vigilo"),
+    ],
+    "hoy": [
+        ("/hoy", "cómo van las que vigilo desde las 00:00"),
+        ("/hoy btc eth", "solo esas"),
     ],
     "ratio": [
         ("/ratio eth btc", "cuánto bitcoin vale un ethereum y cómo ha ido en 30 días"),

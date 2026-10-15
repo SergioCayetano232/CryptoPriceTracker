@@ -14,6 +14,7 @@ from .cuando import Cuando
 from .dia import Dia
 from .diasemana import DiasSemana
 from .horas import Horas
+from .hoy import Hoy
 from .maximo import Maximo, hace
 from .mejor import Extremo
 from .mercado import Mercado, grande
@@ -350,6 +351,31 @@ def formatear_resumen(
         if siguiente:
             texto.append(f"   <i>{siguiente}</i>")
 
+    return "\n".join(texto)
+
+
+def formatear_hoy(
+    lineas: list[tuple[str, Hoy | None]], currency: str, ultimo: datetime
+) -> str:
+    """Respuesta de /hoy. ultimo es la hora del precio más nuevo."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["☀️ <b>Hoy</b>, desde las 00:00", ""]
+    for coin_id, h in lineas:
+        nombre = escape(coin_id.replace("-", " ").title())
+        if h is None:
+            texto.append(f"<b>{nombre}</b>  <i>(sin precios de hoy)</i>")
+            continue
+        linea = f"<b>{nombre}</b>  {simbolo}{_num(h.ahora)}  "
+        linea += f"{_flecha(h.cambio)} {h.cambio:+.2f}%"
+        if h.desde is not None:
+            linea += f" <i>(desde las {h.desde.astimezone():%H:%M})</i>"
+        texto.append(linea)
+        texto.append(
+            f"   <i>máx {simbolo}{_num(h.maximo)} · mín {simbolo}{_num(h.minimo)}</i>"
+        )
+    texto.append(
+        f"\n<i>Con lo guardado, lo último de las {ultimo.astimezone():%H:%M}</i>"
+    )
     return "\n".join(texto)
 
 

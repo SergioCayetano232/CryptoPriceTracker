@@ -4436,6 +4436,25 @@ def test_ratio_de_una(config, enviados):
     assert "De dos en dos. Escríbelo así: /ratio eth btc 30d" in enviados[0]
 
 
+# --- /hoy ---
+
+
+def test_hoy(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    _precio_de(config, "bitcoin", 100.0, 0)  # con 0, de hoy aunque sean las 00:00
+
+    main.atender(config, _mensaje("/hoy"))
+
+    assert "☀️ <b>Hoy</b>, desde las 00:00" in enviados[0]
+    assert "<b>Bitcoin</b>  €100,00" in enviados[0]
+
+
+def test_hoy_sin_precios(config, enviados):
+    main.atender(config, _mensaje("/hoy btc eth"))
+
+    assert "No tengo precios guardados de hoy" in enviados[0]
+
+
 # --- /racha ---
 
 
