@@ -32,6 +32,7 @@ from .ratio import Ratio
 from .reparto import Trozo
 from .rsi import PERIODO, SOBRECOMPRA, SOBREVENTA, Rsi
 from .semanal import Semana
+from .sube import Subida
 from .telegram import escape
 from .tendencias import Tendencia
 from .top import ENTRE, Movida
@@ -833,6 +834,37 @@ def formatear_caida(
             f"\nPeor caída <b>{c.peor:+.2f}%</b>: de {simbolo}{_num(c.pico)} el "
             f"{c.cuando_pico.astimezone():%d/%m} a {simbolo}{_num(c.valle)} el "
             f"{c.cuando_valle.astimezone():%d/%m}"
+        )
+    if desde is not None:
+        cuando = desde.astimezone()
+        texto += f"\n<i>Solo tengo precios desde el {cuando:%d/%m a las %H:%M}.</i>"
+    return texto
+
+
+def formatear_sube(
+    coin_id: str, s: Subida, horas: float, currency: str, desde: datetime | None = None
+) -> str:
+    """Respuesta de /sube. desde va si no hay precios de todo el tramo."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(coin_id.replace("-", " ").title())
+
+    texto = f"🚀 <b>{nombre}</b>, {nombre_periodo(horas)}\n\n"
+    if s.desde_minimo == 0:
+        texto += f"Ahora <b>{simbolo}{_num(s.ahora)}</b>, está en su mínimo del tramo\n"
+    else:
+        texto += (
+            f"Ahora <b>{simbolo}{_num(s.ahora)}</b>, "
+            f"<b>{s.desde_minimo:+.2f}%</b> desde el mínimo\n"
+            f"<i>Mínimo {simbolo}{_num(s.minimo)} el "
+            f"{s.cuando_minimo.astimezone():%d/%m}</i>\n"
+        )
+    if s.mejor == 0:
+        texto += "\nNo ha tenido ninguna subida en este tramo"
+    else:
+        texto += (
+            f"\nMejor subida <b>{s.mejor:+.2f}%</b>: de {simbolo}{_num(s.valle)} el "
+            f"{s.cuando_valle.astimezone():%d/%m} a {simbolo}{_num(s.pico)} el "
+            f"{s.cuando_pico.astimezone():%d/%m}"
         )
     if desde is not None:
         cuando = desde.astimezone()

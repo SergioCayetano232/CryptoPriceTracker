@@ -61,6 +61,7 @@ from crypto_tracker import (
     salud,
     semanal,
     simbolos,
+    sube,
     telegram,
     top,
     verdes,
@@ -841,6 +842,9 @@ def responder(
     if nombre == "caida":
         return _caida(config, argumento)
 
+    if nombre == "sube":
+        return _sube(config, argumento)
+
     if nombre == "verdes":
         return _verdes(config, argumento)
 
@@ -1421,6 +1425,33 @@ def _caida(config: Config, argumento: str) -> str:
     primero = serie[0][0]
     falta = periodo.falta_principio(primero, datetime.now(timezone.utc), horas)
     return alerts.formatear_caida(
+        coin_id, resultado, horas, config.vs_currency, primero if falta else None
+    )
+
+
+def _sube(config: Config, argumento: str) -> str:
+    try:
+        coin_id, horas = sube.interpretar(argumento)
+    except periodo.PeriodoError as e:
+        return telegram.escape(str(e))
+    if not coin_id:
+        vigiladas = _con_cambios(config).watchlist
+        if not vigiladas:
+            return f"¿De cuál? Por ejemplo: {sube.EJEMPLO}"
+        coin_id = vigiladas[0].coin_id
+
+    serie = database.get_serie(config.database_path, coin_id, horas, config.vs_currency)
+    resultado = sube.calcular(serie)
+    if resultado is None:
+        return (
+            f"No tengo precios guardados de <b>{telegram.escape(coin_id)}</b> "
+            f"({periodo.nombre(horas)}). Solo sé de las que vigilo: míralas "
+            "con /vigilar"
+        )
+
+    primero = serie[0][0]
+    falta = periodo.falta_principio(primero, datetime.now(timezone.utc), horas)
+    return alerts.formatear_sube(
         coin_id, resultado, horas, config.vs_currency, primero if falta else None
     )
 

@@ -36,6 +36,7 @@ COMANDOS = {
     "cuando": "La última vez que estuvo a un precio (ej: /cuando btc 60000)",
     "rsi": "Si ha subido o bajado demasiado rápido (ej: /rsi btc)",
     "caida": "Cuánto ha bajado desde el máximo (ej: /caida btc 30d)",
+    "sube": "Cuánto ha subido desde el mínimo (ej: /sube btc 30d)",
     "volatilidad": "Cuánto se mueve, para elegir el % (ej: /volatilidad btc 30d)",
     "vigilar": "Ver o cambiar lo que vigilo (ej: /vigilar solana %5)",
     "dejar": "Dejar de vigilar una o varias (ej: /dejar solana o /dejar sol eth)",
@@ -112,6 +113,7 @@ ALIAS = {
     "correlation": "correlacion",
     "env": "copia",
     "caída": "caida",
+    "subida": "sube",
     "average": "media",
     "ranking": "comparar",
     "global": "mercado",
@@ -253,6 +255,11 @@ EJEMPLOS = {
         ("/caida bitcoin", "cuánto ha bajado desde el máximo de 30 días"),
         ("/caida bitcoin 7d", "del tramo que digas"),
         ("/caida", "a secas, la primera que vigilo"),
+    ],
+    "sube": [
+        ("/sube bitcoin", "cuánto ha subido desde el mínimo de 30 días"),
+        ("/sube bitcoin 7d", "del tramo que digas"),
+        ("/sube", "a secas, la primera que vigilo"),
     ],
     "objetivo": [
         ("/objetivo bitcoin 100000", "lo que valdría tu cartera si llega a 100.000"),

@@ -4162,6 +4162,37 @@ def test_rango_mal_escrito(config, enviados):
     assert "/rango bitcoin 7d" in enviados[0]
 
 
+# --- /sube ---
+
+
+def test_sube(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    for dias, precio in [(29, 100.0), (20, 80.0), (10, 120.0), (1, 96.0)]:
+        _precio_de(config, "bitcoin", precio, dias * 24 * 60)
+
+    main.atender(config, _mensaje("/sube btc"))
+
+    texto = enviados[0]
+    assert "🚀 <b>Bitcoin</b>, últimos 30 días" in texto
+    assert "<b>+20.00%</b> desde el mínimo" in texto
+    assert "Mejor subida <b>+50.00%</b>" in texto
+
+
+def test_sube_con_el_alias(config, enviados):
+    _precio_de(config, "bitcoin", 100.0, 60)
+    _precio_de(config, "bitcoin", 99.0, 5)
+
+    main.atender(config, _mensaje("/subida"))
+
+    assert "está en su mínimo del tramo" in enviados[0]
+
+
+def test_sube_sin_precios(config, enviados):
+    main.atender(config, _mensaje("/sube sol 7d"))
+
+    assert "No tengo precios guardados de <b>solana</b>" in enviados[0]
+
+
 # --- /caida ---
 
 
