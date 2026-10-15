@@ -4187,6 +4187,15 @@ def test_sube_con_el_alias(config, enviados):
     assert "está en su mínimo del tramo" in enviados[0]
 
 
+def test_minimo_es_sube(config, enviados):
+    _precio_de(config, "bitcoin", 90.0, 60)
+    _precio_de(config, "bitcoin", 99.0, 5)
+
+    main.atender(config, _mensaje("/mínimo btc 7d"))
+
+    assert "<b>+10.00%</b> desde el mínimo" in enviados[0]
+
+
 def test_sube_sin_precios(config, enviados):
     main.atender(config, _mensaje("/sube sol 7d"))
 

@@ -114,6 +114,9 @@ ALIAS = {
     "env": "copia",
     "caída": "caida",
     "subida": "sube",
+    # /maximo ya es /ath; el mínimo del tramo sale en lo primero de /sube.
+    "minimo": "sube",
+    "mínimo": "sube",
     "average": "media",
     "ranking": "comparar",
     "global": "mercado",
