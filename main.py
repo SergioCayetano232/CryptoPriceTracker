@@ -53,6 +53,7 @@ from crypto_tracker import (
     puntuales,
     racha,
     rango,
+    ratio,
     reparto,
     rsi,
     salud,
@@ -849,6 +850,9 @@ def responder(
 
     if nombre == "horas":
         return _horas(config, argumento)
+
+    if nombre == "ratio":
+        return _ratio(config, argumento)
 
     if nombre == "rsi":
         return _rsi(config, argumento)
@@ -1657,6 +1661,33 @@ def _correlacion(config: Config, argumento: str) -> str:
             "que vigilo: míralas con /vigilar"
         )
     return alerts.formatear_correlacion(*ids, resultado, horas)
+
+
+def _ratio(config: Config, argumento: str) -> str:
+    try:
+        ids, horas = ratio.interpretar(argumento)
+    except periodo.PeriodoError as e:
+        return telegram.escape(str(e))
+    if not ids:
+        ids = [w.coin_id for w in _con_cambios(config).watchlist[:2]]
+        if len(ids) < 2:
+            return f"¿Cuáles? Por ejemplo: {ratio.EJEMPLO}"
+
+    una, otra = (
+        volatilidad.por_dias(
+            database.get_serie(config.database_path, c, horas, config.vs_currency)
+        )
+        for c in ids
+    )
+    resultado = ratio.calcular(una, otra)
+    if resultado is None:
+        nombres = " y ".join(f"<b>{telegram.escape(c)}</b>" for c in ids)
+        return (
+            f"Necesito precios de {nombres} de al menos dos días "
+            f"({periodo.nombre(horas)}) y no los tengo. Solo sé de las que vigilo: "
+            "míralas con /vigilar"
+        )
+    return alerts.formatear_ratio(*ids, resultado, horas)
 
 
 def _convertir(config: Config, argumento: str) -> str:

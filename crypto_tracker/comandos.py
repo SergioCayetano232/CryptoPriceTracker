@@ -40,6 +40,7 @@ COMANDOS = {
     "dejar": "Dejar de vigilar una o varias (ej: /dejar solana o /dejar sol eth)",
     "comparar": "Qué tal les ha ido, de mejor a peor (ej: /comparar btc eth 7d)",
     "correlacion": "Si dos criptos se mueven a la vez (ej: /correlacion btc eth 30d)",
+    "ratio": "Cuánto vale una en otra y cómo ha cambiado (ej: /ratio eth btc 30d)",
     "convertir": "Cuánto es en dinero o en cripto (ej: /convertir 0.05 bitcoin)",
     "si": "Cuánto tendrías si hubieras invertido (ej: /si 1000 bitcoin 30d)",
     "dca": "Lo mismo, metiendo un poco cada semana (ej: /dca 50 bitcoin 90d)",
@@ -219,6 +220,11 @@ EJEMPLOS = {
         ("/horas bitcoin", "a qué hora suele estar más barata y más cara en 30 días"),
         ("/horas bitcoin 7d", "del tramo que digas"),
         ("/horas", "a secas, la primera que vigilo"),
+    ],
+    "ratio": [
+        ("/ratio eth btc", "cuánto bitcoin vale un ethereum y cómo ha ido en 30 días"),
+        ("/ratio eth btc 7d", "del tramo que digas"),
+        ("/ratio", "a secas, las dos primeras que vigilo"),
     ],
     "rango": [
         ("/rango bitcoin", "máximo, mínimo y media de los últimos 7 días"),

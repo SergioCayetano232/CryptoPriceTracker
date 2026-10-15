@@ -4409,6 +4409,33 @@ def test_horas_de_varias(config, enviados):
     assert "Escríbelo así: /horas bitcoin 30d" in enviados[0]
 
 
+# --- /ratio ---
+
+
+def test_ratio(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    for dias, eth, btc in [(2, 3000.0, 100000.0), (0, 3300.0, 100000.0)]:
+        _precio_de(config, "ethereum", eth, dias * 24 * 60 + 5)
+        _precio_de(config, "bitcoin", btc, dias * 24 * 60 + 5)
+
+    main.atender(config, _mensaje("/ratio eth btc 7d"))
+
+    assert "1 Ethereum = <b>0,0330</b> Bitcoin" in enviados[0]
+    assert "🔺 +10.00%" in enviados[0]
+
+
+def test_ratio_sin_precios(config, enviados):
+    main.atender(config, _mensaje("/ratio eth sol"))
+
+    assert "Necesito precios de <b>ethereum</b> y <b>solana</b>" in enviados[0]
+
+
+def test_ratio_de_una(config, enviados):
+    main.atender(config, _mensaje("/ratio eth"))
+
+    assert "De dos en dos. Escríbelo así: /ratio eth btc 30d" in enviados[0]
+
+
 # --- /racha ---
 
 

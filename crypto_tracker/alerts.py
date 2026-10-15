@@ -26,6 +26,7 @@ from .periodo import nombre as nombre_periodo
 from .puntuales import CARTERA, Puntual, cumplidas, ejemplo
 from .racha import Racha
 from .rango import Rango, barra
+from .ratio import Ratio
 from .reparto import Trozo
 from .rsi import PERIODO, SOBRECOMPRA, SOBREVENTA, Rsi
 from .semanal import Semana
@@ -718,6 +719,26 @@ def formatear_correlacion(una: str, otra: str, c: Correlacion, horas: float) -> 
         f"<i>Con {c.dias} días. +1 es que se mueven igual, 0 que no tienen nada que "
         "ver y -1 que una sube cuando la otra baja</i>"
     )
+
+
+def formatear_ratio(una: str, otra: str, r: Ratio, horas: float) -> str:
+    """Respuesta de /ratio."""
+    n1, n2 = (escape(x.replace("-", " ").title()) for x in (una, otra))
+    valores = [v for _, v in r.dias]
+    texto = (
+        f"⚖️ <b>{n1}</b> en <b>{n2}</b>, {nombre_periodo(horas)}\n\n"
+        f"1 {n1} = <b>{_num(r.ahora)}</b> {n2}\n"
+        f"{_flecha(r.cambio)} {r.cambio:+.2f}% desde el {r.desde:%d/%m} "
+        f"({_num(r.antes)})\n"
+    )
+    if len(valores) >= MINIMO_BARRAS:
+        texto += f"<code>{sparkline(muestrear(valores, BARRAS_MOVIL))}</code>\n"
+    texto += (
+        f"Máximo {_num(max(valores))} · Mínimo {_num(min(valores))}\n\n"
+        f"<i>Si sube, a {n1} le ha ido mejor que a {n2}. "
+        "Con el precio del final de cada día</i>"
+    )
+    return texto
 
 
 def formatear_reparto(trozos: list[Trozo], total: float, currency: str) -> str:
