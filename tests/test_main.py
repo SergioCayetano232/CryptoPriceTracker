@@ -3988,6 +3988,34 @@ def test_si_la_foto_no_pasa_el_texto_lleva_el_boton(
 # --- /objetivo ---
 
 
+def test_equilibrio(con_cartera, enviados, monkeypatch):
+    monkeypatch.setattr(
+        coingecko, "get_prices", lambda ids, cur: {"bitcoin": 70000.0, "solana": 120.0}
+    )
+
+    main.atender(con_cartera, _mensaje("/equilibrio"))
+
+    # Solana te salió a 142,86: le falta. Bitcoin a 62.500: ya ganas.
+    assert enviados[0].index("<b>Solana</b>") < enviados[0].index("<b>Bitcoin</b>")
+    assert "<b>Solana</b> a €142,86 · falta <b>+19.05%</b>" in enviados[0]
+    assert "<b>Bitcoin</b> a €62.500,00 · ya ganas" in enviados[0]
+    assert "coingecko.com" in enviados[0]
+
+
+def test_equilibrio_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/equilibrio"))
+
+    assert "PORTFOLIO" in enviados[0]
+
+
+def test_equilibrio_si_falta_un_precio(con_cartera, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 70000.0})
+
+    main.atender(con_cartera, _mensaje("/equilibrio"))
+
+    assert "no tengo el precio de todo" in enviados[0]
+
+
 def test_objetivo(con_cartera, enviados, monkeypatch):
     monkeypatch.setattr(
         coingecko, "get_prices", lambda ids, cur: {"bitcoin": 70000.0, "solana": 150.0}

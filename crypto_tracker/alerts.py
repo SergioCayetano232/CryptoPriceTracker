@@ -13,6 +13,7 @@ from .correlacion import Correlacion
 from .cuando import Cuando
 from .dia import Dia
 from .diasemana import DiasSemana
+from .equilibrio import Cartera
 from .horas import Horas
 from .hoy import Hoy
 from .maximo import Maximo, hace
@@ -931,6 +932,36 @@ def formatear_horas(coin_id: str, h: Horas, horas: float) -> str:
     if cara - barata < 0.5:
         texto += "\n<i>La diferencia es pequeña: no lo tomes como una regla.</i>"
     return texto
+
+
+def formatear_equilibrio(c: Cartera, currency: str) -> str:
+    """Respuesta de /equilibrio."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["🧮 <b>Para no perder</b>", ""]
+    for e in c.criptos:
+        nombre = escape(e.coin_id.replace("-", " ").title())
+        if e.falta > 0:
+            como = f"falta <b>{e.falta:+.2f}%</b>"
+        else:
+            como = f"ya ganas, aguanta <b>{e.falta:+.2f}%</b>"
+        texto.append(
+            f"{'🔴' if e.falta > 0 else '🟢'} <b>{nombre}</b> a "
+            f"{simbolo}{_num(e.medio)} · {como}"
+        )
+        texto.append(f"   <i>ahora {simbolo}{_num(e.precio)}</i>")
+
+    if c.total is not None:
+        if c.total > 0:
+            texto.append(f"\n📦 Todo junto tendría que subir un <b>{c.total:+.2f}%</b>")
+        else:
+            texto.append(
+                f"\n📦 Todo junto vas ganando: aguanta una bajada del "
+                f"<b>{-c.total:.2f}%</b>"
+            )
+    if c.sin_coste:
+        nombres = ", ".join(escape(x.replace("-", " ").title()) for x in c.sin_coste)
+        texto.append(f"\n<i>De {nombres} no sé lo que te costó.</i>")
+    return "\n".join(texto)
 
 
 def formatear_objetivo(e: Escenario, currency: str) -> str:

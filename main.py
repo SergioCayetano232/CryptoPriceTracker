@@ -37,6 +37,7 @@ from crypto_tracker import (
     dia,
     diario,
     diasemana,
+    equilibrio,
     exportar,
     extremos,
     grafica,
@@ -857,6 +858,9 @@ def responder(
 
     if nombre == "hoy":
         return _hoy(config, argumento)
+
+    if nombre == "equilibrio":
+        return _equilibrio(config)
 
     if nombre == "rsi":
         return _rsi(config, argumento)
@@ -1878,6 +1882,29 @@ def _dca(config: Config, argumento: str) -> str:
             ultimo if viejo else None,
         )
     )
+
+
+def _equilibrio(config: Config) -> str:
+    config = _con_cambios(config)
+    if not config.cartera:
+        return SIN_CARTERA
+
+    precios = _consultar(config, [p.coin_id for p in config.cartera])
+    if precios is None:
+        return "No he podido consultar los precios. Prueba en un rato."
+    valores, faltan = cartera.valorar(list(config.cartera), precios)
+    # Sin el precio de alguna, el total saldría más bajo de lo que es.
+    if faltan:
+        return (
+            "Ahora mismo no tengo el precio de todo lo que tienes. Prueba en un rato."
+        )
+    resultado = equilibrio.calcular(valores)
+    if not resultado.criptos:
+        return (
+            "No sé lo que te costó nada de la cartera. Apúntalo al comprar: "
+            "/compra bitcoin 0.01 600"
+        )
+    return alerts.con_fuente(alerts.formatear_equilibrio(resultado, config.vs_currency))
 
 
 def _objetivo(config: Config, argumento: str) -> str:

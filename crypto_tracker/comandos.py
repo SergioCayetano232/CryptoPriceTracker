@@ -46,6 +46,7 @@ COMANDOS = {
     "si": "Cuánto tendrías si hubieras invertido (ej: /si 1000 bitcoin 30d)",
     "dca": "Lo mismo, metiendo un poco cada semana (ej: /dca 50 bitcoin 90d)",
     "objetivo": "Cuánto valdría tu cartera a ese precio (ej: /objetivo btc 100000)",
+    "equilibrio": "A qué precio dejas de perder con cada una de tu cartera",
     "exportar": "Los precios guardados en un CSV (ej: /exportar bitcoin 30d)",
     "mercado": "Lo que vale todo el mercado y cuánto es de Bitcoin",
     "tendencias": "Las criptos que más se buscan hoy",
@@ -221,6 +222,9 @@ EJEMPLOS = {
         ("/horas bitcoin", "a qué hora suele estar más barata y más cara en 30 días"),
         ("/horas bitcoin 7d", "del tramo que digas"),
         ("/horas", "a secas, la primera que vigilo"),
+    ],
+    "equilibrio": [
+        ("/equilibrio", "a qué precio te salió cada una y cuánto le falta"),
     ],
     "hoy": [
         ("/hoy", "cómo van las que vigilo desde las 00:00"),
