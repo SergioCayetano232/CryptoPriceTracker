@@ -1702,7 +1702,7 @@ def _correlacion(config: Config, argumento: str) -> str:
     return alerts.formatear_correlacion(*ids, resultado, horas)
 
 
-def _hoy(config: Config, argumento: str) -> str:
+def _hoy(config: Config, argumento: str) -> str | comandos.ConBotones:
     coin_ids = simbolos.varias(argumento)
     if not argumento:
         coin_ids = [w.coin_id for w in _con_cambios(config).watchlist]
@@ -1730,7 +1730,12 @@ def _hoy(config: Config, argumento: str) -> str:
             "No tengo precios guardados de hoy. Solo sé de las que vigilo, y "
             "mientras estoy encendido: míralas con /vigilar"
         )
-    return alerts.formatear_hoy(lineas, config.vs_currency, ultimo)
+    texto = alerts.formatear_hoy(lineas, config.vs_currency, ultimo)
+    comando = f"/hoy {argumento}".strip()
+    # Con muchas criptos escritas no cabe en el botón: va sin él.
+    if len(comando.encode()) > botones.MAX_DATOS:
+        return texto
+    return comandos.ConBotones(texto, botones.actualizar(comando))
 
 
 def _ratio(config: Config, argumento: str) -> str:

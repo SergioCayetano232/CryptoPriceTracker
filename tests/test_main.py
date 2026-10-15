@@ -4517,6 +4517,14 @@ def test_hoy(config, enviados, monkeypatch):
     assert "<b>Bitcoin</b>  €100,00" in enviados[0]
 
 
+def test_hoy_lleva_boton_de_actualizar(config, con_teclado):
+    _precio_de(config, "bitcoin", 100.0, 0)
+
+    main.atender(config, _mensaje("/hoy btc"))
+
+    assert con_teclado[0][1]["botones"] == [[("🔄 Actualizar", "/hoy btc")]]
+
+
 def test_hoy_sin_precios(config, enviados):
     main.atender(config, _mensaje("/hoy btc eth"))
 
