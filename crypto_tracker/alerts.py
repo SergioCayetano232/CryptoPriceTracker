@@ -12,6 +12,7 @@ from .config import Posicion, Watch
 from .correlacion import Correlacion
 from .cuando import Cuando
 from .dia import Dia
+from .diasemana import DiasSemana
 from .maximo import Maximo, hace
 from .mejor import Extremo
 from .mercado import Mercado, grande
@@ -839,6 +840,27 @@ def formatear_verdes(
     )
     if incompleto:
         texto += f"\n<i>Solo tengo precios desde el {v.desde:%d/%m}.</i>"
+    return texto
+
+
+def formatear_diasemana(
+    coin_id: str, s: DiasSemana, horas: float, incompleto: bool = False
+) -> str:
+    """Respuesta de /diasemana. incompleto si no hay precios de todo el tramo."""
+    nombre = escape(coin_id.replace("-", " ").title())
+    texto = f"📅 <b>{nombre}</b> por días de la semana, {nombre_periodo(horas)}\n\n"
+    for d in s.dias:
+        texto += f"{_flecha(d.media)} {d.nombre}: <b>{d.media:+.2f}%</b> · {d.veces}\n"
+
+    # Con un solo día no hay nada que comparar.
+    if len(s.dias) > 1:
+        texto += (
+            f"\nMejor: <b>{s.mejor.nombre.lower()}</b> · "
+            f"Peor: <b>{s.peor.nombre.lower()}</b>\n"
+        )
+    texto += "<i>Lo que cambia de media ese día y cuántas veces lo he visto</i>"
+    if incompleto:
+        texto += f"\n<i>Solo tengo precios desde el {s.desde:%d/%m}.</i>"
     return texto
 
 

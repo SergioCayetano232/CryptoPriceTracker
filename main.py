@@ -36,6 +36,7 @@ from crypto_tracker import (
     dca,
     dia,
     diario,
+    diasemana,
     exportar,
     extremos,
     grafica,
@@ -842,6 +843,9 @@ def responder(
     if nombre == "extremo":
         return _extremo(config, argumento)
 
+    if nombre == "diasemana":
+        return _diasemana(config, argumento)
+
     if nombre == "rsi":
         return _rsi(config, argumento)
 
@@ -1448,6 +1452,30 @@ def _extremo(config: Config, argumento: str) -> str:
     return alerts.formatear_extremo(
         coin_id, resultado, horas, config.vs_currency, dias[0][0] if falta else None
     )
+
+
+def _diasemana(config: Config, argumento: str) -> str:
+    try:
+        coin_id, horas = diasemana.interpretar(argumento)
+    except periodo.PeriodoError as e:
+        return telegram.escape(str(e))
+    if not coin_id:
+        vigiladas = _con_cambios(config).watchlist
+        if not vigiladas:
+            return f"¿De cuál? Por ejemplo: {diasemana.EJEMPLO}"
+        coin_id = vigiladas[0].coin_id
+
+    serie = database.get_serie(config.database_path, coin_id, horas, config.vs_currency)
+    resultado = diasemana.calcular(volatilidad.por_dias(serie))
+    if resultado is None:
+        return (
+            f"No tengo precios guardados de <b>{telegram.escape(coin_id)}</b> de dos "
+            f"días seguidos ({periodo.nombre(horas)}). Solo sé de las que vigilo: "
+            "míralas con /vigilar"
+        )
+
+    falta = periodo.falta_principio(serie[0][0], datetime.now(timezone.utc), horas)
+    return alerts.formatear_diasemana(coin_id, resultado, horas, falta)
 
 
 def _media(config: Config, argumento: str) -> str:

@@ -4340,6 +4340,33 @@ def test_verdes_de_varias(config, enviados):
     assert "Escríbelo así: /verdes bitcoin 30d" in enviados[0]
 
 
+# --- /diasemana ---
+
+
+def test_diasemana(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    for dias, precio in [(3, 100.0), (2, 105.0), (1, 103.0), (0, 110.0)]:
+        _precio_de(config, "bitcoin", precio, dias * 24 * 60 + 5)
+
+    main.atender(config, _mensaje("/diasemana btc 30d"))
+
+    assert "<b>Bitcoin</b> por días de la semana, últimos 30 días" in enviados[0]
+    assert "Mejor:" in enviados[0]
+    assert "Solo tengo precios desde el" in enviados[0]
+
+
+def test_diasemana_sin_cripto_usa_la_primera(config, enviados):
+    main.atender(config, _mensaje("/diasemana"))
+
+    assert "No tengo precios guardados de <b>bitcoin</b>" in enviados[0]
+
+
+def test_diasemana_de_varias(config, enviados):
+    main.atender(config, _mensaje("/diasemana btc eth"))
+
+    assert "Escríbelo así: /diasemana bitcoin 90d" in enviados[0]
+
+
 # --- /racha ---
 
 
