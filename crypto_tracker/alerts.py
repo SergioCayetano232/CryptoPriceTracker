@@ -55,6 +55,7 @@ BARRAS = "▁▂▃▄▅▆▇█"
 
 # Mas barritas que esto y en el movil la linea salta a la siguiente.
 BARRAS_MOVIL = 24
+MINIMO_BARRAS = 6
 
 # Ni la cripto mas barata necesita mas para que se vea su precio.
 MAX_DECIMALES = 12
@@ -994,10 +995,12 @@ def formatear_precio(
     en_7d: float | None = None,
     en_1h: float | None = None,
     tuyo: Valor | None = None,
+    dia: list[float] | None = None,
 ) -> str:
     """Respuesta de /precio: lo que vale ahora y cómo va en 1 h, 24 h y 7 días.
 
-    tuyo es lo que tienes de ella, si esta en la cartera."""
+    tuyo es lo que tienes de ella, si esta en la cartera. dia, los precios
+    guardados de las últimas 24 h, para las barritas."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
     nombre = escape(coin_id.replace("-", " ").title())
     texto = f"💰 <b>{nombre}</b>  {simbolo}{_num(precio)}"
@@ -1009,6 +1012,9 @@ def formatear_precio(
         texto += f"\n{_flecha(variacion)} {variacion:+.2f}% en 24 h"
     if en_7d is not None:
         texto += f"\n{_flecha(en_7d)} {en_7d:+.2f}% en 7 días"
+    # Con cuatro puntos las barritas no dicen nada.
+    if dia and len(dia) >= MINIMO_BARRAS:
+        texto += f"\n<code>{sparkline(muestrear(dia, BARRAS_MOVIL))}</code> <i>24 h</i>"
     if tuyo is not None:
         texto += (
             f"\n\n💼 Tienes {texto_cantidad(tuyo.cantidad)}, "

@@ -2239,6 +2239,21 @@ def test_precio_con_la_ultima_hora(config, enviados, monkeypatch):
     assert "€63.000,00\n🔻 -0.40% en 1 h\n🔺 +2.50% en 24 h" in enviados[0]
 
 
+def test_precio_con_las_barritas_de_lo_guardado(config, enviados, monkeypatch):
+    monkeypatch.setattr(
+        coingecko,
+        "precios_semana",
+        lambda ids, cur: {"bitcoin": Precio("bitcoin", 63000.0, 2.5, -4.25)},
+    )
+    for i in range(8):
+        _precio_de(config, "bitcoin", 60000.0 + i * 100, (8 - i) * 60)
+    _precio_de(config, "bitcoin", 1.0, 25 * 60)  # de antes de ayer, no cuenta
+
+    main.atender(config, _mensaje("/precio btc"))
+
+    assert "en 7 días\n<code>▁▂▃▄▅▆▇█</code> <i>24 h</i>" in enviados[0]
+
+
 def test_precio_con_lo_que_tienes(con_cartera, enviados, monkeypatch):
     monkeypatch.setattr(
         coingecko,

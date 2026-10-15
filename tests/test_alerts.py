@@ -687,3 +687,17 @@ def test_formatear_precio_con_la_semana():
 
     assert "Sin datos de las últimas 24 h" in texto
     assert "🔻 -4.25% en 7 días" in texto
+
+
+def test_precio_con_barritas_de_24h():
+    dia = [100.0, 101.0, 102.0, 103.0, 104.0, 105.0]
+
+    texto = formatear_precio("bitcoin", 105.0, 5.0, "eur", dia=dia)
+
+    assert texto.endswith("\n<code>▁▂▄▅▇█</code> <i>24 h</i>")
+
+
+def test_precio_sin_barritas_con_pocos_puntos():
+    texto = formatear_precio("bitcoin", 105.0, 5.0, "eur", dia=[100.0] * 5)
+
+    assert "<code>" not in texto

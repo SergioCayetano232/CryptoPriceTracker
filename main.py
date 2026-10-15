@@ -1197,6 +1197,11 @@ def _precio(config: Config, argumento: str) -> str | comandos.ConBotones:
 
     if len(coin_ids) == 1:
         coin_id, precio, en_24h, en_7d = lineas[0]
+        # Va en la moneda del .env, pero la forma de la línea es la misma.
+        serie = database.get_serie(
+            config.database_path, coin_id, 24, config.vs_currency
+        )
+        dia = [p for _, p in serie]
         texto = alerts.con_fuente(
             alerts.formatear_precio(
                 coin_id,
@@ -1208,6 +1213,7 @@ def _precio(config: Config, argumento: str) -> str | comandos.ConBotones:
                 None
                 if otra
                 else cartera.de(list(_con_cambios(config).cartera), coin_id, precio),
+                dia,
             )
         )
         teclado = botones.para_precio(coin_id)
