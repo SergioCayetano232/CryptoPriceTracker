@@ -383,7 +383,8 @@ def parse_extremos(raw: str) -> int | None:
 
 def load_config() -> Config:
     """Monta la configuracion. Lanza ConfigError si algo falta o esta mal."""
-    check_interval = _parse_positive_int("CHECK_INTERVAL", "300")
+    # Con 300 la clave gratuita de CoinGecko va muy justa a final de mes.
+    check_interval = _parse_positive_int("CHECK_INTERVAL", "330")
     brusco = parse_brusco(os.getenv("MOVIMIENTO_BRUSCO", ""))
 
     # Con una ventana mas corta que el intervalo nunca habria dos precios

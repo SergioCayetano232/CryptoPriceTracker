@@ -143,7 +143,7 @@ python main.py
 ```
 python main.py --loop
 ```
-Se queda mirando los precios cada 5 minutos. Para pararlo, `Ctrl+C`.
+Se queda mirando los precios cada cinco minutos y medio. Para pararlo, `Ctrl+C`.
 
 Al arrancar te manda un 🟢 *Encendido* con lo que vigila y, si llevaba un rato
 parado, desde cuándo. Así sabes si el servidor se ha reiniciado.
@@ -487,7 +487,7 @@ Todo lo que va haciendo queda apuntado en `data/tracker.log`.
 |---|---|---|
 | `COINGECKO_API_KEY` | Clave gratuita de CoinGecko (ver arriba) | vacío |
 | `VS_CURRENCY` | Moneda de los precios (`usd`, `eur`, `gbp`) | `eur` |
-| `CHECK_INTERVAL` | Segundos entre consulta y consulta | `300` (5 min) |
+| `CHECK_INTERVAL` | Segundos entre consulta y consulta | `330` (5 min y medio) |
 | `HISTORY_DAYS` | Días de histórico que se guardan | `90` |
 | `DATABASE_PATH` | Dónde se guardan los datos | `data/prices.db` |
 | `RESUMEN_DIARIO` | Hora del resumen de cada día (`09:00`), que acaba con el índice de miedo y codicia. Vacío, sin resumen | vacío |

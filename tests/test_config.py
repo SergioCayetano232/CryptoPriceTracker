@@ -310,3 +310,14 @@ def test_tramos_invalidos(entrada):
 
     with pytest.raises(ConfigError):
         parse_tramo(entrada)
+
+
+def test_sin_check_interval_va_a_330(monkeypatch):
+    from crypto_tracker.config import load_config
+
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "x")
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "1")
+    monkeypatch.setenv("WATCHLIST", "bitcoin:%5")
+    monkeypatch.delenv("CHECK_INTERVAL", raising=False)
+
+    assert load_config().check_interval == 330
