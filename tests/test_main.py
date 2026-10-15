@@ -4002,6 +4002,16 @@ def test_equilibrio(con_cartera, enviados, monkeypatch):
     assert "coingecko.com" in enviados[0]
 
 
+def test_equilibrio_lleva_boton_de_actualizar(con_cartera, con_teclado, monkeypatch):
+    monkeypatch.setattr(
+        coingecko, "get_prices", lambda ids, cur: {"bitcoin": 70000.0, "solana": 120.0}
+    )
+
+    main.atender(con_cartera, _mensaje("/equilibrio"))
+
+    assert con_teclado[0][1]["botones"] == [[("🔄 Actualizar", "/equilibrio")]]
+
+
 def test_equilibrio_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/equilibrio"))
 

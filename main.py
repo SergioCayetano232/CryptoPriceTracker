@@ -1920,7 +1920,7 @@ def _dca(config: Config, argumento: str) -> str:
     )
 
 
-def _equilibrio(config: Config) -> str:
+def _equilibrio(config: Config) -> str | comandos.ConBotones:
     config = _con_cambios(config)
     if not config.cartera:
         return SIN_CARTERA
@@ -1940,7 +1940,10 @@ def _equilibrio(config: Config) -> str:
             "No sé lo que te costó nada de la cartera. Apúntalo al comprar: "
             "/compra bitcoin 0.01 600"
         )
-    return alerts.con_fuente(alerts.formatear_equilibrio(resultado, config.vs_currency))
+    texto = alerts.con_fuente(
+        alerts.formatear_equilibrio(resultado, config.vs_currency)
+    )
+    return comandos.ConBotones(texto, botones.actualizar("/equilibrio"))
 
 
 def _objetivo(config: Config, argumento: str) -> str:
