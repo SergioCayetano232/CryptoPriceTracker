@@ -1,5 +1,6 @@
 """Tests de como contesta el bot a lo que le escriben."""
 
+import contextlib
 import time
 from datetime import datetime, timedelta, timezone
 
@@ -69,6 +70,27 @@ def test_contesta_la_ayuda(config, enviados):
     main.atender(config, _mensaje("/start"))
 
     assert "/status" in enviados[0]
+
+
+@pytest.mark.parametrize("nombre", list(comandos.COMANDOS))
+def test_todos_los_comandos_del_menu_tienen_respuesta(config, monkeypatch, nombre):
+    import requests
+
+    def sin_red(*a, **k):
+        raise requests.ConnectionError("sin red en los tests")
+
+    monkeypatch.setattr(requests.Session, "request", sin_red)
+    monkeypatch.setattr(coingecko.time, "sleep", lambda s: None)  # sin esperas
+    no_entendidos = []
+    monkeypatch.setattr(
+        comandos, "no_entiendo", lambda n, *a: no_entendidos.append(n) or ""
+    )
+
+    # Que falle por no tener red da igual: lo que miro es que llegue a su sitio.
+    with contextlib.suppress(Exception):
+        main.responder(config, nombre, "")
+
+    assert no_entendidos == []
 
 
 def test_ignora_otros_chats(config, enviados):
