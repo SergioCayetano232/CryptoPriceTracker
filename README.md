@@ -596,9 +596,9 @@ tests/           los tests
 windows/         para dejarlo corriendo en un servidor
 ```
 
-Pasar los tests y el linter:
+Pasar los tests y el linter (instala las versiones fijadas en `pyproject.toml`):
 ```
-pip install pytest ruff
+pip install -e ".[dev]"
 pytest
 ruff check .
 ```
