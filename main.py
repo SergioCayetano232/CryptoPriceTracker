@@ -1192,6 +1192,7 @@ def _crear_alerta(config: Config, argumento: str) -> str:
 
 
 def _precio(config: Config, argumento: str) -> str | comandos.ConBotones:
+    comando = f"/precio {argumento}".strip()
     argumento, otra = moneda.separar(argumento)
     currency = otra or config.vs_currency
     # Lo guardado y lo que te costó la cartera van en la del .env: no se mezclan.
@@ -1248,7 +1249,11 @@ def _precio(config: Config, argumento: str) -> str | comandos.ConBotones:
         )
         teclado = botones.para_precio(coin_id, grafica=len(dia) >= 2)
         return comandos.ConBotones(texto, teclado) if teclado else texto
-    return alerts.con_fuente(alerts.formatear_precios(lineas, faltan, currency))
+    texto = alerts.con_fuente(alerts.formatear_precios(lineas, faltan, currency))
+    # Con diez ids largos no cabe en el boton, y entonces va sin el.
+    if len(comando.encode()) > botones.MAX_DATOS:
+        return texto
+    return comandos.ConBotones(texto, botones.actualizar(comando))
 
 
 def _ath(config: Config, argumento: str) -> str:

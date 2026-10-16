@@ -2441,11 +2441,37 @@ def test_precio_de_una_con_precios_guardados_lleva_grafica(config, monkeypatch):
     assert filas[-1] == [("📈 Gráfica", "/historico bitcoin")]
 
 
-def test_precio_de_varias_sin_botones(config, monkeypatch):
+def test_precio_de_varias_lleva_actualizar(config, monkeypatch):
     mandados = _con_botones(monkeypatch)
     _precio(monkeypatch, {"bitcoin": 63000.0, "ethereum": 2500.0})
 
-    main.atender(config, _mensaje("/precio btc eth"))
+    main.atender(config, _mensaje("/precio btc eth usd"))
+    main.atender_boton(config, _boton(mandados[0][1][0][0][1]))
+
+    assert mandados[0][1] == [[("🔄 Actualizar", "/precio btc eth usd")]]
+    assert mandados[1][0] == mandados[0][0]
+
+
+def test_precio_a_secas_lleva_actualizar(config, monkeypatch):
+    from dataclasses import replace
+
+    config = replace(
+        config, watchlist=[Watch("bitcoin", percent=5), Watch("solana", step=10)]
+    )
+    mandados = _con_botones(monkeypatch)
+    _precio(monkeypatch, {"bitcoin": 63000.0, "solana": 150.0})
+
+    main.atender(config, _mensaje("/precio"))
+
+    assert mandados[0][1] == [[("🔄 Actualizar", "/precio")]]
+
+
+def test_precio_de_muchas_con_ids_largos_sin_actualizar(config, monkeypatch):
+    mandados = _con_botones(monkeypatch)
+    ids = [f"una-cripto-larga-{i}" for i in range(4)]
+    _precio(monkeypatch, {c: 1.0 for c in ids})
+
+    main.atender(config, _mensaje("/precio " + " ".join(ids)))
 
     assert mandados[0][1] is None
 

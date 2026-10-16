@@ -261,8 +261,8 @@ Si en un mensaje vienen varias criptos, salen los botones de las tres primeras.
 te ponen esa `/alerta` desde lo que vale ahora, y un **📈 Gráfica** con la de
 las últimas 24 h si tiene precios guardados.
 
-`/status`, `/resumen`, `/cartera` y `/alertas` llevan un **🔄 Actualizar** para
-volver a pedirlos de un toque.
+`/status`, `/resumen`, `/cartera`, `/alertas` y `/precio` de varias llevan un
+**🔄 Actualizar** para volver a pedirlos de un toque.
 
 **Alertas de una sola vez:**
 
