@@ -168,7 +168,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/precio` | Sin decir cuál, todas las que vigilas |
 | `/precio btc usd` | En otra moneda solo esa vez (`eur`, `usd` o `gbp`; también `$` o `dólares`). Vale con varias y con `/precio usd` a secas. No sale lo tuyo de la cartera, que va en la moneda del `.env` |
 | `btc` o `btc eth` | Sin barra, lo mismo que `/precio`. Solo con las conocidas, para que un "hola" no se lo tome como una cripto |
-| `/ath bitcoin` | Su máximo histórico, cuándo fue y cuánto le falta para volver (vale `/ath btc eth`, y a secas, las que vigilas) |
+| `/ath bitcoin` | Su máximo histórico, cuándo fue y cuánto le falta para volver, y debajo su mínimo histórico y cuánto ha subido desde ahí (vale `/ath btc eth`, solo con el máximo, y a secas, las que vigilas) |
 | `/cartera` | Tu cartera: cuánto vale, cuánto ganas o pierdes y la gráfica de 7 días |
 | `/cartera 30d` | Lo mismo, con la gráfica del tramo que digas |
 | `/cartera usd` | Lo que vale en otra moneda (`eur`, `usd` o `gbp`). Sin lo que ganas ni gráfica, que lo que te costó va en la moneda del `.env` |

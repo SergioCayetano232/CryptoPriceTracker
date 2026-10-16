@@ -1,7 +1,7 @@
-"""/ath: el maximo historico de una cripto y cuanto le falta para volver."""
+"""/ath: el maximo historico de una cripto, cuanto le falta y su minimo."""
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 
 
@@ -11,10 +11,18 @@ class Maximo:
     precio: float
     maximo: float
     fecha: datetime
+    minimo: float | None = None
+    fecha_minimo: datetime | None = None
 
     def falta(self) -> float:
         """Lo que tiene que subir, en %, para volver al maximo. 0 si ya esta."""
         return max(0.0, (self.maximo / self.precio - 1) * 100)
+
+    def desde_minimo(self) -> float | None:
+        """Lo que ha subido desde el minimo historico, en %."""
+        if self.minimo is None:
+            return None
+        return max(0.0, (self.precio / self.minimo - 1) * 100)
 
 
 def leer(datos) -> dict[str, Maximo]:
@@ -32,8 +40,20 @@ def leer(datos) -> dict[str, Maximo]:
             continue
         # Con una moneda recien salida a veces llegan a 0 o null.
         if m.precio > 0 and m.maximo > 0 and math.isfinite(m.maximo):
-            maximos[m.coin_id] = m
+            maximos[m.coin_id] = _con_minimo(m, d)
     return maximos
+
+
+def _con_minimo(m: Maximo, d: dict) -> Maximo:
+    # El minimo es un extra: si viene raro, el maximo vale igual.
+    try:
+        minimo = float(d["atl"])
+        fecha = datetime.fromisoformat(d["atl_date"].replace("Z", "+00:00"))
+    except (KeyError, TypeError, ValueError, AttributeError):
+        return m
+    if minimo <= 0 or not math.isfinite(minimo):
+        return m
+    return replace(m, minimo=minimo, fecha_minimo=fecha)
 
 
 def hace(fecha: datetime, ahora: datetime) -> str:

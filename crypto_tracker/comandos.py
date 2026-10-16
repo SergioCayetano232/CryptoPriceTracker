@@ -13,7 +13,7 @@ COMANDOS = {
     "resumen": "El resumen del día sin esperar, con el índice de miedo",
     "horario": "A qué hora te mando el resumen (ej: /horario 8:30 o /horario no)",
     "precio": "Lo que vale una cripto, varias o, a secas, las que vigilo",
-    "ath": "El máximo histórico y cuánto le falta (ej: /ath bitcoin)",
+    "ath": "El máximo y el mínimo histórico (ej: /ath bitcoin)",
     "cartera": "Cuánto vale lo que tienes, con gráfica (ej: /cartera 30d)",
     "reparto": "Qué parte de tu cartera es cada cripto, con gráfica",
     "semana": "Cómo le ha ido a tu cartera esta semana, o a una (ej: /semana btc)",

@@ -1176,8 +1176,17 @@ def formatear_maximo(m: Maximo, currency: str, ahora: datetime) -> str:
         f"Ahora {simbolo}{_num(m.precio)} · "
     )
     if not m.falta():
-        return texto + "🎉 está en máximos"
-    return texto + f"le falta +{m.falta():.2f}% para volver"
+        texto += "🎉 está en máximos"
+    else:
+        texto += f"le falta +{m.falta():.2f}% para volver"
+    subido = m.desde_minimo()
+    if subido is None:
+        return texto
+    return texto + (
+        f"\n\n🕳 Mínimo histórico {simbolo}{_num(m.minimo)}\n"
+        f"<i>El {m.fecha_minimo.astimezone():%d/%m/%Y}, "
+        f"{hace(m.fecha_minimo, ahora)}</i> · ha subido +{subido:.2f}% desde ahí"
+    )
 
 
 def formatear_maximos(maximos: list[Maximo], faltan: list[str], currency: str) -> str:

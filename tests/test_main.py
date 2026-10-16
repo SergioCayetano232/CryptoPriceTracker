@@ -2829,6 +2829,26 @@ def test_ath(config, enviados, monkeypatch):
     assert "CoinGecko" in enviados[0]
 
 
+def test_ath_con_el_minimo(config, enviados, monkeypatch):
+    from crypto_tracker.maximo import Maximo
+
+    m = Maximo(
+        "bitcoin",
+        75000.0,
+        100000.0,
+        datetime(2026, 3, 14, tzinfo=timezone.utc),
+        50.0,
+        datetime(2013, 7, 6, tzinfo=timezone.utc),
+    )
+    monkeypatch.setattr(coingecko, "maximos", lambda ids, cur: {"bitcoin": m})
+
+    main.atender(config, _mensaje("/ath btc"))
+
+    assert "le falta +33.33% para volver\n\n🕳 Mínimo histórico €50,00" in enviados[0]
+    assert "El 06/07/2013, hace" in enviados[0]
+    assert "ha subido +149900.00% desde ahí" in enviados[0]
+
+
 def test_ath_en_maximos(config, enviados, monkeypatch):
     _maximos(monkeypatch, {"bitcoin": (100000.0, 100000.0)})
 

@@ -23,6 +23,27 @@ def test_leer():
     assert leer([_dato()]) == {"bitcoin": Maximo("bitcoin", 75000, 100000, FECHA)}
 
 
+def test_leer_con_el_minimo():
+    dato = _dato(atl=67.81, atl_date="2013-07-06T00:00:00.000Z")
+
+    m = leer([dato])["bitcoin"]
+
+    assert m.minimo == 67.81
+    assert m.fecha_minimo == datetime(2013, 7, 6, tzinfo=timezone.utc)
+    assert m.desde_minimo() == pytest.approx(110503.7, 0.001)
+
+
+@pytest.mark.parametrize(
+    "raro", [{"atl": None}, {"atl": 0}, {"atl": 5, "atl_date": "ayer"}]
+)
+def test_leer_con_el_minimo_raro_se_queda_el_maximo(raro):
+    m = leer([_dato(**raro)])["bitcoin"]
+
+    assert m.maximo == 100000
+    assert m.minimo is None
+    assert m.desde_minimo() is None
+
+
 @pytest.mark.parametrize(
     "raro",
     [
