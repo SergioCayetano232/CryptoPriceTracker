@@ -167,6 +167,7 @@ EJEMPLOS = {
     "cartera": [
         ("/cartera", "cuánto vale, con la gráfica de 7 días"),
         ("/cartera 30d", "con la gráfica del tramo que digas"),
+        ("/cartera usd", "lo que vale en dólares, sin lo que ganas"),
     ],
     "compra": [
         ("/compra bitcoin 0.01 600", "0,01 por 600 € en total"),

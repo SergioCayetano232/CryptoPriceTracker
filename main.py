@@ -2430,6 +2430,10 @@ def _cartera(
     config: Config, argumento: str
 ) -> str | comandos.Foto | comandos.ConBotones:
     """/cartera con la grafica de lo que ha valido. Sin datos, solo el texto."""
+    resto, otra = moneda.separar(argumento)
+    if otra and otra != config.vs_currency:
+        return _cartera_en(config, otra, f"/cartera {argumento}")
+    argumento = resto
     try:
         horas = periodo.leer(argumento) if argumento else HORAS_CARTERA
     except periodo.PeriodoError as e:
@@ -2468,6 +2472,29 @@ def _cartera(
         return comandos.ConBotones(texto, teclado)
 
     return comandos.Foto(png, texto, texto, teclado)
+
+
+def _cartera_en(
+    config: Config, currency: str, comando: str
+) -> str | comandos.ConBotones:
+    """/cartera usd: lo que vale en otra moneda, sin ganancias ni grafica."""
+    try:
+        precios = coingecko.get_prices([p.coin_id for p in config.cartera], currency)
+    except coingecko.CoinGeckoError as e:
+        logger.error("No se pudieron consultar los precios: %s", e)
+        precios = {}
+    if not precios:
+        return "No he podido consultar los precios. Prueba en un rato."
+
+    # Lo que te costo esta en la moneda del .env: pasarlo al cambio de hoy mentiria.
+    sin_coste = [replace(p, invertido=None) for p in config.cartera]
+    valores, faltan = cartera.valorar(sin_coste, precios)
+    texto = alerts.formatear_cartera(valores, cartera.total(valores), faltan, currency)
+    texto += (
+        f"\n<i>Lo que ganas o pierdes solo te lo sé decir en "
+        f"{config.vs_currency.upper()}, que es en lo que apuntaste lo que te costó.</i>"
+    )
+    return comandos.ConBotones(alerts.con_fuente(texto), botones.actualizar(comando))
 
 
 def _reparto(config: Config) -> str | comandos.Foto:

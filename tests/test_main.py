@@ -955,6 +955,40 @@ def test_cartera_sola(con_cartera, enviados, monkeypatch):
     assert "coingecko.com" in enviados[0]
 
 
+def test_cartera_en_otra_moneda(con_cartera, monkeypatch):
+    mandados = _con_botones(monkeypatch)
+    pedidas = []
+
+    def precios(ids, cur):
+        pedidas.append(cur)
+        return {"bitcoin": 80000.0, "solana": 170.0}
+
+    monkeypatch.setattr(coingecko, "get_prices", precios)
+
+    main.atender(con_cartera, _mensaje("/cartera usd"))
+    main.atender(con_cartera, _mensaje("/cartera $"))
+
+    texto, teclado = mandados[0]
+    assert pedidas == ["usd", "usd"]
+    assert "Total <b>$2.470,00</b>\n" in texto  # sin lo que ganas detras
+    assert "te salió" not in texto
+    assert "solo te lo sé decir en EUR" in texto
+    assert teclado == [[("🔄 Actualizar", "/cartera usd")]]
+    # En otra moneda no se guarda: el historico va en la del .env.
+    assert database.get_last_price(con_cartera.database_path, "bitcoin") is None
+
+
+def test_cartera_en_la_misma_moneda_como_siempre(con_cartera, enviados, monkeypatch):
+    monkeypatch.setattr(
+        coingecko, "get_prices", lambda ids, cur: {"bitcoin": 70000.0, "solana": 150.0}
+    )
+
+    main.atender(con_cartera, _mensaje("/cartera eur"))
+
+    assert "2.170,00" in enviados[0]
+    assert "solo te lo sé decir" not in enviados[0]
+
+
 def test_cartera_guarda_los_precios(con_cartera, enviados, monkeypatch):
     monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"solana": 150.0})
 

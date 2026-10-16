@@ -171,6 +171,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/ath bitcoin` | Su máximo histórico, cuándo fue y cuánto le falta para volver (vale `/ath btc eth`, y a secas, las que vigilas) |
 | `/cartera` | Tu cartera: cuánto vale, cuánto ganas o pierdes y la gráfica de 7 días |
 | `/cartera 30d` | Lo mismo, con la gráfica del tramo que digas |
+| `/cartera usd` | Lo que vale en otra moneda (`eur`, `usd` o `gbp`). Sin lo que ganas ni gráfica, que lo que te costó va en la moneda del `.env` |
 | `/reparto` | Qué parte de tu cartera es cada cripto, con una imagen de barras. Si tienes más de 6, las pequeñas van juntas en "Otras" |
 | `/semana` | El resumen de tu semana sin esperar al domingo. No gasta consultas |
 | `/semana bitcoin` | La semana de una sola: lo mismo que `/historico bitcoin 7d` |
