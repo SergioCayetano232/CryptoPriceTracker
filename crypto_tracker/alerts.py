@@ -1519,6 +1519,23 @@ def formatear_cerca(cerca: list[tuple[Puntual, float]], currency: str) -> str:
     return "\n".join(lineas)
 
 
+def formatear_lejos(cuantas: int, a: Puntual, falta: float, currency: str) -> str:
+    """Si ninguna esta a punto, una linea para que no se te olvide que las tienes."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = (
+        "Tu cartera"
+        if a.coin_id == CARTERA
+        else escape(a.coin_id.replace("-", " ").title())
+    )
+    flecha = "🔺" if a.sube else "🔻"
+    tienes = "Tienes 1 alerta" if cuantas == 1 else f"Tienes {cuantas} alertas"
+    cual = "" if cuantas == 1 else ", la más cerca"
+    return (
+        f"🎯 {tienes}{cual}: <b>{nombre}</b> {flecha} {simbolo}{_num(a.objetivo)}  "
+        f"<i>(falta {falta:+.2f}%)</i>"
+    )
+
+
 def formatear_caducadas(alertas: list[Puntual], currency: str) -> str:
     """Las de /alerta que se han borrado por tiempo sin llegar a su precio."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")

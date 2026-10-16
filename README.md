@@ -286,6 +286,10 @@ Lo que escribas después del precio (o del tramo) se guarda como nota y te sale
 con el aviso: `/alerta bitcoin 70000 vender la mitad`. Así te acuerdas de por
 qué la pusiste.
 
+El resumen del día (y `/resumen`) te enseña las que están a menos de un 3 % de
+saltar. Si no hay ninguna tan cerca, te dice cuántas tienes y cuál está más
+cerca, para que no se te olviden.
+
 Con `cartera` en vez de una cripto, mira lo que vale todo lo que tienes junto:
 `/alerta cartera 5000` o `/alerta cartera -10%`. Si en un ciclo falta el precio
 de alguna, ese ciclo no la mira, que el total saldría más bajo de lo que es y

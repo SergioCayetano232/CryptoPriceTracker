@@ -12,6 +12,7 @@ Uso:
 
 import argparse
 import logging
+import math
 import sys
 import time
 from dataclasses import replace
@@ -2393,8 +2394,14 @@ def montar_resumen(
         if valor is not None:
             con_valor[puntuales.CARTERA] = valor
         hay = puntuales.cerca(pendientes, con_valor)
+        todas = puntuales.cerca(pendientes, con_valor, margen=math.inf)
         if hay:
             texto += "\n\n" + alerts.formatear_cerca(hay, config.vs_currency)
+        elif todas:
+            a, falta = todas[0]
+            texto += "\n\n" + alerts.formatear_lejos(
+                len(pendientes), a, falta, config.vs_currency
+            )
     if pie:
         texto += "\n\n" + pie
 

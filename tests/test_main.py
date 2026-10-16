@@ -4217,13 +4217,20 @@ def test_resumen_lleva_las_alertas_a_punto(con_resumen, enviados, monkeypatch):
     assert "80.000" not in enviados[0]
 
 
-def test_resumen_sin_alertas_a_punto_como_antes(con_resumen, enviados):
+def test_resumen_sin_alertas_a_punto_dice_la_mas_cerca(con_resumen, enviados):
     database.crear_puntual(con_resumen.database_path, "bitcoin", 80000, True, "eur")
+
+    database.crear_puntual(con_resumen.database_path, "bitcoin", 90000, True, "eur")
 
     main.resumen_diario(con_resumen, _dia(9, 5))
 
     assert "resumen del día" in enviados[0]
     assert "A punto de saltar" not in enviados[0]
+    assert (
+        "🎯 Tienes 2 alertas, la más cerca: <b>Bitcoin</b> 🔺 €80.000,00"
+        in (enviados[0])
+    )
+    assert "90.000" not in enviados[0]
 
 
 def test_resumen_diario_lleva_las_alertas_a_punto(con_resumen, enviados):
@@ -4243,6 +4250,12 @@ def test_resumen_con_alerta_de_la_cartera_a_punto(con_cartera, enviados, monkeyp
     main.atender(con_cartera, _mensaje("/resumen"))
 
     assert "<b>Tu cartera</b> 🔺 €2.200,00  <i>(falta +1.38%)</i>" in enviados[0]
+
+
+def test_resumen_sin_alertas_no_dice_nada_de_ellas(con_resumen, enviados):
+    main.resumen_diario(con_resumen, _dia(9, 5))
+
+    assert "🎯" not in enviados[0]
 
 
 def test_el_status_no_lleva_las_alertas_a_punto(con_resumen, enviados):

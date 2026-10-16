@@ -9,6 +9,7 @@ from crypto_tracker.alerts import (
     Alert,
     formatear,
     formatear_cerca,
+    formatear_lejos,
     formatear_puntual,
     formatear_puntuales,
     formatear_quitadas,
@@ -373,6 +374,18 @@ def test_cerca_con_otro_margen():
 
     assert cerca([alerta], {"bitcoin": 70000.0}) == []
     assert len(cerca([alerta], {"bitcoin": 70000.0}, margen=10)) == 1
+
+
+def test_formatear_lejos():
+    bitcoin = Puntual(2, "bitcoin", 80000, True)
+
+    assert formatear_lejos(1, bitcoin, 14.29, "eur") == (
+        "🎯 Tienes 1 alerta: <b>Bitcoin</b> 🔺 €80.000,00  <i>(falta +14.29%)</i>"
+    )
+    assert formatear_lejos(3, Puntual(5, "cartera", 1500, False), -25.0, "eur") == (
+        "🎯 Tienes 3 alertas, la más cerca: <b>Tu cartera</b> 🔻 €1.500,00  "
+        "<i>(falta -25.00%)</i>"
+    )
 
 
 def test_formatear_cerca():
