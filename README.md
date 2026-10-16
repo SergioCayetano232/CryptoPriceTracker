@@ -258,7 +258,8 @@ Si en un mensaje vienen varias criptos, salen los botones de las tres primeras.
 **🔔 Volver a avisar** por si te arrepientes.
 
 `/precio` de una sola lleva **🔔 Si sube un 5%** y **🔔 Si baja un 5%**, que
-te ponen esa `/alerta` desde lo que vale ahora.
+te ponen esa `/alerta` desde lo que vale ahora, y un **📈 Gráfica** con la de
+las últimas 24 h si tiene precios guardados.
 
 `/status`, `/resumen`, `/cartera` y `/alertas` llevan un **🔄 Actualizar** para
 volver a pedirlos de un toque.

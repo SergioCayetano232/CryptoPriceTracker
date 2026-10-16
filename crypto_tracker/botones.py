@@ -89,14 +89,19 @@ def para_tendencias(lista: list[Tendencia]) -> list[list[tuple[str, str]]]:
     return [botones[i : i + POR_FILA] for i in range(0, len(botones), POR_FILA)]
 
 
-def para_precio(coin_id: str) -> list[list[tuple[str, str]]]:
+def para_precio(coin_id: str, grafica: bool = False) -> list[list[tuple[str, str]]]:
     """Una /alerta un 5 % arriba o abajo de lo que vale ahora, sin escribirla."""
     fila = [
         (f"🔔 Si sube un {OTRA}%", f"/alerta {coin_id} +{OTRA}%"),
         (f"🔔 Si baja un {OTRA}%", f"/alerta {coin_id} -{OTRA}%"),
     ]
     # Con un id larguísimo no caben: mejor sin botones que con uno a medias.
-    return [fila] if all(_cabe(b) for b in fila) else []
+    filas = [fila] if all(_cabe(b) for b in fila) else []
+    # Sin precios guardados /historico no tendria nada que dibujar.
+    boton = ("📈 Gráfica", f"/historico {coin_id}")
+    if grafica and _cabe(boton):
+        filas.append([boton])
+    return filas
 
 
 def para_alertas(alertas: list[Puntual]) -> list[list[tuple[str, str]]]:

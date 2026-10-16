@@ -1245,7 +1245,7 @@ def _precio(config: Config, argumento: str) -> str | comandos.ConBotones:
                 dia,
             )
         )
-        teclado = botones.para_precio(coin_id)
+        teclado = botones.para_precio(coin_id, grafica=len(dia) >= 2)
         return comandos.ConBotones(texto, teclado) if teclado else texto
     return alerts.con_fuente(alerts.formatear_precios(lineas, faltan, currency))
 

@@ -234,3 +234,19 @@ def test_para_precio():
 
 def test_para_precio_con_un_id_que_no_cabe():
     assert para_precio("x" * 60) == []
+
+
+def test_para_precio_con_grafica():
+    filas = para_precio("bitcoin", grafica=True)
+
+    assert filas[1] == [("📈 Gráfica", "/historico bitcoin")]
+    nombre, argumento = comandos.interpretar(filas[1][0][1])
+    assert nombre == "historico"
+    assert argumento == "bitcoin"
+
+
+def test_para_precio_con_grafica_y_un_id_largo():
+    # Las de /alerta no caben pero la grafica si: mejor eso que nada.
+    assert para_precio("x" * 53, grafica=True) == [
+        [("📈 Gráfica", "/historico " + "x" * 53)]
+    ]

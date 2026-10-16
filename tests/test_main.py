@@ -2414,6 +2414,18 @@ def test_precio_de_una_lleva_botones_de_alerta(config, monkeypatch):
     ]
 
 
+def test_precio_de_una_con_precios_guardados_lleva_grafica(config, monkeypatch):
+    mandados = _con_botones(monkeypatch)
+    _precio(monkeypatch, {"bitcoin": 63000.0})
+    _precio_hace(config, 62000.0, 120)
+    _precio_hace(config, 62500.0, 60)
+
+    main.atender(config, _mensaje("/precio btc"))
+
+    _, filas = mandados[0]
+    assert filas[-1] == [("📈 Gráfica", "/historico bitcoin")]
+
+
 def test_precio_de_varias_sin_botones(config, monkeypatch):
     mandados = _con_botones(monkeypatch)
     _precio(monkeypatch, {"bitcoin": 63000.0, "ethereum": 2500.0})
