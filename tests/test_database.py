@@ -657,6 +657,19 @@ def test_movimientos_el_mas_reciente_primero(db):
     ]
 
 
+def test_movimientos_de_una_cripto(db):
+    for coin_id in ("bitcoin", "solana", "bitcoin"):
+        database.apuntar_movimiento(
+            db, coin_id, "compra", 1, 10, None, Posicion(coin_id, 1, 10)
+        )
+
+    assert [m.coin_id for m in database.get_movimientos(db, coin_id="bitcoin")] == [
+        "bitcoin",
+        "bitcoin",
+    ]
+    assert database.get_movimientos(db, coin_id="ethereum") == []
+
+
 def test_deshacer_vuelve_a_como_estaba_y_lo_borra(db):
     antes = Posicion("bitcoin", 0.02, 1000)
     database.apuntar_movimiento(db, "bitcoin", "venta", 0.02, None, antes, None)

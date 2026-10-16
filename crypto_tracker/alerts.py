@@ -496,15 +496,18 @@ def formatear_venta(
     return texto + ". Mira /cartera"
 
 
-def formatear_movimientos(lista: list[Movimiento], currency: str) -> str:
+def formatear_movimientos(
+    lista: list[Movimiento], currency: str, coin_id: str | None = None
+) -> str:
     """Respuesta de /movimientos: los ultimos, el mas reciente arriba."""
+    de = f" de {escape(coin_id.replace('-', ' ').title())}" if coin_id else ""
     if not lista:
         return (
-            "No has apuntado ninguna compra ni venta por aquí. "
+            f"No has apuntado ninguna compra ni venta{de} por aquí. "
             "Lo del PORTFOLIO del .env no sale."
         )
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
-    lineas = ["📒 <b>Tus últimas compras y ventas</b>"]
+    lineas = [f"📒 <b>Tus últimas compras y ventas{de}</b>"]
     for m in lista:
         nombre = escape(m.coin_id.replace("-", " ").title())
         cuando = m.cuando.astimezone()

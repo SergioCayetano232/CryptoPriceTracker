@@ -666,12 +666,20 @@ def apuntar_movimiento(
     return cursor.lastrowid
 
 
-def get_movimientos(db_path: str, limite: int = 10) -> list[Movimiento]:
-    """Los ultimos, el mas reciente primero."""
+def get_movimientos(
+    db_path: str, limite: int = 10, coin_id: str | None = None
+) -> list[Movimiento]:
+    """Los ultimos, el mas reciente primero. Con coin_id, solo los de esa."""
     with _connect(db_path) as conn:
-        filas = conn.execute(
-            "SELECT * FROM movimientos ORDER BY id DESC LIMIT ?", (limite,)
-        ).fetchall()
+        if coin_id is None:
+            filas = conn.execute(
+                "SELECT * FROM movimientos ORDER BY id DESC LIMIT ?", (limite,)
+            ).fetchall()
+        else:
+            filas = conn.execute(
+                "SELECT * FROM movimientos WHERE coin_id = ? ORDER BY id DESC LIMIT ?",
+                (coin_id, limite),
+            ).fetchall()
     return [_movimiento(f) for f in filas]
 
 

@@ -2037,6 +2037,30 @@ def test_movimientos_lista_y_boton_de_la_ultima(config, monkeypatch):
     assert teclado == [[("↩️ Deshacer la última", f"/deshacer {ultima.id}")]]
 
 
+def test_movimientos_de_una_cripto(config, monkeypatch):
+    mandados = _con_botones(monkeypatch)
+    _precio(monkeypatch, {"solana": 150.0, "bitcoin": 60000.0})
+    main.atender(config, _mensaje("/compra solana 1 150"))
+    main.atender(config, _mensaje("/compra bitcoin 0.01 600"))
+
+    main.atender(config, _mensaje("/movimientos sol"))
+    main.atender(config, _mensaje("/movimientos btc"))
+
+    texto, teclado = mandados[2]
+    assert "compras y ventas de Solana" in texto
+    assert "Bitcoin" not in texto
+    # La ultima es la de bitcoin: el boton desharía otra que no sale aqui.
+    assert teclado is None
+    ultima = database.get_movimientos(config.database_path)[0]
+    assert mandados[3][1] == [[("↩️ Deshacer la última", f"/deshacer {ultima.id}")]]
+
+
+def test_movimientos_de_una_sin_nada(config, enviados):
+    main.atender(config, _mensaje("/movimientos eth"))
+
+    assert "ninguna compra ni venta de Ethereum" in enviados[0]
+
+
 def test_movimientos_sin_nada(config, enviados):
     main.atender(config, _mensaje("/movimientos"))
 

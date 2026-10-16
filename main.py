@@ -728,7 +728,7 @@ def responder(
         return _vender(config, argumento)
 
     if nombre == "movimientos":
-        return _movimientos(config)
+        return _movimientos(config, argumento)
 
     if nombre == "deshacer":
         return _deshacer(config, argumento)
@@ -1100,10 +1100,15 @@ def _deshacer(config: Config, argumento: str) -> str:
     return alerts.formatear_deshecho(hecho, config.vs_currency)
 
 
-def _movimientos(config: Config) -> str | comandos.ConBotones:
-    lista = database.get_movimientos(config.database_path)
-    texto = alerts.formatear_movimientos(lista, config.vs_currency)
+def _movimientos(config: Config, argumento: str) -> str | comandos.ConBotones:
+    coin_id = simbolos.a_id(argumento) if argumento else None
+    lista = database.get_movimientos(config.database_path, coin_id=coin_id)
+    texto = alerts.formatear_movimientos(lista, config.vs_currency, coin_id)
     if not lista:
+        return texto
+    # /deshacer solo quita la ultima de todas, que puede ser de otra cripto.
+    ultima = database.get_movimientos(config.database_path, 1)[0]
+    if lista[0].id != ultima.id:
         return texto
     return comandos.ConBotones(
         texto, botones.deshacer_movimiento(lista[0].id, "↩️ Deshacer la última")

@@ -19,7 +19,7 @@ COMANDOS = {
     "semana": "Cómo le ha ido a tu cartera esta semana, o a una (ej: /semana btc)",
     "compra": "Apuntar una compra en la cartera (ej: /compra bitcoin 0.01 600)",
     "venta": "Apuntar una venta (ej: /venta bitcoin 0.005 o todo)",
-    "movimientos": "Tus últimas compras y ventas",
+    "movimientos": "Tus últimas compras y ventas (ej: /movimientos btc)",
     "deshacer": "Quitar la última compra o venta que apuntaste",
     "alerta": "Avísame una vez a un precio o un % (ej: /alerta btc 70000 o +10% 7d)",
     "alertas": "Las alertas que tienes puestas",
