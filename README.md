@@ -186,7 +186,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/alerta bitcoin` | Sin precio, te dice a cuánto está y te pone un ejemplo |
 | `/alerta cartera 5000` | Lo mismo con lo que vale tu cartera entera (también `-10%`) |
 | `/alertas` | Las alertas que tienes puestas y cuánto le falta a cada una, con un 🗑 para quitarlas |
-| `/quitar 3` | Quita la alerta número 3 (`/quitar 2 5` varias, `/quitar todas` todas) |
+| `/quitar 3` | Quita la alerta número 3 (`/quitar 2 5` varias, `/quitar bitcoin` las de esa cripto, `/quitar todas` todas) |
 | `/volatilidad bitcoin 30d` | Cuánto se mueve de media al día y cuántos avisos te habría dado `/vigilar` con %2, %5 y %10 (sin tramo, 30 días) |
 | `/vigilar` | Lo que está vigilando y cómo |
 | `/vigilar solana %5` | Añade una cripto, o cambia cómo vigila una que ya estaba |

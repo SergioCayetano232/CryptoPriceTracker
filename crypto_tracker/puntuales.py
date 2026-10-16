@@ -122,6 +122,11 @@ def numeros(argumento: str) -> list[int]:
     return list(dict.fromkeys(ids))
 
 
+def de_cripto(alertas: list[Puntual], coin_id: str) -> list[int]:
+    """Los numeros de las alertas de esa cripto, para /quitar bitcoin."""
+    return [a.id for a in alertas if a.coin_id == coin_id]
+
+
 def objetivo_relativo(precio: float, porcentaje: float) -> float:
     return precio * (1 + porcentaje / 100)
 

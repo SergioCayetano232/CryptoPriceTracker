@@ -764,6 +764,8 @@ def responder(
         try:
             numeros = puntuales.numeros(argumento)
         except puntuales.PuntualError:
+            if len(argumento.split()) == 1:
+                return _quitar_de_cripto(config, simbolos.a_id(argumento))
             return (
                 "¿Cuál? Mira el número con /alertas y luego, por ejemplo, /quitar 3 "
                 "o /quitar 2 5. Para quitarlas todas: /quitar todas"
@@ -930,6 +932,17 @@ def _alertas(config: Config) -> str | comandos.ConBotones:
     if not pendientes:
         return texto
     return comandos.ConBotones(texto, botones.para_alertas(pendientes))
+
+
+def _quitar_de_cripto(config: Config, coin_id: str) -> str:
+    """/quitar bitcoin: todas las de esa cripto de una vez."""
+    pendientes = database.get_puntuales(config.database_path, config.vs_currency)
+    numeros = puntuales.de_cripto(pendientes, coin_id)
+    if not numeros:
+        return f"No tienes ninguna alerta de {telegram.escape(coin_id)}. Mira /alertas"
+    for n in numeros:
+        database.borrar_puntual(config.database_path, n)
+    return alerts.formatear_quitadas(numeros, [])
 
 
 def _lista_vigiladas(config: Config) -> str:

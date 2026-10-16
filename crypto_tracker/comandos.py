@@ -23,7 +23,7 @@ COMANDOS = {
     "deshacer": "Quitar la última compra o venta que apuntaste",
     "alerta": "Avísame una vez a un precio o un % (ej: /alerta btc 70000 o +10% 7d)",
     "alertas": "Las alertas que tienes puestas",
-    "quitar": "Quitar alertas (ej: /quitar 3, /quitar 2 5 o /quitar todas)",
+    "quitar": "Quitar alertas (ej: /quitar 3, /quitar btc o /quitar todas)",
     "historico": "Cómo ha ido una cripto (ej: /historico bitcoin 7d)",
     "media": "Las medias de 7, 30 y 90 días y si está por encima (ej: /media btc)",
     "racha": "Cuántos días seguidos lleva subiendo o bajando (ej: /racha btc)",
@@ -155,6 +155,7 @@ EJEMPLOS = {
     "quitar": [
         ("/quitar 3", "la número 3 de /alertas"),
         ("/quitar 2 5", "varias"),
+        ("/quitar bitcoin", "todas las de esa cripto"),
         ("/quitar todas", "todas"),
     ],
     "vigilar": [

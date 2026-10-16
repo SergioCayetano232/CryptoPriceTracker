@@ -20,6 +20,7 @@ from crypto_tracker.puntuales import (
     caducidad,
     cerca,
     cumplidas,
+    de_cripto,
     interpretar,
     interpretar_relativa,
     numero,
@@ -325,6 +326,17 @@ def test_nota_demasiado_larga():
 
 
 # --- repetidas ---
+
+
+def test_de_cripto():
+    tienes = [
+        Puntual(1, "bitcoin", 70000.0, True),
+        Puntual(2, "solana", 100.0, False),
+        Puntual(4, "bitcoin", 60000.0, False),
+    ]
+
+    assert de_cripto(tienes, "bitcoin") == [1, 4]
+    assert de_cripto(tienes, "ethereum") == []
 
 
 def test_repetida():

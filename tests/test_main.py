@@ -1371,6 +1371,28 @@ def test_quitar_varias_con_alguna_que_no_existe(config, enviados):
     assert database.get_puntuales(config.database_path, "eur") == []
 
 
+def test_quitar_las_de_una_cripto(config, enviados):
+    database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
+    sol = database.crear_puntual(config.database_path, "solana", 100, False, "eur")
+    database.crear_puntual(config.database_path, "bitcoin", 60000, False, "eur")
+
+    main.atender(config, _mensaje("/quitar BTC"))
+    main.atender(config, _mensaje("/quitar bitcoin"))
+
+    assert enviados[0] == "🗑 2 alertas quitadas."
+    assert enviados[1] == "No tienes ninguna alerta de bitcoin. Mira /alertas"
+    assert database.get_puntuales(config.database_path, "eur") == [sol]
+
+
+def test_quitar_las_de_la_cartera(config, enviados):
+    database.crear_puntual(config.database_path, "cartera", 5000, True, "eur")
+
+    main.atender(config, _mensaje("/quitar cartera"))
+
+    assert enviados[0] == "🗑 Alerta quitada."
+    assert database.get_puntuales(config.database_path, "eur") == []
+
+
 def test_quitar_con_algo_que_no_es_numero_no_borra_nada(config, enviados):
     a = database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
 
