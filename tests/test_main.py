@@ -1674,6 +1674,21 @@ def test_vigilar_a_secas_lista_lo_del_env(config, enviados):
     assert "desde Telegram" not in enviados[0]
 
 
+def test_vigilar_a_secas_lleva_botones_para_dejarlas(config, monkeypatch):
+    mandados = _con_botones(monkeypatch)
+    database.guardar_cambio(config.database_path, "solana", "solana:%5.0")
+
+    main.atender(config, _mensaje("/vigilar"))
+    main.atender_boton(config, _boton("/dejar solana"))
+    main.atender(config, _mensaje("/vigilar"))
+
+    assert mandados[0][1] == [
+        [("✖ Bitcoin", "/dejar bitcoin"), ("✖ Solana", "/dejar solana")]
+    ]
+    assert "Dejo de vigilar <b>Solana</b>" in mandados[1][0]
+    assert mandados[2][1] is None  # con una sola no hay nada que dejar
+
+
 def test_vigilar_una_nueva(config, enviados, monkeypatch):
     pedidas = _precio(monkeypatch, {"bitcoin": 63000.0, "solana": 150.0})
 

@@ -11,6 +11,7 @@ from crypto_tracker.botones import (
     para_mute,
     para_precio,
     para_tendencias,
+    para_vigilar,
 )
 from crypto_tracker.tendencias import Tendencia
 
@@ -216,6 +217,22 @@ def test_el_boton_de_otra_se_entiende_como_alerta_relativa():
 
     assert nombre == "alerta"
     assert puntuales.interpretar_relativa(argumento) == ("cartera", 5.0)
+
+
+def test_para_vigilar_de_dos_en_dos():
+    filas = para_vigilar(["bitcoin", "shiba-inu", "solana"])
+
+    assert filas == [
+        [("✖ Bitcoin", "/dejar bitcoin"), ("✖ Shiba Inu", "/dejar shiba-inu")],
+        [("✖ Solana", "/dejar solana")],
+    ]
+    nombre, argumento = comandos.interpretar(filas[0][1][1])
+    assert nombre == "dejar"
+    assert argumento == "shiba-inu"
+
+
+def test_para_vigilar_con_una_sola_sin_botones():
+    assert para_vigilar(["bitcoin"]) == []
 
 
 def test_para_precio():

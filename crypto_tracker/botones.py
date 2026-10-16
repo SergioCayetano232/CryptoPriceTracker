@@ -89,6 +89,19 @@ def para_tendencias(lista: list[Tendencia]) -> list[list[tuple[str, str]]]:
     return [botones[i : i + POR_FILA] for i in range(0, len(botones), POR_FILA)]
 
 
+def para_vigilar(coin_ids: list[str]) -> list[list[tuple[str, str]]]:
+    """Un ✖ por cripto para /vigilar, que es como escribir /dejar."""
+    # Con una sola no: /dejar no deja quitar la ultima y el boton no haria nada.
+    if len(coin_ids) < 2:
+        return []
+    botones = [
+        (f"✖ {c.replace('-', ' ').title()}", f"/dejar {c}")
+        for c in coin_ids[:MAX_ALERTAS]
+    ]
+    botones = [b for b in botones if _cabe(b)]
+    return [botones[i : i + POR_FILA] for i in range(0, len(botones), POR_FILA)]
+
+
 def para_precio(coin_id: str, grafica: bool = False) -> list[list[tuple[str, str]]]:
     """Una /alerta un 5 % arriba o abajo de lo que vale ahora, sin escribirla."""
     fila = [

@@ -945,12 +945,13 @@ def _quitar_de_cripto(config: Config, coin_id: str) -> str:
     return alerts.formatear_quitadas(numeros, [])
 
 
-def _lista_vigiladas(config: Config) -> str:
+def _lista_vigiladas(config: Config) -> str | comandos.ConBotones:
     cambios = database.get_cambios(config.database_path)
     desde_telegram = {c for c, regla in cambios.items() if regla is not None}
-    return alerts.formatear_vigiladas(
-        _con_cambios(config).watchlist, config.vs_currency, desde_telegram
-    )
+    watchlist = _con_cambios(config).watchlist
+    texto = alerts.formatear_vigiladas(watchlist, config.vs_currency, desde_telegram)
+    teclado = botones.para_vigilar([w.coin_id for w in watchlist])
+    return comandos.ConBotones(texto, teclado) if teclado else texto
 
 
 def _vigilar(config: Config, argumento: str) -> str:
