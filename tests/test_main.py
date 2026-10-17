@@ -204,6 +204,20 @@ def test_mute_a_secas_si_ya_estaba_callado_no_lo_toca(config, monkeypatch):
     assert ("1 h", "/mute 1h") in filas[1]
 
 
+def test_mute_a_secas_dice_las_criptos_calladas(config, monkeypatch):
+    mandados = _con_botones(monkeypatch)
+    main.atender(config, _mensaje("/mute bitcoin 2h"))
+
+    main.atender(config, _mensaje("/mute"))
+
+    texto, filas = mandados[1]
+    hasta = database.criptos_calladas(config.database_path)["bitcoin"]
+    assert f"<b>Bitcoin</b> hasta las {hasta.astimezone():%H:%M}" in texto
+    assert "/unmute bitcoin" in texto
+    assert "¿Cuánto tiempo me callo con todas?" in texto
+    assert filas[0] == [("🔔 Volver a avisar", "/unmute")]
+
+
 def test_mute_con_tiempo_mal_escrito_explica_el_formato(config, enviados):
     main.atender(config, _mensaje("/mute mucho"))
 

@@ -678,15 +678,10 @@ def responder(
         if not argumento:
             # A secas, si ya estaba callado, mejor decirlo que alargarlo sin querer.
             estaba = database.silenciado_hasta(config.database_path)
-            if estaba:
-                cuando = estaba.astimezone()
-                return comandos.ConBotones(
-                    f"🔕 Ya estoy callado hasta las {cuando:%H:%M del %d/%m}.\n"
-                    "¿Vuelvo a avisar o lo cambio?",
-                    botones.para_mute(ya_callado=True),
-                )
+            calladas = database.criptos_calladas(config.database_path)
             return comandos.ConBotones(
-                "🔕 ¿Cuánto tiempo me callo?", botones.para_mute()
+                callar.a_secas(estaba, calladas),
+                botones.para_mute(ya_callado=bool(estaba or calladas)),
             )
         try:
             cripto, minutos = callar.interpretar(argumento, datetime.now().astimezone())

@@ -1,5 +1,6 @@
 """/mute bitcoin 2h: callar una sola cripto y que las demás sigan avisando."""
 
+import html
 from datetime import datetime
 
 from .config import ConfigError, minutos_mute
@@ -26,3 +27,31 @@ def interpretar(argumento: str, ahora: datetime) -> tuple[str | None, int]:
             f"o /mute {cripto} hasta 8:00"
         )
     return a_id(cripto), minutos_mute(resto, ahora)
+
+
+def a_secas(hasta: datetime | None, calladas: dict[str, datetime]) -> str:
+    """/mute sin nada: lo que tengo callado ahora y la pregunta de cuánto."""
+    lineas = []
+    if hasta:
+        lineas.append(
+            f"🔕 Ya estoy callado hasta las {hasta.astimezone():%H:%M del %d/%m}."
+        )
+    if calladas:
+        lineas.append(
+            "Y aparte, cada una por su lado:" if hasta else "🔕 Ahora no te aviso de:"
+        )
+        # La que antes vuelve a avisar, primero.
+        for coin_id, cuando in sorted(calladas.items(), key=lambda x: x[1]):
+            nombre = html.escape(coin_id.replace("-", " ").title())
+            lineas.append(
+                f"<b>{nombre}</b> hasta las {cuando.astimezone():%H:%M del %d/%m} "
+                f"· /unmute {html.escape(coin_id)}"
+            )
+
+    if hasta:
+        lineas.append(("\n" if calladas else "") + "¿Vuelvo a avisar o lo cambio?")
+    elif calladas:
+        lineas.append("\n¿Cuánto tiempo me callo con todas?")
+    else:
+        lineas.append("🔕 ¿Cuánto tiempo me callo?")
+    return "\n".join(lineas)
