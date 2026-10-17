@@ -187,7 +187,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/alerta bitcoin 70000 7d` | Lo mismo, pero si en 7 días no ha llegado se borra sola y te lo dice |
 | `/alerta bitcoin 70000 vender la mitad` | Con una nota detrás, que te sale en el aviso (también después del tramo) |
 | `/alerta bitcoin` | Sin precio, te dice a cuánto está y te pone un ejemplo |
-| `/alerta cartera 5000` | Lo mismo con lo que vale tu cartera entera (también `-10%`) |
+| `/alerta cartera 5000` | Lo mismo con lo que vale tu cartera entera (también `-10%`). Si espera a que suba, con una barra `▓▓▓▓░░` de lo que llevas |
 | `/alertas` | Las alertas que tienes puestas y cuánto le falta a cada una, la más cerca primero, con un 🗑 para quitarlas |
 | `/quitar 3` | Quita la alerta número 3 (`/quitar 2 5` varias, `/quitar bitcoin` las de esa cripto, `/quitar todas` todas) |
 | `/volatilidad bitcoin 30d` | Cuánto se mueve de media al día y cuántos avisos te habría dado `/vigilar` con %2, %5 y %10 (sin tramo, 30 días) |

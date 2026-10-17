@@ -597,6 +597,38 @@ def test_aviso_de_la_cartera():
     assert "Precio actual" not in texto
 
 
+def test_alertas_con_la_barra_de_la_cartera():
+    alertas = [
+        Puntual(1, "cartera", 5000.0, True),
+        Puntual(2, "cartera", 2000.0, False),
+    ]
+
+    texto = formatear_puntuales(alertas, "eur", {"cartera": 3480.0})
+
+    assert "\n      <code>▓▓▓▓▓▓░░░░</code> 69%\n" in texto
+    assert texto.count("▓") == 6  # la de bajar no lleva
+
+
+def test_la_barra_no_se_llena_hasta_llegar():
+    texto = formatear_puntuales(
+        [Puntual(1, "cartera", 5000.0, True)], "eur", {"cartera": 4990.0}
+    )
+
+    assert "<code>▓▓▓▓▓▓▓▓▓░</code> 99%" in texto
+
+
+def test_alertas_sin_precio_sin_barra():
+    texto = formatear_puntuales([Puntual(1, "cartera", 5000.0, True)], "eur")
+
+    assert "▓" not in texto and "░" not in texto
+
+
+def test_crear_alerta_de_la_cartera_con_la_barra():
+    texto = formatear_puntual(Puntual(1, "cartera", 5000.0, True), 1250.0, "eur")
+
+    assert texto.endswith("\n<code>▓▓░░░░░░░░</code> 25% del camino")
+
+
 def test_crear_alerta_de_la_cartera():
     alerta = Puntual(1, "cartera", 4500.0, sube=False)
 

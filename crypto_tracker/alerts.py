@@ -26,7 +26,7 @@ from .miedo import nombre as nombre_miedo
 from .movimientos import Movimiento, texto_cantidad
 from .objetivo import Escenario
 from .periodo import nombre as nombre_periodo
-from .puntuales import CARTERA, Puntual, cumplidas, ejemplo
+from .puntuales import CARTERA, Puntual, cumplidas, ejemplo, progreso
 from .racha import Racha
 from .rango import Rango, barra
 from .ratio import Ratio
@@ -1504,6 +1504,9 @@ def formatear_puntual(alerta: Puntual, precio: float, currency: str) -> str:
             f"<b>{simbolo}{_num(alerta.objetivo)}</b>.\n"
             f"Ahora vale {simbolo}{_num(precio)}. {una_vez}"
         )
+        hecho = progreso(alerta, precio)
+        if hecho is not None:
+            texto += f"\n{_barra_progreso(hecho)} del camino"
     else:
         nombre = escape(alerta.coin_id.replace("-", " ").title())
         texto = (
@@ -1554,6 +1557,9 @@ def formatear_puntuales(
             linea += f"  ⌛ {a.caduca.astimezone():%d/%m}"
         falta = _falta((precios or {}).get(a.coin_id), a)
         lineas.append(f"{linea}  <i>{falta}</i>" if falta else linea)
+        hecho = progreso(a, (precios or {}).get(a.coin_id))
+        if hecho is not None:
+            lineas.append(f"      {_barra_progreso(hecho)}")
         if a.nota:
             lineas.append(f"      📝 {escape(a.nota)}")
     lineas.append(f"\nPara quitar una: /quitar {alertas[0].id}")
@@ -1707,6 +1713,13 @@ def _falta(precio: float | None, alerta: Puntual) -> str:
     if cumplidas([alerta], {alerta.coin_id: precio}):
         return "(ya ha llegado, te aviso en el próximo ciclo)"
     return f"(falta {(alerta.objetivo - precio) / precio * 100:+.2f}%)"
+
+
+def _barra_progreso(porcentaje: float) -> str:
+    """'<code>▓▓▓▓▓▓▓░░░</code> 68%'."""
+    # Con floor un 99% no se ve lleno, que es lo que es: aún no ha llegado.
+    llenas = math.floor(porcentaje / 10)
+    return f"<code>{'▓' * llenas}{'░' * (10 - llenas)}</code> {math.floor(porcentaje)}%"
 
 
 def _ganancia(ganancia: float, simbolo: str) -> str:

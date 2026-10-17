@@ -28,6 +28,7 @@ from crypto_tracker.puntuales import (
     numeros,
     objetivo_relativo,
     por_cercania,
+    progreso,
     repetida,
     separar_caducidad,
     separar_nota,
@@ -420,3 +421,22 @@ def test_formatear_cerca():
     assert "<b>Bitcoin</b> 🔺 €71.000,00  <i>(falta +1.43%)</i>" in texto
     assert "📝 vender la mitad" in texto
     assert "<b>Tu cartera</b> 🔻 €2.000,00  <i>(falta -2.50%)</i>" in texto
+
+
+def test_progreso_de_la_cartera():
+    meta = Puntual(1, "cartera", 5000, True)
+
+    assert progreso(meta, 3400.0) == pytest.approx(68)
+    assert progreso(meta, 5200.0) == 100  # ya llegó, salta en el siguiente ciclo
+
+
+@pytest.mark.parametrize(
+    "alerta, valor",
+    [
+        (Puntual(1, "cartera", 2000, False), 3000.0),  # esperando a que baje
+        (Puntual(1, "bitcoin", 80000, True), 70000.0),  # solo la cartera
+        (Puntual(1, "cartera", 5000, True), None),  # sin precio ahora
+    ],
+)
+def test_sin_progreso(alerta, valor):
+    assert progreso(alerta, valor) is None

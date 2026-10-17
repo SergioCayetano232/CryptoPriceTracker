@@ -184,6 +184,14 @@ def repetida(
     )
 
 
+def progreso(alerta: Puntual, valor: float | None) -> float | None:
+    """Lo que lleva tu cartera hacia la meta, en %. Solo en las de que suba."""
+    # En una de bajar, "60% del camino" no se entiende: ¿60% de qué?
+    if alerta.coin_id != CARTERA or not alerta.sube or not valor or valor < 0:
+        return None
+    return min(100.0, valor / alerta.objetivo * 100)
+
+
 def cumplidas(alertas: list[Puntual], precios: dict[str, float]) -> list[Puntual]:
     """Las que ya han llegado. Pasarse tambien cuenta: entre ciclo y ciclo salta."""
     hechas = []
