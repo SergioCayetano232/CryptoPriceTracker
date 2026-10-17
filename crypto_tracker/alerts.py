@@ -14,6 +14,7 @@ from .cuando import Cuando
 from .dia import Dia
 from .diasemana import DiasSemana
 from .equilibrio import Cartera
+from .ganancias import Ganancias
 from .horas import Horas
 from .hoy import Hoy
 from .maximo import Maximo, hace
@@ -481,15 +482,26 @@ def formatear_compra(
 
 
 def formatear_venta(
-    coin_id: str, vendido: float, queda: Posicion | None, currency: str
+    coin_id: str,
+    vendido: float,
+    queda: Posicion | None,
+    currency: str,
+    cobrado: float | None = None,
+    ganancia: float | None = None,
 ) -> str:
     """Lo que se contesta a un /venta. queda es None si ya no tienes nada."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
     nombre = escape(coin_id.replace("-", " ").title())
-    texto = f"💸 Apunto la venta de <b>{texto_cantidad(vendido)}</b> de {nombre}.\n"
+    texto = f"💸 Apunto la venta de <b>{texto_cantidad(vendido)}</b> de {nombre}"
+    if cobrado is not None:
+        texto += f" por {simbolo}{_num(cobrado)}"
+    texto += ".\n"
+    if ganancia is not None:
+        texto += f"{_flecha(ganancia)} Le sacas {_ganancia(ganancia, simbolo)}. "
+        texto += "Lo de todas, en /ganancias\n"
     if queda is None:
         return texto + f"Ya no te queda nada de {nombre}."
 
-    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
     texto += f"Te quedan {texto_cantidad(queda.cantidad)}"
     if queda.invertido is not None:
         texto += f", que te costaron {simbolo}{_num(queda.invertido)}"
@@ -513,11 +525,43 @@ def formatear_movimientos(
         cuando = m.cuando.astimezone()
         if m.tipo == "compra":
             linea = f"🛒 Compra de {texto_cantidad(m.cantidad)} de {nombre}"
-            if m.coste is not None:
-                linea += f" por {simbolo}{_num(m.coste)}"
         else:
             linea = f"💸 Venta de {texto_cantidad(m.cantidad)} de {nombre}"
+        if m.coste is not None:
+            linea += f" por {simbolo}{_num(m.coste)}"
         lineas.append(f"{linea}  <i>{cuando:%d/%m %H:%M}</i>")
+    return "\n".join(lineas)
+
+
+def formatear_ganancias(g: Ganancias, currency: str) -> str:
+    """Respuesta de /ganancias: lo que has sacado de verdad, sin lo que aún tienes."""
+    if not g.por_cripto and not g.sin_datos:
+        return (
+            "Todavía no has vendido nada, así que no has ganado ni perdido. "
+            "Lo que vale lo que tienes sale en /cartera"
+        )
+    if not g.por_cripto:
+        return (
+            "Tus ventas apuntadas son de antes de guardar a cuánto vendías, "
+            "o de algo sin lo que te costó, así que no puedo sacar cuentas. "
+            "Las nuevas ya sí: /venta bitcoin 0.005 350"
+        )
+
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    lineas = ["💰 <b>Lo que has ganado vendiendo</b>", ""]
+    for coin_id, ganancia in g.por_cripto:
+        nombre = escape(coin_id.replace("-", " ").title())
+        lineas.append(
+            f"{_flecha(ganancia)} <b>{nombre}</b>  {_ganancia(ganancia, simbolo)}"
+        )
+    if len(g.por_cripto) > 1:
+        lineas.append(f"\nTotal <b>{_ganancia(g.total, simbolo)}</b>")
+    if g.sin_datos:
+        cuantas = "1 venta" if g.sin_datos == 1 else f"{g.sin_datos} ventas"
+        lineas.append(
+            f"<i>No cuento {cuantas}: sin a cuánto vendiste o sin lo que te costó.</i>"
+        )
+    lineas.append("\nLo que aún tienes no entra, eso está en /cartera")
     return "\n".join(lineas)
 
 

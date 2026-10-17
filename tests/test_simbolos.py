@@ -46,7 +46,7 @@ def test_en_cada_comando():
     assert convertir.interpretar("500 eur sol", "eur").coin_id == "solana"
     assert convertir.interpretar("0.05 btc", "eur").coin_id == "bitcoin"
     assert movimientos.interpretar_compra("btc 0.01 600")[0] == "bitcoin"
-    assert movimientos.interpretar_venta("btc todo") == ("bitcoin", None)
+    assert movimientos.interpretar_venta("btc todo") == ("bitcoin", None, None)
     watch, regla = vigiladas.interpretar("sol %5")
     assert (watch.coin_id, regla) == ("solana", "solana:%5.0")
 

@@ -657,6 +657,20 @@ def test_movimientos_el_mas_reciente_primero(db):
     ]
 
 
+def test_ventas_todas_y_solo_ventas(db):
+    btc = Posicion("bitcoin", 1, 100)
+    database.apuntar_movimiento(db, "bitcoin", "compra", 1, 100, None, btc)
+    for _ in range(12):
+        database.apuntar_movimiento(db, "bitcoin", "venta", 0.01, 2, btc, btc)
+    database.apuntar_movimiento(db, "bitcoin", "venta", 0.5, None, btc, btc)
+
+    ventas = database.get_ventas(db)
+
+    assert len(ventas) == 13  # sin el limite de 10 de /movimientos
+    assert {v.tipo for v in ventas} == {"venta"}
+    assert (ventas[0].coste, ventas[-1].coste) == (2, None)
+
+
 def test_movimientos_de_una_cripto(db):
     for coin_id in ("bitcoin", "solana", "bitcoin"):
         database.apuntar_movimiento(

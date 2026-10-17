@@ -6,6 +6,7 @@ from crypto_tracker.config import Posicion
 from crypto_tracker.movimientos import (
     MovimientoError,
     buscar,
+    cobrado,
     combinar,
     comprar,
     interpretar_compra,
@@ -63,16 +64,34 @@ def test_interpretar_compra_numeros_malos(argumento, mensaje):
 @pytest.mark.parametrize(
     "argumento, esperado",
     [
-        ("bitcoin 0.005", ("bitcoin", 0.005)),
-        ("Bitcoin todo", ("bitcoin", None)),
-        ("bitcoin TODO", ("bitcoin", None)),
+        ("bitcoin 0.005", ("bitcoin", 0.005, None)),
+        ("Bitcoin todo", ("bitcoin", None, None)),
+        ("bitcoin TODO", ("bitcoin", None, None)),
+        ("bitcoin 0.005 400", ("bitcoin", 0.005, "400")),
+        ("bitcoin todo @ 70000", ("bitcoin", None, "@70000")),
     ],
 )
 def test_interpretar_venta(argumento, esperado):
     assert interpretar_venta(argumento) == esperado
 
 
-@pytest.mark.parametrize("argumento", ["", "bitcoin", "bitcoin 0.005 400"])
+@pytest.mark.parametrize(
+    "precio, esperado",
+    [("400", 400), ("400,50", 400.5), ("@70000", 350), ("@70k", 350)],
+)
+def test_cobrado(precio, esperado):
+    assert cobrado(precio, 0.005) == pytest.approx(esperado)
+
+
+@pytest.mark.parametrize("precio", ["mucho", "-5"])
+def test_cobrado_malo(precio):
+    with pytest.raises(MovimientoError):
+        cobrado(precio, 0.005)
+
+
+@pytest.mark.parametrize(
+    "argumento", ["", "bitcoin", "bitcoin 0.005 400 más", "bitcoin 0.005 @"]
+)
 def test_interpretar_venta_formato_malo(argumento):
     with pytest.raises(MovimientoError, match="/venta bitcoin todo"):
         interpretar_venta(argumento)

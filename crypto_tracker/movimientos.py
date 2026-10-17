@@ -8,7 +8,7 @@ from .puntuales import numero
 from .simbolos import a_id
 
 EJEMPLO_COMPRA = "/compra bitcoin 0.01 600"
-EJEMPLO_VENTA = "/venta bitcoin 0.005 o /venta bitcoin todo"
+EJEMPLO_VENTA = "/venta bitcoin 0.005 350 o /venta bitcoin todo"
 
 # Lo que queda por debajo de esto son restos de los decimales, no algo que tengas.
 RESTO = 1e-9
@@ -67,15 +67,27 @@ def interpretar_compra(argumento: str) -> tuple[str, float, float | None]:
     return a_id(partes[0]), cantidad, coste
 
 
-def interpretar_venta(argumento: str) -> tuple[str, float | None]:
-    """'bitcoin 0.005' -> ('bitcoin', 0.005). 'bitcoin todo' -> ('bitcoin', None)."""
-    partes = argumento.split()
-    if len(partes) != 2:
+def interpretar_venta(argumento: str) -> tuple[str, float | None, str | None]:
+    """'bitcoin 0.005' -> ('bitcoin', 0.005, None). 'bitcoin todo' -> cantidad None.
+
+    Lo tercero es a cuánto vendiste, sin leer: con 'todo @60000' aún no sé cuánto es.
+    """
+    partes = argumento.replace("@ ", "@").split()
+    if len(partes) not in (2, 3) or partes[-1] == "@":
         raise MovimientoError(f"Escríbelo así: {EJEMPLO_VENTA}")
 
+    precio = partes[2] if len(partes) == 3 else None
     if partes[1].lower() == "todo":
-        return a_id(partes[0]), None
-    return a_id(partes[0]), _cantidad(partes[1], EJEMPLO_VENTA)
+        return a_id(partes[0]), None, precio
+    return a_id(partes[0]), _cantidad(partes[1], EJEMPLO_VENTA), precio
+
+
+def cobrado(precio: str, vendido: float) -> float:
+    """'700' es lo que te dieron en total; '@70000', lo de cada una."""
+    valor = _numero(precio.removeprefix("@"), EJEMPLO_VENTA)
+    if valor < 0:
+        raise MovimientoError("Lo que te dieron no puede ser negativo.")
+    return valor * vendido if precio.startswith("@") else valor
 
 
 def comprar(

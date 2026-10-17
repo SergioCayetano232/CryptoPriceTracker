@@ -18,8 +18,9 @@ COMANDOS = {
     "reparto": "Qué parte de tu cartera es cada cripto, con gráfica",
     "semana": "Cómo le ha ido a tu cartera esta semana, o a una (ej: /semana btc)",
     "compra": "Apuntar una compra en la cartera (ej: /compra bitcoin 0.01 600)",
-    "venta": "Apuntar una venta (ej: /venta bitcoin 0.005 o todo)",
+    "venta": "Apuntar una venta (ej: /venta bitcoin 0.005 350 o todo)",
     "movimientos": "Tus últimas compras y ventas (ej: /movimientos btc)",
+    "ganancias": "Lo que has ganado o perdido con lo que ya vendiste",
     "deshacer": "Quitar la última compra o venta que apuntaste",
     "alerta": "Avísame una vez a un precio o un % (ej: /alerta btc 70000 o +10% 7d)",
     "alertas": "Las alertas que tienes puestas",
@@ -118,6 +119,8 @@ ALIAS = {
     "hours": "horas",
     "weekday": "diasemana",
     "breakeven": "equilibrio",
+    "ganancia": "ganancias",
+    "beneficios": "ganancias",
     # /maximo ya es /ath; el mínimo del tramo sale en lo primero de /sube.
     "minimo": "sube",
     "mínimo": "sube",
@@ -174,7 +177,9 @@ EJEMPLOS = {
         ("/compra bitcoin 0.01 @60000", "con el precio de cada una"),
     ],
     "venta": [
-        ("/venta bitcoin 0.005", "una parte"),
+        ("/venta bitcoin 0.005 350", "una parte, por 350 € en total"),
+        ("/venta bitcoin 0.005 @70000", "con el precio de cada una"),
+        ("/venta bitcoin 0.005", "sin precio, al de ahora"),
         ("/venta bitcoin todo", "la saca de la cartera"),
     ],
     "historico": [

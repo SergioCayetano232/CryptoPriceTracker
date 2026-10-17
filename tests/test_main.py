@@ -1960,13 +1960,90 @@ def test_comprar_mal_escrito(config, enviados):
     assert database.get_cambios_cartera(config.database_path) == {}
 
 
-def test_vender_una_parte(config, enviados):
+def test_vender_una_parte(config, enviados, monkeypatch):
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+
+    main.atender(config, _mensaje("/venta bitcoin 0.005"))
+
+    assert "venta de <b>0,005</b> de Bitcoin por €300,00" in enviados[0]
+    assert "🔺 Le sacas +€50,00" in enviados[0]
+    assert "Te quedan 0,015, que te costaron €750,00" in enviados[0]
+
+
+def test_vender_diciendo_a_cuanto_no_consulta_el_precio(config, enviados, monkeypatch):
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
+    pedidas = _precio(monkeypatch, {"bitcoin": 60000.0})
+
+    main.atender(config, _mensaje("/venta bitcoin 0.005 200"))
+    main.atender(config, _mensaje("/venta bitcoin todo @70000"))
+
+    assert pedidas == []
+    assert "por €200,00" in enviados[0]
+    assert "🔻 Le sacas -€50,00" in enviados[0]
+    assert "por €1.050,00" in enviados[1]  # las 0,015 que quedaban
+    assert "Le sacas +€300,00" in enviados[1]
+
+
+def test_vender_sin_conexion_la_apunta_igual(config, enviados, monkeypatch):
+    def falla(ids, cur):
+        raise coingecko.CoinGeckoError("Sin conexion con CoinGecko")
+
+    monkeypatch.setattr(coingecko, "get_prices", falla)
     config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
 
     main.atender(config, _mensaje("/venta bitcoin 0.005"))
 
-    assert "venta de <b>0,005</b> de Bitcoin" in enviados[0]
-    assert "Te quedan 0,015, que te costaron €750,00" in enviados[0]
+    assert "Apunto la venta de <b>0,005</b> de Bitcoin.\n" in enviados[0]
+    assert "Le sacas" not in enviados[0]
+    [venta] = database.get_ventas(config.database_path)
+    assert venta.coste is None
+
+
+def test_ganancias_de_lo_vendido(config, enviados, monkeypatch):
+    config = _con_cartera(
+        config, Posicion("bitcoin", 0.02, 1000), Posicion("solana", 10, 2000)
+    )
+    _precio(monkeypatch, {})
+
+    main.atender(config, _mensaje("/venta bitcoin 0.01 700"))
+    main.atender(config, _mensaje("/venta solana todo 1500"))
+    main.atender(config, _mensaje("/ganancias"))
+
+    texto = enviados[2]
+    assert "🔺 <b>Bitcoin</b>  +€200,00" in texto
+    assert "🔻 <b>Solana</b>  -€500,00" in texto
+    assert texto.index("Bitcoin") < texto.index("Solana")
+    assert "Total <b>-€300,00</b>" in texto
+    assert "No cuento" not in texto
+
+
+def test_ganancias_sin_ventas(config, enviados):
+    main.atender(config, _mensaje("/ganancias"))
+
+    assert "Todavía no has vendido nada" in enviados[0]
+
+
+def test_ganancias_con_ventas_de_antes_sin_precio(config, enviados):
+    btc = Posicion("bitcoin", 0.02, 1000)
+    database.apuntar_movimiento(
+        config.database_path, "bitcoin", "venta", 0.01, None, btc, btc
+    )
+
+    main.atender(config, _mensaje("/ganancias"))
+
+    assert "son de antes de guardar a cuánto vendías" in enviados[0]
+
+
+def test_ganancias_deshaciendo_la_venta_se_va(config, enviados, monkeypatch):
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
+    _precio(monkeypatch, {})
+
+    main.atender(config, _mensaje("/venta bitcoin 0.01 700"))
+    main.atender(config, _mensaje("/deshacer"))
+    main.atender(config, _mensaje("/ganancias"))
+
+    assert "Todavía no has vendido nada" in enviados[2]
 
 
 def test_vender_todo_la_quita_de_la_cartera(config, enviados, monkeypatch):

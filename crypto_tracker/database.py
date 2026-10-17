@@ -683,6 +683,15 @@ def get_movimientos(
     return [_movimiento(f) for f in filas]
 
 
+def get_ventas(db_path: str) -> list[Movimiento]:
+    """Todas, sin limite: lo ganado sale de sumarlas."""
+    with _connect(db_path) as conn:
+        filas = conn.execute(
+            "SELECT * FROM movimientos WHERE tipo = 'venta' ORDER BY id"
+        ).fetchall()
+    return [_movimiento(f) for f in filas]
+
+
 def deshacer_ultimo(db_path: str) -> Movimiento | None:
     """Deja la cripto como estaba antes del ultimo y lo borra. None si no hay."""
     with _connect(db_path) as conn:

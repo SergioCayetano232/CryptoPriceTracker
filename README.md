@@ -177,7 +177,8 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/semana bitcoin` | La semana de una sola: lo mismo que `/historico bitcoin 7d` |
 | `/compra bitcoin 0.01 600` | Apunta en la cartera que has comprado 0,01 por 600 € |
 | `/compra bitcoin 0.01 @60000` | Lo mismo, con el precio de cada una en vez del total |
-| `/venta bitcoin 0.005` | Apunta una venta (`/venta bitcoin todo` la saca de la cartera) |
+| `/venta bitcoin 0.005 350` | Apunta una venta y lo que te dieron (`/venta bitcoin todo` la saca de la cartera) |
+| `/ganancias` | Lo que has ganado o perdido de verdad con lo que ya vendiste |
 | `/movimientos` | Tus últimas compras y ventas, con un botón para deshacer la última (`/movimientos btc`, solo las de esa) |
 | `/deshacer` | Quita la última compra o venta y deja la cripto como estaba |
 | `/alerta bitcoin 70000` | Te avisa una vez cuando llegue a ese precio |
@@ -366,9 +367,14 @@ costó. Si no pones el precio (`/compra solana 3`), lo apunta a lo que vale en
 ese momento. Si prefieres poner a cuánto te salió cada una, como lo enseña el
 exchange, va con `@`: `/compra bitcoin 0.01 @60000`.
 
-`/venta bitcoin 0.005` lo resta, y lo que te costó baja en la misma proporción:
-si vendes la mitad, se va la mitad de lo invertido. `/venta bitcoin todo` la
-saca de la cartera.
+`/venta bitcoin 0.005 350` lo resta, y lo que te costó baja en la misma
+proporción: si vendes la mitad, se va la mitad de lo invertido. El último número
+es lo que te dieron, o con `@` a cuánto cada una; sin él, se apunta al precio de
+ahora. `/venta bitcoin todo` la saca de la cartera.
+
+`/ganancias` suma lo que has sacado con cada venta, contando lo que te costó
+esa parte al precio medio. Las ventas apuntadas antes de esto no guardaban el
+precio, así que no entran.
 
 Si te equivocas, cada respuesta lleva un **↩️ Deshacer** que la deja como
 estaba. `/movimientos` te enseña las últimas que has apuntado, y `/deshacer`
@@ -571,6 +577,7 @@ crypto_tracker/
   vigiladas.py   lo que cambias con /vigilar
   volatilidad.py lo que se mueve cada día, para /volatilidad
   movimientos.py las compras y ventas de /compra y /venta
+  ganancias.py   lo ganado con lo vendido, para /ganancias
   proximo.py     a qué precio salta el siguiente aviso
   cartera.py     cuánto vale lo que tienes
   grafica.py     las imágenes de /historico y /cartera
