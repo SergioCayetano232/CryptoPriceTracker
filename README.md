@@ -104,7 +104,8 @@ WATCHLIST=bitcoin:55000:75000
 Te avisa si baja de 55.000 o si sube de 75.000.
 
 Cada aviso lleva debajo cuánto ha variado en las últimas 24 h (`En 24 h: 🔺
-+4.17%`), para saber si viene de un subidón o es ruido.
++4.17%`), para saber si viene de un subidón o es ruido, y cuánto le falta para
+su máximo histórico.
 
 **Puedes mezclar y poner varias separadas por comas:**
 ```

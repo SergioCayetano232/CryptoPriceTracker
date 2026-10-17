@@ -25,6 +25,13 @@ class Maximo:
         return max(0.0, (self.precio / self.minimo - 1) * 100)
 
 
+def falta_a(maximos: dict[str, Maximo], coin_id: str, precio: float) -> float | None:
+    """Lo que le falta al maximo desde ese precio, no desde el de la consulta."""
+    m = maximos.get(coin_id)
+    # El del aviso es el que lees en el mensaje; el de /coins/markets va algo detras.
+    return replace(m, precio=precio).falta() if m and precio > 0 else None
+
+
 def leer(datos) -> dict[str, Maximo]:
     """Saca los maximos de lo que devuelve /coins/markets. Lo que venga raro, fuera."""
     maximos = {}

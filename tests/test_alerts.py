@@ -558,6 +558,26 @@ def test_sin_historico_no_sale_la_linea():
     assert "24 h" not in formatear(Alert("bitcoin", 64100.0, 64000.0, ALTO), "eur")
 
 
+def test_lo_que_falta_para_el_maximo_va_tras_las_24h():
+    aviso = Alert("bitcoin", 80000.0, 79000.0, ALTO, variacion_24h=2.0, falta_maximo=25)
+
+    texto = formatear(aviso, "eur")
+
+    assert texto.endswith(
+        "<i>En 24 h: 🔺 +2.00%</i>\n<i>Le falta +25.00% para su máximo histórico</i>"
+    )
+
+
+def test_en_maximos_lo_celebra():
+    aviso = Alert("bitcoin", 105000.0, 100000.0, ALTO, falta_maximo=0)
+
+    assert "🎉 <i>Está en su máximo histórico</i>" in formatear(aviso, "eur")
+
+
+def test_sin_maximo_no_sale_la_linea():
+    assert "histórico" not in formatear(Alert("bitcoin", 64100.0, 64000.0, ALTO), "eur")
+
+
 def test_la_alerta_puntual_sigue_cerrando_el_mensaje():
     aviso = Alert("bitcoin", 70100.0, 70000.0, ALTO, puntual=True, variacion_24h=1.0)
 

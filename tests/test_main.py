@@ -62,6 +62,12 @@ def sin_cambios_de_coingecko(monkeypatch):
     monkeypatch.setattr(coingecko, "_cambios", {})
 
 
+@pytest.fixture(autouse=True)
+def sin_maximos_de_verdad(monkeypatch):
+    """Cada aviso los pide; sin esto los tests de avisos irian a CoinGecko."""
+    monkeypatch.setattr(coingecko, "maximos", lambda ids, cur: {})
+
+
 def _mensaje(texto, chat=123, hace=0):
     return {"chat": {"id": chat}, "text": texto, "date": int(time.time()) - hace}
 
@@ -804,6 +810,54 @@ def test_avisos_con_sonido_fuera_de_horas(config, sonidos, monkeypatch):
     main.ejecutar_ciclo(config, {"bitcoin": "%60000.0"})
 
     assert sonidos == [False]
+
+
+def test_el_aviso_dice_lo_que_falta_para_el_maximo(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 90000.0})
+    pedidas = _maximos(monkeypatch, {"bitcoin": (89000.0, 108000.0)})
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%60000.0"})
+
+    assert pedidas == [["bitcoin"]]
+    # con los 90.000 del aviso, no con los 89.000 de la consulta de máximos
+    assert "Le falta +20.00% para su máximo histórico" in enviados[0]
+
+
+def test_sin_avisos_no_pide_maximos(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 60100.0})
+    pedidas = _maximos(monkeypatch, {"bitcoin": (60100.0, 108000.0)})
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%60000.0"})
+
+    assert enviados == []
+    assert pedidas == []
+
+
+def test_si_fallan_los_maximos_el_aviso_sale_igual(config, enviados, monkeypatch):
+    def falla(ids, cur):
+        raise coingecko.CoinGeckoError("Sin conexion con CoinGecko")
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 90000.0})
+    monkeypatch.setattr(coingecko, "maximos", falla)
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%60000.0"})
+
+    assert "ha subido" in enviados[0]
+    assert "histórico" not in enviados[0]
+
+
+def test_el_aviso_de_la_cartera_no_pide_maximos(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    config = replace(config, cartera=(Posicion("bitcoin", 0.1, 5000.0),))
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 61000.0})
+    pedidas = _maximos(monkeypatch, {})
+    database.crear_puntual(config.database_path, "cartera", 6000, True, "eur")
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%60000.0"})
+
+    assert "Tu cartera" in enviados[0]
+    assert pedidas == []
 
 
 def test_las_respuestas_a_comandos_siempre_suenan(ahora_tranquilo, sonidos):

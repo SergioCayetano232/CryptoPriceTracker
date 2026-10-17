@@ -80,6 +80,7 @@ class Alert:
     variacion_24h: float | None = None  # None si aun no hay historico de un dia
     extremo_dias: int | None = None  # solo en los de maximo o minimo de N dias
     nota: str | None = None  # la que escribiste en la /alerta
+    falta_maximo: float | None = None  # en %; 0 si esta en maximos
 
 
 def clasificar(price: float, watch: Watch) -> str:
@@ -284,6 +285,12 @@ def formatear(alerta: Alert, currency: str) -> str:
     if alerta.variacion_24h is not None:
         v = alerta.variacion_24h
         texto += f"\n<i>En 24 h: {_flecha(v)} {v:+.2f}%</i>"
+    if alerta.falta_maximo == 0:
+        texto += "\n🎉 <i>Está en su máximo histórico</i>"
+    elif alerta.falta_maximo is not None:
+        texto += (
+            f"\n<i>Le falta +{alerta.falta_maximo:.2f}% para su máximo histórico</i>"
+        )
     if alerta.nota:
         texto += f"\n📝 {escape(alerta.nota)}"
     if alerta.puntual:

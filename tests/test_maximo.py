@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from crypto_tracker.maximo import Maximo, hace, leer
+from crypto_tracker.maximo import Maximo, falta_a, hace, leer
 
 FECHA = datetime(2026, 3, 14, 10, 0, tzinfo=timezone.utc)
 
@@ -85,3 +85,15 @@ def test_falta():
 )
 def test_hace(dias, esperado):
     assert hace(FECHA, FECHA + timedelta(days=dias, hours=3)) == esperado
+
+
+def test_falta_a_con_el_precio_del_aviso():
+    maximos = {"bitcoin": Maximo("bitcoin", 70000.0, 100000.0, FECHA)}
+
+    assert falta_a(maximos, "bitcoin", 80000.0) == pytest.approx(25)
+    assert falta_a(maximos, "bitcoin", 105000.0) == 0
+
+
+def test_falta_a_sin_maximo():
+    assert falta_a({}, "bitcoin", 80000.0) is None
+    assert falta_a({}, "cartera", 5000.0) is None

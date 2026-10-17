@@ -41,10 +41,12 @@ from crypto_tracker import (
     equilibrio,
     exportar,
     extremos,
+    ganancias,
     grafica,
     horas,
     hoy,
     hubiera,
+    maximo,
     media,
     mejor,
     miedo,
@@ -214,8 +216,14 @@ def ejecutar_ciclo(
         )
         return estado_nuevo, None
 
+    maximos = _maximos_avisos(config, avisos)
     avisos = [
-        replace(a, variacion_24h=_variacion(config, a.coin_id, a.price)) for a in avisos
+        replace(
+            a,
+            variacion_24h=_variacion(config, a.coin_id, a.price),
+            falta_maximo=maximo.falta_a(maximos, a.coin_id, a.price),
+        )
+        for a in avisos
     ]
 
     # Todo en un mensaje: si cruzan tres a la vez, tres notificaciones
@@ -238,6 +246,21 @@ def ejecutar_ciclo(
         logger.error("No se pudo avisar de: %s", cruzadas)
 
     return estado_nuevo, None
+
+
+def _maximos_avisos(
+    config: Config, avisos: list[alerts.Alert]
+) -> dict[str, maximo.Maximo]:
+    """Una consulta para todos, y solo cuando hay aviso: casi ningún ciclo la gasta."""
+    ids = [a.coin_id for a in avisos if a.coin_id != puntuales.CARTERA]
+    if not ids:
+        return {}
+    try:
+        return coingecko.maximos(list(dict.fromkeys(ids)), config.vs_currency)
+    except coingecko.CoinGeckoError as e:
+        # Es un extra; el aviso sale igual sin esa línea.
+        logger.warning("Aviso sin el máximo histórico: %s", e)
+        return {}
 
 
 def _calladas(config: Config) -> set[str]:
@@ -731,6 +754,9 @@ def responder(
     if nombre == "movimientos":
         return _movimientos(config, argumento)
 
+    if nombre == "ganancias":
+        return _ganancias(config)
+
     if nombre == "deshacer":
         return _deshacer(config, argumento)
 
@@ -1061,21 +1087,48 @@ def _comprar(config: Config, argumento: str) -> str | comandos.ConBotones:
 
 def _vender(config: Config, argumento: str) -> str | comandos.ConBotones:
     try:
-        coin_id, cantidad = movimientos.interpretar_venta(argumento)
+        coin_id, cantidad, precio = movimientos.interpretar_venta(argumento)
         antes = movimientos.buscar(_con_cambios(config).cartera, coin_id)
         queda = movimientos.vender(antes, coin_id, cantidad)
+        vendido = antes.cantidad if cantidad is None else cantidad
+        cobrado = movimientos.cobrado(precio, vendido) if precio else None
     except movimientos.MovimientoError as e:
         return telegram.escape(str(e))
 
-    vendido = antes.cantidad if cantidad is None else cantidad
+    if cobrado is None:
+        cobrado = _cobrado_ahora(config, coin_id, vendido)
     numero = database.apuntar_movimiento(
-        config.database_path, coin_id, "venta", vendido, None, antes, queda
+        config.database_path, coin_id, "venta", vendido, cobrado, antes, queda
     )
-    logger.info("Cartera: vende %s de %s", vendido, coin_id)
+    logger.info("Cartera: vende %s de %s por %s", vendido, coin_id, cobrado)
     return comandos.ConBotones(
-        alerts.formatear_venta(coin_id, vendido, queda, config.vs_currency),
+        alerts.formatear_venta(
+            coin_id,
+            vendido,
+            queda,
+            config.vs_currency,
+            cobrado,
+            ganancias.de_venta(antes, vendido, cobrado),
+        ),
         botones.deshacer_movimiento(numero),
     )
+
+
+def _cobrado_ahora(config: Config, coin_id: str, vendido: float) -> float | None:
+    """Sin decir a cuánto, al precio de ahora, como /compra."""
+    try:
+        precios = coingecko.get_prices([coin_id], config.vs_currency)
+    except coingecko.CoinGeckoError as e:
+        # La venta se apunta igual; solo se queda fuera de /ganancias.
+        logger.warning("Apunto la venta sin precio: %s", e)
+        return None
+    precio = precios.get(coin_id)
+    return None if precio is None else precio * vendido
+
+
+def _ganancias(config: Config) -> str:
+    ventas = database.get_ventas(config.database_path)
+    return alerts.formatear_ganancias(ganancias.calcular(ventas), config.vs_currency)
 
 
 def _deshacer(config: Config, argumento: str) -> str:
