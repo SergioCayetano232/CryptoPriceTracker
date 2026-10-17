@@ -34,6 +34,20 @@ def test_leer_volumen_raro_o_cero_es_sin_volumen():
     assert [p.volumen for p in leer(datos).values()] == [None, None]
 
 
+def test_leer_con_el_puesto():
+    assert leer([_moneda(market_cap_rank=5)])["bitcoin"].puesto == 5
+
+
+def test_leer_puesto_raro_es_sin_puesto():
+    datos = [
+        _moneda("a", market_cap_rank=None),
+        _moneda("b", market_cap_rank=0),
+        _moneda("c", market_cap_rank="5"),
+    ]
+
+    assert [p.puesto for p in leer(datos).values()] == [None, None, None]
+
+
 def test_leer_sin_variaciones():
     datos = [
         _moneda(
@@ -81,3 +95,17 @@ def test_formatear_volumen_en_otra_moneda():
     texto = formatear_precio("bitcoin", 70000.0, 2.5, "usd", volumen=850_000)
 
     assert "<i>Volumen en 24 h: $850.000</i>" in texto
+
+
+def test_formatear_con_puesto_y_volumen():
+    texto = formatear_precio(
+        "solana", 150.0, 2.5, "eur", volumen=4_200_000_000, puesto=6
+    )
+
+    assert "\n<i>Puesto #6 · volumen en 24 h: €4.200 millones</i>" in texto
+
+
+def test_formatear_con_puesto_sin_volumen():
+    texto = formatear_precio("solana", 150.0, 2.5, "eur", puesto=6)
+
+    assert "\n<i>Puesto #6</i>" in texto

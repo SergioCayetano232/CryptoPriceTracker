@@ -12,6 +12,7 @@ class Precio:
     en_7d: float | None
     en_1h: float | None = None
     volumen: float | None = None  # lo negociado en 24 h, en la misma moneda
+    puesto: int | None = None  # en capitalizacion; las muy nuevas no tienen
 
 
 def leer(datos) -> dict[str, Precio]:
@@ -31,6 +32,7 @@ def leer(datos) -> dict[str, Precio]:
             _numero(d.get("price_change_percentage_7d_in_currency")),
             _numero(d.get("price_change_percentage_1h_in_currency")),
             _numero(d.get("total_volume")) or None,
+            _entero(d.get("market_cap_rank")),
         )
     return precios
 
@@ -39,3 +41,7 @@ def _numero(valor) -> float | None:
     if isinstance(valor, (int, float)) and math.isfinite(valor):
         return float(valor)
     return None
+
+
+def _entero(valor) -> int | None:
+    return valor if isinstance(valor, int) and valor > 0 else None

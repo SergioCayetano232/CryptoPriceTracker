@@ -1301,6 +1301,7 @@ def _precio(config: Config, argumento: str) -> str | comandos.ConBotones:
                 else cartera.de(list(_con_cambios(config).cartera), coin_id, precio),
                 dia,
                 precios[coin_id].volumen,
+                precios[coin_id].puesto,
             )
         )
         teclado = botones.para_precio(coin_id, grafica=len(dia) >= 2)
