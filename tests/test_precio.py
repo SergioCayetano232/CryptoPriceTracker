@@ -1,8 +1,10 @@
 """Tests de leer el precio con las variaciones de 1 h, 24 h y 7 dias."""
 
+import pytest
+
 from crypto_tracker.alerts import formatear_precio
 from crypto_tracker.cartera import Valor
-from crypto_tracker.precio import Precio, leer
+from crypto_tracker.precio import Precio, en_sats, leer
 
 
 def _moneda(coin_id="bitcoin", **cambios):
@@ -109,3 +111,25 @@ def test_formatear_con_puesto_sin_volumen():
     texto = formatear_precio("solana", 150.0, 2.5, "eur", puesto=6)
 
     assert "\n<i>Puesto #6</i>" in texto
+
+
+def test_en_sats():
+    assert en_sats("solana", 92.13, 72463.0) == pytest.approx(127140.7, abs=0.1)
+    assert en_sats("pepe", 0.00000346, 72463.0) == pytest.approx(0.004775, rel=1e-3)
+
+
+def test_en_sats_ni_bitcoin_ni_sin_su_precio():
+    assert en_sats("bitcoin", 72463.0, 72463.0) is None
+    assert en_sats("solana", 92.13, None) is None
+
+
+def test_formatear_en_sats():
+    texto = formatear_precio("solana", 92.13, 2.5, "eur", sats=127140.7)
+
+    assert texto.startswith("💰 <b>Solana</b>  €92,13  <i>(127.141 sats)</i>\n")
+
+
+def test_formatear_menos_de_un_sat_no_es_cero():
+    texto = formatear_precio("pepe", 0.00000346, 2.5, "eur", sats=0.004775)
+
+    assert "<i>(0,004775 sats)</i>" in texto

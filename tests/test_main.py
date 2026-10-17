@@ -2484,7 +2484,8 @@ def test_precio_de_una_que_no_vigilas(config, enviados, monkeypatch):
 
     main.atender(config, _mensaje("/precio Solana"))
 
-    assert pedidas == [["solana"]]  # una sola consulta, sin lo vigilado
+    # una sola consulta, sin lo vigilado; bitcoin, para los sats
+    assert pedidas == [["solana", "bitcoin"]]
     assert "💰 <b>Solana</b>  €150,00\n🔺 +2.50% en 24 h" in enviados[0]
     assert "CoinGecko" in enviados[0]
 
@@ -2511,6 +2512,19 @@ def test_precio_con_el_puesto_y_el_volumen(config, enviados, monkeypatch):
     assert (
         "en 7 días\n<i>Puesto #1 · volumen en 24 h: €32.512 millones</i>" in enviados[0]
     )
+
+
+def test_precio_en_sats(config, enviados, monkeypatch):
+    pedidas = _precio(monkeypatch, {"solana": 150.0, "bitcoin": 75000.0})
+
+    main.atender(config, _mensaje("/precio sol"))
+    main.atender(config, _mensaje("/precio btc"))
+    main.atender(config, _mensaje("/precio sol eth"))
+
+    assert "💰 <b>Solana</b>  €150,00  <i>(200.000 sats)</i>" in enviados[0]
+    assert pedidas[1] == ["bitcoin"]  # sin repetirlo
+    assert "sats" not in enviados[1]
+    assert pedidas[2] == ["solana", "ethereum"]  # con varias no sale
 
 
 def test_precio_de_varias_sin_volumen(config, enviados, monkeypatch):

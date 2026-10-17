@@ -1162,6 +1162,7 @@ def formatear_precio(
     dia: list[float] | None = None,
     volumen: float | None = None,
     puesto: int | None = None,
+    sats: float | None = None,
 ) -> str:
     """Respuesta de /precio: lo que vale ahora y cómo va en 1 h, 24 h y 7 días.
 
@@ -1170,6 +1171,10 @@ def formatear_precio(
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
     nombre = escape(coin_id.replace("-", " ").title())
     texto = f"💰 <b>{nombre}</b>  {simbolo}{_num(precio)}"
+    if sats is not None:
+        # Por debajo de un sat, redondear daría "0 sats", que no es verdad.
+        en_sats = texto_cantidad(round(sats)) if sats >= 1 else _num(sats)
+        texto += f"  <i>({en_sats} sats)</i>"
     if en_1h is not None:
         texto += f"\n{_flecha(en_1h)} {en_1h:+.2f}% en 1 h"
     if variacion is None:

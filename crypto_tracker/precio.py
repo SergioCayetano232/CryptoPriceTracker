@@ -37,6 +37,13 @@ def leer(datos) -> dict[str, Precio]:
     return precios
 
 
+def en_sats(coin_id: str, precio: float, bitcoin: float | None) -> float | None:
+    """Cuántos satoshis vale una. None para el propio bitcoin o sin su precio."""
+    if coin_id == "bitcoin" or not bitcoin:
+        return None
+    return precio / bitcoin * 100_000_000
+
+
 def _numero(valor) -> float | None:
     if isinstance(valor, (int, float)) and math.isfinite(valor):
         return float(valor)

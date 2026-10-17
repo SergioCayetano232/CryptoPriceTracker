@@ -77,6 +77,7 @@ from crypto_tracker.config import (
     load_config,
     minutos_mute,
 )
+from crypto_tracker.precio import en_sats
 
 logger = logging.getLogger("crypto_tracker")
 
@@ -1262,8 +1263,12 @@ def _precio(config: Config, argumento: str) -> str | comandos.ConBotones:
     if len(coin_ids) > simbolos.MAX_VARIAS:
         return f"Como mucho {simbolos.MAX_VARIAS} a la vez."
 
+    # Con una sola, bitcoin va en la misma consulta para dar lo que vale en sats.
+    pedir = coin_ids
+    if len(coin_ids) == 1 and coin_ids[0] != "bitcoin":
+        pedir = [*coin_ids, "bitcoin"]
     try:
-        precios = coingecko.precios_semana(coin_ids, currency)
+        precios = coingecko.precios_semana(pedir, currency)
     except coingecko.CoinGeckoError as e:
         return f"No he podido mirar el precio ahora mismo: {telegram.escape(str(e))}"
 
@@ -1288,6 +1293,7 @@ def _precio(config: Config, argumento: str) -> str | comandos.ConBotones:
             config.database_path, coin_id, 24, config.vs_currency
         )
         dia = [p for _, p in serie]
+        bitcoin = precios.get("bitcoin")
         texto = alerts.con_fuente(
             alerts.formatear_precio(
                 coin_id,
@@ -1302,6 +1308,7 @@ def _precio(config: Config, argumento: str) -> str | comandos.ConBotones:
                 dia,
                 precios[coin_id].volumen,
                 precios[coin_id].puesto,
+                en_sats(coin_id, precio, bitcoin.precio if bitcoin else None),
             )
         )
         teclado = botones.para_precio(coin_id, grafica=len(dia) >= 2)
