@@ -39,7 +39,11 @@ def grande(valor: float) -> str:
     """2.507.117.360.729 -> '2,51 billones'; 850.000.000.000 -> '850.000 millones'."""
     if valor >= 1e12:
         return f"{valor / 1e12:.2f} billones".replace(".", ",")
-    return f"{valor / 1e6:,.0f} millones".replace(",", ".")
+    # Con una pequeña saldría "0 millones".
+    if valor < 1e6:
+        return f"{valor:,.0f}".replace(",", ".")
+    millones = f"{valor / 1e6:,.0f}".replace(",", ".")
+    return "1 millón" if millones == "1" else f"{millones} millones"
 
 
 def _numero(valor) -> float | None:

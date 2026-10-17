@@ -53,6 +53,8 @@ def test_leer_algo_que_no_es_lo_esperado(datos):
         (1e12, "1,00 billones"),
         (850_000_000_000, "850.000 millones"),
         (3_400_000_000, "3.400 millones"),
+        (1_000_000, "1 millón"),
+        (845_300.7, "845.301"),
     ],
 )
 def test_grande(valor, esperado):

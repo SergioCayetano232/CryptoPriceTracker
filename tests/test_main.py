@@ -2502,6 +2502,26 @@ def test_precio_con_la_semana(config, enviados, monkeypatch):
     assert "en 1 h" not in enviados[0]  # si CoinGecko no lo da, no sale
 
 
+def test_precio_con_el_volumen(config, enviados, monkeypatch):
+    btc = Precio("bitcoin", 63000.0, 2.5, -4.25, volumen=32_512_000_000)
+    monkeypatch.setattr(coingecko, "precios_semana", lambda ids, cur: {"bitcoin": btc})
+
+    main.atender(config, _mensaje("/precio btc"))
+
+    assert "en 7 días\n<i>Volumen en 24 h: €32.512 millones</i>" in enviados[0]
+
+
+def test_precio_de_varias_sin_volumen(config, enviados, monkeypatch):
+    precios = {
+        c: Precio(c, 100.0, 1.0, 2.0, volumen=5e9) for c in ("bitcoin", "solana")
+    }
+    monkeypatch.setattr(coingecko, "precios_semana", lambda ids, cur: precios)
+
+    main.atender(config, _mensaje("/precio btc sol"))
+
+    assert "Volumen" not in enviados[0]  # una por línea, no cabe
+
+
 def test_precio_con_la_ultima_hora(config, enviados, monkeypatch):
     monkeypatch.setattr(
         coingecko,

@@ -22,6 +22,18 @@ def test_leer():
     assert leer([_moneda()]) == esperado
 
 
+def test_leer_con_volumen():
+    p = leer([_moneda(total_volume=32_500_000_000)])["bitcoin"]
+
+    assert p.volumen == 32_500_000_000
+
+
+def test_leer_volumen_raro_o_cero_es_sin_volumen():
+    datos = [_moneda("a", total_volume=None), _moneda("b", total_volume=0)]
+
+    assert [p.volumen for p in leer(datos).values()] == [None, None]
+
+
 def test_leer_sin_variaciones():
     datos = [
         _moneda(
@@ -59,3 +71,13 @@ def test_formatear_con_lo_que_tienes_sin_invertido():
     texto = formatear_precio("bitcoin", 70000.0, 2.5, "eur", tuyo=tuyo)
 
     assert texto.endswith("que valen <b>€1.120,00</b>")
+
+
+def test_formatear_sin_volumen_no_sale():
+    assert "Volumen" not in formatear_precio("bitcoin", 70000.0, 2.5, "eur")
+
+
+def test_formatear_volumen_en_otra_moneda():
+    texto = formatear_precio("bitcoin", 70000.0, 2.5, "usd", volumen=850_000)
+
+    assert "<i>Volumen en 24 h: $850.000</i>" in texto

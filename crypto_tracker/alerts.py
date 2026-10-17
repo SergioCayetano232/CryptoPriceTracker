@@ -1160,6 +1160,7 @@ def formatear_precio(
     en_1h: float | None = None,
     tuyo: Valor | None = None,
     dia: list[float] | None = None,
+    volumen: float | None = None,
 ) -> str:
     """Respuesta de /precio: lo que vale ahora y cómo va en 1 h, 24 h y 7 días.
 
@@ -1176,6 +1177,8 @@ def formatear_precio(
         texto += f"\n{_flecha(variacion)} {variacion:+.2f}% en 24 h"
     if en_7d is not None:
         texto += f"\n{_flecha(en_7d)} {en_7d:+.2f}% en 7 días"
+    if volumen is not None:
+        texto += f"\n<i>Volumen en 24 h: {simbolo}{grande(volumen)}</i>"
     # Con cuatro puntos las barritas no dicen nada.
     if dia and len(dia) >= MINIMO_BARRAS:
         texto += f"\n<code>{sparkline(muestrear(dia, BARRAS_MOVIL))}</code> <i>24 h</i>"

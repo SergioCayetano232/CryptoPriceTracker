@@ -11,6 +11,7 @@ class Precio:
     en_24h: float | None  # en %
     en_7d: float | None
     en_1h: float | None = None
+    volumen: float | None = None  # lo negociado en 24 h, en la misma moneda
 
 
 def leer(datos) -> dict[str, Precio]:
@@ -29,6 +30,7 @@ def leer(datos) -> dict[str, Precio]:
             _numero(d.get("price_change_percentage_24h_in_currency")),
             _numero(d.get("price_change_percentage_7d_in_currency")),
             _numero(d.get("price_change_percentage_1h_in_currency")),
+            _numero(d.get("total_volume")) or None,
         )
     return precios
 
