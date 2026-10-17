@@ -1295,6 +1295,19 @@ def test_alertas_con_lo_que_falta(config, enviados, monkeypatch):
     assert "CoinGecko" in enviados[0]
 
 
+def test_alertas_la_mas_cerca_primero(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 62500.0, "solana": 125.0})
+    database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
+    database.crear_puntual(config.database_path, "solana", 100, False, "eur")
+    cerca = database.crear_puntual(config.database_path, "bitcoin", 60000, False, "eur")
+
+    main.atender(config, _mensaje("/alertas"))
+
+    texto = enviados[0]
+    assert texto.index("-4.00%") < texto.index("+12.00%") < texto.index("-20.00%")
+    assert f"Para quitar una: /quitar {cerca.id}" in texto
+
+
 def test_alertas_de_la_cartera_con_lo_que_falta(config, enviados, monkeypatch):
     from dataclasses import replace
 

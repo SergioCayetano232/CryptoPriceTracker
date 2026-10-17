@@ -927,6 +927,7 @@ def _horario(config: Config, argumento: str) -> str:
 def _alertas(config: Config) -> str | comandos.ConBotones:
     pendientes = database.get_puntuales(config.database_path, config.vs_currency)
     precios = _precios_alertas(config, pendientes)
+    pendientes = puntuales.por_cercania(pendientes, precios)
     texto = alerts.formatear_puntuales(pendientes, config.vs_currency, precios)
     if precios:
         texto = alerts.con_fuente(texto)

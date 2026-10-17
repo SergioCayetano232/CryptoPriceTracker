@@ -196,6 +196,22 @@ def cumplidas(alertas: list[Puntual], precios: dict[str, float]) -> list[Puntual
     return hechas
 
 
+def por_cercania(alertas: list[Puntual], precios: dict[str, float]) -> list[Puntual]:
+    """La que antes va a saltar primero. Las que ya llegaron, arriba del todo."""
+    hechas = cumplidas(alertas, precios)
+
+    def distancia(a: Puntual) -> float:
+        precio = precios.get(a.coin_id)
+        if a in hechas:
+            return -1
+        # Sin precio no se sabe, al final; sorted es estable y quedan como estaban.
+        if not precio:
+            return math.inf
+        return abs(a.objetivo - precio) / precio
+
+    return sorted(alertas, key=distancia)
+
+
 def cerca(
     alertas: list[Puntual], precios: dict[str, float], margen: float = CERCA
 ) -> list[tuple[Puntual, float]]:

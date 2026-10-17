@@ -27,6 +27,7 @@ from crypto_tracker.puntuales import (
     numero,
     numeros,
     objetivo_relativo,
+    por_cercania,
     repetida,
     separar_caducidad,
     separar_nota,
@@ -367,6 +368,25 @@ def test_cerca():
     hay = cerca([lejos, justo, bajando, ya_llego, sin_precio], precios)
 
     assert [(a.id, round(f, 2)) for a, f in hay] == [(2, 1.43), (3, -2.0)]
+
+
+def test_por_cercania():
+    lejos = Puntual(1, "bitcoin", 80000, True)
+    justo = Puntual(2, "bitcoin", 71000, True)
+    bajando = Puntual(3, "solana", 147, False)
+    ya_llego = Puntual(4, "solana", 160, False)
+    sin_precio = Puntual(5, "dogecoin", 1, True)
+    precios = {"bitcoin": 70000.0, "solana": 150.0}
+
+    ordenadas = por_cercania([sin_precio, lejos, justo, bajando, ya_llego], precios)
+
+    assert [a.id for a in ordenadas] == [4, 2, 3, 1, 5]
+
+
+def test_por_cercania_sin_precios_las_deja_como_estaban():
+    alertas = [Puntual(3, "solana", 100, False), Puntual(1, "bitcoin", 70000, True)]
+
+    assert por_cercania(alertas, {}) == alertas
 
 
 def test_cerca_con_otro_margen():
