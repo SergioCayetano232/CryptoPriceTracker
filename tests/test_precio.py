@@ -56,6 +56,18 @@ def test_leer_con_minimo_y_maximo_de_24h():
     assert (p.minimo_24h, p.maximo_24h) == (61800.0, 64250.5)
 
 
+def test_leer_rango_24h_con_el_precio_fuera_lo_estira():
+    datos = [
+        _moneda("a", current_price=61000, low_24h=61800, high_24h=64250),
+        _moneda("b", current_price=65000, low_24h=61800, high_24h=64250),
+    ]
+
+    assert [(p.minimo_24h, p.maximo_24h) for p in leer(datos).values()] == [
+        (61000.0, 64250.0),
+        (61800.0, 65000.0),
+    ]
+
+
 def test_leer_rango_24h_cojo_o_al_reves_es_sin_rango():
     datos = [
         _moneda("a", low_24h=61800, high_24h=None),

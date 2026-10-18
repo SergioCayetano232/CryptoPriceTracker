@@ -37,7 +37,7 @@ def leer(datos) -> dict[str, Precio]:
             _numero(d.get("price_change_percentage_1h_in_currency")),
             _numero(d.get("total_volume")) or None,
             _entero(d.get("market_cap_rank")),
-            *_rango_24h(d.get("low_24h"), d.get("high_24h")),
+            *_rango_24h(d.get("low_24h"), d.get("high_24h"), precio),
             *_emitido(d.get("circulating_supply"), d.get("max_supply")),
         )
     return precios
@@ -50,12 +50,13 @@ def en_sats(coin_id: str, precio: float, bitcoin: float | None) -> float | None:
     return precio / bitcoin * 100_000_000
 
 
-def _rango_24h(minimo, maximo) -> tuple[float | None, float | None]:
+def _rango_24h(minimo, maximo, precio: float) -> tuple[float | None, float | None]:
     minimo, maximo = _numero(minimo), _numero(maximo)
     # Con uno solo, o al reves, no es un rango que se pueda enseñar.
     if not minimo or not maximo or minimo > maximo:
         return None, None
-    return minimo, maximo
+    # CoinGecko los pone al dia con retraso y el precio de ahora se sale a veces.
+    return min(minimo, precio), max(maximo, precio)
 
 
 def _emitido(circulante, tope) -> tuple[float | None, float | None]:
