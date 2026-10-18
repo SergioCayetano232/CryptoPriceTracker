@@ -2588,6 +2588,15 @@ def test_precio_con_el_maximo_historico(config, enviados, monkeypatch):
     assert "le falta +55.56%</i>" in enviados[0]
 
 
+def test_precio_con_30_dias(config, enviados, monkeypatch):
+    btc = Precio("bitcoin", 63000.0, 2.5, -4.25, en_30d=8.1)
+    monkeypatch.setattr(coingecko, "precios_semana", lambda ids, cur: {"bitcoin": btc})
+
+    main.atender(config, _mensaje("/precio btc"))
+
+    assert "🔻 -4.25% en 7 días\n🔺 +8.10% en 30 días" in enviados[0]
+
+
 def test_precio_en_sats(config, enviados, monkeypatch):
     pedidas = _precio(monkeypatch, {"solana": 150.0, "bitcoin": 75000.0})
 

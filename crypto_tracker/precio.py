@@ -20,10 +20,11 @@ class Precio:
     emitido: float | None = None  # en % de las que habra como mucho
     tope: float | None = None  # las que habra como mucho; muchas no tienen
     maximo: maximos.Maximo | None = None  # el historico
+    en_30d: float | None = None
 
 
 def leer(datos) -> dict[str, Precio]:
-    """Saca lo de /coins/markets con price_change_percentage=1h,24h,7d."""
+    """Saca lo de /coins/markets con price_change_percentage=1h,24h,7d,30d."""
     precios = {}
     historicos = maximos.leer(datos)
     for d in datos if isinstance(datos, list) else []:
@@ -44,6 +45,7 @@ def leer(datos) -> dict[str, Precio]:
             *_rango_24h(d.get("low_24h"), d.get("high_24h"), precio),
             *_emitido(d.get("circulating_supply"), d.get("max_supply")),
             historicos.get(d["id"]),
+            _numero(d.get("price_change_percentage_30d_in_currency")),
         )
     return precios
 

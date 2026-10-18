@@ -111,6 +111,12 @@ def test_leer_maximo_raro_es_sin_maximo():
     assert leer([_moneda(ath=98000, ath_date=None)])["bitcoin"].maximo is None
 
 
+def test_leer_con_30_dias():
+    p = leer([_moneda(price_change_percentage_30d_in_currency=-12.3)])["bitcoin"]
+
+    assert p.en_30d == -12.3
+
+
 def test_leer_sin_variaciones():
     datos = [
         _moneda(
@@ -196,6 +202,16 @@ def test_formatear_lo_emitido():
 
 def test_formatear_sin_emitido_no_sale():
     assert "Emitido" not in formatear_precio("ethereum", 2000.0, 2.5, "eur")
+
+
+def test_formatear_con_30_dias():
+    texto = formatear_precio("bitcoin", 63000.0, 2.5, "eur", -4.25, en_30d=-12.3)
+
+    assert "🔻 -4.25% en 7 días\n🔻 -12.30% en 30 días" in texto
+
+
+def test_formatear_sin_30_dias_no_sale():
+    assert "30 días" not in formatear_precio("bitcoin", 63000.0, 2.5, "eur", -4.25)
 
 
 AHORA = datetime(2025, 10, 18, tzinfo=timezone.utc)

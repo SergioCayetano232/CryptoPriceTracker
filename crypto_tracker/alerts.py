@@ -1173,8 +1173,9 @@ def formatear_precio(
     emitido: tuple[float, float] | None = None,
     maximo: Maximo | None = None,
     ahora: datetime | None = None,
+    en_30d: float | None = None,
 ) -> str:
-    """Respuesta de /precio: lo que vale ahora y cómo va en 1 h, 24 h y 7 días.
+    """Respuesta de /precio: lo que vale ahora y cómo va en 1 h, 24 h, 7 y 30 días.
 
     tuyo es lo que tienes de ella, si esta en la cartera. dia, los precios
     guardados de las últimas 24 h, para las barritas."""
@@ -1193,6 +1194,8 @@ def formatear_precio(
         texto += f"\n{_flecha(variacion)} {variacion:+.2f}% en 24 h"
     if en_7d is not None:
         texto += f"\n{_flecha(en_7d)} {en_7d:+.2f}% en 7 días"
+    if en_30d is not None:
+        texto += f"\n{_flecha(en_30d)} {en_30d:+.2f}% en 30 días"
     if rango_24h is not None:
         bajo, alto = rango_24h
         texto += (
