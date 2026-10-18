@@ -516,6 +516,7 @@ def avisar_encendido(config: Config) -> None:
             config.check_interval,
             ultimo,
             datetime.now(timezone.utc),
+            len(_puntuales(config)),
         ),
     )
 

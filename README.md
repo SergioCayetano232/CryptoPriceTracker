@@ -146,8 +146,9 @@ python main.py --loop
 ```
 Se queda mirando los precios cada cinco minutos y medio. Para pararlo, `Ctrl+C`.
 
-Al arrancar te manda un 🟢 *Encendido* con lo que vigila y, si llevaba un rato
-parado, desde cuándo. Así sabes si el servidor se ha reiniciado.
+Al arrancar te manda un 🟢 *Encendido* con lo que vigila, cuántas alertas tienes
+puestas y, si llevaba un rato parado, desde cuándo. Así sabes si el servidor se
+ha reiniciado.
 
 Si pasa media hora sin poder consultar los precios, te avisa por Telegram, y
 otra vez cuando vuelve a funcionar. Si se para por errores, también te lo dice.

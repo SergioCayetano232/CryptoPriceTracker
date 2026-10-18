@@ -2482,6 +2482,17 @@ def test_avisa_al_encenderse(config, enviados, monkeypatch):
     assert "apagado" not in enviados[0]  # nunca habia guardado nada
 
 
+def test_al_encenderse_dice_las_alertas_puestas(config, enviados, monkeypatch):
+    database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
+    database.crear_puntual(config.database_path, "solana", 100, False, "eur")
+    database.crear_puntual(config.database_path, "bitcoin", 60000, False, "usd")
+
+    _arrancar_bucle(config, monkeypatch)
+
+    # La de dolares no cuenta: con EUR en el .env no saltaria.
+    assert "\nTienes 2 alertas puestas esperando." in enviados[0]
+
+
 def test_al_encenderse_dice_cuanto_estuvo_apagado(config, enviados, monkeypatch):
     _precio_hace(config, 60000.0, 3 * 60)
 

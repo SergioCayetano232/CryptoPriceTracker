@@ -96,7 +96,11 @@ def mensaje_bot(
 
 
 def mensaje_encendido(
-    vigiladas: int, intervalo: int, ultimo: datetime | None, ahora: datetime
+    vigiladas: int,
+    intervalo: int,
+    ultimo: datetime | None,
+    ahora: datetime,
+    alertas: int = 0,
 ) -> str:
     """Al arrancar --loop. ultimo es el ultimo precio guardado, si hay alguno."""
     texto = [
@@ -104,6 +108,11 @@ def mensaje_encendido(
         f"Encendido: vigilo {vigiladas} {'cripto' if vigiladas == 1 else 'criptos'} "
         f"cada {_cada(intervalo)}.",
     ]
+    if alertas:
+        texto.append(
+            f"Tienes {alertas} {'alerta puesta' if alertas == 1 else 'alertas puestas'}"
+            " esperando."
+        )
     # Un par de ciclos sin precio es un reinicio normal; mas, es que estuvo caido.
     if ultimo is not None and ahora - ultimo > timedelta(seconds=intervalo * 2):
         texto.append(

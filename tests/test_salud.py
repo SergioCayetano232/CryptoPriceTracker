@@ -221,6 +221,19 @@ def test_encendido_una_sola_cripto_y_segundos_sueltos():
     assert "vigilo 1 cripto cada 5 min 30 s." in texto
 
 
+def test_encendido_con_alertas_puestas():
+    assert "\nTienes 2 alertas puestas esperando." in mensaje_encendido(
+        3, 300, None, INICIO, alertas=2
+    )
+    assert "\nTienes 1 alerta puesta esperando." in mensaje_encendido(
+        3, 300, None, INICIO, alertas=1
+    )
+
+
+def test_encendido_sin_alertas_no_lo_dice():
+    assert "alerta" not in mensaje_encendido(3, 300, None, INICIO)
+
+
 def test_encendido_tras_un_reinicio_rapido_no_dice_apagado():
     # Un ciclo sin precio es lo que tarda en reiniciar, no una caida.
     texto = mensaje_encendido(3, 300, _min(-6), INICIO)
