@@ -2608,6 +2608,15 @@ def test_precio_con_30_dias(config, enviados, monkeypatch):
     assert "🔻 -4.25% en 7 días\n🔺 +8.10% en 30 días" in enviados[0]
 
 
+def test_precio_volumen_con_lo_que_es_de_lo_que_vale(config, enviados, monkeypatch):
+    btc = Precio("bitcoin", 63000.0, 2.5, -4.25, volumen=32e9, capitalizacion=1.25e12)
+    monkeypatch.setattr(coingecko, "precios_semana", lambda ids, cur: {"bitcoin": btc})
+
+    main.atender(config, _mensaje("/precio btc"))
+
+    assert "<i>Volumen en 24 h: €32.000 millones (3% de lo que vale)</i>" in enviados[0]
+
+
 def test_precio_en_sats(config, enviados, monkeypatch):
     pedidas = _precio(monkeypatch, {"solana": 150.0, "bitcoin": 75000.0})
 

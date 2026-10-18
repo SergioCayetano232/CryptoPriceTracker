@@ -43,6 +43,12 @@ def test_leer_con_el_puesto():
     assert leer([_moneda(market_cap_rank=5)])["bitcoin"].puesto == 5
 
 
+def test_leer_con_la_capitalizacion():
+    datos = [_moneda("a", market_cap=1.2e12), _moneda("b", market_cap=0)]
+
+    assert [p.capitalizacion for p in leer(datos).values()] == [1.2e12, None]
+
+
 def test_leer_puesto_raro_es_sin_puesto():
     datos = [
         _moneda("a", market_cap_rank=None),
@@ -172,6 +178,28 @@ def test_formatear_con_puesto_y_volumen():
     )
 
     assert "\n<i>Puesto #6 · volumen en 24 h: €4.200 millones</i>" in texto
+
+
+def test_formatear_volumen_con_lo_que_es_de_lo_que_vale():
+    texto = formatear_precio(
+        "solana", 150.0, 2.5, "eur", volumen=4_200_000_000, capitalizacion=84e9
+    )
+
+    assert "<i>Volumen en 24 h: €4.200 millones (5% de lo que vale)</i>" in texto
+
+
+def test_formatear_volumen_minimo_de_lo_que_vale():
+    texto = formatear_precio(
+        "bitcoin", 70000.0, 2.5, "eur", volumen=5e9, capitalizacion=1.4e12
+    )
+
+    assert "(&lt;1% de lo que vale)" in texto
+
+
+def test_formatear_capitalizacion_sin_volumen_no_sale():
+    texto = formatear_precio("solana", 150.0, 2.5, "eur", puesto=6, capitalizacion=84e9)
+
+    assert "de lo que vale" not in texto
 
 
 def test_formatear_con_puesto_sin_volumen():

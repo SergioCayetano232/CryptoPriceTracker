@@ -21,6 +21,7 @@ class Precio:
     tope: float | None = None  # las que habra como mucho; muchas no tienen
     maximo: maximos.Maximo | None = None  # el historico
     en_30d: float | None = None
+    capitalizacion: float | None = None
 
 
 def leer(datos) -> dict[str, Precio]:
@@ -46,6 +47,7 @@ def leer(datos) -> dict[str, Precio]:
             *_emitido(d.get("circulating_supply"), d.get("max_supply")),
             historicos.get(d["id"]),
             _numero(d.get("price_change_percentage_30d_in_currency")),
+            _numero(d.get("market_cap")) or None,
         )
     return precios
 

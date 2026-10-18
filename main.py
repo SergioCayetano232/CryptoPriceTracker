@@ -1318,6 +1318,7 @@ def _precio(config: Config, argumento: str) -> str | comandos.ConBotones:
                 emitido,
                 p.maximo,
                 en_30d=p.en_30d,
+                capitalizacion=p.capitalizacion,
             )
         )
         teclado = botones.para_precio(coin_id, grafica=len(dia) >= 2)

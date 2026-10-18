@@ -1174,6 +1174,7 @@ def formatear_precio(
     maximo: Maximo | None = None,
     ahora: datetime | None = None,
     en_30d: float | None = None,
+    capitalizacion: float | None = None,
 ) -> str:
     """Respuesta de /precio: lo que vale ahora y cómo va en 1 h, 24 h, 7 y 30 días.
 
@@ -1206,7 +1207,13 @@ def formatear_precio(
     if puesto is not None:
         datos.append(f"Puesto #{puesto}")
     if volumen is not None:
-        datos.append(f"volumen en 24 h: {simbolo}{grande(volumen)}")
+        texto_volumen = f"volumen en 24 h: {simbolo}{grande(volumen)}"
+        # Para ver si hoy se mueve mucho para lo grande que es.
+        if capitalizacion:
+            texto_volumen += (
+                f" ({_peso(volumen / capitalizacion * 100)} de lo que vale)"
+            )
+        datos.append(texto_volumen)
     if datos:
         linea = " · ".join(datos)
         texto += f"\n<i>{linea[0].upper()}{linea[1:]}</i>"
