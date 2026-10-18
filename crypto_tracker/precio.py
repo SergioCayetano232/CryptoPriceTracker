@@ -3,6 +3,8 @@
 import math
 from dataclasses import dataclass
 
+from . import maximo as maximos
+
 
 @dataclass(frozen=True)
 class Precio:
@@ -17,11 +19,13 @@ class Precio:
     maximo_24h: float | None = None
     emitido: float | None = None  # en % de las que habra como mucho
     tope: float | None = None  # las que habra como mucho; muchas no tienen
+    maximo: maximos.Maximo | None = None  # el historico
 
 
 def leer(datos) -> dict[str, Precio]:
     """Saca lo de /coins/markets con price_change_percentage=1h,24h,7d."""
     precios = {}
+    historicos = maximos.leer(datos)
     for d in datos if isinstance(datos, list) else []:
         if not isinstance(d, dict) or not d.get("id"):
             continue
@@ -39,6 +43,7 @@ def leer(datos) -> dict[str, Precio]:
             _entero(d.get("market_cap_rank")),
             *_rango_24h(d.get("low_24h"), d.get("high_24h"), precio),
             *_emitido(d.get("circulating_supply"), d.get("max_supply")),
+            historicos.get(d["id"]),
         )
     return precios
 

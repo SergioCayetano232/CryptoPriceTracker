@@ -1,9 +1,12 @@
 """Tests de leer el precio con las variaciones de 1 h, 24 h y 7 dias."""
 
+from datetime import datetime, timezone
+
 import pytest
 
 from crypto_tracker.alerts import formatear_precio
 from crypto_tracker.cartera import Valor
+from crypto_tracker.maximo import Maximo
 from crypto_tracker.precio import Precio, en_sats, leer
 
 
@@ -97,6 +100,17 @@ def test_leer_sin_tope_o_pasado_de_el_es_sin_emitido():
     assert [(p.emitido, p.tope) for p in leer(datos).values()] == [(None, None)] * 3
 
 
+def test_leer_con_el_maximo_historico():
+    p = leer([_moneda(ath=98000, ath_date="2024-12-17T15:02:41.429Z")])["bitcoin"]
+
+    assert p.maximo.maximo == 98000
+    assert p.maximo.fecha.date().isoformat() == "2024-12-17"
+
+
+def test_leer_maximo_raro_es_sin_maximo():
+    assert leer([_moneda(ath=98000, ath_date=None)])["bitcoin"].maximo is None
+
+
 def test_leer_sin_variaciones():
     datos = [
         _moneda(
@@ -182,6 +196,27 @@ def test_formatear_lo_emitido():
 
 def test_formatear_sin_emitido_no_sale():
     assert "Emitido" not in formatear_precio("ethereum", 2000.0, 2.5, "eur")
+
+
+AHORA = datetime(2025, 10, 18, tzinfo=timezone.utc)
+
+
+def test_formatear_con_el_maximo_historico():
+    m = Maximo("bitcoin", 63000.0, 98000.0, datetime(2024, 12, 17, tzinfo=timezone.utc))
+
+    texto = formatear_precio("bitcoin", 63000.0, 2.5, "eur", maximo=m, ahora=AHORA)
+
+    assert texto.endswith(
+        "\n<i>Máximo histórico €98.000,00 hace 10 meses · le falta +55.56%</i>"
+    )
+
+
+def test_formatear_en_maximos():
+    m = Maximo("bitcoin", 99000.0, 98000.0, AHORA)
+
+    texto = formatear_precio("bitcoin", 99000.0, 2.5, "eur", maximo=m, ahora=AHORA)
+
+    assert texto.endswith("\n🎉 <i>Está en su máximo histórico</i>")
 
 
 def test_en_sats():

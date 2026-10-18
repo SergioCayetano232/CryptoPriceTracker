@@ -2575,6 +2575,19 @@ def test_precio_con_lo_emitido(config, enviados, monkeypatch):
     assert "en 7 días\n<i>Emitido el 95.7% de 21 millones</i>" in enviados[0]
 
 
+def test_precio_con_el_maximo_historico(config, enviados, monkeypatch):
+    from crypto_tracker.maximo import Maximo
+
+    m = Maximo("bitcoin", 63000.0, 98000.0, datetime(2024, 12, 17, tzinfo=timezone.utc))
+    btc = Precio("bitcoin", 63000.0, 2.5, -4.25, maximo=m)
+    monkeypatch.setattr(coingecko, "precios_semana", lambda ids, cur: {"bitcoin": btc})
+
+    main.atender(config, _mensaje("/precio btc"))
+
+    assert "\n<i>Máximo histórico €98.000,00 hace " in enviados[0]
+    assert "le falta +55.56%</i>" in enviados[0]
+
+
 def test_precio_en_sats(config, enviados, monkeypatch):
     pedidas = _precio(monkeypatch, {"solana": 150.0, "bitcoin": 75000.0})
 

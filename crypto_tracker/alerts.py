@@ -1171,6 +1171,8 @@ def formatear_precio(
     sats: float | None = None,
     rango_24h: tuple[float, float] | None = None,
     emitido: tuple[float, float] | None = None,
+    maximo: Maximo | None = None,
+    ahora: datetime | None = None,
 ) -> str:
     """Respuesta de /precio: lo que vale ahora y cómo va en 1 h, 24 h y 7 días.
 
@@ -1192,9 +1194,9 @@ def formatear_precio(
     if en_7d is not None:
         texto += f"\n{_flecha(en_7d)} {en_7d:+.2f}% en 7 días"
     if rango_24h is not None:
-        minimo, maximo = rango_24h
+        bajo, alto = rango_24h
         texto += (
-            f"\n<i>Mínimo {simbolo}{_num(minimo)} · máximo {simbolo}{_num(maximo)}"
+            f"\n<i>Mínimo {simbolo}{_num(bajo)} · máximo {simbolo}{_num(alto)}"
             " en 24 h</i>"
         )
     datos = []
@@ -1208,6 +1210,15 @@ def formatear_precio(
     if emitido is not None:
         porcentaje, tope = emitido
         texto += f"\n<i>Emitido el {porcentaje:.1f}% de {grande(tope)}</i>"
+    if maximo is not None:
+        if not maximo.falta():
+            texto += "\n🎉 <i>Está en su máximo histórico</i>"
+        else:
+            cuando = hace(maximo.fecha, ahora or datetime.now(maximo.fecha.tzinfo))
+            texto += (
+                f"\n<i>Máximo histórico {simbolo}{_num(maximo.maximo)} {cuando}"
+                f" · le falta +{maximo.falta():.2f}%</i>"
+            )
     # Con cuatro puntos las barritas no dicen nada.
     if dia and len(dia) >= MINIMO_BARRAS:
         texto += f"\n<code>{sparkline(muestrear(dia, BARRAS_MOVIL))}</code> <i>24 h</i>"

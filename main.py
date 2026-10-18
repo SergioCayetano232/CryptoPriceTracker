@@ -1315,6 +1315,7 @@ def _precio(config: Config, argumento: str) -> str | comandos.ConBotones:
                 en_sats(coin_id, precio, bitcoin.precio if bitcoin else None),
                 rango_24h,
                 emitido,
+                p.maximo,
             )
         )
         teclado = botones.para_precio(coin_id, grafica=len(dia) >= 2)
