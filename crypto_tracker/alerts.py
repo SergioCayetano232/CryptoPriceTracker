@@ -425,7 +425,11 @@ def formatear_historico(
 
 
 def formatear_cartera(
-    valores: list[Valor], total: Valor, faltan: list[str], currency: str
+    valores: list[Valor],
+    total: Valor,
+    faltan: list[str],
+    currency: str,
+    sats: float | None = None,
 ) -> str:
     """Bloque de la cartera para el resumen: cada cripto y el total."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
@@ -463,6 +467,8 @@ def formatear_cartera(
             f"({_ganancia(total.ganancia, simbolo)})"
         )
     texto.append(linea)
+    if sats is not None:
+        texto.append(f"<i>En sats: {texto_cantidad(round(sats))}</i>")
 
     if faltan:
         # Mejor decir que el total esta cojo que dar uno que parezca completo.

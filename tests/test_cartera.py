@@ -119,6 +119,19 @@ def test_mensaje_de_la_cartera():
     assert "(+$20,00)" in texto
 
 
+def test_mensaje_con_el_total_en_sats():
+    valores = [Valor("bitcoin", 1120.0, 1000.0), Valor("solana", 1050.0, 1000.0)]
+    texto = formatear_cartera(valores, total(valores), [], "eur", sats=3_100_000.4)
+
+    assert "(+€170,00)\n<i>En sats: 3.100.000</i>" in texto
+
+
+def test_mensaje_sin_sats_no_salen():
+    valores = [Valor("bitcoin", 1120.0, 1000.0)]
+
+    assert "sats" not in formatear_cartera(valores, total(valores), [], "eur")
+
+
 def test_mensaje_con_perdidas():
     valores = [Valor("bitcoin", 800.0, 1000.0)]
     texto = formatear_cartera(valores, total(valores), [], "usd")

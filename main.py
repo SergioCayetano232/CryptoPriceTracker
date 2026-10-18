@@ -2589,17 +2589,26 @@ def _reparto(config: Config) -> str | comandos.Foto:
 
 def montar_cartera(config: Config) -> str | None:
     """Solo la cartera, sin el resto del resumen. None si no hay precios."""
-    precios = _consultar(config, [p.coin_id for p in config.cartera])
+    coin_ids = [p.coin_id for p in config.cartera]
+    # Bitcoin va en la misma consulta para dar el total en sats.
+    pedir = coin_ids if "bitcoin" in coin_ids else [*coin_ids, "bitcoin"]
+    precios = _consultar(config, pedir)
     if precios is None:
         return None
-    return alerts.con_fuente(_bloque_cartera(config, precios))
+    return alerts.con_fuente(_bloque_cartera(config, precios, con_sats=True))
 
 
-def _bloque_cartera(config: Config, precios: dict[str, float]) -> str:
+def _bloque_cartera(
+    config: Config, precios: dict[str, float], con_sats: bool = False
+) -> str:
     valores, faltan = cartera.valorar(list(config.cartera), precios)
-    return alerts.formatear_cartera(
-        valores, cartera.total(valores), faltan, config.vs_currency
-    )
+    suma = cartera.total(valores)
+    sats = None
+    bitcoin = precios.get("bitcoin")
+    # Con solo bitcoin seria repetir lo que tienes, que ya se ve arriba.
+    if con_sats and bitcoin and any(v.coin_id != "bitcoin" for v in valores):
+        sats = suma.valor / bitcoin * alerts.POR_BTC
+    return alerts.formatear_cartera(valores, suma, faltan, config.vs_currency, sats)
 
 
 def _consultar(config: Config, coin_ids: list[str]) -> dict[str, float] | None:

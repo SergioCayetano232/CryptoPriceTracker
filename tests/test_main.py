@@ -1023,6 +1023,44 @@ def test_cartera_sola(con_cartera, enviados, monkeypatch):
     assert "coingecko.com" in enviados[0]
 
 
+def test_cartera_con_el_total_en_sats(con_cartera, enviados, monkeypatch):
+    monkeypatch.setattr(
+        coingecko, "get_prices", lambda ids, cur: {"bitcoin": 70000.0, "solana": 150.0}
+    )
+
+    main.atender(con_cartera, _mensaje("/cartera"))
+
+    assert "<i>En sats: 3.100.000</i>" in enviados[0]
+
+
+def test_cartera_sin_bitcoin_lo_pide_para_los_sats(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    from crypto_tracker.config import parse_cartera
+
+    config = replace(config, cartera=parse_cartera("solana:7:1000"))
+    pedidas = _precio(monkeypatch, {"solana": 150.0, "bitcoin": 70000.0})
+
+    main.atender(config, _mensaje("/cartera"))
+
+    assert pedidas == [["solana", "bitcoin"]]  # en la misma consulta
+    assert "<i>En sats: 1.500.000</i>" in enviados[0]
+    assert "Bitcoin" not in enviados[0]  # no se cuela en la cartera
+
+
+def test_cartera_solo_de_bitcoin_sin_sats(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    from crypto_tracker.config import parse_cartera
+
+    config = replace(config, cartera=parse_cartera("bitcoin:0.016:1000"))
+    _precio(monkeypatch, {"bitcoin": 70000.0})
+
+    main.atender(config, _mensaje("/cartera"))
+
+    assert "sats" not in enviados[0]
+
+
 def test_cartera_en_otra_moneda(con_cartera, monkeypatch):
     mandados = _con_botones(monkeypatch)
     pedidas = []
