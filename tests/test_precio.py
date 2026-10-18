@@ -50,6 +50,24 @@ def test_leer_puesto_raro_es_sin_puesto():
     assert [p.puesto for p in leer(datos).values()] == [None, None, None]
 
 
+def test_leer_con_minimo_y_maximo_de_24h():
+    p = leer([_moneda(low_24h=61800, high_24h=64250.5)])["bitcoin"]
+
+    assert (p.minimo_24h, p.maximo_24h) == (61800.0, 64250.5)
+
+
+def test_leer_rango_24h_cojo_o_al_reves_es_sin_rango():
+    datos = [
+        _moneda("a", low_24h=61800, high_24h=None),
+        _moneda("b", low_24h=0, high_24h=64000),
+        _moneda("c", low_24h=65000, high_24h=64000),
+    ]
+
+    assert [(p.minimo_24h, p.maximo_24h) for p in leer(datos).values()] == [
+        (None, None)
+    ] * 3
+
+
 def test_leer_sin_variaciones():
     datos = [
         _moneda(
@@ -111,6 +129,18 @@ def test_formatear_con_puesto_sin_volumen():
     texto = formatear_precio("solana", 150.0, 2.5, "eur", puesto=6)
 
     assert "\n<i>Puesto #6</i>" in texto
+
+
+def test_formatear_con_minimo_y_maximo_de_24h():
+    texto = formatear_precio(
+        "bitcoin", 63000.0, 2.5, "eur", -4.25, rango_24h=(61800.0, 64250.5)
+    )
+
+    assert "en 7 días\n<i>Mínimo €61.800,00 · máximo €64.250,50 en 24 h</i>" in texto
+
+
+def test_formatear_sin_rango_24h_no_sale():
+    assert "Mínimo" not in formatear_precio("bitcoin", 63000.0, 2.5, "eur")
 
 
 def test_en_sats():

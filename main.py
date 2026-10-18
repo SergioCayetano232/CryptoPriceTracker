@@ -1294,6 +1294,9 @@ def _precio(config: Config, argumento: str) -> str | comandos.ConBotones:
         )
         dia = [p for _, p in serie]
         bitcoin = precios.get("bitcoin")
+        p = precios[coin_id]
+        # leer() ya deja los dos o ninguno.
+        rango_24h = (p.minimo_24h, p.maximo_24h) if p.maximo_24h else None
         texto = alerts.con_fuente(
             alerts.formatear_precio(
                 coin_id,
@@ -1309,6 +1312,7 @@ def _precio(config: Config, argumento: str) -> str | comandos.ConBotones:
                 precios[coin_id].volumen,
                 precios[coin_id].puesto,
                 en_sats(coin_id, precio, bitcoin.precio if bitcoin else None),
+                rango_24h,
             )
         )
         teclado = botones.para_precio(coin_id, grafica=len(dia) >= 2)

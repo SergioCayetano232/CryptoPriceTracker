@@ -2514,6 +2514,20 @@ def test_precio_con_el_puesto_y_el_volumen(config, enviados, monkeypatch):
     )
 
 
+def test_precio_con_minimo_y_maximo_de_24h(config, enviados, monkeypatch):
+    btc = Precio(
+        "bitcoin", 63000.0, 2.5, -4.25, puesto=1, minimo_24h=61800, maximo_24h=64250
+    )
+    monkeypatch.setattr(coingecko, "precios_semana", lambda ids, cur: {"bitcoin": btc})
+
+    main.atender(config, _mensaje("/precio btc"))
+
+    assert (
+        "en 7 días\n<i>Mínimo €61.800,00 · máximo €64.250,00 en 24 h</i>\n"
+        "<i>Puesto #1</i>" in enviados[0]
+    )
+
+
 def test_precio_en_sats(config, enviados, monkeypatch):
     pedidas = _precio(monkeypatch, {"solana": 150.0, "bitcoin": 75000.0})
 

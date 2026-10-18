@@ -13,6 +13,8 @@ class Precio:
     en_1h: float | None = None
     volumen: float | None = None  # lo negociado en 24 h, en la misma moneda
     puesto: int | None = None  # en capitalizacion; las muy nuevas no tienen
+    minimo_24h: float | None = None
+    maximo_24h: float | None = None
 
 
 def leer(datos) -> dict[str, Precio]:
@@ -33,6 +35,7 @@ def leer(datos) -> dict[str, Precio]:
             _numero(d.get("price_change_percentage_1h_in_currency")),
             _numero(d.get("total_volume")) or None,
             _entero(d.get("market_cap_rank")),
+            *_rango_24h(d.get("low_24h"), d.get("high_24h")),
         )
     return precios
 
@@ -42,6 +45,14 @@ def en_sats(coin_id: str, precio: float, bitcoin: float | None) -> float | None:
     if coin_id == "bitcoin" or not bitcoin:
         return None
     return precio / bitcoin * 100_000_000
+
+
+def _rango_24h(minimo, maximo) -> tuple[float | None, float | None]:
+    minimo, maximo = _numero(minimo), _numero(maximo)
+    # Con uno solo, o al reves, no es un rango que se pueda enseñar.
+    if not minimo or not maximo or minimo > maximo:
+        return None, None
+    return minimo, maximo
 
 
 def _numero(valor) -> float | None:

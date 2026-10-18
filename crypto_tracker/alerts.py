@@ -1163,6 +1163,7 @@ def formatear_precio(
     volumen: float | None = None,
     puesto: int | None = None,
     sats: float | None = None,
+    rango_24h: tuple[float, float] | None = None,
 ) -> str:
     """Respuesta de /precio: lo que vale ahora y cómo va en 1 h, 24 h y 7 días.
 
@@ -1183,6 +1184,12 @@ def formatear_precio(
         texto += f"\n{_flecha(variacion)} {variacion:+.2f}% en 24 h"
     if en_7d is not None:
         texto += f"\n{_flecha(en_7d)} {en_7d:+.2f}% en 7 días"
+    if rango_24h is not None:
+        minimo, maximo = rango_24h
+        texto += (
+            f"\n<i>Mínimo {simbolo}{_num(minimo)} · máximo {simbolo}{_num(maximo)}"
+            " en 24 h</i>"
+        )
     datos = []
     if puesto is not None:
         datos.append(f"Puesto #{puesto}")
