@@ -15,6 +15,8 @@ class Precio:
     puesto: int | None = None  # en capitalizacion; las muy nuevas no tienen
     minimo_24h: float | None = None
     maximo_24h: float | None = None
+    emitido: float | None = None  # en % de las que habra como mucho
+    tope: float | None = None  # las que habra como mucho; muchas no tienen
 
 
 def leer(datos) -> dict[str, Precio]:
@@ -36,6 +38,7 @@ def leer(datos) -> dict[str, Precio]:
             _numero(d.get("total_volume")) or None,
             _entero(d.get("market_cap_rank")),
             *_rango_24h(d.get("low_24h"), d.get("high_24h")),
+            *_emitido(d.get("circulating_supply"), d.get("max_supply")),
         )
     return precios
 
@@ -53,6 +56,14 @@ def _rango_24h(minimo, maximo) -> tuple[float | None, float | None]:
     if not minimo or not maximo or minimo > maximo:
         return None, None
     return minimo, maximo
+
+
+def _emitido(circulante, tope) -> tuple[float | None, float | None]:
+    circulante, tope = _numero(circulante), _numero(tope)
+    # Mas en circulacion que el tope es un dato mal puesto en CoinGecko.
+    if not circulante or not tope or circulante > tope:
+        return None, None
+    return circulante / tope * 100, tope
 
 
 def _numero(valor) -> float | None:

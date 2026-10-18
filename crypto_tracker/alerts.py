@@ -1170,6 +1170,7 @@ def formatear_precio(
     puesto: int | None = None,
     sats: float | None = None,
     rango_24h: tuple[float, float] | None = None,
+    emitido: tuple[float, float] | None = None,
 ) -> str:
     """Respuesta de /precio: lo que vale ahora y cómo va en 1 h, 24 h y 7 días.
 
@@ -1204,6 +1205,9 @@ def formatear_precio(
     if datos:
         linea = " · ".join(datos)
         texto += f"\n<i>{linea[0].upper()}{linea[1:]}</i>"
+    if emitido is not None:
+        porcentaje, tope = emitido
+        texto += f"\n<i>Emitido el {porcentaje:.1f}% de {grande(tope)}</i>"
     # Con cuatro puntos las barritas no dicen nada.
     if dia and len(dia) >= MINIMO_BARRAS:
         texto += f"\n<code>{sparkline(muestrear(dia, BARRAS_MOVIL))}</code> <i>24 h</i>"

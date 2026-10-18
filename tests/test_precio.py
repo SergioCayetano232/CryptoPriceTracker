@@ -68,6 +68,23 @@ def test_leer_rango_24h_cojo_o_al_reves_es_sin_rango():
     ] * 3
 
 
+def test_leer_lo_emitido():
+    p = leer([_moneda(circulating_supply=19_950_000, max_supply=21_000_000)])
+
+    assert p["bitcoin"].emitido == pytest.approx(95.0)
+    assert p["bitcoin"].tope == 21_000_000
+
+
+def test_leer_sin_tope_o_pasado_de_el_es_sin_emitido():
+    datos = [
+        _moneda("a", circulating_supply=120_000_000, max_supply=None),
+        _moneda("b", circulating_supply=None, max_supply=21_000_000),
+        _moneda("c", circulating_supply=22_000_000, max_supply=21_000_000),
+    ]
+
+    assert [(p.emitido, p.tope) for p in leer(datos).values()] == [(None, None)] * 3
+
+
 def test_leer_sin_variaciones():
     datos = [
         _moneda(
@@ -141,6 +158,18 @@ def test_formatear_con_minimo_y_maximo_de_24h():
 
 def test_formatear_sin_rango_24h_no_sale():
     assert "Mínimo" not in formatear_precio("bitcoin", 63000.0, 2.5, "eur")
+
+
+def test_formatear_lo_emitido():
+    texto = formatear_precio(
+        "bitcoin", 63000.0, 2.5, "eur", puesto=1, emitido=(95.04, 21_000_000)
+    )
+
+    assert "<i>Puesto #1</i>\n<i>Emitido el 95.0% de 21 millones</i>" in texto
+
+
+def test_formatear_sin_emitido_no_sale():
+    assert "Emitido" not in formatear_precio("ethereum", 2000.0, 2.5, "eur")
 
 
 def test_en_sats():
