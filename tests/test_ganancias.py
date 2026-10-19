@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 
 import pytest
 
+from crypto_tracker.alerts import formatear_ganancias
 from crypto_tracker.config import Posicion
 from crypto_tracker.ganancias import calcular, de_venta
 from crypto_tracker.movimientos import Movimiento
@@ -58,3 +59,37 @@ def test_calcular_sin_ventas():
     assert g.por_cripto == []
     assert g.total == 0
     assert g.sin_datos == 0
+
+
+def test_porcentaje_sobre_lo_que_costo():
+    ventas = [
+        _venta("solana", 5, 600, Posicion("solana", 10, 2000)),  # costó 1.000
+        _venta("bitcoin", 0.01, 700, Posicion("bitcoin", 0.02, 1000)),  # costó 500
+        _venta("bitcoin", 0.01, 650, Posicion("bitcoin", 0.01, 500)),  # costó 500
+    ]
+
+    g = calcular(ventas)
+
+    assert g.porcentaje("bitcoin") == pytest.approx(35)
+    assert g.porcentaje("solana") == pytest.approx(-40)
+    assert g.porcentaje_total == pytest.approx(-2.5)
+
+
+def test_porcentaje_si_no_costo_nada():
+    g = calcular([_venta("bitcoin", 0.01, 700, Posicion("bitcoin", 0.02, 0))])
+
+    assert g.porcentaje("bitcoin") is None
+    assert g.porcentaje_total is None
+
+
+def test_formatear_con_el_porcentaje():
+    ventas = [
+        _venta("solana", 5, 600, Posicion("solana", 10, 2000)),
+        _venta("bitcoin", 0.01, 700, Posicion("bitcoin", 0.02, 1000)),
+    ]
+
+    texto = formatear_ganancias(calcular(ventas), "eur")
+
+    assert "🔺 <b>Bitcoin</b>  +€200,00  <i>+40.00%</i>" in texto
+    assert "🔻 <b>Solana</b>  -€400,00  <i>-40.00%</i>" in texto
+    assert "Total <b>-€200,00</b>  <i>-13.33%</i>" in texto

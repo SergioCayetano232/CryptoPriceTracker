@@ -601,11 +601,16 @@ def formatear_ganancias(g: Ganancias, currency: str) -> str:
     lineas = ["💰 <b>Lo que has ganado vendiendo</b>", ""]
     for coin_id, ganancia in g.por_cripto:
         nombre = escape(coin_id.replace("-", " ").title())
-        lineas.append(
-            f"{_flecha(ganancia)} <b>{nombre}</b>  {_ganancia(ganancia, simbolo)}"
-        )
+        linea = f"{_flecha(ganancia)} <b>{nombre}</b>  {_ganancia(ganancia, simbolo)}"
+        porcentaje = g.porcentaje(coin_id)
+        if porcentaje is not None:
+            linea += f"  <i>{porcentaje:+.2f}%</i>"
+        lineas.append(linea)
     if len(g.por_cripto) > 1:
-        lineas.append(f"\nTotal <b>{_ganancia(g.total, simbolo)}</b>")
+        linea = f"\nTotal <b>{_ganancia(g.total, simbolo)}</b>"
+        if g.porcentaje_total is not None:
+            linea += f"  <i>{g.porcentaje_total:+.2f}%</i>"
+        lineas.append(linea)
     if g.sin_datos:
         cuantas = "1 venta" if g.sin_datos == 1 else f"{g.sin_datos} ventas"
         lineas.append(
