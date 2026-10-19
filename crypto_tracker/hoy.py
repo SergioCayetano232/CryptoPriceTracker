@@ -34,3 +34,15 @@ def calcular(serie: list[tuple[datetime, float]], desde: datetime) -> Hoy | None
     if antes:
         return Hoy(antes[-1], precios[-1], max(precios), min(precios), None)
     return Hoy(precios[0], precios[-1], max(precios), min(precios), hoy[0][0])
+
+
+def mejor_y_peor(lineas: list[tuple[str, Hoy | None]]) -> tuple[str, str] | None:
+    """Las ids de la que mejor va hoy y la que peor. None si no hay con qué comparar."""
+    # Las que empiezan más tarde de las 00:00 miden otro tramo: no cuentan.
+    completas = [(c, h.cambio) for c, h in lineas if h and h.desde is None]
+    if len(completas) < 3:
+        return None
+    completas.sort(key=lambda x: x[1])
+    if completas[0][1] == completas[-1][1]:
+        return None
+    return completas[-1][0], completas[0][0]

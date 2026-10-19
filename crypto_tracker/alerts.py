@@ -17,6 +17,7 @@ from .equilibrio import Cartera
 from .ganancias import Ganancias
 from .horas import Horas
 from .hoy import Hoy
+from .hoy import mejor_y_peor as extremos_hoy
 from .maximo import Maximo, hace
 from .mejor import Extremo
 from .mercado import Mercado, grande
@@ -370,6 +371,7 @@ def formatear_hoy(
     """Respuesta de /hoy. ultimo es la hora del precio más nuevo."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
     texto = ["☀️ <b>Hoy</b>, desde las 00:00", ""]
+    mejor, peor = extremos_hoy(lineas) or (None, None)
     for coin_id, h in lineas:
         nombre = escape(coin_id.replace("-", " ").title())
         if h is None:
@@ -379,6 +381,10 @@ def formatear_hoy(
         linea += f"{_flecha(h.cambio)} {h.cambio:+.2f}%"
         if h.desde is not None:
             linea += f" <i>(desde las {h.desde.astimezone():%H:%M})</i>"
+        if coin_id == mejor:
+            linea += "  <i>← la mejor</i>"
+        elif coin_id == peor:
+            linea += "  <i>← la peor</i>"
         texto.append(linea)
         texto.append(
             f"   <i>máx {simbolo}{_num(h.maximo)} · mín {simbolo}{_num(h.minimo)}</i>"
