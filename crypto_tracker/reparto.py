@@ -9,6 +9,9 @@ MAXIMO = 6
 
 OTRAS = "otras"
 
+# Por encima de esto, si esa cae se lleva media cartera con ella.
+MUCHO = 50
+
 
 @dataclass(frozen=True)
 class Trozo:
@@ -41,3 +44,11 @@ def trozos(valores: list[Valor]) -> list[Trozo]:
         junto = sum(v.valor for v in resto)
         lista.append(Trozo(OTRAS, junto, junto / total * 100, None))
     return lista
+
+
+def demasiado(lista: list[Trozo]) -> Trozo | None:
+    """La que se come más de la mitad de la cartera, si hay alguna."""
+    # Con una sola, que sea el 100% ya lo sabes.
+    if len(lista) < 2 or lista[0].coin_id == OTRAS:
+        return None
+    return lista[0] if lista[0].peso > MUCHO else None

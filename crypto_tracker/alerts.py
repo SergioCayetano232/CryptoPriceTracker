@@ -30,7 +30,7 @@ from .puntuales import CARTERA, Puntual, cumplidas, ejemplo, progreso
 from .racha import Racha
 from .rango import Rango, barra
 from .ratio import Ratio
-from .reparto import Trozo
+from .reparto import Trozo, demasiado
 from .rsi import PERIODO, SOBRECOMPRA, SOBREVENTA, Rsi
 from .semanal import Semana
 from .sube import Subida
@@ -881,6 +881,13 @@ def formatear_reparto(trozos: list[Trozo], total: float, currency: str) -> str:
     for t in trozos:
         nombre = escape(t.coin_id.replace("-", " ").title())
         lineas.append(f"<b>{nombre}</b> {t.peso:.0f}% · {simbolo}{_num(t.valor)}")
+    grande = demasiado(trozos)
+    if grande:
+        nombre = escape(grande.coin_id.replace("-", " ").title())
+        lineas.append(
+            f"\n⚖️ Más de la mitad es <b>{nombre}</b>. "
+            "Si cae, lo notará toda la cartera."
+        )
     return "\n".join(lineas)
 
 

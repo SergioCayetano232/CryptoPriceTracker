@@ -5,7 +5,7 @@ import pytest
 from crypto_tracker.alerts import formatear_reparto
 from crypto_tracker.cartera import Valor
 from crypto_tracker.grafica import dibujar_reparto
-from crypto_tracker.reparto import OTRAS, Trozo, trozos
+from crypto_tracker.reparto import OTRAS, Trozo, demasiado, trozos
 
 
 def _valores(**valores):
@@ -50,6 +50,42 @@ def test_formatear():
     assert "🥧 <b>Tu cartera</b>: €2.000,00" in texto
     assert "<b>Bitcoin</b> 75% · €1.500,00" in texto
     assert "<b>Otras</b> 25% · €500,00" in texto
+
+
+def test_demasiado_en_una():
+    t = trozos(_valores(bitcoin=600, ethereum=300, solana=100))
+
+    assert demasiado(t).coin_id == "bitcoin"
+
+
+def test_justo_la_mitad_no_es_demasiado():
+    assert demasiado(trozos(_valores(bitcoin=500, ethereum=500))) is None
+
+
+def test_demasiado_con_una_sola_no_avisa():
+    assert demasiado(trozos(_valores(bitcoin=500))) is None
+
+
+def test_demasiado_no_cuenta_otras():
+    t = [Trozo(OTRAS, 600, 60, None), Trozo("bitcoin", 400, 40, 0)]
+
+    assert demasiado(t) is None
+
+
+def test_formatear_avisa_si_una_es_mas_de_la_mitad():
+    t = [Trozo("shiba-inu", 1500, 75, 0), Trozo("bitcoin", 500, 25, 1)]
+
+    texto = formatear_reparto(t, 2000, "eur")
+
+    assert texto.endswith(
+        "\n\n⚖️ Más de la mitad es <b>Shiba Inu</b>. Si cae, lo notará toda la cartera."
+    )
+
+
+def test_formatear_repartida_no_avisa():
+    t = [Trozo("bitcoin", 1000, 50, 0), Trozo("ethereum", 1000, 50, 1)]
+
+    assert "⚖️" not in formatear_reparto(t, 2000, "eur")
 
 
 @pytest.mark.parametrize("cuantas", [1, 3, 6])
