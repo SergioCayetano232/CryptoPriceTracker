@@ -1585,7 +1585,10 @@ def formatear_sin_objetivo(coin_id: str, precio: float, currency: str) -> str:
 
 
 def formatear_puntuales(
-    alertas: list[Puntual], currency: str, precios: dict[str, float] | None = None
+    alertas: list[Puntual],
+    currency: str,
+    precios: dict[str, float] | None = None,
+    ahora: datetime | None = None,
 ) -> str:
     """Respuesta de /alertas. Con precios, dice cuanto le falta a cada una."""
     if not alertas:
@@ -1610,6 +1613,9 @@ def formatear_puntuales(
         hecho = progreso(a, (precios or {}).get(a.coin_id))
         if hecho is not None:
             lineas.append(f"      {_barra_progreso(hecho)}")
+        if a.creada:
+            puesta = hace(a.creada, ahora or datetime.now(a.creada.tzinfo))
+            lineas.append(f"      🕐 <i>puesta {puesta}</i>")
         if a.nota:
             lineas.append(f"      📝 {escape(a.nota)}")
     lineas.append(f"\nPara quitar una: /quitar {alertas[0].id}")

@@ -37,6 +37,7 @@ class Puntual:
     sube: bool  # True si espera a que suba hasta el objetivo
     caduca: datetime | None = None  # None, las de antes y las que no lo pidieron
     nota: str | None = None
+    creada: datetime | None = None
 
 
 def separar_nota(argumento: str) -> tuple[str, str | None]:

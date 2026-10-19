@@ -528,23 +528,24 @@ def crear_puntual(
     caduca: datetime | None = None,
     nota: str | None = None,
 ) -> Puntual:
-    ahora = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    ahora = datetime.now(timezone.utc).replace(microsecond=0)
+    created_at = ahora.isoformat()
     caduca_at = caduca.isoformat(timespec="seconds") if caduca else None
     with _connect(db_path) as conn:
         cursor = conn.execute(
             "INSERT INTO alertas_puntuales "
             "(coin_id, objetivo, sube, currency, created_at, caduca_at, nota) "
             "VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (coin_id, objetivo, int(sube), currency, ahora, caduca_at, nota),
+            (coin_id, objetivo, int(sube), currency, created_at, caduca_at, nota),
         )
-    return Puntual(cursor.lastrowid, coin_id, objetivo, sube, caduca, nota)
+    return Puntual(cursor.lastrowid, coin_id, objetivo, sube, caduca, nota, ahora)
 
 
 def get_puntuales(db_path: str, currency: str) -> list[Puntual]:
     """Las alertas pendientes. Las de otra moneda no cuentan, saltarian mal."""
     with _connect(db_path) as conn:
         filas = conn.execute(
-            "SELECT id, coin_id, objetivo, sube, caduca_at, nota "
+            "SELECT id, coin_id, objetivo, sube, caduca_at, nota, created_at "
             "FROM alertas_puntuales WHERE currency = ? ORDER BY id",
             (currency,),
         ).fetchall()
@@ -557,6 +558,7 @@ def get_puntuales(db_path: str, currency: str) -> list[Puntual]:
             bool(f["sube"]),
             datetime.fromisoformat(f["caduca_at"]) if f["caduca_at"] else None,
             f["nota"],
+            datetime.fromisoformat(f["created_at"]),
         )
         for f in filas
     ]

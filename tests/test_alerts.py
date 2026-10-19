@@ -1,5 +1,7 @@
 """Tests de la logica de alertas."""
 
+from datetime import datetime, timezone
+
 import pytest
 
 from crypto_tracker.alerts import (
@@ -615,6 +617,22 @@ def test_la_barra_no_se_llena_hasta_llegar():
     )
 
     assert "<code>▓▓▓▓▓▓▓▓▓░</code> 99%" in texto
+
+
+def test_alertas_con_cuanto_llevan_puestas():
+    creada = datetime(2026, 10, 1, 12, 0, tzinfo=timezone.utc)
+    ahora = datetime(2026, 10, 4, 18, 0, tzinfo=timezone.utc)
+    alertas = [Puntual(1, "bitcoin", 70000.0, True, creada=creada)]
+
+    texto = formatear_puntuales(alertas, "eur", ahora=ahora)
+
+    assert "🕐 <i>puesta hace 3 días</i>" in texto
+
+
+def test_alertas_de_antes_sin_fecha():
+    texto = formatear_puntuales([Puntual(1, "bitcoin", 70000.0, True)], "eur")
+
+    assert "puesta" not in texto
 
 
 def test_alertas_sin_precio_sin_barra():

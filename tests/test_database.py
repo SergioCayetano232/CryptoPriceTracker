@@ -353,6 +353,13 @@ def test_puntual_va_y_vuelve(db):
     assert creada.sube is True
 
 
+def test_puntual_guarda_cuando_se_puso(db):
+    creada = database.crear_puntual(db, "bitcoin", 70000.0, True, "eur")
+
+    assert creada.creada is not None
+    assert database.get_puntuales(db, "eur")[0].creada == creada.creada
+
+
 def test_puntuales_en_orden_de_creacion(db):
     a = database.crear_puntual(db, "bitcoin", 70000.0, True, "eur")
     b = database.crear_puntual(db, "ethereum", 2000.0, False, "eur")
