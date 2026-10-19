@@ -77,6 +77,18 @@ def peso(valor: Valor, total: Valor) -> float | None:
     return valor.valor / total.valor * 100 if total.valor else None
 
 
+def mejor_y_peor(valores: list[Valor]) -> tuple[Valor, Valor] | None:
+    """La que mejor va y la que peor, en %. None si no hay con que comparar."""
+    con_coste = [v for v in valores if v.porcentaje is not None]
+    # Con dos, las dos ya salen justo encima: seria repetirlas.
+    if len(con_coste) < 3:
+        return None
+    ordenadas = sorted(con_coste, key=lambda v: v.porcentaje)
+    if ordenadas[0].porcentaje == ordenadas[-1].porcentaje:
+        return None
+    return ordenadas[-1], ordenadas[0]
+
+
 def valor_total(posiciones: list[Posicion], precios: dict[str, float]) -> float | None:
     """Lo que vale todo junto. None si falta el precio de alguna."""
     # Un total sin una de ellas parece una caida, y daria una alerta falsa.

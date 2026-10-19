@@ -8,6 +8,7 @@ from crypto_tracker.alerts import formatear_cartera
 from crypto_tracker.cartera import (
     Valor,
     de,
+    mejor_y_peor,
     peso,
     serie_valor,
     total,
@@ -117,6 +118,54 @@ def test_mensaje_de_la_cartera():
     assert "-10.00%" in texto
     assert "$2.020,00" in texto
     assert "(+$20,00)" in texto
+
+
+def test_mejor_y_peor():
+    valores = [
+        Valor("bitcoin", 1120.0, 1000.0),
+        Valor("ethereum", 900.0, 1000.0),
+        Valor("solana", 1500.0, 1000.0),
+    ]
+
+    mejor, peor = mejor_y_peor(valores)
+
+    assert (mejor.coin_id, peor.coin_id) == ("solana", "ethereum")
+
+
+def test_mejor_y_peor_con_dos_no_sale():
+    valores = [Valor("bitcoin", 1120.0, 1000.0), Valor("ethereum", 900.0, 1000.0)]
+
+    assert mejor_y_peor(valores) is None
+
+
+def test_mejor_y_peor_sin_lo_invertido_no_cuenta():
+    valores = [
+        Valor("bitcoin", 1120.0, 1000.0),
+        Valor("ethereum", 900.0, 1000.0),
+        Valor("solana", 1500.0),
+    ]
+
+    assert mejor_y_peor(valores) is None
+
+
+def test_mejor_y_peor_si_van_igual_no_sale():
+    valores = [Valor(c, 1100.0, 1000.0) for c in ("bitcoin", "ethereum", "solana")]
+
+    assert mejor_y_peor(valores) is None
+
+
+def test_mensaje_con_la_mejor_y_la_peor():
+    valores = [
+        Valor("bitcoin", 1120.0, 1000.0),
+        Valor("ethereum", 900.0, 1000.0),
+        Valor("shiba-inu", 1500.0, 1000.0),
+    ]
+    texto = formatear_cartera(valores, total(valores), [], "eur")
+
+    assert (
+        "La que mejor va: <b>Shiba Inu</b> +50.00% · "
+        "la que peor: <b>Ethereum</b> -10.00%"
+    ) in texto
 
 
 def test_mensaje_con_el_total_en_sats():

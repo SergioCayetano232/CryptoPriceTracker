@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import date, datetime
 
 from .caida import Caida
-from .cartera import Valor, peso
+from .cartera import Valor, mejor_y_peor, peso
 from .comparar import Resultado
 from .config import Posicion, Watch
 from .correlacion import Correlacion
@@ -469,6 +469,13 @@ def formatear_cartera(
     texto.append(linea)
     if sats is not None:
         texto.append(f"<i>En sats: {texto_cantidad(round(sats))}</i>")
+    extremos = mejor_y_peor(valores)
+    if extremos:
+        mejor, peor = (
+            f"<b>{escape(v.coin_id.replace('-', ' ').title())}</b> {v.porcentaje:+.2f}%"
+            for v in extremos
+        )
+        texto.append(f"La que mejor va: {mejor} · la que peor: {peor}")
 
     if faltan:
         # Mejor decir que el total esta cojo que dar uno que parezca completo.
