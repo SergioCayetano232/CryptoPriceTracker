@@ -5,7 +5,7 @@ from datetime import date, timedelta
 import pytest
 
 from crypto_tracker.alerts import formatear_racha
-from crypto_tracker.racha import Racha, calcular
+from crypto_tracker.racha import Racha, calcular, mas_larga
 
 HOY = date(2026, 10, 12)
 
@@ -78,3 +78,44 @@ def test_formatear_un_dia_y_sin_el_principio():
 
     assert "lleva <b>al menos 1 día</b> bajando" in texto
     assert "seguidos" not in texto
+
+
+def test_mas_larga():
+    dias = _dias(100, 101, 102, 103, 104, 90, 91, 92)
+
+    assert mas_larga(dias, sube=True) == 4
+    assert mas_larga(dias, sube=False) == 1
+
+
+def test_mas_larga_se_corta_en_los_huecos_y_si_no_cambia():
+    hueco = [(HOY - timedelta(days=10), 90.0), (HOY - timedelta(days=9), 95.0)]
+
+    assert mas_larga([*hueco, *_dias(100, 101, 101, 102)], sube=True) == 1
+
+
+def test_mas_larga_sin_dias():
+    assert mas_larga([], sube=True) == 0
+
+
+def test_formatear_con_una_mas_larga_antes():
+    r = Racha(True, 3, HOY - timedelta(days=3), 100, 110, True)
+
+    texto = formatear_racha("bitcoin", r, "eur", 7, date(2026, 7, 14))
+
+    assert "La más larga subiendo desde el 14/07 fue de 7 días" in texto
+
+
+def test_formatear_cuando_es_la_mas_larga():
+    r = Racha(False, 5, HOY - timedelta(days=5), 100, 80, True)
+
+    texto = formatear_racha("bitcoin", r, "eur", 5, date(2026, 7, 14))
+
+    assert "🏆 Es la más larga bajando desde el 14/07" in texto
+
+
+def test_formatear_sin_el_principio_no_compara():
+    r = Racha(True, 3, HOY - timedelta(days=3), 100, 110, False)
+
+    texto = formatear_racha("bitcoin", r, "eur", 3, date(2026, 7, 14))
+
+    assert "más larga" not in texto

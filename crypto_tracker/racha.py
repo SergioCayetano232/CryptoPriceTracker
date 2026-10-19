@@ -53,3 +53,13 @@ def calcular(dias: list[tuple[date, float]]) -> Racha | None:
         return None
     desde, antes = dias[i]
     return Racha(sube, cuantos, desde, antes, dias[-1][1], entera)
+
+
+def mas_larga(dias: list[tuple[date, float]], sube: bool) -> int:
+    """La racha más larga hacia ese lado en todos los días que hay."""
+    mejor = actual = 0
+    for (ayer, anterior), (dia, precio) in zip(dias, dias[1:], strict=False):
+        seguido = (dia - ayer).days == 1 and precio != anterior
+        actual = actual + 1 if seguido and (precio > anterior) == sube else 0
+        mejor = max(mejor, actual)
+    return mejor

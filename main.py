@@ -1686,14 +1686,18 @@ def _racha(config: Config, argumento: str) -> str:
     serie = database.get_serie(
         config.database_path, coin_id, racha.HORAS, config.vs_currency
     )
-    resultado = racha.calcular(volatilidad.por_dias(serie))
+    dias = volatilidad.por_dias(serie)
+    resultado = racha.calcular(dias)
     if resultado is None:
         return (
             f"No tengo precios guardados de <b>{telegram.escape(coin_id)}</b> de dos "
             "días seguidos que hayan cambiado. Solo sé de las que vigilo: míralas "
             "con /vigilar"
         )
-    return alerts.formatear_racha(coin_id, resultado, config.vs_currency)
+    record = racha.mas_larga(dias, resultado.sube)
+    return alerts.formatear_racha(
+        coin_id, resultado, config.vs_currency, record, dias[0][0]
+    )
 
 
 def _rsi(config: Config, argumento: str) -> str:

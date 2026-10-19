@@ -702,21 +702,35 @@ def formatear_media(
     return "\n".join(lineas)
 
 
-def formatear_racha(coin_id: str, r: Racha, currency: str) -> str:
-    """Respuesta de /racha."""
+def formatear_racha(
+    coin_id: str,
+    r: Racha,
+    currency: str,
+    record: int | None = None,
+    desde: date | None = None,
+) -> str:
+    """Respuesta de /racha. record es la más larga hacia ese lado desde ese día."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
     nombre = escape(coin_id.replace("-", " ").title())
     hacia = "subiendo" if r.sube else "bajando"
     dias = "1 día" if r.dias == 1 else f"{r.dias} días"
     # Si los datos se acaban antes que la racha, puede ser más larga.
     cuantos = dias if r.entera else f"al menos {dias}"
-    return (
+    texto = (
         f"{_flecha(r.cambio)} <b>{nombre}</b> lleva <b>{cuantos}</b> "
         f"{'' if r.dias == 1 else 'seguidos '}{hacia}, contando hoy\n"
         f"{r.cambio:+.2f}% desde el {r.desde:%d/%m}: "
         f"{simbolo}{_num(r.antes)} → {simbolo}{_num(r.ahora)}\n"
-        "<i>Con el precio del final de cada día</i>"
     )
+    # Si no sé dónde empieza la de ahora, compararla con otra no vale.
+    if r.entera and record and desde:
+        if record <= r.dias:
+            texto += f"🏆 Es la más larga {hacia} desde el {desde:%d/%m}\n"
+        else:
+            texto += (
+                f"La más larga {hacia} desde el {desde:%d/%m} fue de {record} días\n"
+            )
+    return texto + "<i>Con el precio del final de cada día</i>"
 
 
 def formatear_rsi(coin_id: str, r: Rsi, currency: str) -> str:
