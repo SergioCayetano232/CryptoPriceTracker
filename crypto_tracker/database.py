@@ -669,9 +669,11 @@ def apuntar_movimiento(
 
 
 def get_movimientos(
-    db_path: str, limite: int = 10, coin_id: str | None = None
+    db_path: str, limite: int | None = 10, coin_id: str | None = None
 ) -> list[Movimiento]:
     """Los ultimos, el mas reciente primero. Con coin_id, solo los de esa."""
+    # En SQLite un LIMIT -1 es sin limite.
+    limite = -1 if limite is None else limite
     with _connect(db_path) as conn:
         if coin_id is None:
             filas = conn.execute(

@@ -664,6 +664,15 @@ def test_movimientos_el_mas_reciente_primero(db):
     ]
 
 
+def test_movimientos_sin_limite(db):
+    btc = Posicion("bitcoin", 1, 10)
+    for _ in range(12):
+        database.apuntar_movimiento(db, "bitcoin", "compra", 1, 10, None, btc)
+
+    assert len(database.get_movimientos(db)) == 10
+    assert len(database.get_movimientos(db, None)) == 12
+
+
 def test_ventas_todas_y_solo_ventas(db):
     btc = Posicion("bitcoin", 1, 100)
     database.apuntar_movimiento(db, "bitcoin", "compra", 1, 100, None, btc)

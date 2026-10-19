@@ -23,7 +23,7 @@ from .mercado import Mercado, grande
 from .miedo import Indice
 from .miedo import hace as dia_miedo
 from .miedo import nombre as nombre_miedo
-from .movimientos import Movimiento, precio_medio, texto_cantidad
+from .movimientos import Movimiento, precio_medio, texto_cantidad, totales
 from .objetivo import Escenario
 from .periodo import nombre as nombre_periodo
 from .puntuales import CARTERA, Puntual, cumplidas, ejemplo, progreso
@@ -541,7 +541,10 @@ def formatear_venta(
 
 
 def formatear_movimientos(
-    lista: list[Movimiento], currency: str, coin_id: str | None = None
+    lista: list[Movimiento],
+    currency: str,
+    coin_id: str | None = None,
+    todos: list[Movimiento] | None = None,
 ) -> str:
     """Respuesta de /movimientos: los ultimos, el mas reciente arriba."""
     de = f" de {escape(coin_id.replace('-', ' ').title())}" if coin_id else ""
@@ -562,6 +565,15 @@ def formatear_movimientos(
         if m.coste is not None:
             linea += f" por {simbolo}{_num(m.coste)}"
         lineas.append(f"{linea}  <i>{cuando:%d/%m %H:%M}</i>")
+
+    todos = todos or lista
+    comprado, vendido = totales(todos)
+    if comprado or vendido:
+        de_cuantos = f" de los {len(todos)}" if len(todos) > len(lista) else ""
+        lineas.append(
+            f"\nEn total{de_cuantos}: {simbolo}{_num(comprado)} comprado · "
+            f"{simbolo}{_num(vendido)} vendido"
+        )
     return "\n".join(lineas)
 
 

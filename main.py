@@ -1155,7 +1155,8 @@ def _deshacer(config: Config, argumento: str) -> str:
 def _movimientos(config: Config, argumento: str) -> str | comandos.ConBotones:
     coin_id = simbolos.a_id(argumento) if argumento else None
     lista = database.get_movimientos(config.database_path, coin_id=coin_id)
-    texto = alerts.formatear_movimientos(lista, config.vs_currency, coin_id)
+    todos = database.get_movimientos(config.database_path, None, coin_id)
+    texto = alerts.formatear_movimientos(lista, config.vs_currency, coin_id, todos)
     if not lista:
         return texto
     # /deshacer solo quita la ultima de todas, que puede ser de otra cripto.

@@ -142,6 +142,14 @@ def combinar(
     return tuple(p for p in resultado if p is not None)
 
 
+def totales(lista: list[Movimiento]) -> tuple[float, float]:
+    """Lo que has metido comprando y lo que has sacado vendiendo."""
+    # Las que no dicen lo que costaron no suman: no hay de donde sacarlo.
+    comprado = sum(m.coste for m in lista if m.tipo == "compra" and m.coste)
+    vendido = sum(m.coste for m in lista if m.tipo == "venta" and m.coste)
+    return comprado, vendido
+
+
 def buscar(posiciones: tuple[Posicion, ...], coin_id: str) -> Posicion | None:
     return next((p for p in posiciones if p.coin_id == coin_id), None)
 

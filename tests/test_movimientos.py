@@ -1,10 +1,13 @@
 """Tests de apuntar compras y ventas de la cartera desde Telegram."""
 
+from datetime import datetime, timezone
+
 import pytest
 
-from crypto_tracker.alerts import formatear_compra
+from crypto_tracker.alerts import formatear_compra, formatear_movimientos
 from crypto_tracker.config import Posicion
 from crypto_tracker.movimientos import (
+    Movimiento,
     MovimientoError,
     buscar,
     cobrado,
@@ -15,6 +18,7 @@ from crypto_tracker.movimientos import (
     interpretar_venta,
     precio_medio,
     texto_cantidad,
+    totales,
     vender,
 )
 
@@ -248,3 +252,44 @@ def test_primera_compra_sin_precio_medio():
 
     assert "Te sale a" not in texto
     assert texto.endswith("que te costaron €600,00. Mira /cartera")
+
+
+# --- el total de /movimientos ---
+
+CUANDO = datetime(2026, 10, 1, 12, 0, tzinfo=timezone.utc)
+
+
+def _mov(tipo: str, coste: float | None, coin_id: str = "bitcoin") -> Movimiento:
+    return Movimiento(1, coin_id, tipo, 0.01, coste, None, CUANDO)
+
+
+def test_totales():
+    lista = [_mov("compra", 600), _mov("compra", 400), _mov("venta", 350)]
+
+    assert totales(lista) == (1000, 350)
+
+
+def test_totales_sin_lo_que_costo_no_suma():
+    assert totales([_mov("compra", None), _mov("venta", 200)]) == (0, 200)
+
+
+def test_movimientos_con_el_total():
+    lista = [_mov("venta", 350), _mov("compra", 600, "ethereum")]
+
+    texto = formatear_movimientos(lista, "eur")
+
+    assert texto.endswith("\n\nEn total: €600,00 comprado · €350,00 vendido")
+
+
+def test_movimientos_total_de_todos_aunque_salgan_menos():
+    todos = [_mov("compra", 100)] * 12
+
+    texto = formatear_movimientos(todos[:10], "eur", todos=todos)
+
+    assert "En total de los 12: €1.200,00 comprado" in texto
+
+
+def test_movimientos_sin_precios_sin_total():
+    texto = formatear_movimientos([_mov("compra", None)], "eur")
+
+    assert "En total" not in texto
