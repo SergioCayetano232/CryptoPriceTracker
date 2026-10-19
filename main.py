@@ -1077,7 +1077,7 @@ def _comprar(config: Config, argumento: str) -> str | comandos.ConBotones:
     )
     logger.info("Cartera: compra %s de %s por %s", cantidad, coin_id, coste)
     return comandos.ConBotones(
-        alerts.formatear_compra(cantidad, coste, ahora, config.vs_currency),
+        alerts.formatear_compra(cantidad, coste, ahora, config.vs_currency, antes),
         botones.deshacer_movimiento(numero),
     )
 

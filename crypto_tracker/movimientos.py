@@ -100,6 +100,13 @@ def comprar(
     return Posicion(coin_id, posicion.cantidad + cantidad, invertido)
 
 
+def precio_medio(posicion: Posicion | None) -> float | None:
+    """A cuanto te sale cada una. None si no sabes lo que costo."""
+    if posicion is None or posicion.invertido is None or not posicion.cantidad:
+        return None
+    return posicion.invertido / posicion.cantidad
+
+
 def vender(
     posicion: Posicion | None, coin_id: str, cantidad: float | None
 ) -> Posicion | None:

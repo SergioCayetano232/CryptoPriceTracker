@@ -2,6 +2,7 @@
 
 import pytest
 
+from crypto_tracker.alerts import formatear_compra
 from crypto_tracker.config import Posicion
 from crypto_tracker.movimientos import (
     MovimientoError,
@@ -12,6 +13,7 @@ from crypto_tracker.movimientos import (
     interpretar_compra,
     interpretar_deshacer,
     interpretar_venta,
+    precio_medio,
     texto_cantidad,
     vender,
 )
@@ -207,3 +209,42 @@ def test_deshacer_con_el_numero_del_boton():
 def test_deshacer_mal_escrito(argumento):
     with pytest.raises(MovimientoError):
         interpretar_deshacer(argumento)
+
+
+# --- el precio medio al comprar ---
+
+
+def test_precio_medio():
+    assert precio_medio(Posicion("bitcoin", 0.02, 1200.0)) == 60000.0
+
+
+def test_precio_medio_sin_lo_que_costo():
+    assert precio_medio(Posicion("bitcoin", 0.02)) is None
+    assert precio_medio(None) is None
+
+
+def test_compra_que_baja_el_precio_medio():
+    antes = Posicion("bitcoin", 0.01, 700.0)
+    ahora = comprar(antes, "bitcoin", 0.01, 500.0)
+
+    texto = formatear_compra(0.01, 500.0, ahora, "eur", antes)
+
+    assert "🔻 Te sale a €60.000,00 cada una, antes a €70.000,00." in texto
+
+
+def test_compra_que_sube_el_precio_medio():
+    antes = Posicion("bitcoin", 0.01, 500.0)
+    ahora = comprar(antes, "bitcoin", 0.01, 700.0)
+
+    texto = formatear_compra(0.01, 700.0, ahora, "eur", antes)
+
+    assert "🔺 Te sale a €60.000,00 cada una, antes a €50.000,00." in texto
+
+
+def test_primera_compra_sin_precio_medio():
+    ahora = comprar(None, "bitcoin", 0.01, 600.0)
+
+    texto = formatear_compra(0.01, 600.0, ahora, "eur")
+
+    assert "Te sale a" not in texto
+    assert texto.endswith("que te costaron €600,00. Mira /cartera")
