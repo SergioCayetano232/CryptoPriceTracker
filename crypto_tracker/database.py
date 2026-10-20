@@ -215,6 +215,17 @@ def ultimo_guardado(db_path: str) -> datetime | None:
     return datetime.fromisoformat(fila["cuando"]) if fila["cuando"] else None
 
 
+def guardados(db_path: str) -> tuple[int, datetime | None]:
+    """Cuantos precios hay guardados y de cuando es el mas viejo."""
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT COUNT(*) AS cuantos, MIN(created_at) AS desde FROM prices"
+        ).fetchone()
+
+    desde = datetime.fromisoformat(fila["desde"]) if fila["desde"] else None
+    return fila["cuantos"], desde
+
+
 def get_price_at(
     db_path: str, coin_id: str, horas: int, margen: int = 12
 ) -> float | None:

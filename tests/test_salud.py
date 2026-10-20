@@ -246,3 +246,18 @@ def test_encendido_dice_cuanto_llevaba_apagado():
 
     assert "Llevaba apagado desde el" in texto
     assert "(2 d 3 h)" in texto
+
+
+def test_bot_con_los_precios_guardados():
+    pulso = Pulso(ahora=_min(0))
+    desde = datetime(2026, 7, 22, 10, 0, tzinfo=timezone.utc)
+
+    texto = mensaje_bot(pulso, _min(5), 1, 0, guardados=(12345, desde))
+
+    assert "💾 12.345 precios guardados, desde el 22/07/2026" in texto
+
+
+def test_bot_sin_precios_guardados_no_lo_dice():
+    pulso = Pulso(ahora=_min(0))
+
+    assert "guardados" not in mensaje_bot(pulso, _min(5), 1, 0, guardados=(0, None))

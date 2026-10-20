@@ -585,6 +585,19 @@ def test_ultimo_guardado(db):
     assert antes <= cuando <= datetime.now(timezone.utc)
 
 
+def test_guardados_sin_nada(db):
+    assert database.guardados(db) == (0, None)
+
+
+def test_guardados(db):
+    antes = datetime.now(timezone.utc).replace(microsecond=0)
+    database.save_prices(db, {"bitcoin": 63000.0, "solana": 150.0}, "eur")
+
+    cuantos, desde = database.guardados(db)
+    assert cuantos == 2
+    assert antes <= desde <= datetime.now(timezone.utc)
+
+
 # --- caducidad de /alerta ---
 
 

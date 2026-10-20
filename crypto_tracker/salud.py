@@ -66,6 +66,7 @@ def mensaje_bot(
     alertas: int,
     callado: datetime | None = None,
     consultas: int | None = None,
+    guardados: tuple[int, datetime | None] | None = None,
 ) -> str:
     """Respuesta de /bot: si sigue vivo y desde cuando."""
     texto = [
@@ -90,6 +91,14 @@ def mensaje_bot(
     )
     if consultas is not None:
         texto.append(f"📡 {cuota.corto(consultas)}")
+    if guardados is not None and guardados[1] is not None:
+        cuantos, desde = guardados
+        miles = f"{cuantos:,}".replace(",", ".")
+        # Asi sabes si te da para un /historico 90d antes de pedirlo.
+        texto.append(
+            f"💾 {miles} {'precio guardado' if cuantos == 1 else 'precios guardados'}"
+            f", desde el {desde.astimezone():%d/%m/%Y}"
+        )
     if callado is not None:
         texto.append(f"🔕 Callado hasta las {callado.astimezone():%H:%M del %d/%m}")
     return "\n".join(texto)

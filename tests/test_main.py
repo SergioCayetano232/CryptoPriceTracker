@@ -2429,6 +2429,19 @@ def test_bot_con_el_bucle_en_marcha(config, enviados, monkeypatch):
     assert "Vigilo 1 cripto · 1 alerta puesta" in enviados[0]
 
 
+def test_bot_dice_los_precios_guardados(config, enviados, monkeypatch):
+    from datetime import datetime, timezone
+
+    from crypto_tracker import salud
+
+    monkeypatch.setattr(main, "_pulso", salud.Pulso(ahora=datetime.now(timezone.utc)))
+    database.save_prices(config.database_path, {"bitcoin": 63000.0}, "eur")
+
+    main.atender(config, _mensaje("/bot"))
+
+    assert "💾 1 precio guardado, desde el" in enviados[0]
+
+
 def test_bot_cuenta_las_consultas_del_mes(config, enviados, monkeypatch):
     from datetime import datetime, timezone
 

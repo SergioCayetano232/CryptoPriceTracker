@@ -818,6 +818,7 @@ def responder(
             len(database.get_puntuales(config.database_path, config.vs_currency)),
             _silenciado(config),
             database.get_consultas(config.database_path, cuota.mes(ahora)),
+            database.guardados(config.database_path),
         )
 
     if nombre == "precio":
