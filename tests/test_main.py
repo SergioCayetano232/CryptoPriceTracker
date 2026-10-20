@@ -2958,6 +2958,32 @@ def test_convertir_cripto_a_dinero(config, enviados, monkeypatch):
     assert "CoinGecko" in enviados[0]
 
 
+def test_convertir_dice_lo_que_valia_hace_24h(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 62000.0})
+    monkeypatch.setattr(coingecko, "_cambios", {"bitcoin": 2.5})
+
+    main.atender(config, _mensaje("/convertir 0.05 bitcoin"))
+
+    assert "Hace 24 h valía €3.024,39  🔺 +2.50%" in enviados[0]
+
+
+def test_convertir_sin_cambio_no_dice_nada_de_ayer(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 62000.0})
+
+    main.atender(config, _mensaje("/convertir 0.05 bitcoin"))
+
+    assert "Hace 24 h" not in enviados[0]
+
+
+def test_convertir_desde_dinero_no_dice_lo_de_ayer(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"solana": 150.0})
+    monkeypatch.setattr(coingecko, "_cambios", {"solana": -3.0})
+
+    main.atender(config, _mensaje("/convertir 500€ solana"))
+
+    assert "Hace 24 h" not in enviados[0]
+
+
 def test_convertir_dinero_a_cripto(config, enviados, monkeypatch):
     _precio(monkeypatch, {"solana": 150.0})
 

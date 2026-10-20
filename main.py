@@ -1914,6 +1914,7 @@ def _convertir(config: Config, argumento: str) -> str:
             conversion.desde_dinero,
             config.vs_currency,
             conversion.sats,
+            _variacion(config, coin_id, precio),
         )
     )
 

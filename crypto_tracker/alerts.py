@@ -642,6 +642,7 @@ def formatear_conversion(
     desde_dinero: bool,
     currency: str,
     sats: bool = False,
+    variacion: float | None = None,
 ) -> str:
     """Respuesta de /convertir. Lo que escribiste va primero."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
@@ -656,7 +657,15 @@ def formatear_conversion(
     if sats:
         texto += f" · 1 sat = {simbolo}{_num(precio / POR_BTC)}"
         texto += f"\n{_cripto(cripto, nombre, False)}"
-    return texto + "</i>"
+    texto += "</i>"
+    # Si escribes dinero, lo que cambia es la cripto que te dan, no lo que vale.
+    if variacion is None or desde_dinero:
+        return texto
+    antes = dinero / (1 + variacion / 100)
+    return (
+        f"{texto}\nHace 24 h valía {simbolo}{_num(antes)}  "
+        f"{_flecha(variacion)} {variacion:+.2f}%"
+    )
 
 
 def _cripto(cantidad: float, nombre: str, sats: bool) -> str:
