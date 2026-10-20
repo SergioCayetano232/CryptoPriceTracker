@@ -2047,16 +2047,37 @@ def test_comprar_algo_que_no_existe(config, enviados, monkeypatch):
     assert database.get_cambios_cartera(config.database_path) == {}
 
 
-def test_comprar_mas_de_lo_del_env(config, enviados, monkeypatch):
-    def no_llamar(*a):
-        raise AssertionError("ya la tenia y dice el coste, no hace falta el precio")
+def test_comprar_mas_de_lo_del_env_sin_conexion(config, enviados, monkeypatch):
+    def falla(*a):
+        raise coingecko.CoinGeckoError("Sin conexion con CoinGecko")
 
-    monkeypatch.setattr(coingecko, "get_prices", no_llamar)
+    # Ya la tenia y dice el coste: el precio solo es para pillar erratas.
+    monkeypatch.setattr(coingecko, "get_prices", falla)
     config = _con_cartera(config, Posicion("bitcoin", 0.016, 1000))
 
     main.atender(config, _mensaje("/compra bitcoin 0,01 600"))
 
     assert "Ahora tienes 0,026, que te costaron €1.600,00" in enviados[0]
+
+
+def test_comprar_a_un_precio_normal_no_avisa(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+
+    main.atender(config, _mensaje("/compra bitcoin 0.01 620"))
+
+    assert "⚠️" not in enviados[0]
+
+
+def test_comprar_con_un_cero_de_mas_avisa(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+
+    main.atender(config, _mensaje("/compra bitcoin 0.01 6000"))
+
+    assert "Esta la pagas a €600.000,00 cada una" in enviados[0]
+    assert "ahora está a €60.000,00 (+900%)" in enviados[0]
+    assert "Si es una errata, dale a Deshacer." in enviados[0]
+    # Avisa, pero la apunta: puede ser de verdad.
+    assert len(database.get_movimientos(config.database_path)) == 1
 
 
 def test_comprar_mal_escrito(config, enviados):
@@ -2191,14 +2212,14 @@ def test_compra_lleva_boton_para_deshacerla(config, monkeypatch):
 
 
 def test_deshacer_una_compra_mal_apuntada(config, enviados, monkeypatch):
-    def no_llamar(*a):
-        raise AssertionError("no hace falta el precio")
-
-    monkeypatch.setattr(coingecko, "get_prices", no_llamar)
+    _precio(monkeypatch, {"bitcoin": 60000.0})
     config = _con_cartera(config, Posicion("bitcoin", 0.016, 1000))
 
     main.atender(config, _mensaje("/compra bitcoin 10 600"))
     main.atender(config, _mensaje("/deshacer"))
+
+    assert "⚠️ Esta la pagas a €60,00 cada una" in enviados[0]
+    assert "ahora está a €60.000,00 (-100%)" in enviados[0]
 
     assert "Quito la compra de <b>10</b> de Bitcoin" in enviados[1]
     assert "Vuelves a tener 0,016, que te costaron €1.000,00" in enviados[1]

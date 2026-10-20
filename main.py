@@ -1059,18 +1059,21 @@ def _comprar(config: Config, argumento: str) -> str | comandos.ConBotones:
 
     antes = movimientos.buscar(_con_cambios(config).cartera, coin_id)
     # Sin coste hace falta el precio de ahora; si es nueva, de paso vemos que existe.
-    if coste is None or antes is None:
-        try:
-            precios = coingecko.get_prices([coin_id], config.vs_currency)
-        except coingecko.CoinGeckoError as e:
+    # Si no, solo sirve para pillar erratas, y sin el se apunta igual.
+    imprescindible = coste is None or antes is None
+    try:
+        precio = coingecko.get_prices([coin_id], config.vs_currency).get(coin_id)
+    except coingecko.CoinGeckoError as e:
+        if imprescindible:
             return f"No he podido consultar el precio: {telegram.escape(str(e))}"
-        if coin_id not in precios:
-            return (
-                f"No encuentro <b>{telegram.escape(coin_id)}</b> en CoinGecko. "
-                f"Prueba con /buscar {telegram.escape(coin_id)}"
-            )
-        if coste is None:
-            coste = cantidad * precios[coin_id]
+        precio = None
+    if precio is None and imprescindible:
+        return (
+            f"No encuentro <b>{telegram.escape(coin_id)}</b> en CoinGecko. "
+            f"Prueba con /buscar {telegram.escape(coin_id)}"
+        )
+    if coste is None:
+        coste = cantidad * precio
 
     ahora = movimientos.comprar(antes, coin_id, cantidad, coste)
     numero = database.apuntar_movimiento(
@@ -1078,7 +1081,9 @@ def _comprar(config: Config, argumento: str) -> str | comandos.ConBotones:
     )
     logger.info("Cartera: compra %s de %s por %s", cantidad, coin_id, coste)
     return comandos.ConBotones(
-        alerts.formatear_compra(cantidad, coste, ahora, config.vs_currency, antes),
+        alerts.formatear_compra(
+            cantidad, coste, ahora, config.vs_currency, antes, precio
+        ),
         botones.deshacer_movimiento(numero),
     )
 

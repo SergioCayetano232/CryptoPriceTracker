@@ -13,6 +13,10 @@ EJEMPLO_VENTA = "/venta bitcoin 0.005 350 o /venta bitcoin todo"
 # Lo que queda por debajo de esto son restos de los decimales, no algo que tengas.
 RESTO = 1e-9
 
+# Una compra de hace semanas puede ir un 20% lejos del precio de hoy. Un cero de
+# mas o de menos se va mucho mas alla.
+DESCUADRE = 30
+
 
 class MovimientoError(Exception):
     """La compra o la venta no se entiende o no se puede hacer."""
@@ -105,6 +109,14 @@ def precio_medio(posicion: Posicion | None) -> float | None:
     if posicion is None or posicion.invertido is None or not posicion.cantidad:
         return None
     return posicion.invertido / posicion.cantidad
+
+
+def descuadre(cantidad: float, coste: float, precio: float | None) -> float | None:
+    """Cuanto se aleja lo pagado por unidad del precio de ahora, en %, si es mucho."""
+    if not precio or cantidad <= 0:
+        return None
+    diferencia = (coste / cantidad / precio - 1) * 100
+    return diferencia if abs(diferencia) > DESCUADRE else None
 
 
 def vender(

@@ -13,6 +13,7 @@ from crypto_tracker.movimientos import (
     cobrado,
     combinar,
     comprar,
+    descuadre,
     interpretar_compra,
     interpretar_deshacer,
     interpretar_venta,
@@ -293,3 +294,23 @@ def test_movimientos_sin_precios_sin_total():
     texto = formatear_movimientos([_mov("compra", None)], "eur")
 
     assert "En total" not in texto
+
+
+# --- compras que no cuadran con el precio ---
+
+
+def test_compra_normal_no_descuadra():
+    assert descuadre(0.01, 620, 60000) is None
+
+
+def test_compra_con_un_cero_de_mas():
+    assert descuadre(0.01, 6000, 60000) == pytest.approx(900)
+
+
+def test_compra_con_un_cero_de_menos():
+    assert descuadre(0.1, 600, 60000) == pytest.approx(-90)
+
+
+def test_descuadre_sin_precio_o_sin_cantidad():
+    assert descuadre(0.01, 6000, None) is None
+    assert descuadre(0, 6000, 60000) is None

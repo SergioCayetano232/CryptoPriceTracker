@@ -24,7 +24,13 @@ from .mercado import Mercado, grande
 from .miedo import Indice
 from .miedo import hace as dia_miedo
 from .miedo import nombre as nombre_miedo
-from .movimientos import Movimiento, precio_medio, texto_cantidad, totales
+from .movimientos import (
+    Movimiento,
+    descuadre,
+    precio_medio,
+    texto_cantidad,
+    totales,
+)
 from .objetivo import Escenario
 from .periodo import nombre as nombre_periodo
 from .puntuales import CARTERA, Puntual, cumplidas, ejemplo, progreso
@@ -497,6 +503,7 @@ def formatear_compra(
     ahora: Posicion,
     currency: str,
     antes: Posicion | None = None,
+    precio: float | None = None,
 ) -> str:
     """Lo que se contesta a un /compra: lo apuntado y como queda."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
@@ -516,7 +523,15 @@ def formatear_compra(
             f"\n{_flecha(medio - medio_antes)} Te sale a {simbolo}{_num(medio)} "
             f"cada una, antes a {simbolo}{_num(medio_antes)}."
         )
-    return texto + " Mira /cartera"
+    texto += " Mira /cartera"
+    raro = descuadre(cantidad, coste, precio)
+    if raro is not None:
+        texto += (
+            f"\n\n⚠️ Esta la pagas a {simbolo}{_num(coste / cantidad)} cada una y ahora "
+            f"está a {simbolo}{_num(precio)} ({raro:+.0f}%). "
+            "Si es una errata, dale a Deshacer."
+        )
+    return texto
 
 
 def formatear_venta(
