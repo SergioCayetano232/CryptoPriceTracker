@@ -535,8 +535,12 @@ def formatear_venta(
         texto += f" por {simbolo}{_num(cobrado)}"
     texto += ".\n"
     if ganancia is not None:
-        texto += f"{_flecha(ganancia)} Le sacas {_ganancia(ganancia, simbolo)}. "
-        texto += "Lo de todas, en /ganancias\n"
+        texto += f"{_flecha(ganancia)} Le sacas {_ganancia(ganancia, simbolo)}"
+        # Si hay ganancia es que hay cobrado: lo que costó es la resta.
+        coste = cobrado - ganancia
+        if coste > 0:
+            texto += f" ({ganancia / coste * 100:+.2f}%)"
+        texto += ". Lo de todas, en /ganancias\n"
     if queda is None:
         return texto + f"Ya no te queda nada de {nombre}."
 

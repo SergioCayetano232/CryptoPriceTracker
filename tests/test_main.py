@@ -2073,7 +2073,7 @@ def test_vender_una_parte(config, enviados, monkeypatch):
     main.atender(config, _mensaje("/venta bitcoin 0.005"))
 
     assert "venta de <b>0,005</b> de Bitcoin por €300,00" in enviados[0]
-    assert "🔺 Le sacas +€50,00" in enviados[0]
+    assert "🔺 Le sacas +€50,00 (+20.00%)." in enviados[0]
     assert "Te quedan 0,015, que te costaron €750,00" in enviados[0]
 
 
@@ -2086,9 +2086,9 @@ def test_vender_diciendo_a_cuanto_no_consulta_el_precio(config, enviados, monkey
 
     assert pedidas == []
     assert "por €200,00" in enviados[0]
-    assert "🔻 Le sacas -€50,00" in enviados[0]
+    assert "🔻 Le sacas -€50,00 (-20.00%)." in enviados[0]
     assert "por €1.050,00" in enviados[1]  # las 0,015 que quedaban
-    assert "Le sacas +€300,00" in enviados[1]
+    assert "Le sacas +€300,00 (+40.00%)." in enviados[1]
 
 
 def test_vender_sin_conexion_la_apunta_igual(config, enviados, monkeypatch):

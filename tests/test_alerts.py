@@ -17,6 +17,7 @@ from crypto_tracker.alerts import (
     formatear_puntual,
     formatear_puntuales,
     formatear_resumen,
+    formatear_venta,
     revisar,
 )
 from crypto_tracker.config import Watch
@@ -787,3 +788,9 @@ def test_precio_sin_barritas_con_pocos_puntos():
     texto = formatear_precio("bitcoin", 105.0, 5.0, "eur", dia=[100.0] * 5)
 
     assert "<code>" not in texto
+
+
+def test_venta_de_algo_que_salio_gratis_no_da_porcentaje():
+    texto = formatear_venta("bitcoin", 0.01, None, "eur", cobrado=600.0, ganancia=600.0)
+
+    assert "Le sacas +€600,00. Lo de todas" in texto
