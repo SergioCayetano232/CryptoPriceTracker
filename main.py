@@ -2021,6 +2021,7 @@ def _dca(config: Config, argumento: str) -> str:
             primero if falta else None,
             config.vs_currency,
             ultimo if viejo else None,
+            resultado.de_golpe,
         )
     )
 

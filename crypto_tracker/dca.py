@@ -35,6 +35,8 @@ class Resultado:
     compras: int
     cripto: float
     valor: float
+    # Lo mismo metido entero en la primera compra, para comparar
+    de_golpe: float = 0.0
 
 
 def interpretar(argumento: str, currency: str) -> Plan:
@@ -75,13 +77,17 @@ def calcular(
     """Compra al primer precio guardado de cada tramo. La serie no puede ir vacía."""
     cripto = 0.0
     compras = 0
+    primero = None
     siguiente = serie[0][0]
     for cuando, precio in serie:
         # Con el bot parado unos días se salta esas compras, no las junta todas.
         if cuando >= siguiente and precio > 0:
             cripto += cantidad / precio
             compras += 1
+            primero = primero or precio
             while siguiente <= cuando:
                 siguiente += timedelta(hours=cada)
 
-    return Resultado(compras, cripto, cripto * serie[-1][1])
+    final = serie[-1][1]
+    de_golpe = cantidad * compras / primero * final if primero else 0.0
+    return Resultado(compras, cripto, cripto * final, de_golpe)

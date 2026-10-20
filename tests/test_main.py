@@ -3684,6 +3684,9 @@ def test_dca(config, enviados, monkeypatch):
     assert "€100,00 en <b>Bitcoin</b> cada semana hace 14 días" in enviados[0]
     assert "<b>€360,00</b>" in enviados[0]
     assert "2 compras, €200,00 en total" in enviados[0]
+    # Los 200 a 50.000 son 0,004, que ahora valen 240
+    assert "Todo de golpe en la primera: €240,00 (+20.00%)" in enviados[0]
+    assert "Mejor poco a poco, por €120,00" in enviados[0]
 
 
 def test_dca_sin_precios(config, enviados):

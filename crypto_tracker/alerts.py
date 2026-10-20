@@ -1218,6 +1218,7 @@ def formatear_dca(
     desde: datetime | None,
     currency: str,
     ultimo: datetime | None = None,
+    de_golpe: float | None = None,
 ) -> str:
     """Respuesta de /dca. desde y ultimo, como en /si."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
@@ -1235,6 +1236,19 @@ def formatear_dca(
         f"<i>{veces}, {simbolo}{_num(invertido)} en total · "
         f"precio medio {simbolo}{_num(invertido / cripto)}</i>"
     )
+    # Con una compra sola es lo mismo, no hay nada que comparar.
+    if de_golpe and compras > 1:
+        diferencia = valor - de_golpe
+        texto += (
+            f"\n\n📦 Todo de golpe en la primera: {simbolo}{_num(de_golpe)} "
+            f"({(de_golpe / invertido - 1) * 100:+.2f}%)\n"
+        )
+        if abs(diferencia) < 0.01:
+            texto += "Te habría dado lo mismo"
+        elif diferencia > 0:
+            texto += f"Mejor poco a poco, por {simbolo}{_num(diferencia)}"
+        else:
+            texto += f"Mejor de golpe, por {simbolo}{_num(-diferencia)}"
     if desde:
         texto += f"\n<i>Solo tengo precios desde entonces, no de {_hace(horas)}</i>"
     if ultimo:

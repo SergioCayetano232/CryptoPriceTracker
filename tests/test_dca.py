@@ -61,6 +61,8 @@ def test_calcular_una_compra_por_semana():
     assert r.compras == 3
     assert r.cripto == pytest.approx(1 + 2 + 0.5)
     assert r.valor == pytest.approx(3.5 * 200)
+    # Los 300 de golpe a 100 son 3, que ahora valen 600
+    assert r.de_golpe == pytest.approx(600)
 
 
 def test_calcular_con_el_bot_parado_no_junta_compras():
@@ -77,6 +79,31 @@ def test_formatear_dca():
     assert "hoy tendrías <b>€700,00</b>" in texto
     assert "+133.33% (+€400,00)" in texto
     assert "3 compras, €300,00 en total · precio medio €85,71" in texto
+
+
+def test_formatear_dca_comparado_con_de_golpe():
+    texto = formatear_dca(
+        100, "bitcoin", "cada semana", 3, 3.5, 700, 360, None, "eur", de_golpe=600
+    )
+
+    assert "📦 Todo de golpe en la primera: €600,00 (+100.00%)" in texto
+    assert "Mejor poco a poco, por €100,00" in texto
+
+
+def test_formatear_dca_mejor_de_golpe():
+    texto = formatear_dca(
+        100, "bitcoin", "cada semana", 2, 1.5, 300, 360, None, "eur", de_golpe=400
+    )
+
+    assert "Mejor de golpe, por €100,00" in texto
+
+
+def test_formatear_dca_con_una_compra_no_compara():
+    texto = formatear_dca(
+        50, "bitcoin", "cada día", 1, 1, 40, 2160, None, "eur", de_golpe=40
+    )
+
+    assert "de golpe" not in texto
 
 
 def test_formatear_dca_sin_todo_el_tramo():
