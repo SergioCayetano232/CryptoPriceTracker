@@ -1351,13 +1351,13 @@ def _ath(config: Config, argumento: str) -> str:
     if not encontrados:
         return alerts.formatear_no_encuentro(faltan)
 
+    ahora = datetime.now(timezone.utc)
     if len(coin_ids) == 1:
-        ahora = datetime.now(timezone.utc)
         return alerts.con_fuente(
             alerts.formatear_maximo(encontrados[0], config.vs_currency, ahora)
         )
     return alerts.con_fuente(
-        alerts.formatear_maximos(encontrados, faltan, config.vs_currency)
+        alerts.formatear_maximos(encontrados, faltan, config.vs_currency, ahora)
     )
 
 

@@ -1356,7 +1356,9 @@ def formatear_maximo(m: Maximo, currency: str, ahora: datetime) -> str:
     )
 
 
-def formatear_maximos(maximos: list[Maximo], faltan: list[str], currency: str) -> str:
+def formatear_maximos(
+    maximos: list[Maximo], faltan: list[str], currency: str, ahora: datetime
+) -> str:
     """/ath de varias, una por linea."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
     texto = ["🏔 <b>Máximo histórico</b> · <i>lo que le falta</i>", ""]
@@ -1365,7 +1367,7 @@ def formatear_maximos(maximos: list[Maximo], faltan: list[str], currency: str) -
         falta = f"+{m.falta():.2f}%" if m.falta() else "🎉 en máximos"
         texto.append(
             f"<b>{nombre}</b>  {simbolo}{_num(m.maximo)} "
-            f"<i>({m.fecha.astimezone():%m/%Y})</i>  {falta}"
+            f"<i>({hace(m.fecha, ahora)})</i>  {falta}"
         )
 
     if faltan:

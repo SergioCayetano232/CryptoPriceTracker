@@ -3159,8 +3159,9 @@ def test_ath_de_varias(config, enviados, monkeypatch):
 
     main.atender(config, _mensaje("/ath btc sol bitcion"))
 
-    assert "<b>Bitcoin</b>  €100.000,00 <i>(03/2026)</i>  +33.33%" in enviados[0]
-    assert "<b>Solana</b>  €250,00 <i>(03/2026)</i>  🎉 en máximos" in enviados[0]
+    assert "<b>Bitcoin</b>  €100.000,00 <i>(hace " in enviados[0]
+    assert "</i>  +33.33%" in enviados[0]
+    assert "</i>  🎉 en máximos" in enviados[0]
     assert "No encuentro <b>bitcion</b>" in enviados[0]
 
 

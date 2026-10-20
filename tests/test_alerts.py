@@ -12,6 +12,7 @@ from crypto_tracker.alerts import (
     _num,
     clasificar,
     formatear,
+    formatear_maximos,
     formatear_precio,
     formatear_puntual,
     formatear_puntuales,
@@ -19,6 +20,7 @@ from crypto_tracker.alerts import (
     revisar,
 )
 from crypto_tracker.config import Watch
+from crypto_tracker.maximo import Maximo
 from crypto_tracker.puntuales import Puntual
 
 # --- clasificar ---
@@ -574,6 +576,20 @@ def test_en_maximos_lo_celebra():
     aviso = Alert("bitcoin", 105000.0, 100000.0, ALTO, falta_maximo=0)
 
     assert "🎉 <i>Está en su máximo histórico</i>" in formatear(aviso, "eur")
+
+
+def test_ath_de_varias_dice_hace_cuanto():
+    ahora = datetime(2026, 10, 20, tzinfo=timezone.utc)
+    marzo = datetime(2026, 3, 14, tzinfo=timezone.utc)
+    maximos = [
+        Maximo("bitcoin", 75000.0, 100000.0, marzo),
+        Maximo("solana", 250.0, 250.0, ahora),
+    ]
+
+    texto = formatear_maximos(maximos, [], "eur", ahora)
+
+    assert "<b>Bitcoin</b>  €100.000,00 <i>(hace 7 meses)</i>  +33.33%" in texto
+    assert "<b>Solana</b>  €250,00 <i>(hoy)</i>  🎉 en máximos" in texto
 
 
 def test_sin_maximo_no_sale_la_linea():
