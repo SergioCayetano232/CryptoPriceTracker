@@ -2278,6 +2278,8 @@ def test_movimientos_de_una_cripto(config, monkeypatch):
 
     texto, teclado = mandados[2]
     assert "compras y ventas de Solana" in texto
+    assert "Compra de 1 de Solana por €150,00 <i>(a €150,00)</i>" in texto
+    assert "0,01 de Bitcoin por €600,00 <i>(a €60.000,00)</i>" in mandados[3][0]
     assert "Bitcoin" not in texto
     # La ultima es la de bitcoin: el boton desharía otra que no sale aqui.
     assert teclado is None

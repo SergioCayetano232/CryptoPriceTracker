@@ -574,6 +574,8 @@ def formatear_movimientos(
             linea = f"💸 Venta de {texto_cantidad(m.cantidad)} de {nombre}"
         if m.coste is not None:
             linea += f" por {simbolo}{_num(m.coste)}"
+            if m.cantidad > 0:
+                linea += f" <i>(a {simbolo}{_num(m.coste / m.cantidad)})</i>"
         lineas.append(f"{linea}  <i>{cuando:%d/%m %H:%M}</i>")
 
     todos = todos or lista
