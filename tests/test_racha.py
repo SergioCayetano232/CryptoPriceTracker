@@ -62,6 +62,12 @@ def test_sin_dos_dias():
     assert calcular([(HOY - timedelta(days=3), 100.0), (HOY, 110.0)]) is None
 
 
+def test_al_dia_compuesto():
+    r = Racha(False, 2, HOY - timedelta(days=2), 100, 81, True)
+
+    assert r.al_dia == pytest.approx(-10)
+
+
 def test_formatear():
     r = Racha(True, 3, HOY - timedelta(days=3), 100, 110, True)
 
@@ -71,6 +77,7 @@ def test_formatear():
         "🔺 <b>Bitcoin</b> lleva <b>3 días</b> seguidos subiendo, contando hoy" in texto
     )
     assert "+10.00% desde el 09/10: €100,00 → €110,00" in texto
+    assert "De media, +3.23% al día" in texto
 
 
 def test_formatear_un_dia_y_sin_el_principio():
@@ -78,6 +85,8 @@ def test_formatear_un_dia_y_sin_el_principio():
 
     assert "lleva <b>al menos 1 día</b> bajando" in texto
     assert "seguidos" not in texto
+    # Con un día la media es el propio cambio
+    assert "De media" not in texto
 
 
 def test_mas_larga():

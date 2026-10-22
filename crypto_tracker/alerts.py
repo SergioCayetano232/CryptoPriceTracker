@@ -763,6 +763,8 @@ def formatear_racha(
         f"{r.cambio:+.2f}% desde el {r.desde:%d/%m}: "
         f"{simbolo}{_num(r.antes)} → {simbolo}{_num(r.ahora)}\n"
     )
+    if r.dias > 1:
+        texto += f"De media, {r.al_dia:+.2f}% al día\n"
     # Si no sé dónde empieza la de ahora, compararla con otra no vale.
     if r.entera and record and desde:
         if record <= r.dias:

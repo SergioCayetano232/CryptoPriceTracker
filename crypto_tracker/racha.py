@@ -20,6 +20,11 @@ class Racha:
     def cambio(self) -> float:
         return (self.ahora / self.antes - 1) * 100
 
+    @property
+    def al_dia(self) -> float:
+        # Compuesto: tres días al +3.23% hacen un +10%, no tres al +3.33%.
+        return ((self.ahora / self.antes) ** (1 / self.dias) - 1) * 100
+
 
 def calcular(dias: list[tuple[date, float]]) -> Racha | None:
     """Cuenta de hoy hacia atrás. None si no hay dos días seguidos con precio.
