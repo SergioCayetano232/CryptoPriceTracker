@@ -71,6 +71,22 @@ def test_formatear():
     assert "Solo tengo" not in texto
 
 
+def test_formatear_hace_cuanto_fue_el_minimo():
+    s = Subida(60.0, _dia(3), 84.0, 80.0, _dia(1), 120.0, _dia(2))
+
+    texto = formatear_sube("bitcoin", s, 720, "eur", ahora=_dia(13))
+
+    assert "Mínimo €60,00 el 04/10, hace 10 días" in texto
+
+
+def test_formatear_con_el_minimo_de_hoy_no_dice_hace():
+    s = Subida(60.0, _dia(3), 84.0, 80.0, _dia(1), 120.0, _dia(2))
+
+    texto = formatear_sube("bitcoin", s, 720, "eur", ahora=_dia(3))
+
+    assert "Mínimo €60,00 el 04/10</i>" in texto
+
+
 def test_formatear_en_el_minimo_y_sin_subidas():
     s = Subida(80.0, _dia(2), 80.0, 100.0, _dia(0), 100.0, _dia(0))
 

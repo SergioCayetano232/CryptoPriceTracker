@@ -1006,11 +1006,18 @@ def formatear_caida(
 
 
 def formatear_sube(
-    coin_id: str, s: Subida, horas: float, currency: str, desde: datetime | None = None
+    coin_id: str,
+    s: Subida,
+    horas: float,
+    currency: str,
+    desde: datetime | None = None,
+    ahora: datetime | None = None,
 ) -> str:
     """Respuesta de /sube. desde va si no hay precios de todo el tramo."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
     nombre = escape(coin_id.replace("-", " ").title())
+    momento = s.cuando_minimo.astimezone()
+    cuanto = hace(s.cuando_minimo, ahora or datetime.now(momento.tzinfo))
 
     texto = f"🚀 <b>{nombre}</b>, {nombre_periodo(horas)}\n\n"
     if s.desde_minimo == 0:
@@ -1019,8 +1026,8 @@ def formatear_sube(
         texto += (
             f"Ahora <b>{simbolo}{_num(s.ahora)}</b>, "
             f"<b>{s.desde_minimo:+.2f}%</b> desde el mínimo\n"
-            f"<i>Mínimo {simbolo}{_num(s.minimo)} el "
-            f"{s.cuando_minimo.astimezone():%d/%m}</i>\n"
+            f"<i>Mínimo {simbolo}{_num(s.minimo)} el {momento:%d/%m}"
+            f"{'' if cuanto == 'hoy' else ', ' + cuanto}</i>\n"
         )
     if s.mejor == 0:
         texto += "\nNo ha tenido ninguna subida en este tramo"
