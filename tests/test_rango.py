@@ -76,7 +76,7 @@ def test_formatear():
     assert "ahora -8.33%" in texto
     assert "Mínimo €80,00" in texto
     assert "ahora +37.50%" in texto
-    assert "Media €102,50" in texto
+    assert "Media €102,50  <i>ahora +7.32%</i>" in texto
     assert "Ahora <b>€110,00</b>, al 75% del rango" in texto
     assert "<code>mín ━━━━━━━●━━ máx</code>" in texto
     assert "Solo tengo" not in texto

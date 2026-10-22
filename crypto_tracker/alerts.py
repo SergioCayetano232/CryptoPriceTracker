@@ -940,6 +940,7 @@ def formatear_rango(
     nombre = escape(coin_id.replace("-", " ").title())
     del_maximo = (r.ahora / r.maximo - 1) * 100
     del_minimo = (r.ahora / r.minimo - 1) * 100
+    de_la_media = (r.ahora / r.media - 1) * 100
 
     texto = (
         f"📏 <b>{nombre}</b>, {nombre_periodo(horas)}\n\n"
@@ -947,7 +948,7 @@ def formatear_rango(
         f" · ahora {del_maximo:+.2f}%</i>\n"
         f"Mínimo {simbolo}{_num(r.minimo)}  <i>el {r.cuando_minimo.astimezone():%d/%m}"
         f" · ahora {del_minimo:+.2f}%</i>\n"
-        f"Media {simbolo}{_num(r.media)}\n\n"
+        f"Media {simbolo}{_num(r.media)}  <i>ahora {de_la_media:+.2f}%</i>\n\n"
         f"Ahora <b>{simbolo}{_num(r.ahora)}</b>"
     )
     if r.posicion is None:
