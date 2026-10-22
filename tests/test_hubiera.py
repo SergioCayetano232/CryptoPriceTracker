@@ -47,6 +47,7 @@ def test_formatear_ganando():
     assert "€1.000,00 en <b>Bitcoin</b> hace 30 días" in texto
     assert "hoy tendrías <b>€1.200,00</b>" in texto
     assert "🔺 +20.00% (+€200,00)" in texto
+    assert "Habrías comprado 0,02 Bitcoin" in texto
     assert "Entonces €50.000,00 · ahora €60.000,00" in texto
     assert "Solo tengo" not in texto
 

@@ -1215,6 +1215,7 @@ def formatear_hubiera(
         f"{cuando}, hoy tendrías <b>{simbolo}{_num(valor)}</b>\n"
         f"{_flecha(porcentaje)} {porcentaje:+.2f}% "
         f"({_ganancia(valor - cantidad, simbolo)})\n"
+        f"<i>Habrías comprado {texto_cantidad(cantidad / antes)} {nombre}</i>\n"
         f"<i>Entonces {simbolo}{_num(antes)} · ahora {simbolo}{_num(ahora)}</i>"
     )
     if desde:
