@@ -38,7 +38,7 @@ from .racha import Racha
 from .rango import Rango, barra
 from .ratio import Ratio
 from .reparto import Trozo, demasiado
-from .rsi import PERIODO, SOBRECOMPRA, SOBREVENTA, Rsi
+from .rsi import PERIODO, SOBRECOMPRA, SOBREVENTA, Rsi, hasta_zona
 from .semanal import Semana
 from .sube import Subida
 from .telegram import escape
@@ -786,6 +786,12 @@ def formatear_rsi(coin_id: str, r: Rsi, currency: str) -> str:
         zona = "🧊 <b>Sobrevendida</b>: ha bajado mucho y rápido, suele rebotar"
     else:
         zona = "😐 <b>Neutral</b>: ni pasada de subidas ni de bajadas"
+        puntos, arriba = hasta_zona(r.valor)
+        cuantos = "menos de 1 punto" if puntos < 1 else f"{puntos:.0f} puntos"
+        zona += (
+            f"\nLe faltan {cuantos} para "
+            f"{'sobrecomprada' if arriba else 'sobrevendida'}"
+        )
 
     texto = (
         f"📊 <b>{nombre}</b>, RSI de {PERIODO} días: <b>{r.valor:.0f}</b>\n"

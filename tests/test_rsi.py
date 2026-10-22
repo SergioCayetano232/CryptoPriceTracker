@@ -5,7 +5,7 @@ from datetime import date, timedelta
 import pytest
 
 from crypto_tracker.alerts import formatear_rsi
-from crypto_tracker.rsi import Rsi, calcular
+from crypto_tracker.rsi import Rsi, calcular, hasta_zona
 
 HOY = date(2026, 10, 12)
 
@@ -71,6 +71,28 @@ def test_formatear(valor, esperado):
     assert f"📊 <b>Bitcoin</b>, RSI de 14 días: <b>{valor}</b>" in texto
     assert esperado in texto
     assert "Ahora €110,00" in texto
+
+
+@pytest.mark.parametrize(
+    "valor,esperado",
+    [
+        (62, (8, True)),
+        (50, (20, True)),
+        (41, (11, False)),
+        (70, None),
+        (25, None),
+    ],
+)
+def test_hasta_zona(valor, esperado):
+    assert hasta_zona(valor) == esperado
+
+
+def test_formatear_neutral_dice_cuanto_falta():
+    texto = formatear_rsi("bitcoin", Rsi(62, 110, 90), "eur")
+
+    assert "Le faltan 8 puntos para sobrecomprada" in texto
+    assert "menos de 1" in formatear_rsi("bitcoin", Rsi(69.6, 110, 90), "eur")
+    assert "Le faltan" not in formatear_rsi("bitcoin", Rsi(75, 110, 90), "eur")
 
 
 def test_formatear_con_pocos_dias_lo_avisa():

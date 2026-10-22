@@ -46,3 +46,12 @@ def calcular(dias: list[tuple[date, float]]) -> Rsi | None:
     else:
         valor = 100 - 100 / (1 + sube / baja)
     return Rsi(valor, precios[-1], len(precios))
+
+
+def hasta_zona(valor: float) -> tuple[float, bool] | None:
+    """Puntos para la zona más cerca y si es la de sobrecompra. None si ya está."""
+    if valor <= SOBREVENTA or valor >= SOBRECOMPRA:
+        return None
+    if valor >= 50:
+        return SOBRECOMPRA - valor, True
+    return valor - SOBREVENTA, False
