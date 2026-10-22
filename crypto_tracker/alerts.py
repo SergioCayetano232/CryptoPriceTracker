@@ -948,9 +948,12 @@ def formatear_rango(
         f" · ahora {del_maximo:+.2f}%</i>\n"
         f"Mínimo {simbolo}{_num(r.minimo)}  <i>el {r.cuando_minimo.astimezone():%d/%m}"
         f" · ahora {del_minimo:+.2f}%</i>\n"
-        f"Media {simbolo}{_num(r.media)}  <i>ahora {de_la_media:+.2f}%</i>\n\n"
-        f"Ahora <b>{simbolo}{_num(r.ahora)}</b>"
+        f"Media {simbolo}{_num(r.media)}  <i>ahora {de_la_media:+.2f}%</i>\n"
     )
+    # Sin moverse sería un 0% que no dice nada; ya sale abajo.
+    if r.posicion is not None:
+        texto += f"<i>Del mínimo al máximo, {r.amplitud:+.2f}%</i>\n"
+    texto += f"\nAhora <b>{simbolo}{_num(r.ahora)}</b>"
     if r.posicion is None:
         texto += "\n<i>No se ha movido nada en este tramo</i>"
     else:

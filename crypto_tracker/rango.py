@@ -27,6 +27,11 @@ class Rango:
             return None
         return (self.ahora - self.minimo) / (self.maximo - self.minimo) * 100
 
+    @property
+    def amplitud(self) -> float:
+        """Cuánto hay del mínimo al máximo, en %."""
+        return (self.maximo / self.minimo - 1) * 100
+
 
 def interpretar(argumento: str) -> tuple[str, float]:
     """'bitcoin 30d' -> ('bitcoin', 720). Sin tramo, 7 días; sin cripto, ''."""

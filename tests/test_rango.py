@@ -41,6 +41,7 @@ def test_calcular():
     assert r.cuando_minimo == INICIO + timedelta(days=2)
     assert r.media == 102.5
     assert r.posicion == 75
+    assert r.amplitud == 50
 
 
 def test_calcular_con_empate_se_queda_el_ultimo():
@@ -77,6 +78,7 @@ def test_formatear():
     assert "Mínimo €80,00" in texto
     assert "ahora +37.50%" in texto
     assert "Media €102,50  <i>ahora +7.32%</i>" in texto
+    assert "Del mínimo al máximo, +50.00%" in texto
     assert "Ahora <b>€110,00</b>, al 75% del rango" in texto
     assert "<code>mín ━━━━━━━●━━ máx</code>" in texto
     assert "Solo tengo" not in texto
@@ -88,5 +90,6 @@ def test_formatear_sin_moverse_y_con_hueco():
     texto = formatear_rango("bitcoin", r, 168, "eur", desde=INICIO)
 
     assert "No se ha movido nada" in texto
+    assert "Del mínimo" not in texto
     assert "mín" not in texto
     assert "Solo tengo precios desde el" in texto
