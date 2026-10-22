@@ -27,6 +27,12 @@ class Horas:
     def cara(self) -> int:
         return max(self.medias, key=self.medias.__getitem__)
 
+    @property
+    def ahorro(self) -> float:
+        """Cuánto más barato sale de media comprar a la barata que a la cara, en %."""
+        barata, cara = self.medias[self.barata], self.medias[self.cara]
+        return (1 - (1 + barata / 100) / (1 + cara / 100)) * 100
+
 
 def interpretar(argumento: str) -> tuple[str, float]:
     """'bitcoin 7d' -> ('bitcoin', 168). Sin tramo, 30 días; sin cripto, ''."""

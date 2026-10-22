@@ -67,6 +67,19 @@ def test_interpretar():
         interpretar("btc eth")
 
 
+def test_ahorro():
+    h = Horas({4: -1.0, 17: 1.0}, 3)
+
+    # 99 en vez de 101
+    assert h.ahorro == pytest.approx(1.98, abs=0.01)
+
+
+def test_formatear_sin_diferencia_no_dice_ahorro():
+    texto = formatear_horas("eth", Horas({1: 0.0, 2: 0.0}, 1), 7 * 24)
+
+    assert "Comprando" not in texto
+
+
 def test_formatear():
     medias = {h: 0.0 for h in range(24)}
     medias[4], medias[17] = -0.8, 0.6
@@ -76,6 +89,7 @@ def test_formatear():
     assert texto.startswith("🕐 <b>Bitcoin</b> por horas, últimos 30 días")
     assert "🟢 Más barata sobre las <b>04:00</b> (-0.80%)" in texto
     assert "🔴 Más cara sobre las <b>17:00</b> (+0.60%)" in texto
+    assert "Comprando a las 04:00 y no a las 17:00, un <b>1.39%</b> más barato" in texto
     assert "<code>00h ▅▅▅▅▁" in texto
     assert "en 12 días completos" in texto
     assert "no lo tomes como una regla" not in texto

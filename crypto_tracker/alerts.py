@@ -1134,6 +1134,11 @@ def formatear_horas(coin_id: str, h: Horas, horas: float) -> str:
         f"🟢 Más barata sobre las <b>{h.barata:02d}:00</b> ({barata:+.2f}%)\n"
         f"🔴 Más cara sobre las <b>{h.cara:02d}:00</b> ({cara:+.2f}%)\n"
     )
+    if h.ahorro > 0:
+        texto += (
+            f"Comprando a las {h.barata:02d}:00 y no a las {h.cara:02d}:00, "
+            f"un <b>{h.ahorro:.2f}%</b> más barato\n"
+        )
     # Si falta alguna hora, las etiquetas de los lados mentirían.
     if len(h.medias) == 24:
         texto += f"\n<code>00h {sparkline(list(h.medias.values()))} 23h</code>\n"
