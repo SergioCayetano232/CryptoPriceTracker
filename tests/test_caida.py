@@ -85,6 +85,22 @@ def test_formatear():
     assert "Solo tengo" not in texto
 
 
+def test_formatear_hace_cuanto_fue_el_maximo():
+    c = Caida(130, _dia(4), 117, 120, _dia(1), 90, _dia(2))
+
+    texto = formatear_caida("bitcoin", c, 720, "eur", ahora=_dia(14))
+
+    assert "Máximo €130,00 el 05/10, hace 10 días" in texto
+
+
+def test_formatear_con_el_maximo_de_hoy_no_dice_hace():
+    c = Caida(130, _dia(4), 117, 120, _dia(1), 90, _dia(2))
+
+    texto = formatear_caida("bitcoin", c, 720, "eur", ahora=_dia(4))
+
+    assert "Máximo €130,00 el 05/10</i>" in texto
+
+
 def test_formatear_en_maximos_y_sin_caidas():
     c = Caida(120, _dia(2), 120, 100, _dia(0), 100, _dia(0))
 

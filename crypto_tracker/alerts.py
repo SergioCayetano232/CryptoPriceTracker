@@ -968,11 +968,18 @@ def formatear_rango(
 
 
 def formatear_caida(
-    coin_id: str, c: Caida, horas: float, currency: str, desde: datetime | None = None
+    coin_id: str,
+    c: Caida,
+    horas: float,
+    currency: str,
+    desde: datetime | None = None,
+    ahora: datetime | None = None,
 ) -> str:
     """Respuesta de /caida. desde va si no hay precios de todo el tramo."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
     nombre = escape(coin_id.replace("-", " ").title())
+    momento = c.cuando_maximo.astimezone()
+    cuanto = hace(c.cuando_maximo, ahora or datetime.now(momento.tzinfo))
 
     texto = f"📉 <b>{nombre}</b>, {nombre_periodo(horas)}\n\n"
     if c.desde_maximo == 0:
@@ -981,8 +988,8 @@ def formatear_caida(
         texto += (
             f"Ahora <b>{simbolo}{_num(c.ahora)}</b>, "
             f"<b>{c.desde_maximo:+.2f}%</b> desde el máximo\n"
-            f"<i>Máximo {simbolo}{_num(c.maximo)} el "
-            f"{c.cuando_maximo.astimezone():%d/%m}</i>\n"
+            f"<i>Máximo {simbolo}{_num(c.maximo)} el {momento:%d/%m}"
+            f"{'' if cuanto == 'hoy' else ', ' + cuanto}</i>\n"
         )
     if c.peor == 0:
         texto += "\nNo ha tenido ninguna caída en este tramo"
