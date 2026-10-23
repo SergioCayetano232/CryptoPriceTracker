@@ -73,3 +73,29 @@ def test_formatear_mas_rojos_con_iguales_e_incompleto():
 
 def test_formatear_empate():
     assert formatear_verdes("eth", Verdes(3, 3, 0, HOY), 7 * 24).startswith("⚪")
+
+
+def test_guarda_los_ultimos_dias_seguidos():
+    v = calcular(_dias(100, 101, 102, 101, 101, 103, 104, 103, 105, 106))
+
+    assert v.ultimos == (False, None, True, True, False, True, True)
+
+
+def test_los_ultimos_empiezan_despues_del_hueco():
+    dias = [*_dias(100, 105, 103)[:2], (HOY - timedelta(days=1), 90.0), (HOY, 95.0)]
+
+    assert calcular(dias).ultimos == (True,)
+
+
+def test_formatear_los_ultimos_dias():
+    v = Verdes(4, 2, 1, HOY, (True, False, None, True, True, False, True))
+
+    texto = formatear_verdes("bitcoin", v, 30 * 24)
+
+    assert "Últimos 7 días: 🟩🟥⬜🟩🟩🟥🟩\n" in texto
+
+
+def test_formatear_con_un_solo_dia_no_saca_los_ultimos():
+    texto = formatear_verdes("bitcoin", Verdes(1, 0, 0, HOY, (True,)), 7 * 24)
+
+    assert "Últimos" not in texto

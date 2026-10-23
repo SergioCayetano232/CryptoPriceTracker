@@ -10,6 +10,8 @@ POR_DEFECTO = 30 * 24
 
 EJEMPLO = "/verdes bitcoin 30d"
 
+ULTIMOS = 7
+
 
 @dataclass(frozen=True)
 class Verdes:
@@ -17,6 +19,9 @@ class Verdes:
     bajan: int
     iguales: int
     desde: date
+    # De los días seguidos más recientes, el último es el de más a la derecha.
+    # True sube, False baja y None igual.
+    ultimos: tuple[bool | None, ...] = ()
 
     @property
     def total(self) -> int:
@@ -43,9 +48,11 @@ def calcular(dias: list[tuple[date, float]]) -> Verdes | None:
     ni un día comparado con el anterior."""
     suben = bajan = iguales = 0
     desde = None
+    seguidos: list[bool | None] = []
     for (ayer, anterior), (dia, precio) in zip(dias, dias[1:], strict=False):
         # Con el bot parado no sé cómo fueron esos días, ese salto no cuenta.
         if (dia - ayer).days != 1:
+            seguidos = []
             continue
         if desde is None:
             desde = ayer
@@ -55,7 +62,8 @@ def calcular(dias: list[tuple[date, float]]) -> Verdes | None:
             bajan += 1
         else:
             iguales += 1
+        seguidos.append(None if precio == anterior else precio > anterior)
 
     if desde is None:
         return None
-    return Verdes(suben, bajan, iguales, desde)
+    return Verdes(suben, bajan, iguales, desde, tuple(seguidos[-ULTIMOS:]))

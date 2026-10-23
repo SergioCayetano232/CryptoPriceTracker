@@ -1126,8 +1126,13 @@ def formatear_verdes(
     texto += (
         f"\n{'🟩' * verdes}{'🟥' * (10 - verdes)} sube el <b>{pct:.0f}%</b> "
         "de los días\n"
-        "<i>Con el precio del final de cada día</i>"
     )
+    if len(v.ultimos) > 1:
+        cuadros = "".join(
+            {True: "🟩", False: "🟥", None: "⬜"}[sube] for sube in v.ultimos
+        )
+        texto += f"Últimos {len(v.ultimos)} días: {cuadros}\n"
+    texto += "<i>Con el precio del final de cada día</i>"
     if incompleto:
         texto += f"\n<i>Solo tengo precios desde el {v.desde:%d/%m}.</i>"
     return texto
