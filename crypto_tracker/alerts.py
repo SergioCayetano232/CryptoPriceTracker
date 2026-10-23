@@ -1066,7 +1066,12 @@ def formatear_sube(
 
 
 def formatear_extremo(
-    coin_id: str, e: Extremo, horas: float, currency: str, desde: date | None = None
+    coin_id: str,
+    e: Extremo,
+    horas: float,
+    currency: str,
+    desde: date | None = None,
+    hoy: date | None = None,
 ) -> str:
     """Respuesta de /extremo. desde va si no hay precios de todo el tramo."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
@@ -1079,9 +1084,10 @@ def formatear_extremo(
         ("Peor día", e.peor, e.peor.cambio < 0, "No ha bajado ningún día"),
     ):
         if vale:
+            cuanto = hace(d.dia, hoy or date.today())
             texto += (
                 f"\n{_flecha(d.cambio)} {titulo}: <b>{d.cambio:+.2f}%</b> "
-                f"el {d.dia:%d/%m}\n"
+                f"el {d.dia:%d/%m}{'' if cuanto == 'hoy' else ', ' + cuanto}\n"
                 f"<i>{simbolo}{_num(d.antes)} → {simbolo}{_num(d.precio)}</i>\n"
             )
         else:

@@ -200,7 +200,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/historico` | Sin decir cuál, la primera que vigilas (también `/historico 7d`) |
 | `/media bitcoin` | Su media de 7, 30 y 90 días y si el precio de ahora está por encima o por debajo de cada una (`/media bitcoin 14d`, solo la de esos días). Sale de lo guardado y no gasta consultas |
 | `/racha bitcoin` | Cuántos días seguidos lleva subiendo o bajando y cuánto lleva en esa racha. Sale de lo guardado y no gasta consultas |
-| `/extremo bitcoin 30d` | El día que más subió y el que más bajó en ese tramo, con la fecha, el % y de qué precio a cuál (sin tramo, 30 días). Sale de lo guardado y no gasta consultas |
+| `/extremo bitcoin 30d` | El día que más subió y el que más bajó en ese tramo, con la fecha y hace cuánto fue, el % y de qué precio a cuál (sin tramo, 30 días). Sale de lo guardado y no gasta consultas |
 | `/verdes bitcoin 30d` | Cuántos días subió y cuántos bajó en ese tramo, y qué parte fue en verde (sin tramo, 30 días). Sale de lo guardado y no gasta consultas |
 | `/diasemana bitcoin 90d` | Lo que sube o baja de media cada día de la semana, cuál suele ser el mejor y el peor, y cómo suele ir el de hoy (sin tramo, 90 días). Sale de lo guardado y no gasta consultas |
 | `/horas bitcoin 30d` | A qué hora del día suele estar más barata y a cuál más cara, comparando cada hora con la media de su día, con una barrita de las 24 horas y cómo suele estar a la hora de ahora (sin tramo, 30 días). Solo cuenta los días que tiene casi enteros. Sale de lo guardado y no gasta consultas |

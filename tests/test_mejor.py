@@ -73,3 +73,12 @@ def test_formatear_si_solo_baja_y_falta_principio():
     assert "Mejor día" not in texto
     assert "Peor día: <b>-5.00%</b>" in texto
     assert "Solo tengo precios desde el 14/10." in texto
+
+
+def test_formatear_dice_hace_cuanto():
+    e = Extremo(Dia(date(2026, 10, 3), 100, 108), Dia(HOY, 110, 99), 30)
+
+    texto = formatear_extremo("bitcoin", e, 30 * 24, "eur", hoy=HOY)
+
+    assert "Mejor día: <b>+8.00%</b> el 03/10, hace 11 días\n" in texto
+    assert "Peor día: <b>-10.00%</b> el 14/10\n" in texto
