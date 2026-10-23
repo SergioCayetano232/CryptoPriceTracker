@@ -212,7 +212,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/sube bitcoin 30d` | Lo contrario: cuánto ha subido desde el mínimo del tramo y cuál fue su mejor subida, de qué precio a cuál (sin tramo, 30 días). También con `/minimo`. Sale de lo guardado y no gasta consultas |
 | `/comparar btc eth sol 7d` | Qué tal le ha ido a cada una en ese tramo, de la mejor a la peor (sin tramo, 7 días; sin criptos, las que vigilas) |
 | `/correlacion btc eth 30d` | Si dos criptos suben y bajan a la vez (de -1 a +1), para saber si tu cartera está repartida de verdad (sin tramo, 30 días; sin criptos, las dos primeras que vigilas). Sale de lo guardado y no gasta consultas |
-| `/ratio eth btc 30d` | Cuánto vale una en la otra (1 ethereum = 0,03 bitcoin) y cuánto ha cambiado en ese tramo, con barritas, el máximo y el mínimo. Si sube, a la primera le ha ido mejor (sin tramo, 30 días; sin criptos, las dos primeras que vigilas). Sale de lo guardado y no gasta consultas |
+| `/ratio eth btc 30d` | Cuánto vale una en la otra (1 ethereum = 0,03 bitcoin) y cuánto ha cambiado en ese tramo, con barritas, el máximo, el mínimo y en qué punto del rango está. Si sube, a la primera le ha ido mejor (sin tramo, 30 días; sin criptos, las dos primeras que vigilas). Sale de lo guardado y no gasta consultas |
 | `/convertir 0.05 bitcoin` | Cuánto es en euros al precio de ahora |
 | `/convertir 500 eur solana` | Al revés: cuánta solana compras con 500 € (vale `500€`) |
 | `/convertir 1 eth btc` | De una cripto a otra: cuánto bitcoin es 1 ethereum, y al revés |

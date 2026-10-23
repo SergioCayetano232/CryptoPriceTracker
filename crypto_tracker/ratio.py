@@ -31,6 +31,21 @@ class Ratio:
     def cambio(self) -> float:
         return (self.ahora / self.antes - 1) * 100
 
+    @property
+    def maximo(self) -> float:
+        return max(v for _, v in self.dias)
+
+    @property
+    def minimo(self) -> float:
+        return min(v for _, v in self.dias)
+
+    @property
+    def posicion(self) -> float | None:
+        """Como en /rango: 0 en el mínimo, 100 en el máximo."""
+        if self.maximo == self.minimo:
+            return None
+        return (self.ahora - self.minimo) / (self.maximo - self.minimo) * 100
+
 
 def interpretar(argumento: str) -> tuple[list[str], float]:
     """'eth btc 7d' -> (['ethereum', 'bitcoin'], 168). Sin criptos, []."""

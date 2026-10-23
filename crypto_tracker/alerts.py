@@ -915,9 +915,13 @@ def formatear_ratio(una: str, otra: str, r: Ratio, horas: float) -> str:
     )
     if len(valores) >= MINIMO_BARRAS:
         texto += f"<code>{sparkline(muestrear(valores, BARRAS_MOVIL))}</code>\n"
+    texto += f"Máximo {_num(r.maximo)} · Mínimo {_num(r.minimo)}\n"
+    if r.posicion is not None:
+        texto += (
+            f"<code>mín {barra(r.posicion)} máx</code> al {r.posicion:.0f}% del rango\n"
+        )
     texto += (
-        f"Máximo {_num(max(valores))} · Mínimo {_num(min(valores))}\n\n"
-        f"<i>Si sube, a {n1} le ha ido mejor que a {n2}. "
+        f"\n<i>Si sube, a {n1} le ha ido mejor que a {n2}. "
         "Con el precio del final de cada día</i>"
     )
     return texto

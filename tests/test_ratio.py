@@ -67,5 +67,28 @@ def test_formatear():
 def test_formatear_pocos_dias_sin_barritas():
     texto = formatear_ratio("bitcoin", "ethereum", Ratio(_dias(33.0, 30.0)), 7 * 24)
 
-    assert "<code>" not in texto
+    assert texto.count("<code>") == 1  # solo la del rango
     assert "🔻 -9.09%" in texto
+
+
+def test_posicion_en_el_rango():
+    r = Ratio(_dias(0.030, 0.034, 0.029, 0.032))
+
+    assert r.maximo == 0.034
+    assert r.minimo == 0.029
+    assert r.posicion == pytest.approx(60)
+    assert Ratio(_dias(0.03, 0.03)).posicion is None
+
+
+def test_formatear_con_la_barra_del_rango():
+    texto = formatear_ratio(
+        "ethereum", "bitcoin", Ratio(_dias(0.030, 0.034, 0.029, 0.032)), 30 * 24
+    )
+
+    assert "<code>mín ━━━━━●━━━━ máx</code> al 60% del rango\n" in texto
+
+
+def test_formatear_sin_moverse_no_hay_barra():
+    texto = formatear_ratio("ethereum", "bitcoin", Ratio(_dias(0.03, 0.03)), 7 * 24)
+
+    assert "del rango" not in texto
