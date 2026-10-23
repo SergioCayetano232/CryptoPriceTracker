@@ -1105,7 +1105,11 @@ def formatear_verdes(
 
 
 def formatear_diasemana(
-    coin_id: str, s: DiasSemana, horas: float, incompleto: bool = False
+    coin_id: str,
+    s: DiasSemana,
+    horas: float,
+    incompleto: bool = False,
+    hoy: date | None = None,
 ) -> str:
     """Respuesta de /diasemana. incompleto si no hay precios de todo el tramo."""
     nombre = escape(coin_id.replace("-", " ").title())
@@ -1119,6 +1123,14 @@ def formatear_diasemana(
             f"\nMejor: <b>{s.mejor.nombre.lower()}</b> · "
             f"Peor: <b>{s.peor.nombre.lower()}</b>\n"
         )
+    de_hoy = s.de(hoy or date.today())
+    if de_hoy:
+        texto += f"Hoy es {de_hoy.nombre.lower()}: suele ir {de_hoy.media:+.2f}%"
+        if len(s.dias) > 1 and de_hoy == s.mejor:
+            texto += ", su mejor día"
+        elif len(s.dias) > 1 and de_hoy == s.peor:
+            texto += ", su peor día"
+        texto += "\n"
     texto += "<i>Lo que cambia de media ese día y cuántas veces lo he visto</i>"
     if incompleto:
         texto += f"\n<i>Solo tengo precios desde el {s.desde:%d/%m}.</i>"

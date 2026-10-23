@@ -33,6 +33,11 @@ class DiasSemana:
     def peor(self) -> Dia:
         return min(self.dias, key=lambda d: d.media)
 
+    def de(self, fecha: date) -> Dia | None:
+        """El día de la semana de esa fecha, si hay datos de él."""
+        nombre = NOMBRES[fecha.weekday()]
+        return next((d for d in self.dias if d.nombre == nombre), None)
+
 
 def interpretar(argumento: str) -> tuple[str, float]:
     """'bitcoin 30d' -> ('bitcoin', 720). Sin tramo, 90 días; sin cripto, ''."""

@@ -82,3 +82,28 @@ def test_formatear_un_solo_dia_e_incompleto():
 
     assert "Mejor:" not in texto
     assert "Solo tengo precios desde el 05/10." in texto
+
+
+def test_de_una_fecha():
+    s = DiasSemana([Dia("Lunes", 0.82, 12), Dia("Domingo", -1.5, 13)], LUNES)
+
+    assert s.de(LUNES).media == 0.82
+    assert s.de(LUNES + timedelta(days=6)).nombre == "Domingo"
+    assert s.de(LUNES + timedelta(days=1)) is None
+
+
+def test_formatear_dice_como_suele_ir_hoy():
+    s = DiasSemana(
+        [Dia("Lunes", 0.82, 12), Dia("Martes", 0.1, 12), Dia("Domingo", -1.5, 13)],
+        LUNES,
+    )
+
+    lunes = formatear_diasemana("btc", s, 90 * 24, hoy=LUNES)
+    martes = formatear_diasemana("btc", s, 90 * 24, hoy=LUNES + timedelta(days=1))
+    domingo = formatear_diasemana("btc", s, 90 * 24, hoy=LUNES + timedelta(days=6))
+    jueves = formatear_diasemana("btc", s, 90 * 24, hoy=LUNES + timedelta(days=3))
+
+    assert "Hoy es lunes: suele ir +0.82%, su mejor día\n" in lunes
+    assert "Hoy es martes: suele ir +0.10%\n" in martes
+    assert "Hoy es domingo: suele ir -1.50%, su peor día\n" in domingo
+    assert "Hoy es" not in jueves
