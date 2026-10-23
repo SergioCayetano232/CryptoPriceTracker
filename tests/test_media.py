@@ -5,7 +5,7 @@ from datetime import date, timedelta
 import pytest
 
 from crypto_tracker.alerts import formatear_media
-from crypto_tracker.media import calcular, interpretar
+from crypto_tracker.media import calcular, interpretar, lado_de_todas
 from crypto_tracker.periodo import PeriodoError
 
 HOY = date(2026, 10, 12)
@@ -60,3 +60,21 @@ def test_formatear():
     assert "Media de 7 días  €100,00  🔺 +10.00% por encima" in texto
     assert "Media de 30 días  €125,00  🔻 -12.00% por debajo" in texto
     assert "Media de 90 días  <i>no tengo tantos días guardados</i>" in texto
+
+
+def test_lado_de_todas():
+    assert lado_de_todas(110, {7: 100, 30: 105, 90: 90}) is True
+    assert lado_de_todas(80, {7: 100, 30: 105, 90: None}) is False
+    assert lado_de_todas(102, {7: 100, 30: 105}) is None
+    assert lado_de_todas(110, {7: 100, 30: None, 90: None}) is None
+    assert lado_de_todas(100, {7: 100, 30: 90}) is None
+
+
+def test_formatear_por_encima_o_debajo_de_todas():
+    arriba = formatear_media("btc", 130.0, {7: 100.0, 30: 125.0}, "eur")
+    abajo = formatear_media("btc", 90.0, {7: 100.0, 30: 125.0}, "eur")
+    una = formatear_media("btc", 130.0, {14: 100.0}, "eur")
+
+    assert "🟢 Por encima de todas: va hacia arriba" in arriba
+    assert "🔴 Por debajo de todas: va hacia abajo" in abajo
+    assert "de todas" not in una

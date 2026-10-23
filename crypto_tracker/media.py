@@ -37,3 +37,16 @@ def calcular(dias: list[tuple[date, float]], ventana: int) -> float | None:
     if len(dentro) < ventana * COBERTURA:
         return None
     return sum(dentro) / len(dentro)
+
+
+def lado_de_todas(ahora: float, medias: dict[int, float | None]) -> bool | None:
+    """True si está por encima de todas, False si por debajo. None si está entre
+    unas y otras, o si hay menos de dos: con una ya lo dice su línea."""
+    validas = [m for m in medias.values() if m is not None]
+    if len(validas) < 2:
+        return None
+    if all(ahora > m for m in validas):
+        return True
+    if all(ahora < m for m in validas):
+        return False
+    return None

@@ -19,6 +19,7 @@ from .horas import Horas
 from .hoy import Hoy
 from .hoy import mejor_y_peor as extremos_hoy
 from .maximo import Maximo, hace
+from .media import lado_de_todas
 from .mejor import Extremo
 from .mercado import Mercado, grande
 from .miedo import Indice
@@ -738,6 +739,13 @@ def formatear_media(
         lineas.append(
             f"Media de {dias} días  {simbolo}{_num(media)}  "
             f"{_flecha(diferencia)} {diferencia:+.2f}% {lado}"
+        )
+    lado = lado_de_todas(ahora, medias)
+    if lado is not None:
+        lineas.append(
+            "\n🟢 Por encima de todas: va hacia arriba"
+            if lado
+            else "\n🔴 Por debajo de todas: va hacia abajo"
         )
     lineas.append("\n<i>Con el precio del final de cada día</i>")
     return "\n".join(lineas)
