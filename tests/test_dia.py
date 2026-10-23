@@ -106,7 +106,7 @@ def test_formatear():
 
     texto = formatear_dia("bitcoin", d, "eur", HOY)
 
-    assert "📅 <b>Bitcoin</b> el 01/09" in texto
+    assert "📅 <b>Bitcoin</b> el martes 01/09" in texto
     assert "Cerró a <b>€110,00</b>, +10.00% en el día" in texto
     assert "Máximo €120,00 · mínimo €95,00" in texto
     assert "Desde entonces +10.00%: ahora €121,00" in texto
@@ -121,7 +121,7 @@ def test_formatear_hoy_y_de_otro_año():
     assert "<b>Bitcoin</b> hoy" in hoy
     assert "Va por <b>€110,00</b>" in hoy
     assert "Desde entonces" not in hoy
-    assert "el 01/09/2025" in viejo
+    assert "el lunes 01/09/2025" in viejo
 
 
 def test_formatear_con_un_solo_precio():

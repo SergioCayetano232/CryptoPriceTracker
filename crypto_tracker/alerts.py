@@ -12,7 +12,7 @@ from .config import Posicion, Watch
 from .correlacion import Correlacion
 from .cuando import Cuando
 from .dia import Dia
-from .diasemana import DiasSemana
+from .diasemana import NOMBRES, DiasSemana
 from .equilibrio import Cartera
 from .ganancias import Ganancias
 from .horas import Horas
@@ -854,7 +854,8 @@ def formatear_dia(coin_id: str, d: Dia, currency: str, hoy: date | None = None) 
         cuando, precio = "hoy", "Va por"
     else:
         formato = "%d/%m" if d.fecha.year == hoy.year else "%d/%m/%Y"
-        cuando, precio = f"el {d.fecha:{formato}}", "Cerró a"
+        semana = NOMBRES[d.fecha.weekday()].lower()
+        cuando, precio = f"el {semana} {d.fecha:{formato}}", "Cerró a"
 
     texto = f"📅 <b>{nombre}</b> {cuando}\n\n{precio} <b>{simbolo}{_num(d.cierre)}</b>"
     # Con un solo precio guardado ese día, ni cambio ni máximo que contar.
