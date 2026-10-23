@@ -101,3 +101,22 @@ def test_formatear_sin_todas_las_horas_y_poca_diferencia():
     assert "<code>" not in texto
     assert "en 1 día completo" in texto
     assert "no lo tomes como una regla" in texto
+
+
+def test_formatear_dice_como_suele_estar_ahora():
+    medias = {h: 0.0 for h in range(24)}
+    medias[4], medias[17] = -0.8, 0.6
+
+    barata = formatear_horas("btc", Horas(medias, 5), 30 * 24, INICIO.replace(hour=4))
+    cara = formatear_horas("btc", Horas(medias, 5), 30 * 24, INICIO.replace(hour=17))
+    igual = formatear_horas("btc", Horas(medias, 5), 30 * 24, INICIO.replace(hour=9))
+
+    assert "Ahora son las 04:00: a esta hora suele estar -0.80%, más barata" in barata
+    assert "Ahora son las 17:00: a esta hora suele estar +0.60%, más cara" in cara
+    assert "+0.00%, justo en la media del día" in igual
+
+
+def test_formatear_sin_datos_de_la_hora_de_ahora():
+    texto = formatear_horas("eth", Horas({1: -0.1, 2: 0.1}, 1), 7 * 24, INICIO)
+
+    assert "Ahora son" not in texto

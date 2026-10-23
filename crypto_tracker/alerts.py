@@ -1125,7 +1125,9 @@ def formatear_diasemana(
     return texto
 
 
-def formatear_horas(coin_id: str, h: Horas, horas: float) -> str:
+def formatear_horas(
+    coin_id: str, h: Horas, horas: float, ahora: datetime | None = None
+) -> str:
     """Respuesta de /horas."""
     nombre = escape(coin_id.replace("-", " ").title())
     barata, cara = h.medias[h.barata], h.medias[h.cara]
@@ -1138,6 +1140,19 @@ def formatear_horas(coin_id: str, h: Horas, horas: float) -> str:
         texto += (
             f"Comprando a las {h.barata:02d}:00 y no a las {h.cara:02d}:00, "
             f"un <b>{h.ahorro:.2f}%</b> más barato\n"
+        )
+    hora = (ahora or datetime.now()).astimezone().hour
+    if hora in h.medias:
+        media = h.medias[hora]
+        if media < 0:
+            como = "más barata que la media del día"
+        elif media > 0:
+            como = "más cara que la media del día"
+        else:
+            como = "justo en la media del día"
+        texto += (
+            f"\nAhora son las {hora:02d}:00: a esta hora suele estar "
+            f"{media:+.2f}%, {como}\n"
         )
     # Si falta alguna hora, las etiquetas de los lados mentirían.
     if len(h.medias) == 24:
