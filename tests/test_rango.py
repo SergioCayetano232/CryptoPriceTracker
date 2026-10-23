@@ -93,3 +93,14 @@ def test_formatear_sin_moverse_y_con_hueco():
     assert "Del mínimo" not in texto
     assert "mín" not in texto
     assert "Solo tengo precios desde el" in texto
+
+
+def test_formatear_dice_hace_cuanto():
+    r = Rango(120, INICIO, 80, INICIO + timedelta(days=5), 102.5, 110)
+
+    texto = formatear_rango(
+        "bitcoin", r, 30 * 24, "eur", ahora=INICIO + timedelta(days=5, hours=3)
+    )
+
+    assert "Máximo €120,00  <i>el 01/10, hace 5 días · ahora" in texto
+    assert "Mínimo €80,00  <i>el 06/10 · ahora" in texto

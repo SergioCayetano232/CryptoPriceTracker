@@ -204,7 +204,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/verdes bitcoin 30d` | Cuántos días subió y cuántos bajó en ese tramo, y qué parte fue en verde (sin tramo, 30 días). Sale de lo guardado y no gasta consultas |
 | `/diasemana bitcoin 90d` | Lo que sube o baja de media cada día de la semana, cuál suele ser el mejor y el peor, y cómo suele ir el de hoy (sin tramo, 90 días). Sale de lo guardado y no gasta consultas |
 | `/horas bitcoin 30d` | A qué hora del día suele estar más barata y a cuál más cara, comparando cada hora con la media de su día, con una barrita de las 24 horas y cómo suele estar a la hora de ahora (sin tramo, 30 días). Solo cuenta los días que tiene casi enteros. Sale de lo guardado y no gasta consultas |
-| `/rango bitcoin 30d` | Su máximo, su mínimo y su media en ese tramo, y en qué punto del rango está hoy (sin tramo, 7 días). Sale de lo guardado y no gasta consultas |
+| `/rango bitcoin 30d` | Su máximo y su mínimo en ese tramo con hace cuánto fueron, su media y en qué punto del rango está hoy (sin tramo, 7 días). Sale de lo guardado y no gasta consultas |
 | `/dia bitcoin 01/09` | A cuánto cerró ese día, su máximo y su mínimo, y cuánto ha cambiado desde entonces. Vale `ayer` y con año (`01/09/2025`). Sale de lo guardado y no gasta consultas |
 | `/cuando bitcoin 60000` | La última vez que estuvo a ese precio (o más abajo, si ahora está por encima), hace cuánto y lo que ha cambiado desde entonces. Vale `60k`. Sale de lo guardado y no gasta consultas |
 | `/rsi bitcoin` | Su RSI de 14 días: por encima de 70 ha subido demasiado rápido (sobrecomprada) y por debajo de 30 ha bajado demasiado (sobrevendida). Necesita 15 días seguidos guardados y no gasta consultas |

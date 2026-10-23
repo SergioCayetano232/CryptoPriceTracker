@@ -945,7 +945,12 @@ def formatear_reparto(trozos: list[Trozo], total: float, currency: str) -> str:
 
 
 def formatear_rango(
-    coin_id: str, r: Rango, horas: float, currency: str, desde: datetime | None = None
+    coin_id: str,
+    r: Rango,
+    horas: float,
+    currency: str,
+    desde: datetime | None = None,
+    ahora: datetime | None = None,
 ) -> str:
     """Respuesta de /rango. desde va si no hay precios de todo el tramo."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
@@ -954,11 +959,16 @@ def formatear_rango(
     del_minimo = (r.ahora / r.minimo - 1) * 100
     de_la_media = (r.ahora / r.media - 1) * 100
 
+    def hace_cuanto(fecha: datetime) -> str:
+        momento = fecha.astimezone()
+        cuanto = hace(fecha, ahora or datetime.now(momento.tzinfo))
+        return f"el {momento:%d/%m}{'' if cuanto == 'hoy' else ', ' + cuanto}"
+
     texto = (
         f"📏 <b>{nombre}</b>, {nombre_periodo(horas)}\n\n"
-        f"Máximo {simbolo}{_num(r.maximo)}  <i>el {r.cuando_maximo.astimezone():%d/%m}"
+        f"Máximo {simbolo}{_num(r.maximo)}  <i>{hace_cuanto(r.cuando_maximo)}"
         f" · ahora {del_maximo:+.2f}%</i>\n"
-        f"Mínimo {simbolo}{_num(r.minimo)}  <i>el {r.cuando_minimo.astimezone():%d/%m}"
+        f"Mínimo {simbolo}{_num(r.minimo)}  <i>{hace_cuanto(r.cuando_minimo)}"
         f" · ahora {del_minimo:+.2f}%</i>\n"
         f"Media {simbolo}{_num(r.media)}  <i>ahora {de_la_media:+.2f}%</i>\n"
     )
