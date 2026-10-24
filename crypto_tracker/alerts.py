@@ -1021,6 +1021,8 @@ def formatear_caida(
             f"<b>{c.desde_maximo:+.2f}%</b> desde el máximo\n"
             f"<i>Máximo {simbolo}{_num(c.maximo)} el {momento:%d/%m}"
             f"{'' if cuanto == 'hoy' else ', ' + cuanto}</i>\n"
+            f"Para volver al máximo tiene que subir un "
+            f"<b>{c.para_recuperar:+.2f}%</b>\n"
         )
     if c.peor == 0:
         texto += "\nNo ha tenido ninguna caída en este tramo"

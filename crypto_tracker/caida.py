@@ -27,6 +27,11 @@ class Caida:
         return (self.ahora / self.maximo - 1) * 100
 
     @property
+    def para_recuperar(self) -> float:
+        # No es la caída cambiada de signo: tras un -20% hace falta un +25%.
+        return (self.maximo / self.ahora - 1) * 100
+
+    @property
     def peor(self) -> float:
         return (self.valle / self.pico - 1) * 100
 

@@ -59,7 +59,15 @@ def test_calcular_solo_sube():
     c = calcular(_serie(100, 110, 120))
 
     assert c.desde_maximo == 0
+    assert c.para_recuperar == 0
     assert c.peor == 0
+
+
+def test_para_recuperar_no_es_simetrico():
+    c = calcular(_serie(100, 80))
+
+    assert c.desde_maximo == pytest.approx(-20)
+    assert c.para_recuperar == pytest.approx(25)
 
 
 def test_calcular_con_empate_se_queda_el_ultimo_maximo():
@@ -81,6 +89,7 @@ def test_formatear():
     assert "📉 <b>Bitcoin</b>, últimos 30 días" in texto
     assert "Ahora <b>€117,00</b>, <b>-10.00%</b> desde el máximo" in texto
     assert "Máximo €130,00 el 05/10" in texto
+    assert "Para volver al máximo tiene que subir un <b>+11.11%</b>" in texto
     assert "Peor caída <b>-25.00%</b>: de €120,00 el 02/10 a €90,00 el 03/10" in texto
     assert "Solo tengo" not in texto
 
@@ -107,5 +116,6 @@ def test_formatear_en_maximos_y_sin_caidas():
     texto = formatear_caida("bitcoin", c, 168, "eur", desde=INICIO)
 
     assert "está en su máximo del tramo" in texto
+    assert "Para volver" not in texto
     assert "No ha tenido ninguna caída" in texto
     assert "Solo tengo precios desde el" in texto
