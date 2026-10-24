@@ -1585,7 +1585,7 @@ def formatear_miedo(lista: list[Indice]) -> str:
         f"{'▰' * llenas}{'▱' * (10 - llenas)}",
     ]
     antes = []
-    for dias, cuando in ((1, "Ayer"), (7, "Hace una semana")):
+    for dias, cuando in ((1, "Ayer"), (7, "Hace una semana"), (30, "Hace un mes")):
         i = dia_miedo(lista, dias)
         if i is not None:
             antes.append(f"{cuando} {i.valor} {nombre_miedo(i)[0]}")

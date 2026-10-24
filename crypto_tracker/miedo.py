@@ -8,8 +8,8 @@ import requests
 URL = "https://api.alternative.me/fng/"
 TIMEOUT = 15
 
-# Hoy, ayer y hace una semana: lo que hace falta para ver hacia donde va.
-DIAS = 8
+# Hoy, ayer, hace una semana y hace un mes: para ver hacia donde va.
+DIAS = 31
 
 NOMBRES = {
     "extreme fear": ("😱", "Miedo extremo"),

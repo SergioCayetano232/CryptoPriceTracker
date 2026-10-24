@@ -3382,6 +3382,7 @@ def test_miedo(config, monkeypatch):
             Indice(64, "Greed", date(2026, 10, 10)),
             Indice(59, "Greed", date(2026, 10, 9)),
             Indice(20, "Extreme Fear", date(2026, 10, 3)),
+            Indice(48, "Neutral", date(2026, 9, 10)),
         ],
     )
 
@@ -3390,7 +3391,7 @@ def test_miedo(config, monkeypatch):
     texto, teclado = mandados[0]
     assert "😏 <b>Miedo y codicia: 64</b> · Codicia" in texto
     assert "▰▰▰▰▰▰▱▱▱▱" in texto
-    assert "Ayer 59 😏 · Hace una semana 20 😱" in texto
+    assert "Ayer 59 😏 · Hace una semana 20 😱 · Hace un mes 48 😐" in texto
     assert "alternative.me" in texto
     assert teclado == [[("🔄 Actualizar", "/miedo")]]
 
