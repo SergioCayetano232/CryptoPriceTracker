@@ -1063,6 +1063,8 @@ def formatear_sube(
             f"<b>{s.desde_minimo:+.2f}%</b> desde el mínimo\n"
             f"<i>Mínimo {simbolo}{_num(s.minimo)} el {momento:%d/%m}"
             f"{'' if cuanto == 'hoy' else ', ' + cuanto}</i>\n"
+            f"Para volver al mínimo tendría que bajar un "
+            f"<b>{s.para_volver:+.2f}%</b>\n"
         )
     if s.mejor == 0:
         texto += "\nNo ha tenido ninguna subida en este tramo"

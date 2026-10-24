@@ -27,6 +27,11 @@ class Subida:
         return (self.ahora / self.minimo - 1) * 100
 
     @property
+    def para_volver(self) -> float:
+        # Al revés que en /caida: tras un +40%, volver al mínimo es un -28,57%.
+        return (self.minimo / self.ahora - 1) * 100
+
+    @property
     def mejor(self) -> float:
         return (self.pico / self.valle - 1) * 100
 

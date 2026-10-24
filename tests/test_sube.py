@@ -43,6 +43,7 @@ def test_calcular():
     assert s.minimo == 60.0
     assert s.cuando_minimo == _dia(3)
     assert s.desde_minimo == pytest.approx(40)
+    assert s.para_volver == pytest.approx(-28.571, 0.001)
     assert (s.valle, s.pico) == (80.0, 120.0)
     assert (s.cuando_valle, s.cuando_pico) == (_dia(1), _dia(2))
     assert s.mejor == pytest.approx(50)
@@ -52,6 +53,7 @@ def test_calcular_siempre_bajando():
     s = calcular(_serie(100.0, 90.0, 80.0))
 
     assert s.desde_minimo == 0
+    assert s.para_volver == 0
     assert s.mejor == 0
 
 
@@ -67,6 +69,7 @@ def test_formatear():
 
     assert texto.startswith("🚀 <b>Bitcoin</b>, últimos 30 días\n\n")
     assert "Ahora <b>€84,00</b>, <b>+40.00%</b> desde el mínimo" in texto
+    assert "Para volver al mínimo tendría que bajar un <b>-28.57%</b>" in texto
     assert "Mejor subida <b>+50.00%</b>: de €80,00 el 02/10 a €120,00 el 03/10" in texto
     assert "Solo tengo" not in texto
 
@@ -93,5 +96,6 @@ def test_formatear_en_el_minimo_y_sin_subidas():
     texto = formatear_sube("solana", s, 168, "eur", desde=_dia(0))
 
     assert "está en su mínimo del tramo" in texto
+    assert "Para volver" not in texto
     assert "No ha tenido ninguna subida en este tramo" in texto
     assert "Solo tengo precios desde el 01/10" in texto
