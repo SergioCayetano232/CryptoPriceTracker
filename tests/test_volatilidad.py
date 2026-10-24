@@ -11,6 +11,7 @@ from crypto_tracker.volatilidad import (
     calcular,
     interpretar,
     por_dias,
+    recomendar,
 )
 
 # A mediodia: asi la hora de aqui no cambia el dia.
@@ -80,3 +81,16 @@ def test_avisos():
     assert avisos(serie, 2) == 3
     assert avisos(serie, 5) == 2  # 106 desde 100, y 100 desde 106
     assert avisos(serie, 10) == 0
+
+
+def test_recomendar_el_mas_pequeño_que_no_molesta():
+    # En 14 días: %2 avisa 6 veces a la semana, %5 justo 2
+    assert recomendar({2: 12, 5: 4, 10: 1}, 14) == 5
+
+
+def test_recomendar_si_se_mueve_poco_el_mas_fino():
+    assert recomendar({2: 0, 5: 0, 10: 0}, 30) == 2
+
+
+def test_recomendar_si_todos_avisan_mucho_el_mayor():
+    assert recomendar({2: 9, 5: 6, 10: 4}, 7) == 10

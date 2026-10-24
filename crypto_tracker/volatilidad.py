@@ -13,6 +13,9 @@ POR_DEFECTO = 30 * 24
 # Los % que se prueban, de mucho aviso a poco.
 PRUEBAS = (2, 5, 10)
 
+# Más de un par de avisos a la semana ya es ruido.
+POR_SEMANA = 2
+
 
 @dataclass(frozen=True)
 class Volatilidad:
@@ -70,3 +73,12 @@ def avisos(serie: list[tuple[datetime, float]], porcentaje: float) -> int:
         alerta, referencia = _revisar_porcentaje(precio, watch, referencia)
         total += alerta is not None
     return total
+
+
+def recomendar(veces: dict[int, int], dias: int) -> int:
+    """El % mas pequeño que no avisa mas de POR_SEMANA veces a la semana."""
+    for porcentaje in sorted(veces):
+        if veces[porcentaje] / dias * 7 <= POR_SEMANA:
+            return porcentaje
+    # Si hasta el mayor avisa demasiado, es el que menos molesta.
+    return max(veces)

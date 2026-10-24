@@ -3588,6 +3588,8 @@ def test_volatilidad(config, enviados, monkeypatch):
     assert "%2 → 3 veces" in texto
     assert "%5 → 2 veces" in texto
     assert "%10 → ninguna" in texto
+    # %5 son 2 avisos en 4 días, 3,5 a la semana: demasiados
+    assert "<code>/vigilar bitcoin %10</code>" in texto
     assert "Solo tengo precios desde el" in texto
 
 

@@ -1462,6 +1462,7 @@ def _volatilidad(config: Config, argumento: str) -> str:
 
     primero = serie[0][0]
     falta = periodo.falta_principio(primero, datetime.now(timezone.utc), horas)
+    veces = {p: volatilidad.avisos(serie, p) for p in volatilidad.PRUEBAS}
     return alerts.formatear_volatilidad(
         coin_id,
         horas,
@@ -1469,8 +1470,9 @@ def _volatilidad(config: Config, argumento: str) -> str:
         resultado.peor,
         resultado.peor_dia,
         resultado.dias,
-        {p: volatilidad.avisos(serie, p) for p in volatilidad.PRUEBAS},
+        veces,
         primero if falta else None,
+        volatilidad.recomendar(veces, resultado.dias),
     )
 
 

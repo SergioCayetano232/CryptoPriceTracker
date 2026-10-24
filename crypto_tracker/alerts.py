@@ -1667,6 +1667,7 @@ def formatear_volatilidad(
     dias: int,
     avisos: dict[int, int],
     desde: datetime | None,
+    recomendado: int | None = None,
 ) -> str:
     """/volatilidad: lo que se mueve al dia y los avisos que habria dado cada %."""
     nombre = escape(coin_id.replace("-", " ").title())
@@ -1681,6 +1682,12 @@ def formatear_volatilidad(
     for porcentaje, veces in avisos.items():
         cuantas = {0: "ninguna", 1: "1 vez"}.get(veces, f"{veces} veces")
         texto.append(f"%{porcentaje} → {cuantas}")
+    if recomendado is not None:
+        texto += [
+            "",
+            f"👉 Para que te avise un par de veces a la semana como mucho: "
+            f"<code>/vigilar {escape(coin_id)} %{recomendado}</code>",
+        ]
     if desde:
         texto.append(f"\n<i>Solo tengo precios desde el {desde.astimezone():%d/%m}</i>")
     return "\n".join(texto)
