@@ -804,7 +804,8 @@ def formatear_rsi(coin_id: str, r: Rsi, currency: str) -> str:
     texto = (
         f"📊 <b>{nombre}</b>, RSI de {PERIODO} días: <b>{r.valor:.0f}</b>\n"
         f"<code>0 {barra(r.valor)} 100</code>\n"
-        f"{zona}\n\n"
+        f"{zona}\n"
+        f"{_rsi_antes(r)}\n"
         f"Ahora {simbolo}{_num(r.ahora)}\n"
         f"<i>Por encima de {SOBRECOMPRA} se dice sobrecomprada; por debajo de "
         f"{SOBREVENTA}, sobrevendida. Con el precio del final de cada día</i>"
@@ -816,6 +817,16 @@ def formatear_rsi(coin_id: str, r: Rsi, currency: str) -> str:
             "webs.</i>"
         )
     return texto
+
+
+def _rsi_antes(r: Rsi) -> str:
+    if r.hace_semana is None:
+        return ""
+    antes, ahora = round(r.hace_semana), round(r.valor)
+    if antes == ahora:
+        return "Igual que hace una semana\n"
+    rumbo = "subiendo ↗️" if ahora > antes else "bajando ↘️"
+    return f"Hace una semana {antes}, va {rumbo}\n"
 
 
 def formatear_cuando(

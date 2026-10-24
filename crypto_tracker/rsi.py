@@ -18,6 +18,7 @@ class Rsi:
     valor: float
     ahora: float
     dias: int  # cuántos días se han usado
+    hace_semana: float | None = None  # None si no hay días para calcularlo
 
 
 def calcular(dias: list[tuple[date, float]]) -> Rsi | None:
@@ -34,6 +35,11 @@ def calcular(dias: list[tuple[date, float]]) -> Rsi | None:
     if len(precios) < PERIODO + 1:
         return None
 
+    antes = _valor(precios[:-7]) if len(precios) >= PERIODO + 8 else None
+    return Rsi(_valor(precios), precios[-1], len(precios), antes)
+
+
+def _valor(precios: list[float]) -> float:
     cambios = [b - a for a, b in zip(precios, precios[1:], strict=False)]
     sube = sum(max(c, 0) for c in cambios[:PERIODO]) / PERIODO
     baja = sum(max(-c, 0) for c in cambios[:PERIODO]) / PERIODO
@@ -42,10 +48,8 @@ def calcular(dias: list[tuple[date, float]]) -> Rsi | None:
         baja = (baja * (PERIODO - 1) + max(-c, 0)) / PERIODO
 
     if baja == 0:
-        valor = 50.0 if sube == 0 else 100.0
-    else:
-        valor = 100 - 100 / (1 + sube / baja)
-    return Rsi(valor, precios[-1], len(precios))
+        return 50.0 if sube == 0 else 100.0
+    return 100 - 100 / (1 + sube / baja)
 
 
 def hasta_zona(valor: float) -> tuple[float, bool] | None:

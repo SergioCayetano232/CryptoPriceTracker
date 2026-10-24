@@ -28,6 +28,14 @@ def test_calcular_como_wilder():
 
     assert r.valor == pytest.approx(70.53, abs=0.01)
     assert (r.ahora, r.dias) == (46.282, 15)
+    assert r.hace_semana is None  # hacen falta 7 días más
+
+
+def test_calcular_el_de_hace_una_semana():
+    r = calcular(_dias(*WILDER, *[47.0] * 7))
+
+    # El de hace una semana es el mismo de Wilder, sin los 7 días de después
+    assert r.hace_semana == pytest.approx(70.53, abs=0.01)
 
 
 def test_calcular_suaviza_los_dias_siguientes():
@@ -93,6 +101,19 @@ def test_formatear_neutral_dice_cuanto_falta():
     assert "Le faltan 8 puntos para sobrecomprada" in texto
     assert "menos de 1" in formatear_rsi("bitcoin", Rsi(69.6, 110, 90), "eur")
     assert "Le faltan" not in formatear_rsi("bitcoin", Rsi(75, 110, 90), "eur")
+
+
+def test_formatear_compara_con_hace_una_semana():
+    texto = formatear_rsi("bitcoin", Rsi(62, 110, 90, 48.4), "eur")
+    assert "Hace una semana 48, va subiendo ↗️" in texto
+
+    texto = formatear_rsi("bitcoin", Rsi(40, 110, 90, 55), "eur")
+    assert "Hace una semana 55, va bajando ↘️" in texto
+
+    texto = formatear_rsi("bitcoin", Rsi(50.2, 110, 90, 49.9), "eur")
+    assert "Igual que hace una semana" in texto
+
+    assert "Hace una semana" not in formatear_rsi("bitcoin", Rsi(50, 110, 20), "eur")
 
 
 def test_formatear_con_pocos_dias_lo_avisa():
