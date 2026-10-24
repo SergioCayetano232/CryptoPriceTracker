@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from crypto_tracker.comparar import Resultado, comparar, interpretar
+from crypto_tracker.comparar import Resultado, comparar, interpretar, media
 from crypto_tracker.periodo import PeriodoError
 
 AHORA = datetime(2026, 10, 8, 12, 0, tzinfo=timezone.utc)
@@ -81,3 +81,11 @@ def test_comparar_con_el_ultimo_precio_viejo():
 
     assert resultados[0].hasta is None
     assert resultados[1].hasta == viejo[-1][0]
+
+
+def test_media():
+    resultados = [Resultado(c, p, None) for c, p in [("a", 50), ("b", 10), ("c", -20)]]
+
+    assert media(resultados) == pytest.approx(13.333, 0.001)
+    assert media(resultados[:1]) is None
+    assert media([]) is None

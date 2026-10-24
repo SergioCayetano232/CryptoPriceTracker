@@ -3532,6 +3532,7 @@ def test_comparar(config, enviados, monkeypatch):
     assert "🥈 <b>Bitcoin</b>  🔺 +10.00%" in texto
     assert "🥉 <b>Cardano</b>  ➖ +0.00%" in texto
     assert "4. <b>Ethereum</b>  🔻 -20.00%" in texto
+    assert "De media 🔺 <b>+10.00%</b>" in texto
     assert "No tengo precios guardados de <b>pepe</b>" in texto
     assert "desde el" not in texto
 
@@ -3547,6 +3548,7 @@ def test_comparar_a_secas_las_que_vigilas(config, enviados):
     assert "últimos 30 días" in enviados[0]
     assert "🥇 <b>Bitcoin</b>  🔺 +20.00% <i>(desde el" in enviados[0]
     assert "Solana" not in enviados[0]
+    assert "De media" not in enviados[0]  # con una sola no tiene sentido
 
 
 def test_comparar_con_precios_viejos(config, enviados):

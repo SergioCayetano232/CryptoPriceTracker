@@ -8,6 +8,7 @@ from datetime import date, datetime
 from .caida import Caida
 from .cartera import Valor, mejor_y_peor, peso
 from .comparar import Resultado
+from .comparar import media as media_comparar
 from .config import Posicion, Watch
 from .correlacion import Correlacion
 from .cuando import Cuando
@@ -1667,6 +1668,10 @@ def formatear_comparar(
         elif r.hasta:
             linea += f" <i>(hasta el {r.hasta.astimezone():%d/%m})</i>"
         texto.append(linea)
+
+    junta = media_comparar(resultados)
+    if junta is not None:
+        texto += ["", f"De media {_flecha(junta)} <b>{junta:+.2f}%</b>"]
 
     if sin_datos:
         nombres = ", ".join(f"<b>{escape(c)}</b>" for c in sin_datos)

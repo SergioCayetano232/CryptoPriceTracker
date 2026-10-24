@@ -56,3 +56,10 @@ def comparar(
 
     resultados.sort(key=lambda r: r.porcentaje, reverse=True)
     return resultados, sin_datos
+
+
+def media(resultados: list[Resultado]) -> float | None:
+    """Lo que han hecho todas juntas, a partes iguales. Con una sola, None."""
+    if len(resultados) < 2:
+        return None
+    return sum(r.porcentaje for r in resultados) / len(resultados)
