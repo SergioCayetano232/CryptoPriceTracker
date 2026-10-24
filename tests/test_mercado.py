@@ -59,3 +59,9 @@ def test_leer_algo_que_no_es_lo_esperado(datos):
 )
 def test_grande(valor, esperado):
     assert grande(valor) == esperado
+
+
+def test_resto():
+    assert Mercado(1e12, 1, 58.83, 11.0, 9.16).resto == pytest.approx(21.01)
+    assert Mercado(1e12, 1, 58.83, None, 9.16).resto is None
+    assert Mercado(1e12, 1, 80.0, 15.0, 5.01).resto == 0

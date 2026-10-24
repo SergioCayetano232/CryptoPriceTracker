@@ -15,6 +15,15 @@ class Mercado:
     ethereum: float | None
     estables: float | None
 
+    @property
+    def resto(self) -> float | None:
+        """Todas las demás altcoins juntas. None si falta alguna parte."""
+        partes = (self.bitcoin, self.ethereum, self.estables)
+        if None in partes:
+            return None
+        # Por redondeos de CoinGecko podría salir -0,01.
+        return max(100 - sum(partes), 0)
+
 
 def leer(datos, currency: str) -> Mercado:
     data = datos.get("data") if isinstance(datos, dict) else None

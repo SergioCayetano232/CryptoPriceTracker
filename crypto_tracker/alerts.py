@@ -1631,6 +1631,7 @@ def formatear_mercado(m: Mercado, currency: str) -> str:
             ("Bitcoin", m.bitcoin),
             ("Ethereum", m.ethereum),
             ("Estables", m.estables),
+            ("El resto", m.resto),
         )
         if valor is not None
     ]

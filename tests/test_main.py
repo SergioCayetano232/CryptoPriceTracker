@@ -3447,6 +3447,7 @@ def test_mercado(config, monkeypatch):
     assert "<b>Bitcoin</b>  58.8% del total" in texto
     assert "<b>Ethereum</b>  11.0% del total" in texto
     assert "<b>Estables</b>  9.2% del total" in texto
+    assert "<b>El resto</b>  21.0% del total" in texto
     assert "CoinGecko" in texto
     assert kw["botones"] == [[("🔄 Actualizar", "/mercado")]]
 
@@ -3466,6 +3467,7 @@ def test_mercado_a_medias(config, enviados, monkeypatch):
     assert "Ethereum" not in enviados[0]
     assert "en 24 h" not in enviados[0]
     assert "USDT" not in enviados[0]
+    assert "El resto" not in enviados[0]
 
 
 def test_mercado_sin_datos(config, enviados, monkeypatch):
