@@ -834,7 +834,9 @@ def formatear_cuando(
             f"a {objetivo} desde el {c.desde.astimezone():%d/%m}, que es desde cuando "
             f"tengo precios\n"
             f"Lo más {'bajo' if c.por_debajo else 'alto'}, {simbolo}{_num(c.extremo)}. "
-            f"Ahora {simbolo}{_num(c.ahora)}"
+            f"Ahora {simbolo}{_num(c.ahora)}\n"
+            f"Tendría que {'bajar' if c.por_debajo else 'subir'} un "
+            f"<b>{abs(c.falta):.2f}%</b> para llegar"
         )
 
     momento = c.cuando.astimezone()

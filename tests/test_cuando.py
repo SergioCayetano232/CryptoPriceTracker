@@ -59,6 +59,7 @@ def test_calcular_nunca_ha_llegado():
     assert c.cuando is None
     assert c.cambio is None
     assert (c.extremo, c.desde) == (65, _dia(0))
+    assert c.falta == pytest.approx(-25)
 
 
 def test_calcular_justo_ahora():
@@ -96,6 +97,15 @@ def test_formatear_nunca():
 
     assert "<b>Bitcoin</b> no ha bajado a €60,00 desde el 01/09" in texto
     assert "Lo más bajo, €65,00. Ahora €80,00" in texto
+    assert "Tendría que bajar un <b>25.00%</b> para llegar" in texto
+
+
+def test_formatear_nunca_ha_subido():
+    c = Cuando(100, 80, False, None, None, _dia(0), 90)
+
+    texto = formatear_cuando("bitcoin", c, "eur", AHORA)
+
+    assert "Tendría que subir un <b>25.00%</b> para llegar" in texto
 
 
 def test_formatear_justo_ahora():

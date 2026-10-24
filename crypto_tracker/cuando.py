@@ -33,6 +33,11 @@ class Cuando:
             return None
         return (self.ahora / self.precio - 1) * 100
 
+    @property
+    def falta(self) -> float:
+        """Lo que tiene que moverse desde ahora para llegar, con signo."""
+        return (self.objetivo / self.ahora - 1) * 100
+
 
 def interpretar(argumento: str) -> tuple[str, float]:
     """'bitcoin 60000' -> ('bitcoin', 60000.0). Vale 60k y 60.000 €."""
