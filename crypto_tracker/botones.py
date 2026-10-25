@@ -79,6 +79,13 @@ def actualizar(comando: str) -> list[list[tuple[str, str]]]:
     return [[("🔄 Actualizar", comando)]]
 
 
+def para_aleatoria(coin_id: str) -> list[list[tuple[str, str]]]:
+    fila = [("🎲 Otra", "/aleatoria")]
+    if len(f"/precio {coin_id}".encode()) <= MAX_DATOS:
+        fila.append(("📈 Su precio", f"/precio {coin_id}"))
+    return [fila]
+
+
 def para_tendencias(lista: list[Tendencia]) -> list[list[tuple[str, str]]]:
     """Un boton por cripto: /alerta a secas dice el precio y pone un ejemplo."""
     botones = [

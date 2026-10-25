@@ -56,6 +56,7 @@ COMANDOS = {
     "pizza": "Lo que valdrían hoy los 10.000 BTC de las pizzas de 2010",
     "tendencias": "Las criptos que más se buscan hoy",
     "top": "Las 5 que más suben y las 5 que más bajan hoy",
+    "aleatoria": "Una de las 100 más grandes al azar, para descubrir alguna",
     "miedo": "El índice de miedo y codicia del mercado",
     "buscar": "Encuentra el id de una cripto (ej: /buscar btc)",
     "copia": "Lo que vigilo y tu cartera, listo para pegar en el .env",
@@ -138,6 +139,8 @@ ALIAS = {
     "round": "redondo",
     "config": "ajustes",
     "settings": "ajustes",
+    "random": "aleatoria",
+    "azar": "aleatoria",
 }
 
 AYUDA = (

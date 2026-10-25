@@ -20,6 +20,7 @@ from datetime import date, datetime, timedelta, timezone
 
 from crypto_tracker import (
     ajustes,
+    aleatoria,
     alerts,
     botones,
     brusco,
@@ -855,6 +856,9 @@ def responder(
     if nombre == "top":
         return _top(config)
 
+    if nombre == "aleatoria":
+        return _aleatoria(config)
+
     if nombre == "miedo":
         return _miedo()
 
@@ -1406,6 +1410,21 @@ def _top(config: Config) -> str | comandos.ConBotones:
     if not suben and not bajan:
         return texto
     return comandos.ConBotones(alerts.con_fuente(texto), botones.actualizar("/top"))
+
+
+def _aleatoria(config: Config) -> str | comandos.ConBotones:
+    try:
+        lista = coingecko.top_hoy(config.vs_currency)
+    except coingecko.CoinGeckoError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+
+    vigiladas = {w.coin_id for w in _con_cambios(config).watchlist}
+    elegida = aleatoria.elegir(lista, vigiladas)
+    if elegida is None:
+        return "CoinGecko no me ha dado la lista ahora mismo. Prueba en un rato."
+    puesto, m = elegida
+    texto = alerts.formatear_aleatoria(puesto, m, config.vs_currency)
+    return comandos.ConBotones(texto, botones.para_aleatoria(m.coin_id))
 
 
 def _miedo() -> str | comandos.ConBotones:

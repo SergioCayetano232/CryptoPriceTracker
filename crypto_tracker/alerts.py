@@ -1622,6 +1622,22 @@ def formatear_top(suben: list[Movida], bajan: list[Movida], currency: str) -> st
     return "\n".join(texto)
 
 
+def formatear_aleatoria(puesto: int, m: Movida, currency: str) -> str:
+    """/aleatoria: la que ha tocado, con su puesto y cómo va hoy."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    flecha = "🔺" if m.variacion >= 0 else "🔻"
+    nombre = escape(m.nombre)
+    # Sin el símbolo si es el mismo nombre: "NEXO (NEXO)" queda raro.
+    if m.simbolo and m.simbolo != m.nombre.upper():
+        nombre += f" ({escape(m.simbolo)})"
+    return (
+        f"🎲 <b>{nombre}</b>\n"
+        f"Es la número {puesto} por tamaño\n"
+        f"Vale {simbolo}{_num(m.precio)}  ·  En 24 h: {flecha} {m.variacion:+.2f}%\n"
+        f"<i>Para vigilarla: /vigilar {escape(m.coin_id)} %5</i>"
+    )
+
+
 def formatear_miedo(lista: list[Indice]) -> str:
     """/miedo: el de hoy con una barra, y ayer y hace una semana para comparar."""
     if not lista:

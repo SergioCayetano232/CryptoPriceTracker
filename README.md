@@ -228,6 +228,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/pizza` | Lo que valdrían hoy los 10.000 BTC que se pagaron por dos pizzas en 2010, y cuánto falta para el Bitcoin Pizza Day |
 | `/tendencias` | Las 7 criptos que más se buscan hoy en CoinGecko, con un botón en cada una para ver su precio y ponerle una alerta |
 | `/top` | Las 5 que más suben y las 5 que más bajan hoy de las 100 más grandes, con su precio |
+| `/aleatoria` | Una de las 100 más grandes al azar, con su puesto, su precio y cómo va hoy. No saca las que ya vigilas ni las estables. Con un botón para pedir otra |
 | `/miedo` | El índice de miedo y codicia del mercado (0 pánico, 100 euforia), con el de ayer y el de hace una semana. Viene de alternative.me y no gasta consultas de CoinGecko |
 | `/buscar btc` | Encuentra el id de CoinGecko de una cripto |
 | `/copia` | Las líneas `WATCHLIST`, `PORTFOLIO` y `RESUMEN_DIARIO` como están ahora, con lo cambiado por Telegram, listas para pegar en el `.env`. Para guardarlo por si cambias de servidor |
@@ -578,6 +579,7 @@ crypto_tracker/
   dca.py         las compras periódicas de /dca
   maximo.py      el máximo histórico de /ath
   tendencias.py  lo que más se busca, para /tendencias
+  aleatoria.py   una de las más grandes al azar, para /aleatoria
   mercado.py     el mercado entero, para /mercado
   halving.py     cuánto falta para el próximo halving, para /halving
   pizza.py       los 10.000 BTC de las pizzas, para /pizza

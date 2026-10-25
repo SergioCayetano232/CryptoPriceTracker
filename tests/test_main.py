@@ -5242,3 +5242,40 @@ def test_pizza_sin_red(config, enviados, monkeypatch):
     main.atender(config, _mensaje("/pizza"))
 
     assert "No he podido mirar el precio ahora mismo: sin conexión" in enviados[0]
+
+
+# --- /aleatoria ---
+
+
+def test_aleatoria(config, monkeypatch):
+    from crypto_tracker.top import Movida
+
+    mandados = _con_botones(monkeypatch)
+    # bitcoin la vigilas y tether es estable: solo puede salir solana.
+    monkeypatch.setattr(
+        coingecko,
+        "top_hoy",
+        lambda *a, **k: [
+            Movida("bitcoin", "Bitcoin", "BTC", 80000.0, 1.0),
+            Movida("tether", "Tether", "USDT", 1.0, 0.0),
+            Movida("solana", "Solana", "SOL", 105.0, 3.0),
+        ],
+    )
+
+    main.atender(config, _mensaje("/aleatoria"))
+
+    texto, filas = mandados[0]
+    assert "🎲 <b>Solana (SOL)</b>" in texto
+    assert "Es la número 3 por tamaño" in texto
+    assert filas == [[("🎲 Otra", "/aleatoria"), ("📈 Su precio", "/precio solana")]]
+
+
+def test_aleatoria_sin_red(config, enviados, monkeypatch):
+    def falla(*a, **k):
+        raise coingecko.CoinGeckoError("sin conexión")
+
+    monkeypatch.setattr(coingecko, "top_hoy", falla)
+
+    main.atender(config, _mensaje("/aleatoria"))
+
+    assert "No he podido mirarlo ahora mismo: sin conexión" in enviados[0]
