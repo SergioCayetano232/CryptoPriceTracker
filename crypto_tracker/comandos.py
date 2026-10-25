@@ -57,6 +57,7 @@ COMANDOS = {
     "miedo": "El índice de miedo y codicia del mercado",
     "buscar": "Encuentra el id de una cripto (ej: /buscar btc)",
     "copia": "Lo que vigilo y tu cartera, listo para pegar en el .env",
+    "ajustes": "Lo que tienes puesto: moneda, horas tranquilas, avisos...",
     "consultas": "Cuántas consultas a CoinGecko llevas este mes",
     "mute": "Callar los avisos un rato (ej: /mute 2h o /mute bitcoin hasta 8:00)",
     "unmute": "Volver a avisar",
@@ -133,6 +134,8 @@ ALIAS = {
     "callar": "mute",
     "redondos": "redondo",
     "round": "redondo",
+    "config": "ajustes",
+    "settings": "ajustes",
 }
 
 AYUDA = (

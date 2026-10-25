@@ -19,6 +19,7 @@ from dataclasses import replace
 from datetime import date, datetime, timedelta, timezone
 
 from crypto_tracker import (
+    ajustes,
     alerts,
     botones,
     brusco,
@@ -908,6 +909,9 @@ def responder(
 
     if nombre == "correlacion":
         return _correlacion(config, argumento)
+
+    if nombre == "ajustes":
+        return ajustes.mensaje(_con_cambios(config))
 
     if nombre == "copia":
         actual = _con_cambios(config)

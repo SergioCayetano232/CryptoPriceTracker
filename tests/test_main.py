@@ -4909,6 +4909,19 @@ def test_cuando_mal_escrito(config, enviados):
     assert "/cuando bitcoin 60000" in enviados[0]
 
 
+# --- /ajustes ---
+
+
+def test_ajustes_con_el_horario_cambiado(config, enviados):
+    main.atender(config, _mensaje("/horario 7:45"))
+    enviados.clear()
+
+    main.atender(config, _mensaje("/ajustes"))
+
+    assert "⚙️ <b>Tus ajustes</b>" in enviados[0]
+    assert "📰 Resumen cada día a las 07:45" in enviados[0]
+
+
 # --- /redondo ---
 
 
