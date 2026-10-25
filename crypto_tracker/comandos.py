@@ -35,6 +35,7 @@ COMANDOS = {
     "rango": "Entre qué precios se ha movido y dónde está hoy (ej: /rango btc 30d)",
     "dia": "A cuánto estaba un día concreto (ej: /dia btc 01/09 o ayer)",
     "cuando": "La última vez que estuvo a un precio (ej: /cuando btc 60000)",
+    "redondo": "Cuánto le falta para la siguiente cifra redonda (ej: /redondo btc)",
     "rsi": "Si ha subido o bajado demasiado rápido (ej: /rsi btc)",
     "caida": "Cuánto ha bajado desde el máximo (ej: /caida btc 30d)",
     "sube": "Cuánto ha subido desde el mínimo (ej: /sube btc 30d)",
@@ -130,6 +131,8 @@ ALIAS = {
     "máximo": "ath",
     "silencio": "mute",
     "callar": "mute",
+    "redondos": "redondo",
+    "round": "redondo",
 }
 
 AYUDA = (

@@ -4909,6 +4909,37 @@ def test_cuando_mal_escrito(config, enviados):
     assert "/cuando bitcoin 60000" in enviados[0]
 
 
+# --- /redondo ---
+
+
+def test_redondo(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    _precio_de(config, "bitcoin", 60000.0, 60)
+    _precio_de(config, "bitcoin", 64000.0, 5)
+
+    main.atender(config, _mensaje("/redondo btc"))
+
+    assert "🎯 <b>Bitcoin</b>  ahora €64.000,00" in enviados[0]
+    assert "⬆️ €70.000,00  a <b>+9.38%</b>" in enviados[0]
+
+
+def test_redondo_a_secas_las_que_vigilas(config, enviados):
+    _precio_de(config, "bitcoin", 64000.0, 5)
+    _precio_de(config, "ethereum", 2500.0, 5)
+
+    main.atender(config, _mensaje("/redondo"))
+
+    # Ethereum tiene precios, pero no la vigilas.
+    assert "<b>Bitcoin</b>" in enviados[0]
+    assert "Ethereum" not in enviados[0]
+
+
+def test_redondo_sin_precios(config, enviados):
+    main.atender(config, _mensaje("/redondo sol"))
+
+    assert "No tengo precios guardados de <b>solana</b>" in enviados[0]
+
+
 # --- /rsi ---
 
 

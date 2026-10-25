@@ -39,6 +39,7 @@ from .puntuales import CARTERA, Puntual, cumplidas, ejemplo, progreso
 from .racha import Racha
 from .rango import Rango, barra
 from .ratio import Ratio
+from .redondo import Redondo
 from .reparto import Trozo, demasiado
 from .rsi import PERIODO, SOBRECOMPRA, SOBREVENTA, Rsi, hasta_zona
 from .semanal import Semana
@@ -865,6 +866,20 @@ def formatear_cuando(
         texto + f"\nEntonces {simbolo}{_num(c.precio)}, ahora {simbolo}{_num(c.ahora)} "
         f"({c.cambio:+.2f}%)"
     )
+
+
+def formatear_redondo(redondos: list[tuple[str, Redondo]], currency: str) -> str:
+    """Respuesta de /redondo, con una o varias."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    bloques = []
+    for coin_id, r in redondos:
+        nombre = escape(coin_id.replace("-", " ").title())
+        bloques.append(
+            f"🎯 <b>{nombre}</b>  ahora {simbolo}{_num(r.ahora)}\n"
+            f"⬆️ {simbolo}{_num(r.arriba)}  a <b>{r.falta_arriba:+.2f}%</b>\n"
+            f"⬇️ {simbolo}{_num(r.abajo)}  a <b>{r.falta_abajo:+.2f}%</b>"
+        )
+    return "\n\n".join(bloques)
 
 
 def formatear_dia(coin_id: str, d: Dia, currency: str, hoy: date | None = None) -> str:

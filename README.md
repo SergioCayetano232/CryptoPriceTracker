@@ -207,6 +207,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/rango bitcoin 30d` | Su máximo y su mínimo en ese tramo con hace cuánto fueron, su media y en qué punto del rango está hoy (sin tramo, 7 días). Sale de lo guardado y no gasta consultas |
 | `/dia bitcoin 01/09` | Qué día de la semana fue, a cuánto cerró, su máximo y su mínimo, y cuánto ha cambiado desde entonces. Vale `ayer` y con año (`01/09/2025`). Sale de lo guardado y no gasta consultas |
 | `/cuando bitcoin 60000` | La última vez que estuvo a ese precio (o más abajo, si ahora está por encima), hace cuánto y lo que ha cambiado desde entonces. Vale `60k`. Sale de lo guardado y no gasta consultas |
+| `/redondo bitcoin` | Cuánto le falta para la siguiente cifra redonda por arriba y por abajo (de 64.000 a 70.000 y a 60.000). A secas, las que vigilas. Sale de lo guardado y no gasta consultas |
 | `/rsi bitcoin` | Su RSI de 14 días: por encima de 70 ha subido demasiado rápido (sobrecomprada) y por debajo de 30 ha bajado demasiado (sobrevendida). Necesita 15 días seguidos guardados y no gasta consultas |
 | `/caida bitcoin 30d` | Cuánto ha bajado desde el máximo del tramo y cuál fue su peor caída, de qué precio a cuál (sin tramo, 30 días). Sale de lo guardado y no gasta consultas |
 | `/sube bitcoin 30d` | Lo contrario: cuánto ha subido desde el mínimo del tramo y cuál fue su mejor subida, de qué precio a cuál (sin tramo, 30 días). También con `/minimo`. Sale de lo guardado y no gasta consultas |
@@ -593,6 +594,7 @@ crypto_tracker/
   rango.py       el máximo, el mínimo y la media de /rango
   dia.py         a cuánto estaba un día concreto, para /dia
   cuando.py      la última vez que estuvo a un precio, para /cuando
+  redondo.py     la siguiente cifra redonda, para /redondo
   rsi.py         el RSI de 14 días, para /rsi
   caida.py       lo que ha bajado desde el máximo, para /caida
   sube.py        lo que ha subido desde el mínimo, para /sube

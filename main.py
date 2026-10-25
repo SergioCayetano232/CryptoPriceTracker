@@ -59,6 +59,7 @@ from crypto_tracker import (
     racha,
     rango,
     ratio,
+    redondo,
     reparto,
     rsi,
     salud,
@@ -898,6 +899,9 @@ def responder(
 
     if nombre == "cuando":
         return _cuando(config, argumento)
+
+    if nombre == "redondo":
+        return _redondo(config, argumento)
 
     if nombre == "dia":
         return _dia(config, argumento)
@@ -1748,6 +1752,30 @@ def _cuando(config: Config, argumento: str) -> str:
             "Solo sé de las que vigilo: míralas con /vigilar"
         )
     return alerts.formatear_cuando(coin_id, resultado, config.vs_currency)
+
+
+def _redondo(config: Config, argumento: str) -> str:
+    coin_ids = simbolos.varias(argumento)
+    if not argumento:
+        vigiladas = _con_cambios(config).watchlist
+        coin_ids = [w.coin_id for w in vigiladas][: simbolos.MAX_VARIAS]
+    if not coin_ids:
+        return "¿De cuál? Por ejemplo: /redondo bitcoin o /redondo btc eth"
+    if len(coin_ids) > simbolos.MAX_VARIAS:
+        return f"Como mucho {simbolos.MAX_VARIAS} a la vez."
+
+    redondos = []
+    for c in coin_ids:
+        precio = database.get_last_price(config.database_path, c)
+        if precio:
+            redondos.append((c, redondo.calcular(precio)))
+    if not redondos:
+        nombres = ", ".join(f"<b>{telegram.escape(c)}</b>" for c in coin_ids)
+        return (
+            f"No tengo precios guardados de {nombres}. Solo sé de las que "
+            "vigilo: míralas con /vigilar"
+        )
+    return alerts.formatear_redondo(redondos, config.vs_currency)
 
 
 def _dia(config: Config, argumento: str) -> str:
