@@ -35,6 +35,7 @@ from crypto_tracker import (
     copia,
     correlacion,
     cuando,
+    cumple,
     cuota,
     database,
     dca,
@@ -940,6 +941,9 @@ def responder(
 
     if nombre == "pizza":
         return _pizza(config)
+
+    if nombre == "cumple":
+        return alerts.formatear_cumple(cumple.Cumple(date.today()))
 
     if nombre == "millonario":
         return _millonario(config, argumento)

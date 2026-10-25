@@ -5356,3 +5356,14 @@ def test_millonario_de_una_en_una(config, enviados):
     main.atender(config, _mensaje("/millonario btc eth"))
 
     assert "De una en una" in enviados[0]
+
+
+# --- /cumple ---
+
+
+def test_cumple(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+
+    main.atender(config, _mensaje("/cumple"))
+
+    assert "🎂 <b>Bitcoin tiene" in enviados[0]

@@ -13,6 +13,7 @@ from .comparar import media as media_comparar
 from .config import Posicion, Watch
 from .correlacion import Correlacion
 from .cuando import Cuando
+from .cumple import Cumple
 from .dia import Dia
 from .diasemana import NOMBRES, DiasSemana
 from .equilibrio import Cartera
@@ -870,6 +871,19 @@ def formatear_cuando(
         texto + f"\nEntonces {simbolo}{_num(c.precio)}, ahora {simbolo}{_num(c.ahora)} "
         f"({c.cambio:+.2f}%)"
     )
+
+
+def formatear_cumple(c: Cumple) -> str:
+    """Respuesta de /cumple."""
+    dias = f"{c.dias:,}".replace(",", ".")
+    texto = (
+        f"🎂 <b>Bitcoin tiene {c.años} años</b>\n"
+        f"Nació el 03/01/2009 y lleva {dias} días funcionando"
+    )
+    if c.faltan == 0:
+        return texto + "\n🎉 ¡Hoy es su cumpleaños!"
+    falta = "1 día" if c.faltan == 1 else f"{c.faltan} días"
+    return texto + f"\n<i>Faltan {falta} para que cumpla {c.años + 1}</i>"
 
 
 def formatear_millonario(

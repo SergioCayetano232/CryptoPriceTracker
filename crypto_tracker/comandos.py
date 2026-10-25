@@ -54,6 +54,7 @@ COMANDOS = {
     "exportar": "Los precios guardados en un CSV (ej: /exportar bitcoin 30d)",
     "mercado": "Lo que vale todo el mercado y cuánto es de Bitcoin",
     "halving": "Cuánto falta para el próximo halving de Bitcoin",
+    "cumple": "Los años de Bitcoin y cuánto falta para su cumpleaños",
     "pizza": "Lo que valdrían hoy los 10.000 BTC de las pizzas de 2010",
     "millonario": "Cuánto necesitas para tener un millón (ej: /millonario eth)",
     "tendencias": "Las criptos que más se buscan hoy",
@@ -149,6 +150,8 @@ ALIAS = {
     "uptime": "bot",
     "millon": "millonario",
     "millón": "millonario",
+    "cumpleaños": "cumple",
+    "edad": "cumple",
 }
 
 AYUDA = (
