@@ -224,6 +224,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/equilibrio` | A qué precio dejas de perder con cada cripto de tu cartera y cuánto le falta, de la que más lejos está a la que menos, y cuánto tendría que subir todo junto. Solo con las que dicen lo que te costaron |
 | `/exportar bitcoin 30d` | Te manda un CSV con los precios guardados (sin tramo, 30 días) |
 | `/mercado` | Lo que vale todo el mercado cripto, cómo va en 24 h y qué parte es de Bitcoin, Ethereum y las estables |
+| `/halving` | Cuántos días faltan para el próximo halving de Bitcoin, cuánto va de ciclo y cuánto bajará lo que se paga por bloque. La fecha es aproximada y no gasta consultas |
 | `/tendencias` | Las 7 criptos que más se buscan hoy en CoinGecko, con un botón en cada una para ver su precio y ponerle una alerta |
 | `/top` | Las 5 que más suben y las 5 que más bajan hoy de las 100 más grandes, con su precio |
 | `/miedo` | El índice de miedo y codicia del mercado (0 pánico, 100 euforia), con el de ayer y el de hace una semana. Viene de alternative.me y no gasta consultas de CoinGecko |
@@ -577,6 +578,7 @@ crypto_tracker/
   maximo.py      el máximo histórico de /ath
   tendencias.py  lo que más se busca, para /tendencias
   mercado.py     el mercado entero, para /mercado
+  halving.py     cuánto falta para el próximo halving, para /halving
   puntuales.py   las alertas de /alerta
   vigiladas.py   lo que cambias con /vigilar
   volatilidad.py lo que se mueve cada día, para /volatilidad

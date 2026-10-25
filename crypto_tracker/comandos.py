@@ -52,6 +52,7 @@ COMANDOS = {
     "equilibrio": "A qué precio dejas de perder con cada una de tu cartera",
     "exportar": "Los precios guardados en un CSV (ej: /exportar bitcoin 30d)",
     "mercado": "Lo que vale todo el mercado y cuánto es de Bitcoin",
+    "halving": "Cuánto falta para el próximo halving de Bitcoin",
     "tendencias": "Las criptos que más se buscan hoy",
     "top": "Las 5 que más suben y las 5 que más bajan hoy",
     "miedo": "El índice de miedo y codicia del mercado",

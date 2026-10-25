@@ -44,6 +44,7 @@ from crypto_tracker import (
     extremos,
     ganancias,
     grafica,
+    halving,
     horas,
     hoy,
     hubiera,
@@ -909,6 +910,9 @@ def responder(
 
     if nombre == "correlacion":
         return _correlacion(config, argumento)
+
+    if nombre == "halving":
+        return alerts.formatear_halving(halving.calcular(date.today()))
 
     if nombre == "ajustes":
         return ajustes.mensaje(_con_cambios(config))

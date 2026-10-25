@@ -5199,3 +5199,15 @@ def test_media_sin_precios(config, enviados):
     main.atender(config, _mensaje("/media sol"))
 
     assert "No tengo precios guardados de <b>solana</b>" in enviados[0]
+
+
+# --- /halving ---
+
+
+def test_halving(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+
+    main.atender(config, _mensaje("/halving"))
+
+    assert "⛏️ <b>Próximo halving de Bitcoin</b>" in enviados[0]
+    assert "BTC" in enviados[0]

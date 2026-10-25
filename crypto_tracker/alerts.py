@@ -16,6 +16,7 @@ from .dia import Dia
 from .diasemana import NOMBRES, DiasSemana
 from .equilibrio import Cartera
 from .ganancias import Ganancias
+from .halving import Halving
 from .horas import Horas
 from .hoy import Hoy
 from .hoy import mejor_y_peor as extremos_hoy
@@ -865,6 +866,22 @@ def formatear_cuando(
     return (
         texto + f"\nEntonces {simbolo}{_num(c.precio)}, ahora {simbolo}{_num(c.ahora)} "
         f"({c.cambio:+.2f}%)"
+    )
+
+
+def formatear_halving(h: Halving) -> str:
+    """Respuesta de /halving."""
+    ahora = f"{h.recompensa:g}".replace(".", ",")
+    despues = f"{h.recompensa / 2:g}".replace(".", ",")
+    dias = "1 día" if h.faltan == 1 else f"{h.faltan} días"
+    # El día justo ya cuenta el siguiente, y "faltan 1458 días" sin más despista.
+    hoy = "🎉 El halving toca hoy, más o menos\n\n" if h.hoy == h.anterior else ""
+    return (
+        f"{hoy}⛏️ <b>Próximo halving de Bitcoin</b>\n"
+        f"Faltan <b>{dias}</b>, hacia el {h.siguiente:%d/%m/%Y}\n"
+        f"{barra(h.hecho)}  {h.hecho:.0f}% del ciclo\n"
+        f"Lo que se paga por bloque bajará de {ahora} a {despues} BTC\n"
+        "<i>La fecha es aproximada: depende de lo rápido que salgan los bloques</i>"
     )
 
 
