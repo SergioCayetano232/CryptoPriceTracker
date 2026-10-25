@@ -55,6 +55,7 @@ COMANDOS = {
     "mercado": "Lo que vale todo el mercado y cuánto es de Bitcoin",
     "halving": "Cuánto falta para el próximo halving de Bitcoin",
     "pizza": "Lo que valdrían hoy los 10.000 BTC de las pizzas de 2010",
+    "millonario": "Cuánto necesitas para tener un millón (ej: /millonario eth)",
     "tendencias": "Las criptos que más se buscan hoy",
     "top": "Las 5 que más suben y las 5 que más bajan hoy",
     "aleatoria": "Una de las 100 más grandes al azar, para descubrir alguna",
@@ -146,6 +147,8 @@ ALIAS = {
     "last": "ultimo",
     "ping": "bot",
     "uptime": "bot",
+    "millon": "millonario",
+    "millón": "millonario",
 }
 
 AYUDA = (

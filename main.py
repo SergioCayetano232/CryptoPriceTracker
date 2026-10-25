@@ -54,6 +54,7 @@ from crypto_tracker import (
     media,
     mejor,
     miedo,
+    millonario,
     moneda,
     movimientos,
     objetivo,
@@ -940,6 +941,9 @@ def responder(
     if nombre == "pizza":
         return _pizza(config)
 
+    if nombre == "millonario":
+        return _millonario(config, argumento)
+
     if nombre == "ajustes":
         return ajustes.mensaje(_con_cambios(config))
 
@@ -1815,19 +1819,45 @@ def _cuando(config: Config, argumento: str) -> str:
     return alerts.formatear_cuando(coin_id, resultado, config.vs_currency)
 
 
+def _precio_o_pedirlo(config: Config, coin_id: str) -> float | str:
+    """El último guardado y, si no hay, una consulta. Un str es el error."""
+    precio = database.get_last_price(config.database_path, coin_id)
+    if precio:
+        return precio
+    # Si no la vigilas no la tengo guardada: una consulta y listo.
+    try:
+        precio = coingecko.get_prices([coin_id], config.vs_currency).get(coin_id)
+    except coingecko.CoinGeckoError as e:
+        return f"No he podido mirar el precio ahora mismo: {telegram.escape(str(e))}"
+    if not precio:
+        return alerts.formatear_no_encuentro([coin_id])
+    return precio
+
+
 def _pizza(config: Config) -> str:
-    precio = database.get_last_price(config.database_path, "bitcoin")
-    if not precio:
-        # Si no vigilas bitcoin no lo tengo guardado: una consulta y listo.
-        try:
-            precios = coingecko.get_prices(["bitcoin"], config.vs_currency)
-        except coingecko.CoinGeckoError as e:
-            error = telegram.escape(str(e))
-            return f"No he podido mirar el precio ahora mismo: {error}"
-        precio = precios.get("bitcoin")
-    if not precio:
-        return "No he podido mirar el precio de bitcoin ahora mismo."
+    precio = _precio_o_pedirlo(config, "bitcoin")
+    if isinstance(precio, str):
+        return precio
     return alerts.formatear_pizza(pizza.Pizza(precio, date.today()), config.vs_currency)
+
+
+def _millonario(config: Config, argumento: str) -> str:
+    coin_ids = simbolos.varias(argumento) or ["bitcoin"]
+    if len(coin_ids) > 1:
+        return "De una en una. Por ejemplo: /millonario eth"
+    coin_id = coin_ids[0]
+    precio = _precio_o_pedirlo(config, coin_id)
+    if isinstance(precio, str):
+        return precio
+
+    tienes = next(
+        (p.cantidad for p in _con_cambios(config).cartera if p.coin_id == coin_id),
+        None,
+    )
+    unidad = simbolos.de_id(coin_id) or coin_id.replace("-", " ").title()
+    return alerts.formatear_millonario(
+        coin_id, unidad, millonario.Millonario(precio, tienes), config.vs_currency
+    )
 
 
 def _redondo(config: Config, argumento: str) -> str:

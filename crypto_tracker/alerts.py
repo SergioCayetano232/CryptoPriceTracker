@@ -28,6 +28,7 @@ from .mercado import Mercado, grande
 from .miedo import Indice
 from .miedo import hace as dia_miedo
 from .miedo import nombre as nombre_miedo
+from .millonario import Millonario, cantidad
 from .movimientos import (
     Movimiento,
     descuadre,
@@ -869,6 +870,26 @@ def formatear_cuando(
         texto + f"\nEntonces {simbolo}{_num(c.precio)}, ahora {simbolo}{_num(c.ahora)} "
         f"({c.cambio:+.2f}%)"
     )
+
+
+def formatear_millonario(
+    coin_id: str, simbolo_cripto: str, m: Millonario, currency: str
+) -> str:
+    """Respuesta de /millonario."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(coin_id.replace("-", " ").title())
+    cripto = escape(simbolo_cripto)
+    texto = (
+        f"💰 <b>Para tener un millón en {nombre}</b>\n"
+        f"Necesitas <b>{cantidad(m.necesitas)} {cripto}</b>, "
+        f"a {simbolo}{_num(m.precio)} cada uno"
+    )
+    if m.hecho is not None:
+        texto += (
+            f"\nCon lo que tienes ({cantidad(m.tienes)} {cripto}) llevas "
+            f"el <b>{m.hecho:.2f}%</b>"
+        )
+    return texto
 
 
 def formatear_pizza(p: Pizza, currency: str) -> str:

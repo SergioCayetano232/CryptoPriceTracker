@@ -5317,3 +5317,42 @@ def test_ultimo_no_apunta_lo_callado(config, monkeypatch):
     main.ejecutar_ciclo(config, {"bitcoin": "%60000.0"})
 
     assert database.ultimos_avisos(config.database_path) == {}
+
+
+# --- /millonario ---
+
+
+def test_millonario_con_tu_cartera(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    config = replace(config, cartera=(Posicion("bitcoin", 0.5, 5000.0),))
+    _precio_de(config, "bitcoin", 80000.0, 5)
+
+    main.atender(config, _mensaje("/millonario"))
+
+    assert "Necesitas <b>12,5 BTC</b>, a €80.000,00 cada uno" in enviados[0]
+    assert "Con lo que tienes (0,5 BTC) llevas el <b>4.00%</b>" in enviados[0]
+
+
+def test_millonario_de_una_que_no_vigilas(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: {"pepe": 0.00001})
+
+    main.atender(config, _mensaje("/millonario pepe"))
+
+    assert "Necesitas <b>100.000.000.000 Pepe</b>" in enviados[0]
+    assert "Con lo que tienes" not in enviados[0]
+
+
+def test_millonario_no_existe(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: {})
+
+    main.atender(config, _mensaje("/millonario bitcion"))
+
+    assert "No encuentro <b>bitcion</b>" in enviados[0]
+
+
+def test_millonario_de_una_en_una(config, enviados):
+    main.atender(config, _mensaje("/millonario btc eth"))
+
+    assert "De una en una" in enviados[0]

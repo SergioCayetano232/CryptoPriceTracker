@@ -59,3 +59,11 @@ def varias(texto: str) -> list[str]:
     """'btc, sol eth' -> ['bitcoin', 'solana', 'ethereum'], sin repetidas."""
     ids = [a_id(t) for t in texto.replace(",", " ").split()]
     return list(dict.fromkeys(ids))
+
+
+def de_id(coin_id: str) -> str | None:
+    """'bitcoin' -> 'BTC'. None si no es de las conocidas."""
+    for simbolo, id_ in IDS.items():
+        if id_ == coin_id:
+            return simbolo.upper()
+    return None
