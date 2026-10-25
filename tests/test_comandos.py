@@ -32,6 +32,8 @@ from crypto_tracker.comandos import (
         ("/hours btc", ("horas", "btc")),
         ("/weekday btc", ("diasemana", "btc")),
         ("/breakeven", ("equilibrio", "")),
+        ("/ping", ("bot", "")),
+        ("/uptime", ("bot", "")),
         ("/inventado", ("inventado", "")),  # se decide luego que no existe
     ],
 )

@@ -144,6 +144,8 @@ ALIAS = {
     "azar": "aleatoria",
     "último": "ultimo",
     "last": "ultimo",
+    "ping": "bot",
+    "uptime": "bot",
 }
 
 AYUDA = (

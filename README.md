@@ -235,7 +235,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/copia` | Las líneas `WATCHLIST`, `PORTFOLIO` y `RESUMEN_DIARIO` como están ahora, con lo cambiado por Telegram, listas para pegar en el `.env`. Para guardarlo por si cambias de servidor |
 | `/ajustes` | Lo que tienes puesto en el `.env`: la moneda, cada cuánto consulta, los días que guarda, el resumen, el aviso de movimientos bruscos, el de máximos y mínimos y las horas tranquilas |
 | `/consultas` | Cuántas consultas a CoinGecko llevas este mes |
-| `/bot` | Si sigue funcionando: desde cuándo está encendido, cuándo fue el último ciclo y las consultas del mes |
+| `/bot` | Si sigue funcionando: desde cuándo está encendido, cuándo fue el último ciclo y las consultas del mes. También con `/ping` |
 | `/mute` | Te pregunta cuánto tiempo callarse, con botones: 1 h, 4 h o hasta las 8:00 (si ya está callado, o tienes alguna cripto callada, te dice hasta cuándo) |
 | `/mute 2h` | Calla los avisos ese rato, con un botón para deshacerlo |
 | `/mute hasta 8:00` | Calla los avisos hasta esa hora (si ya ha pasado, la de mañana) |
