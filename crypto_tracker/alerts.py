@@ -22,6 +22,8 @@ from .halving import Halving
 from .horas import Horas
 from .hoy import Hoy
 from .hoy import mejor_y_peor as extremos_hoy
+from .lambo import PRECIO as PRECIO_LAMBO
+from .lambo import Lambo
 from .maximo import Maximo, hace
 from .media import lado_de_todas
 from .mejor import Extremo
@@ -871,6 +873,26 @@ def formatear_cuando(
         texto + f"\nEntonces {simbolo}{_num(c.precio)}, ahora {simbolo}{_num(c.ahora)} "
         f"({c.cambio:+.2f}%)"
     )
+
+
+def formatear_lambo(lambo: Lambo, currency: str) -> str:
+    """Respuesta de /lambo."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = [
+        "🏎️ <b>Tu cartera en Lamborghinis</b>",
+        f"Vale {simbolo}{_num(lambo.valor)}",
+    ]
+    if lambo.enteros == 0:
+        texto.append(f"Te da para el <b>{lambo.parte:.2f}%</b> de uno")
+        siguiente = "el primero"
+    else:
+        cuantos = f"{lambo.enteros} Lamborghini{'s' if lambo.enteros > 1 else ''}"
+        texto.append(f"Te da para <b>{cuantos}</b> 🎉")
+        siguiente = "el siguiente"
+    texto.append(f"Para {siguiente} te faltan {simbolo}{_num(lambo.falta)}")
+    precio = f"{PRECIO_LAMBO:,}".replace(",", ".")
+    texto.append(f"<i>A unos {simbolo}{precio} cada uno</i>")
+    return "\n".join(texto)
 
 
 def formatear_cumple(c: Cumple) -> str:

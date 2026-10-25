@@ -51,6 +51,7 @@ from crypto_tracker import (
     horas,
     hoy,
     hubiera,
+    lambo,
     maximo,
     media,
     mejor,
@@ -941,6 +942,9 @@ def responder(
 
     if nombre == "pizza":
         return _pizza(config)
+
+    if nombre == "lambo":
+        return _lambo(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -1843,6 +1847,25 @@ def _pizza(config: Config) -> str:
     if isinstance(precio, str):
         return precio
     return alerts.formatear_pizza(pizza.Pizza(precio, date.today()), config.vs_currency)
+
+
+def _lambo(config: Config) -> str:
+    posiciones = list(_con_cambios(config).cartera)
+    if not posiciones:
+        return SIN_CARTERA
+    precios = {}
+    for p in posiciones:
+        precio = database.get_last_price(config.database_path, p.coin_id)
+        if precio:
+            precios[p.coin_id] = precio
+    faltan = [p.coin_id for p in posiciones if p.coin_id not in precios]
+    if faltan:
+        precios.update(_consultar(config, faltan) or {})
+
+    valor = cartera.valor_total(posiciones, precios)
+    if valor is None:
+        return "No he podido consultar los precios. Prueba en un rato."
+    return alerts.formatear_lambo(lambo.Lambo(valor), config.vs_currency)
 
 
 def _millonario(config: Config, argumento: str) -> str:

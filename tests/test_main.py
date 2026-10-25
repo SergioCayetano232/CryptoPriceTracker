@@ -5367,3 +5367,48 @@ def test_cumple(config, enviados, monkeypatch):
     main.atender(config, _mensaje("/cumple"))
 
     assert "🎂 <b>Bitcoin tiene" in enviados[0]
+
+
+# --- /lambo ---
+
+
+def test_lambo(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    config = replace(
+        config, cartera=(Posicion("bitcoin", 2.0), Posicion("solana", 1000.0))
+    )
+    _precio_de(config, "bitcoin", 100000.0, 5)
+    _precio_de(config, "solana", 100.0, 5)
+
+    main.atender(config, _mensaje("/lambo"))
+
+    assert "Vale €300.000,00" in enviados[0]
+    assert "<b>1 Lamborghini</b>" in enviados[0]
+
+
+def test_lambo_pide_lo_que_no_tiene_guardado(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    pedidas = []
+    monkeypatch.setattr(
+        coingecko,
+        "get_prices",
+        lambda ids, cur: pedidas.append(ids) or {"solana": 100.0},
+    )
+    config = replace(
+        config, cartera=(Posicion("bitcoin", 0.01), Posicion("solana", 10.0))
+    )
+    _precio_de(config, "bitcoin", 100000.0, 5)
+
+    main.atender(config, _mensaje("/lambo"))
+
+    assert pedidas == [["solana"]]
+    assert "Vale €2.000,00" in enviados[0]
+
+
+def test_lambo_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/lambo"))
+
+    assert "No tienes cartera puesta" in enviados[0]
