@@ -5279,3 +5279,41 @@ def test_aleatoria_sin_red(config, enviados, monkeypatch):
     main.atender(config, _mensaje("/aleatoria"))
 
     assert "No he podido mirarlo ahora mismo: sin conexión" in enviados[0]
+
+
+# --- /ultimo ---
+
+
+def test_ultimo_apunta_el_aviso_y_lo_enseña(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 90000.0})
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%60000.0"})
+    enviados.clear()
+    main.atender(config, _mensaje("/ultimo"))
+
+    assert "<b>Bitcoin</b>  hoy a las" in enviados[0]
+    assert "🔺 Subió a €90.000,00  ·  desde entonces +0.00%" in enviados[0]
+
+
+def test_ultimo_sin_avisos(config, enviados):
+    main.atender(config, _mensaje("/ultimo"))
+
+    assert "<b>Bitcoin</b>  <i>aún no ha avisado</i>" in enviados[0]
+
+
+def test_ultimo_no_apunta_lo_que_no_llega(config, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 90000.0})
+    monkeypatch.setattr(telegram, "send_message", lambda *a, **k: False)
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%60000.0"})
+
+    assert database.ultimos_avisos(config.database_path) == {}
+
+
+def test_ultimo_no_apunta_lo_callado(config, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 90000.0})
+    main.atender(config, _mensaje("/mute 2h"))
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%60000.0"})
+
+    assert database.ultimos_avisos(config.database_path) == {}

@@ -5,6 +5,7 @@ import math
 from dataclasses import dataclass
 from datetime import date, datetime
 
+from .avisados import Ultimo
 from .caida import Caida
 from .cartera import Valor, mejor_y_peor, peso
 from .comparar import Resultado
@@ -1619,6 +1620,36 @@ def formatear_top(suben: list[Movida], bajan: list[Movida], currency: str) -> st
                 f"<b>{nombre}</b>  {m.variacion:+.2f}%  "
                 f"<i>{simbolo}{_num(m.precio)}</i>"
             )
+    return "\n".join(texto)
+
+
+def formatear_ultimo(
+    lista: list[Ultimo], currency: str, ahora: datetime | None = None
+) -> str:
+    """/ultimo: cuándo avisó cada una y cuánto se ha movido desde entonces."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["🔔 <b>El último aviso de cada una</b>"]
+    for u in lista:
+        nombre = escape(u.coin_id.replace("-", " ").title())
+        texto.append("")
+        if u.aviso is None:
+            texto.append(f"<b>{nombre}</b>  <i>aún no ha avisado</i>")
+            continue
+
+        momento = u.aviso.cuando.astimezone()
+        cuanto = hace(u.aviso.cuando, ahora or datetime.now(momento.tzinfo))
+        if cuanto == "hoy":
+            cuando = f"hoy a las {momento:%H:%M}"
+        else:
+            cuando = f"{cuanto}, el {momento:%d/%m a las %H:%M}"
+        texto.append(f"<b>{nombre}</b>  {cuando}")
+        linea = (
+            f"{'🔺 Subió' if u.aviso.sube else '🔻 Bajó'} a "
+            f"{simbolo}{_num(u.aviso.precio)}"
+        )
+        if u.desde_entonces is not None:
+            linea += f"  ·  desde entonces {u.desde_entonces:+.2f}%"
+        texto.append(linea)
     return "\n".join(texto)
 
 

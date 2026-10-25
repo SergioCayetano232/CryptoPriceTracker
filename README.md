@@ -190,6 +190,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/alerta bitcoin` | Sin precio, te dice a cuánto está y te pone un ejemplo |
 | `/alerta cartera 5000` | Lo mismo con lo que vale tu cartera entera (también `-10%`). Si espera a que suba, con una barra `▓▓▓▓░░` de lo que llevas |
 | `/alertas` | Las alertas que tienes puestas y cuánto le falta a cada una, la más cerca primero, con un 🗑 para quitarlas |
+| `/ultimo` | Cuándo te avisó por última vez cada una de las que vigilas, a qué precio y cuánto se ha movido desde entonces. Solo cuenta los avisos que llegaron, no los del silencio |
 | `/quitar 3` | Quita la alerta número 3 (`/quitar 2 5` varias, `/quitar bitcoin` las de esa cripto, `/quitar todas` todas) |
 | `/volatilidad bitcoin 30d` | Cuánto se mueve de media al día y cuántos avisos te habría dado `/vigilar` con %2, %5 y %10 (sin tramo, 30 días) |
 | `/vigilar` | Lo que está vigilando y cómo, con un ✖ en cada una para dejarla |
@@ -601,6 +602,7 @@ crypto_tracker/
   rango.py       el máximo, el mínimo y la media de /rango
   dia.py         a cuánto estaba un día concreto, para /dia
   cuando.py      la última vez que estuvo a un precio, para /cuando
+  avisados.py    el último aviso de cada una, para /ultimo
   redondo.py     la siguiente cifra redonda, para /redondo
   rsi.py         el RSI de 14 días, para /rsi
   caida.py       lo que ha bajado desde el máximo, para /caida

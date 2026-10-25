@@ -6,6 +6,7 @@ from contextlib import contextmanager
 from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
 
+from .avisados import Aviso
 from .config import Posicion
 from .movimientos import Movimiento
 from .puntuales import Puntual
@@ -528,6 +529,39 @@ def guardar_brusco(db_path: str, coin_id: str, cuando: datetime) -> None:
             "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
             (f"brusco:{coin_id}", cuando.isoformat(timespec="seconds")),
         )
+
+
+def guardar_avisos(
+    db_path: str, avisos: list[tuple[str, float, bool]], cuando: datetime
+) -> None:
+    """(coin_id, precio, sube) de cada aviso mandado, para /ultimo."""
+    fecha = cuando.isoformat(timespec="seconds")
+    with _connect(db_path) as conn:
+        conn.executemany(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            [
+                (f"aviso:{c}", f"{fecha}|{precio!r}|{'sube' if sube else 'baja'}")
+                for c, precio, sube in avisos
+            ],
+        )
+
+
+def ultimos_avisos(db_path: str) -> dict[str, Aviso]:
+    with _connect(db_path) as conn:
+        filas = conn.execute(
+            "SELECT clave, valor FROM ajustes WHERE clave LIKE 'aviso:%'"
+        ).fetchall()
+
+    avisos = {}
+    for fila in filas:
+        try:
+            fecha, precio, lado = fila["valor"].split("|")
+            aviso = Aviso(datetime.fromisoformat(fecha), float(precio), lado == "sube")
+        except ValueError:
+            logger.warning("Aviso guardado que no se entiende: %r", fila["valor"])
+            continue
+        avisos[fila["clave"].removeprefix("aviso:")] = aviso
+    return avisos
 
 
 def crear_puntual(

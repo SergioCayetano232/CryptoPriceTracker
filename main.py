@@ -22,6 +22,7 @@ from crypto_tracker import (
     ajustes,
     aleatoria,
     alerts,
+    avisados,
     botones,
     brusco,
     caida,
@@ -246,12 +247,26 @@ def ejecutar_ciclo(
     ):
         logger.info("Aviso enviado (%d): %s", len(avisos), cruzadas)
         _borrar_puntuales(config, hechas)
+        _apuntar_avisos(config, avisos)
     else:
         # El aviso se perdio, pero el estado ya cambio. No insistimos:
         # el siguiente cruce volvera a avisar. Las de /alerta siguen ahi.
         logger.error("No se pudo avisar de: %s", cruzadas)
 
     return estado_nuevo, None
+
+
+def _apuntar_avisos(config: Config, avisos: list[alerts.Alert]) -> None:
+    """Para /ultimo. Solo los que han llegado, los del silencio no cuentan."""
+    lista = [
+        (a.coin_id, a.price, a.estado == alerts.ALTO)
+        for a in avisos
+        if a.coin_id != puntuales.CARTERA
+    ]
+    try:
+        database.guardar_avisos(config.database_path, lista, datetime.now(timezone.utc))
+    except database.DatabaseError as e:
+        logger.error("No se pudo apuntar el aviso para /ultimo: %s", e)
 
 
 def _maximos_avisos(
@@ -859,6 +874,9 @@ def responder(
     if nombre == "aleatoria":
         return _aleatoria(config)
 
+    if nombre == "ultimo":
+        return _ultimo(config)
+
     if nombre == "miedo":
         return _miedo()
 
@@ -1410,6 +1428,18 @@ def _top(config: Config) -> str | comandos.ConBotones:
     if not suben and not bajan:
         return texto
     return comandos.ConBotones(alerts.con_fuente(texto), botones.actualizar("/top"))
+
+
+def _ultimo(config: Config) -> str:
+    vigiladas = [w.coin_id for w in _con_cambios(config).watchlist]
+    if not vigiladas:
+        return "No vigilas ninguna. Añade una con /vigilar"
+    lista = avisados.juntar(
+        vigiladas,
+        database.ultimos_avisos(config.database_path),
+        {c: database.get_last_price(config.database_path, c) for c in vigiladas},
+    )
+    return alerts.formatear_ultimo(lista, config.vs_currency)
 
 
 def _aleatoria(config: Config) -> str | comandos.ConBotones:
