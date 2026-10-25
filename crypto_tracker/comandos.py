@@ -53,6 +53,7 @@ COMANDOS = {
     "exportar": "Los precios guardados en un CSV (ej: /exportar bitcoin 30d)",
     "mercado": "Lo que vale todo el mercado y cuánto es de Bitcoin",
     "halving": "Cuánto falta para el próximo halving de Bitcoin",
+    "pizza": "Lo que valdrían hoy los 10.000 BTC de las pizzas de 2010",
     "tendencias": "Las criptos que más se buscan hoy",
     "top": "Las 5 que más suben y las 5 que más bajan hoy",
     "miedo": "El índice de miedo y codicia del mercado",

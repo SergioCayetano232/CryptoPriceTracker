@@ -5211,3 +5211,34 @@ def test_halving(config, enviados, monkeypatch):
 
     assert "⛏️ <b>Próximo halving de Bitcoin</b>" in enviados[0]
     assert "BTC" in enviados[0]
+
+
+# --- /pizza ---
+
+
+def test_pizza_con_lo_guardado(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    _precio_de(config, "bitcoin", 80000.0, 5)
+
+    main.atender(config, _mensaje("/pizza"))
+
+    assert "Hoy serían <b>€800 millones</b>, €400 millones cada una" in enviados[0]
+
+
+def test_pizza_sin_guardar_lo_pide(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: {"bitcoin": 90000.0})
+
+    main.atender(config, _mensaje("/pizza"))
+
+    assert "Hoy serían <b>€900 millones</b>" in enviados[0]
+
+
+def test_pizza_sin_red(config, enviados, monkeypatch):
+    def falla(*a, **k):
+        raise coingecko.CoinGeckoError("sin conexión")
+
+    monkeypatch.setattr(coingecko, "get_prices", falla)
+
+    main.atender(config, _mensaje("/pizza"))
+
+    assert "No he podido mirar el precio ahora mismo: sin conexión" in enviados[0]

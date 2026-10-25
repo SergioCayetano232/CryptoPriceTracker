@@ -56,6 +56,7 @@ from crypto_tracker import (
     movimientos,
     objetivo,
     periodo,
+    pizza,
     proximo,
     puntuales,
     racha,
@@ -914,6 +915,9 @@ def responder(
     if nombre == "halving":
         return alerts.formatear_halving(halving.calcular(date.today()))
 
+    if nombre == "pizza":
+        return _pizza(config)
+
     if nombre == "ajustes":
         return ajustes.mensaje(_con_cambios(config))
 
@@ -1760,6 +1764,21 @@ def _cuando(config: Config, argumento: str) -> str:
             "Solo sé de las que vigilo: míralas con /vigilar"
         )
     return alerts.formatear_cuando(coin_id, resultado, config.vs_currency)
+
+
+def _pizza(config: Config) -> str:
+    precio = database.get_last_price(config.database_path, "bitcoin")
+    if not precio:
+        # Si no vigilas bitcoin no lo tengo guardado: una consulta y listo.
+        try:
+            precios = coingecko.get_prices(["bitcoin"], config.vs_currency)
+        except coingecko.CoinGeckoError as e:
+            error = telegram.escape(str(e))
+            return f"No he podido mirar el precio ahora mismo: {error}"
+        precio = precios.get("bitcoin")
+    if not precio:
+        return "No he podido mirar el precio de bitcoin ahora mismo."
+    return alerts.formatear_pizza(pizza.Pizza(precio, date.today()), config.vs_currency)
 
 
 def _redondo(config: Config, argumento: str) -> str:

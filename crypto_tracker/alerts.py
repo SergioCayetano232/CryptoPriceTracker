@@ -36,6 +36,7 @@ from .movimientos import (
 )
 from .objetivo import Escenario
 from .periodo import nombre as nombre_periodo
+from .pizza import BTC, Pizza
 from .puntuales import CARTERA, Puntual, cumplidas, ejemplo, progreso
 from .racha import Racha
 from .rango import Rango, barra
@@ -867,6 +868,22 @@ def formatear_cuando(
         texto + f"\nEntonces {simbolo}{_num(c.precio)}, ahora {simbolo}{_num(c.ahora)} "
         f"({c.cambio:+.2f}%)"
     )
+
+
+def formatear_pizza(p: Pizza, currency: str) -> str:
+    """Respuesta de /pizza."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = (
+        "🍕 El 22/05/2010 alguien pagó <b>"
+        + f"{BTC:,}".replace(",", ".")
+        + " BTC</b> por dos pizzas\n"
+        f"Hoy serían <b>{simbolo}{grande(p.total)}</b>, "
+        f"{simbolo}{grande(p.por_pizza)} cada una"
+    )
+    if p.aniversario == 0:
+        return texto + "\n🎉 Hoy es el Bitcoin Pizza Day"
+    dias = "1 día" if p.aniversario == 1 else f"{p.aniversario} días"
+    return texto + f"\n<i>Faltan {dias} para el Bitcoin Pizza Day</i>"
 
 
 def formatear_halving(h: Halving) -> str:
