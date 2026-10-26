@@ -34,6 +34,11 @@ from crypto_tracker.comandos import (
         ("/breakeven", ("equilibrio", "")),
         ("/ping", ("bot", "")),
         ("/uptime", ("bot", "")),
+        ("/pnl", ("ganancias", "")),
+        ("/remove 3", ("quitar", "3")),
+        ("/unwatch sol", ("dejar", "sol")),
+        ("/whatif 1000 btc 30d", ("si", "1000 btc 30d")),
+        ("/week", ("semana", "")),
         ("/inventado", ("inventado", "")),  # se decide luego que no existe
     ],
 )
