@@ -16,6 +16,7 @@ from .cuando import Cuando
 from .cumple import Cumple
 from .dia import Dia
 from .diasemana import NOMBRES, DiasSemana
+from .doble import Cartera as CarteraDoble
 from .equilibrio import Cartera
 from .ganancias import Ganancias
 from .halving import Halving
@@ -1374,6 +1375,36 @@ def formatear_equilibrio(c: Cartera, currency: str) -> str:
                 f"\n📦 Todo junto vas ganando: aguanta una bajada del "
                 f"<b>{-c.total:.2f}%</b>"
             )
+    if c.sin_coste:
+        nombres = ", ".join(escape(x.replace("-", " ").title()) for x in c.sin_coste)
+        texto.append(f"\n<i>De {nombres} no sé lo que te costó.</i>")
+    return "\n".join(texto)
+
+
+def formatear_doble(c: CarteraDoble, currency: str) -> str:
+    """Respuesta de /doble."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["✌️ <b>Para doblar lo que metiste</b>", ""]
+    for d in c.criptos:
+        nombre = escape(d.coin_id.replace("-", " ").title())
+        if d.falta > 0:
+            como = f"falta <b>{d.falta:+.2f}%</b>"
+        else:
+            como = "ya lo has doblado"
+        texto.append(
+            f"{'🔴' if d.falta > 0 else '🟢'} <b>{nombre}</b> a "
+            f"{simbolo}{_num(d.objetivo)} · {como}"
+        )
+        texto.append(
+            f"   <i>ahora {simbolo}{_num(d.precio)}, te salió a "
+            f"{simbolo}{_num(d.medio)}</i>"
+        )
+
+    if c.total is not None:
+        if c.total > 0:
+            texto.append(f"\n📦 Todo junto tendría que subir un <b>{c.total:+.2f}%</b>")
+        else:
+            texto.append("\n📦 Todo junto ya lo has doblado 🎉")
     if c.sin_coste:
         nombres = ", ".join(escape(x.replace("-", " ").title()) for x in c.sin_coste)
         texto.append(f"\n<i>De {nombres} no sé lo que te costó.</i>")
