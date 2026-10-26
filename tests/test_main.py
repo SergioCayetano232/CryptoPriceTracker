@@ -5369,6 +5369,23 @@ def test_cumple(config, enviados, monkeypatch):
     assert "🎂 <b>Bitcoin tiene" in enviados[0]
 
 
+# --- /whitepaper ---
+
+
+def test_whitepaper(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+
+    main.atender(config, _mensaje("/whitepaper"))
+
+    assert "📄 <b>El whitepaper de Bitcoin tiene" in enviados[0]
+
+
+def test_paper_es_whitepaper(config, enviados):
+    main.atender(config, _mensaje("/paper"))
+
+    assert "whitepaper de Bitcoin" in enviados[0]
+
+
 # --- /lambo ---
 
 

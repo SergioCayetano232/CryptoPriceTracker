@@ -227,6 +227,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/mercado` | Lo que vale todo el mercado cripto, cómo va en 24 h y qué parte es de Bitcoin, Ethereum y las estables |
 | `/halving` | Cuántos días faltan para el próximo halving de Bitcoin, cuánto va de ciclo y cuánto bajará lo que se paga por bloque. La fecha es aproximada y no gasta consultas |
 | `/cumple` | Los años de Bitcoin, los días que lleva funcionando y cuánto falta para su cumpleaños (el 3 de enero) |
+| `/whitepaper` | Los años del whitepaper de Bitcoin, los días desde que Satoshi lo publicó y cuánto falta para que cumpla (el 31 de octubre) |
 | `/pizza` | Lo que valdrían hoy los 10.000 BTC que se pagaron por dos pizzas en 2010, y cuánto falta para el Bitcoin Pizza Day |
 | `/millonario` | Cuánto bitcoin (u otra, `/millonario eth`) necesitas para tener un millón al precio de hoy y, si la tienes en la cartera, cuánto llevas del camino |
 | `/lambo` | Cuántos Lamborghinis te da tu cartera, a unos 250.000 cada uno, y cuánto te falta para el siguiente |
@@ -587,6 +588,7 @@ crypto_tracker/
   mercado.py     el mercado entero, para /mercado
   halving.py     cuánto falta para el próximo halving, para /halving
   cumple.py      los años de Bitcoin, para /cumple
+  whitepaper.py  los años del whitepaper, para /whitepaper
   pizza.py       los 10.000 BTC de las pizzas, para /pizza
   millonario.py  lo que hace falta para un millón, para /millonario
   lambo.py       tu cartera en Lamborghinis, para /lambo

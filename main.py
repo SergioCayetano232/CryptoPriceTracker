@@ -79,6 +79,7 @@ from crypto_tracker import (
     verdes,
     vigiladas,
     volatilidad,
+    whitepaper,
 )
 from crypto_tracker.config import (
     Config,
@@ -948,6 +949,9 @@ def responder(
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
+
+    if nombre == "whitepaper":
+        return alerts.formatear_whitepaper(whitepaper.Whitepaper(date.today()))
 
     if nombre == "millonario":
         return _millonario(config, argumento)

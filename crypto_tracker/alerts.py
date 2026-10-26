@@ -55,6 +55,7 @@ from .telegram import escape
 from .tendencias import Tendencia
 from .top import ENTRE, Movida
 from .verdes import Verdes
+from .whitepaper import Whitepaper
 
 logger = logging.getLogger(__name__)
 
@@ -906,6 +907,19 @@ def formatear_cumple(c: Cumple) -> str:
         return texto + "\n🎉 ¡Hoy es su cumpleaños!"
     falta = "1 día" if c.faltan == 1 else f"{c.faltan} días"
     return texto + f"\n<i>Faltan {falta} para que cumpla {c.años + 1}</i>"
+
+
+def formatear_whitepaper(w: Whitepaper) -> str:
+    """Respuesta de /whitepaper."""
+    dias = f"{w.dias:,}".replace(",", ".")
+    texto = (
+        f"📄 <b>El whitepaper de Bitcoin tiene {w.años} años</b>\n"
+        f"Satoshi lo publicó el 31/10/2008, hace {dias} días. Son 9 páginas"
+    )
+    if w.faltan == 0:
+        return texto + "\n🎉 ¡Hoy es su cumpleaños!"
+    falta = "1 día" if w.faltan == 1 else f"{w.faltan} días"
+    return texto + f"\n<i>Faltan {falta} para que cumpla {w.años + 1}</i>"
 
 
 def formatear_millonario(

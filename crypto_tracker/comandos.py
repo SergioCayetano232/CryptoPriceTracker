@@ -55,6 +55,7 @@ COMANDOS = {
     "mercado": "Lo que vale todo el mercado y cuánto es de Bitcoin",
     "halving": "Cuánto falta para el próximo halving de Bitcoin",
     "cumple": "Los años de Bitcoin y cuánto falta para su cumpleaños",
+    "whitepaper": "Los años del whitepaper de Satoshi y cuánto falta para cumplir",
     "pizza": "Lo que valdrían hoy los 10.000 BTC de las pizzas de 2010",
     "millonario": "Cuánto necesitas para tener un millón (ej: /millonario eth)",
     "lambo": "Cuántos Lamborghinis te da tu cartera",
@@ -153,6 +154,7 @@ ALIAS = {
     "millón": "millonario",
     "cumpleaños": "cumple",
     "edad": "cumple",
+    "paper": "whitepaper",
 }
 
 AYUDA = (
