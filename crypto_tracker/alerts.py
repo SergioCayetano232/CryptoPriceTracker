@@ -54,6 +54,8 @@ from .ratio import Ratio
 from .redondo import Redondo
 from .reparto import Trozo, demasiado
 from .rsi import PERIODO, SOBRECOMPRA, SOBREVENTA, Rsi, hasta_zona
+from .sat import CANTIDADES as CANTIDADES_SAT
+from .sat import Sat
 from .semanal import Semana
 from .sube import Subida
 from .telegram import escape
@@ -966,6 +968,19 @@ def formatear_caraocruz(lado: str, coin_id: str | None) -> str:
     if coin_id:
         texto += f" <b>{escape(coin_id.replace('-', ' ').title())}</b>"
     return texto + "\n<i>Es una moneda al aire. No es un consejo, que lo sepas.</i>"
+
+
+def formatear_sat(s: Sat, currency: str) -> str:
+    """Respuesta de /sat."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = [f"⚡ <b>1 sat vale {simbolo}{_num(s.valor)}</b>", ""]
+    for dinero in CANTIDADES_SAT:
+        sats = f"{s.por(dinero):,}".replace(",", ".")
+        texto.append(f"{simbolo}{dinero} → {sats} sats")
+    texto.append(
+        f"\n<i>Un bitcoin son 100 millones de sats, a {simbolo}{_num(s.bitcoin)}</i>"
+    )
+    return "\n".join(texto)
 
 
 def formatear_cumple(c: Cumple) -> str:

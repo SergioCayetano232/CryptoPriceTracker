@@ -232,6 +232,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/whitepaper` | Los años del whitepaper de Bitcoin, los días desde que Satoshi lo publicó y cuánto falta para que cumpla (el 31 de octubre) |
 | `/pizza` | Lo que valdrían hoy los 10.000 BTC que se pagaron por dos pizzas en 2010, y cuánto falta para el Bitcoin Pizza Day |
 | `/millonario` | Cuánto bitcoin (u otra, `/millonario eth`) necesitas para tener un millón al precio de hoy y, si la tienes en la cartera, cuánto llevas del camino |
+| `/sat` | Lo que vale un satoshi (la cien millonésima parte de un bitcoin) y cuántos te dan 1, 10 y 100. Para cantidades exactas, `/convertir 50 eur sats` |
 | `/lambo` | Cuántos Lamborghinis te da tu cartera, a unos 250.000 cada uno, y cuánto te falta para el siguiente |
 | `/cafe` | Cuántos cafés te da tu cartera, a 1,50 cada uno, y para cuánto tiempo tienes tomando uno al día |
 | `/tendencias` | Las 7 criptos que más se buscan hoy en CoinGecko, con un botón en cada una para ver su precio y ponerle una alerta |
@@ -599,6 +600,7 @@ crypto_tracker/
   millonario.py  lo que hace falta para un millón, para /millonario
   lambo.py       tu cartera en Lamborghinis, para /lambo
   cafe.py        tu cartera en cafés, para /cafe
+  sat.py         lo que vale un satoshi, para /sat
   puntuales.py   las alertas de /alerta
   vigiladas.py   lo que cambias con /vigilar
   volatilidad.py lo que se mueve cada día, para /volatilidad

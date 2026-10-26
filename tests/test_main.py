@@ -5459,6 +5459,27 @@ def test_paper_es_whitepaper(config, enviados):
     assert "whitepaper de Bitcoin" in enviados[0]
 
 
+# --- /sat ---
+
+
+def test_sat(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    _precio_de(config, "bitcoin", 70000.0, 5)
+
+    main.atender(config, _mensaje("/sats"))
+
+    assert "1 sat vale €0,0007" in enviados[0]
+    assert "€100 → 142.857 sats" in enviados[0]
+
+
+def test_sat_sin_precio_guardado_lo_pide(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 100000.0})
+
+    main.atender(config, _mensaje("/sat"))
+
+    assert "1 sat vale €0,001" in enviados[0]
+
+
 # --- /caraocruz ---
 
 

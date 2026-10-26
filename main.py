@@ -75,6 +75,7 @@ from crypto_tracker import (
     reparto,
     rsi,
     salud,
+    sat,
     semanal,
     simbolos,
     sube,
@@ -973,6 +974,12 @@ def responder(
 
     if nombre == "millonario":
         return _millonario(config, argumento)
+
+    if nombre == "sat":
+        precio = _precio_o_pedirlo(config, "bitcoin")
+        if isinstance(precio, str):
+            return precio
+        return alerts.formatear_sat(sat.Sat(precio), config.vs_currency)
 
     if nombre == "ajustes":
         return ajustes.mensaje(_con_cambios(config))
