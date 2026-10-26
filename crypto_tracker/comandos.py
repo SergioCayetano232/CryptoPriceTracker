@@ -61,6 +61,7 @@ COMANDOS = {
     "pizza": "Lo que valdrían hoy los 10.000 BTC de las pizzas de 2010",
     "millonario": "Cuánto necesitas para tener un millón (ej: /millonario eth)",
     "lambo": "Cuántos Lamborghinis te da tu cartera",
+    "cafe": "Cuántos cafés te da tu cartera",
     "tendencias": "Las criptos que más se buscan hoy",
     "top": "Las 5 que más suben y las 5 que más bajan hoy",
     "aleatoria": "Una de las 100 más grandes al azar, para descubrir alguna",
@@ -133,6 +134,8 @@ ALIAS = {
     "breakeven": "equilibrio",
     "x2": "doble",
     "first": "primera",
+    "café": "cafe",
+    "coffee": "cafe",
     "ganancia": "ganancias",
     "beneficios": "ganancias",
     # /maximo ya es /ath; el mínimo del tramo sale en lo primero de /sube.

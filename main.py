@@ -25,6 +25,7 @@ from crypto_tracker import (
     avisados,
     botones,
     brusco,
+    cafe,
     caida,
     callar,
     cartera,
@@ -955,6 +956,9 @@ def responder(
     if nombre == "lambo":
         return _lambo(config)
 
+    if nombre == "cafe":
+        return _cafe(config)
+
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
 
@@ -1879,6 +1883,21 @@ def _pizza(config: Config) -> str:
 
 
 def _lambo(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_lambo(lambo.Lambo(valor), config.vs_currency)
+
+
+def _cafe(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_cafe(cafe.Cafe(valor), config.vs_currency)
+
+
+def _valor_guardado(config: Config) -> float | str:
+    """Lo que vale la cartera, con lo guardado si lo hay. Si no se puede, el porqué."""
     posiciones = list(_con_cambios(config).cartera)
     if not posiciones:
         return SIN_CARTERA
@@ -1894,7 +1913,7 @@ def _lambo(config: Config) -> str:
     valor = cartera.valor_total(posiciones, precios)
     if valor is None:
         return "No he podido consultar los precios. Prueba en un rato."
-    return alerts.formatear_lambo(lambo.Lambo(valor), config.vs_currency)
+    return valor
 
 
 def _millonario(config: Config, argumento: str) -> str:

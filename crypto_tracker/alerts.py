@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from datetime import date, datetime
 
 from .avisados import Ultimo
+from .cafe import PRECIO as PRECIO_CAFE
+from .cafe import Cafe
 from .caida import Caida
 from .cartera import Valor, mejor_y_peor, peso
 from .comparar import Resultado
@@ -934,6 +936,26 @@ def formatear_lambo(lambo: Lambo, currency: str) -> str:
     texto.append(f"Para {siguiente} te faltan {simbolo}{_num(lambo.falta)}")
     precio = f"{PRECIO_LAMBO:,}".replace(",", ".")
     texto.append(f"<i>A unos {simbolo}{precio} cada uno</i>")
+    return "\n".join(texto)
+
+
+def formatear_cafe(cafe: Cafe, currency: str) -> str:
+    """Respuesta de /cafe."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["☕ <b>Tu cartera en cafés</b>", f"Vale {simbolo}{_num(cafe.valor)}"]
+    if cafe.cuantos == 0:
+        texto.append("No te da ni para un café 😅")
+    else:
+        cuantos = f"{cafe.cuantos:,}".replace(",", ".")
+        texto.append(
+            f"Te da para <b>{cuantos} café{'s' if cafe.cuantos > 1 else ''}</b>"
+        )
+        if cafe.años >= 1:
+            para = f"{cafe.años:.1f} años".replace(".", ",")
+        else:
+            para = "1 día" if cafe.cuantos == 1 else f"{cafe.cuantos} días"
+        texto.append(f"Uno al día, tienes para {para}")
+    texto.append(f"<i>A {simbolo}{_num(PRECIO_CAFE)} cada uno</i>")
     return "\n".join(texto)
 
 

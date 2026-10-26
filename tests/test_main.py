@@ -5490,6 +5490,25 @@ def test_lambo_pide_lo_que_no_tiene_guardado(config, enviados, monkeypatch):
     assert "Vale €2.000,00" in enviados[0]
 
 
+def test_cafe(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    config = replace(config, cartera=(Posicion("bitcoin", 0.02),))
+    _precio_de(config, "bitcoin", 100000.0, 5)
+
+    main.atender(config, _mensaje("/café"))
+
+    assert "Vale €2.000,00" in enviados[0]
+    assert "<b>1.333 cafés</b>" in enviados[0]
+
+
+def test_cafe_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/cafe"))
+
+    assert "PORTFOLIO" in enviados[0]
+
+
 def test_lambo_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/lambo"))
 

@@ -233,6 +233,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/pizza` | Lo que valdrían hoy los 10.000 BTC que se pagaron por dos pizzas en 2010, y cuánto falta para el Bitcoin Pizza Day |
 | `/millonario` | Cuánto bitcoin (u otra, `/millonario eth`) necesitas para tener un millón al precio de hoy y, si la tienes en la cartera, cuánto llevas del camino |
 | `/lambo` | Cuántos Lamborghinis te da tu cartera, a unos 250.000 cada uno, y cuánto te falta para el siguiente |
+| `/cafe` | Cuántos cafés te da tu cartera, a 1,50 cada uno, y para cuánto tiempo tienes tomando uno al día |
 | `/tendencias` | Las 7 criptos que más se buscan hoy en CoinGecko, con un botón en cada una para ver su precio y ponerle una alerta |
 | `/top` | Las 5 que más suben y las 5 que más bajan hoy de las 100 más grandes, con su precio |
 | `/aleatoria` | Una de las 100 más grandes al azar, con su puesto, su precio y cómo va hoy. No saca las que ya vigilas ni las estables. Con un botón para pedir otra |
@@ -595,6 +596,7 @@ crypto_tracker/
   pizza.py       los 10.000 BTC de las pizzas, para /pizza
   millonario.py  lo que hace falta para un millón, para /millonario
   lambo.py       tu cartera en Lamborghinis, para /lambo
+  cafe.py        tu cartera en cafés, para /cafe
   puntuales.py   las alertas de /alerta
   vigiladas.py   lo que cambias con /vigilar
   volatilidad.py lo que se mueve cada día, para /volatilidad
