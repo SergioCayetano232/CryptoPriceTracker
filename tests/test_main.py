@@ -7,7 +7,15 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 import main
-from crypto_tracker import coingecko, comandos, database, grafica, miedo, telegram
+from crypto_tracker import (
+    caraocruz,
+    coingecko,
+    comandos,
+    database,
+    grafica,
+    miedo,
+    telegram,
+)
 from crypto_tracker.config import Config, Posicion, Watch
 from crypto_tracker.precio import Precio
 
@@ -5449,6 +5457,20 @@ def test_paper_es_whitepaper(config, enviados):
     main.atender(config, _mensaje("/paper"))
 
     assert "whitepaper de Bitcoin" in enviados[0]
+
+
+# --- /caraocruz ---
+
+
+def test_caraocruz(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    monkeypatch.setattr(caraocruz, "lanzar", lambda: "cruz")
+
+    main.atender(config, _mensaje("/caraocruz btc"))
+    main.atender(config, _mensaje("/moneda"))
+
+    assert "🪙 Ha salido <b>cruz</b>: vende <b>Bitcoin</b>" in enviados[0]
+    assert "<b>cruz</b>: vende\n" in enviados[1]
 
 
 # --- /lambo ---

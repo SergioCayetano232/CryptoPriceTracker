@@ -9,6 +9,7 @@ from .avisados import Ultimo
 from .cafe import PRECIO as PRECIO_CAFE
 from .cafe import Cafe
 from .caida import Caida
+from .caraocruz import QUE_HACER
 from .cartera import Valor, mejor_y_peor, peso
 from .comparar import Resultado
 from .comparar import media as media_comparar
@@ -957,6 +958,14 @@ def formatear_cafe(cafe: Cafe, currency: str) -> str:
         texto.append(f"Uno al día, tienes para {para}")
     texto.append(f"<i>A {simbolo}{_num(PRECIO_CAFE)} cada uno</i>")
     return "\n".join(texto)
+
+
+def formatear_caraocruz(lado: str, coin_id: str | None) -> str:
+    """Respuesta de /caraocruz."""
+    texto = f"🪙 Ha salido <b>{lado}</b>: {QUE_HACER[lado]}"
+    if coin_id:
+        texto += f" <b>{escape(coin_id.replace('-', ' ').title())}</b>"
+    return texto + "\n<i>Es una moneda al aire. No es un consejo, que lo sepas.</i>"
 
 
 def formatear_cumple(c: Cumple) -> str:

@@ -28,6 +28,7 @@ from crypto_tracker import (
     cafe,
     caida,
     callar,
+    caraocruz,
     cartera,
     coingecko,
     comandos,
@@ -883,6 +884,11 @@ def responder(
 
     if nombre == "aleatoria":
         return _aleatoria(config)
+
+    if nombre == "caraocruz":
+        return alerts.formatear_caraocruz(
+            caraocruz.lanzar(), caraocruz.interpretar(argumento)
+        )
 
     if nombre == "ultimo":
         return _ultimo(config)
