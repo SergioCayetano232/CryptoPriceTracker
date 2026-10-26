@@ -21,6 +21,7 @@ COMANDOS = {
     "venta": "Apuntar una venta (ej: /venta bitcoin 0.005 350 o todo)",
     "movimientos": "Tus últimas compras y ventas (ej: /movimientos btc)",
     "ganancias": "Lo que has ganado o perdido con lo que ya vendiste",
+    "primera": "Tu primera compra y cuánto ha cambiado desde entonces",
     "deshacer": "Quitar la última compra o venta que apuntaste",
     "alerta": "Avísame una vez a un precio o un % (ej: /alerta btc 70000 o +10% 7d)",
     "alertas": "Las alertas que tienes puestas",
@@ -131,6 +132,7 @@ ALIAS = {
     "weekday": "diasemana",
     "breakeven": "equilibrio",
     "x2": "doble",
+    "first": "primera",
     "ganancia": "ganancias",
     "beneficios": "ganancias",
     # /maximo ya es /ath; el mínimo del tramo sale en lo primero de /sube.

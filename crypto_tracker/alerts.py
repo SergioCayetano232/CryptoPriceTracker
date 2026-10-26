@@ -43,6 +43,7 @@ from .movimientos import (
 from .objetivo import Escenario
 from .periodo import nombre as nombre_periodo
 from .pizza import BTC, Pizza
+from .primera import Primera
 from .puntuales import CARTERA, Puntual, cumplidas, ejemplo, progreso
 from .racha import Racha
 from .rango import Rango, barra
@@ -614,6 +615,45 @@ def formatear_movimientos(
             f"{simbolo}{_num(vendido)} vendido"
         )
     return "\n".join(lineas)
+
+
+def formatear_primera(p: Primera, currency: str) -> str:
+    """Respuesta de /primera."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    m = p.compra
+    nombre = escape(m.coin_id.replace("-", " ").title())
+    linea = f"{texto_cantidad(m.cantidad)} de {nombre}"
+    if m.coste is not None:
+        linea += f" por {simbolo}{_num(m.coste)}"
+        if p.pagado is not None:
+            linea += f" (a {simbolo}{_num(p.pagado)})"
+    if p.dias == 0:
+        hace = "hoy"
+    elif p.dias == 1:
+        hace = "hace 1 día"
+    else:
+        hace = f"hace {p.dias:,} días".replace(",", ".")
+    texto = [
+        "🥇 <b>Tu primera compra</b>",
+        linea,
+        f"<i>el {m.cuando.astimezone():%d/%m/%Y}, {hace}</i>",
+    ]
+
+    if p.precio is None:
+        return "\n".join(texto)
+    if p.cambio is not None:
+        texto.append(
+            f"\n{_flecha(p.cambio)} Ahora está a {simbolo}{_num(p.precio)}: "
+            f"<b>{p.cambio:+.2f}%</b> desde entonces"
+        )
+    else:
+        texto.append(f"\nAhora está a {simbolo}{_num(p.precio)}")
+    valor = m.cantidad * p.precio
+    linea = f"Lo que compraste vale hoy {simbolo}{_num(valor)}"
+    if m.coste is not None:
+        linea += f" ({_ganancia(valor - m.coste, simbolo)})"
+    texto.append(linea)
+    return "\n".join(texto)
 
 
 def formatear_ganancias(g: Ganancias, currency: str) -> str:

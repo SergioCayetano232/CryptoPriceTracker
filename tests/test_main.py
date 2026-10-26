@@ -2308,6 +2308,42 @@ def test_movimientos_de_una_cripto(config, monkeypatch):
     assert mandados[3][1] == [[("↩️ Deshacer la última", f"/deshacer {ultima.id}")]]
 
 
+def test_primera(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"solana": 150.0, "bitcoin": 60000.0})
+    main.atender(config, _mensaje("/compra solana 1 100"))
+    main.atender(config, _mensaje("/compra bitcoin 0.01 600"))
+
+    main.atender(config, _mensaje("/primera"))
+    main.atender(config, _mensaje("/primera btc"))
+
+    assert "1 de Solana por €100,00" in enviados[2]
+    assert "<b>+50.00%</b> desde entonces" in enviados[2]
+    assert "Lo que compraste vale hoy €150,00 (+€50,00)" in enviados[2]
+    assert "0,01 de Bitcoin" in enviados[3]
+
+
+def test_primera_sin_compras(config, enviados):
+    main.atender(config, _mensaje("/primera"))
+    main.atender(config, _mensaje("/primera eth"))
+
+    assert "No has apuntado ninguna compra por aquí" in enviados[0]
+    assert "ninguna compra de <b>ethereum</b>" in enviados[1]
+
+
+def test_primera_sin_precio(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"solana": 150.0})
+    main.atender(config, _mensaje("/compra solana 1 100"))
+
+    def falla(*a, **k):
+        raise coingecko.CoinGeckoError("caído")
+
+    monkeypatch.setattr(coingecko, "get_prices", falla)
+    main.atender(config, _mensaje("/primera"))
+
+    assert "1 de Solana por €100,00" in enviados[1]
+    assert "Ahora está" not in enviados[1]
+
+
 def test_movimientos_de_una_sin_nada(config, enviados):
     main.atender(config, _mensaje("/movimientos eth"))
 

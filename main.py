@@ -63,6 +63,7 @@ from crypto_tracker import (
     objetivo,
     periodo,
     pizza,
+    primera,
     proximo,
     puntuales,
     racha,
@@ -776,6 +777,9 @@ def responder(
     if nombre == "movimientos":
         return _movimientos(config, argumento)
 
+    if nombre == "primera":
+        return _primera(config, argumento)
+
     if nombre == "ganancias":
         return _ganancias(config)
 
@@ -1230,6 +1234,23 @@ def _movimientos(config: Config, argumento: str) -> str | comandos.ConBotones:
     return comandos.ConBotones(
         texto, botones.deshacer_movimiento(lista[0].id, "↩️ Deshacer la última")
     )
+
+
+def _primera(config: Config, argumento: str) -> str:
+    coin_id = simbolos.a_id(argumento) if argumento else None
+    todos = database.get_movimientos(config.database_path, None, coin_id)
+    compra = primera.buscar(todos)
+    if compra is None:
+        de = f" de <b>{telegram.escape(coin_id)}</b>" if coin_id else ""
+        return (
+            f"No has apuntado ninguna compra{de} por aquí. Lo del PORTFOLIO "
+            f"del .env no sale. Apúntala así: {movimientos.EJEMPLO_COMPRA}"
+        )
+    # Sin precio sale igual, solo sin la comparación.
+    precios = _consultar(config, [compra.coin_id]) or {}
+    resultado = primera.Primera(compra, precios.get(compra.coin_id), date.today())
+    texto = alerts.formatear_primera(resultado, config.vs_currency)
+    return alerts.con_fuente(texto) if resultado.precio is not None else texto
 
 
 def _crear_alerta(config: Config, argumento: str) -> str:

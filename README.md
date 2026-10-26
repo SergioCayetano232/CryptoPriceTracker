@@ -181,6 +181,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/compra bitcoin 0.01 @60000` | Lo mismo, con el precio de cada una en vez del total |
 | `/venta bitcoin 0.005 350` | Apunta una venta y lo que te dieron (`/venta bitcoin todo` la saca de la cartera) |
 | `/ganancias` | Lo que has ganado o perdido de verdad con lo que ya vendiste |
+| `/primera` | Tu primera compra, cuánto hace, cuánto ha cambiado el precio desde entonces y lo que vale hoy lo que compraste (`/primera btc`, la primera de esa). Solo las apuntadas con `/compra` |
 | `/movimientos` | Tus últimas compras y ventas, con un botón para deshacer la última (`/movimientos btc`, solo las de esa) |
 | `/deshacer` | Quita la última compra o venta y deja la cripto como estaba |
 | `/alerta bitcoin 70000` | Te avisa una vez cuando llegue a ese precio |
@@ -599,6 +600,7 @@ crypto_tracker/
   volatilidad.py lo que se mueve cada día, para /volatilidad
   movimientos.py las compras y ventas de /compra y /venta
   ganancias.py   lo ganado con lo vendido, para /ganancias
+  primera.py     tu primera compra, para /primera
   proximo.py     a qué precio salta el siguiente aviso
   cartera.py     cuánto vale lo que tienes
   grafica.py     las imágenes de /historico y /cartera
