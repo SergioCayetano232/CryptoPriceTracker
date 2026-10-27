@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from datetime import date, datetime
 
 from .avisados import Ultimo
+from .bigmac import PRECIO as PRECIO_BIGMAC
+from .bigmac import BigMac
 from .cafe import PRECIO as PRECIO_CAFE
 from .cafe import Cafe
 from .caida import Caida
@@ -966,6 +968,19 @@ def formatear_cafe(cafe: Cafe, currency: str) -> str:
             para = "1 día" if cafe.cuantos == 1 else f"{cafe.cuantos} días"
         texto.append(f"Uno al día, tienes para {para}")
     texto.append(f"<i>A {simbolo}{_num(PRECIO_CAFE)} cada uno</i>")
+    return "\n".join(texto)
+
+
+def formatear_bigmac(b: BigMac, currency: str) -> str:
+    """Respuesta de /bigmac."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["🍔 <b>Tu cartera en Big Macs</b>", f"Vale {simbolo}{_num(b.valor)}"]
+    if b.cuantos == 0:
+        texto.append("No te da ni para un Big Mac 😅")
+    else:
+        cuantos = f"{b.cuantos:,}".replace(",", ".") + " Big Mac"
+        texto.append(f"Te da para <b>{cuantos}{'s' if b.cuantos > 1 else ''}</b>")
+    texto.append(f"<i>A unos {simbolo}{_num(PRECIO_BIGMAC)} cada uno</i>")
     return "\n".join(texto)
 
 

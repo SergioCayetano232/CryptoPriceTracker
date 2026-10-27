@@ -23,6 +23,7 @@ from crypto_tracker import (
     aleatoria,
     alerts,
     avisados,
+    bigmac,
     botones,
     brusco,
     cafe,
@@ -982,6 +983,9 @@ def responder(
     if nombre == "gasolina":
         return _gasolina(config)
 
+    if nombre == "bigmac":
+        return _bigmac(config)
+
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
 
@@ -1926,6 +1930,13 @@ def _cafe(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_cafe(cafe.Cafe(valor), config.vs_currency)
+
+
+def _bigmac(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_bigmac(bigmac.BigMac(valor), config.vs_currency)
 
 
 def _gasolina(config: Config) -> str:
