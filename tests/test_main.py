@@ -5621,6 +5621,24 @@ def test_bigmac(config, enviados, monkeypatch):
     assert "<b>363 Big Macs</b>" in enviados[0]
 
 
+def test_iphone(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    config = replace(config, cartera=(Posicion("bitcoin", 0.04),))
+    _precio_de(config, "bitcoin", 100000.0, 5)
+
+    main.atender(config, _mensaje("/iphone"))
+
+    assert "<b>2 iPhones</b>" in enviados[0]
+
+
+def test_iphone_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/iphone"))
+
+    assert "PORTFOLIO" in enviados[0]
+
+
 def test_bigmac_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/bigmac"))
 

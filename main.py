@@ -57,6 +57,7 @@ from crypto_tracker import (
     horas,
     hoy,
     hubiera,
+    iphone,
     lambo,
     maximo,
     media,
@@ -985,6 +986,9 @@ def responder(
 
     if nombre == "bigmac":
         return _bigmac(config)
+
+    if nombre == "iphone":
+        return _iphone(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -1930,6 +1934,13 @@ def _cafe(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_cafe(cafe.Cafe(valor), config.vs_currency)
+
+
+def _iphone(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_iphone(iphone.Iphone(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:

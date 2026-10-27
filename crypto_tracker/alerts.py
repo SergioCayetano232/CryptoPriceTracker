@@ -32,6 +32,8 @@ from .halving import Halving
 from .horas import Horas
 from .hoy import Hoy
 from .hoy import mejor_y_peor as extremos_hoy
+from .iphone import PRECIO as PRECIO_IPHONE
+from .iphone import Iphone
 from .lambo import PRECIO as PRECIO_LAMBO
 from .lambo import Lambo
 from .maximo import Maximo, hace
@@ -968,6 +970,23 @@ def formatear_cafe(cafe: Cafe, currency: str) -> str:
             para = "1 día" if cafe.cuantos == 1 else f"{cafe.cuantos} días"
         texto.append(f"Uno al día, tienes para {para}")
     texto.append(f"<i>A {simbolo}{_num(PRECIO_CAFE)} cada uno</i>")
+    return "\n".join(texto)
+
+
+def formatear_iphone(i: Iphone, currency: str) -> str:
+    """Respuesta de /iphone."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["📱 <b>Tu cartera en iPhones</b>", f"Vale {simbolo}{_num(i.valor)}"]
+    if i.enteros == 0:
+        texto.append(f"Te da para el <b>{i.parte:.0f}%</b> de uno")
+        siguiente = "el primero"
+    else:
+        cuantos = f"{i.enteros:,}".replace(",", ".") + " iPhone"
+        texto.append(f"Te da para <b>{cuantos}{'s' if i.enteros > 1 else ''}</b>")
+        siguiente = "el siguiente"
+    texto.append(f"Para {siguiente} te faltan {simbolo}{_num(i.falta)}")
+    precio = f"{PRECIO_IPHONE:,}".replace(",", ".")
+    texto.append(f"<i>A unos {simbolo}{precio} cada uno, el Pro</i>")
     return "\n".join(texto)
 
 

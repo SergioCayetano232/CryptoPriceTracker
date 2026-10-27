@@ -67,6 +67,7 @@ COMANDOS = {
     "sueldo": "Cuántos meses de salario mínimo es tu cartera",
     "gasolina": "Cuántos litros de gasolina te da tu cartera",
     "bigmac": "Cuántos Big Mac te da tu cartera",
+    "iphone": "Cuántos iPhone te da tu cartera",
     "tendencias": "Las criptos que más se buscan hoy",
     "top": "Las 5 que más suben y las 5 que más bajan hoy",
     "aleatoria": "Una de las 100 más grandes al azar, para descubrir alguna",
