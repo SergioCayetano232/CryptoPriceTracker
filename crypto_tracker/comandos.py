@@ -63,6 +63,7 @@ COMANDOS = {
     "sat": "Lo que vale un satoshi y cuántos te dan 1, 10 y 100",
     "lambo": "Cuántos Lamborghinis te da tu cartera",
     "cafe": "Cuántos cafés te da tu cartera",
+    "sueldo": "Cuántos meses de salario mínimo es tu cartera",
     "tendencias": "Las criptos que más se buscan hoy",
     "top": "Las 5 que más suben y las 5 que más bajan hoy",
     "aleatoria": "Una de las 100 más grandes al azar, para descubrir alguna",
@@ -138,6 +139,9 @@ ALIAS = {
     "first": "primera",
     "café": "cafe",
     "coffee": "cafe",
+    "salario": "sueldo",
+    "smi": "sueldo",
+    "salary": "sueldo",
     "ganancia": "ganancias",
     "beneficios": "ganancias",
     # /maximo ya es /ath; el mínimo del tramo sale en lo primero de /sube.

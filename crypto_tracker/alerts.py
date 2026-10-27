@@ -58,6 +58,8 @@ from .sat import CANTIDADES as CANTIDADES_SAT
 from .sat import Sat
 from .semanal import Semana
 from .sube import Subida
+from .sueldo import PAGA as PAGA_SMI
+from .sueldo import Sueldo
 from .telegram import escape
 from .tendencias import Tendencia
 from .top import ENTRE, Movida
@@ -959,6 +961,21 @@ def formatear_cafe(cafe: Cafe, currency: str) -> str:
             para = "1 día" if cafe.cuantos == 1 else f"{cafe.cuantos} días"
         texto.append(f"Uno al día, tienes para {para}")
     texto.append(f"<i>A {simbolo}{_num(PRECIO_CAFE)} cada uno</i>")
+    return "\n".join(texto)
+
+
+def formatear_sueldo(s: Sueldo) -> str:
+    """Respuesta de /sueldo."""
+    texto = ["💼 <b>Tu cartera en sueldos</b>", f"Vale €{_num(s.valor)}"]
+    if s.meses < 1:
+        texto.append("No llega ni a un mes de salario mínimo 😅")
+    else:
+        cuanto, unidad = (s.meses, "mes") if s.meses < 12 else (s.meses / 12, "año")
+        cifra = f"{cuanto:.1f}".replace(".", ",")
+        if cifra != "1,0":
+            unidad += "es" if unidad == "mes" else "s"
+        texto.append(f"Son <b>{cifra} {unidad}</b> de salario mínimo")
+    texto.append(f"<i>El SMI de 2026: €{PAGA_SMI:,} en 14 pagas</i>".replace(",", "."))
     return "\n".join(texto)
 
 

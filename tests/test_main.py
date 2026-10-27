@@ -5546,6 +5546,33 @@ def test_cafe(config, enviados, monkeypatch):
     assert "<b>1.333 cafés</b>" in enviados[0]
 
 
+def test_sueldo(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    config = replace(config, cartera=(Posicion("bitcoin", 0.12),))
+    _precio_de(config, "bitcoin", 100000.0, 5)
+
+    main.atender(config, _mensaje("/smi"))
+
+    assert "Vale €12.000,00" in enviados[0]
+    assert "<b>8,4 meses</b>" in enviados[0]
+
+
+def test_sueldo_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/sueldo"))
+
+    assert "PORTFOLIO" in enviados[0]
+
+
+def test_sueldo_en_dolares(config, enviados):
+    from dataclasses import replace
+
+    main.atender(replace(config, vs_currency="usd"), _mensaje("/sueldo"))
+
+    assert "Solo funciona con <code>VS_CURRENCY=eur</code>" in enviados[0]
+
+
 def test_cafe_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/cafe"))
 

@@ -79,6 +79,7 @@ from crypto_tracker import (
     semanal,
     simbolos,
     sube,
+    sueldo,
     telegram,
     top,
     verdes,
@@ -965,6 +966,9 @@ def responder(
 
     if nombre == "cafe":
         return _cafe(config)
+
+    if nombre == "sueldo":
+        return _sueldo(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -1907,6 +1911,19 @@ def _cafe(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_cafe(cafe.Cafe(valor), config.vs_currency)
+
+
+def _sueldo(config: Config) -> str:
+    # El SMI es en euros: con la cartera en dólares saldría una cuenta sin sentido.
+    if config.vs_currency != "eur":
+        return (
+            "El salario mínimo va en euros. "
+            "Solo funciona con <code>VS_CURRENCY=eur</code>."
+        )
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_sueldo(sueldo.Sueldo(valor))
 
 
 def _valor_guardado(config: Config) -> float | str:

@@ -235,6 +235,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/sat` | Lo que vale un satoshi (la cien millonésima parte de un bitcoin) y cuántos te dan 1, 10 y 100. Para cantidades exactas, `/convertir 50 eur sats` |
 | `/lambo` | Cuántos Lamborghinis te da tu cartera, a unos 250.000 cada uno, y cuánto te falta para el siguiente |
 | `/cafe` | Cuántos cafés te da tu cartera, a 1,50 cada uno, y para cuánto tiempo tienes tomando uno al día |
+| `/sueldo` | Cuántos meses (o años) de salario mínimo es tu cartera, con el SMI de 2026: 1.221 € en 14 pagas. Solo en euros |
 | `/tendencias` | Las 7 criptos que más se buscan hoy en CoinGecko, con un botón en cada una para ver su precio y ponerle una alerta |
 | `/top` | Las 5 que más suben y las 5 que más bajan hoy de las 100 más grandes, con su precio |
 | `/aleatoria` | Una de las 100 más grandes al azar, con su puesto, su precio y cómo va hoy. No saca las que ya vigilas ni las estables. Con un botón para pedir otra |
@@ -600,6 +601,7 @@ crypto_tracker/
   millonario.py  lo que hace falta para un millón, para /millonario
   lambo.py       tu cartera en Lamborghinis, para /lambo
   cafe.py        tu cartera en cafés, para /cafe
+  sueldo.py      tu cartera en salarios mínimos, para /sueldo
   sat.py         lo que vale un satoshi, para /sat
   puntuales.py   las alertas de /alerta
   vigiladas.py   lo que cambias con /vigilar
