@@ -23,6 +23,8 @@ from .doble import Cartera as CarteraDoble
 from .equilibrio import Cartera
 from .frase import Frase
 from .ganancias import Ganancias
+from .gasolina import DEPOSITO, Gasolina
+from .gasolina import PRECIO as PRECIO_GASOLINA
 from .glosario import TERMINOS, buscar, parecido
 from .halving import Halving
 from .horas import Horas
@@ -964,6 +966,25 @@ def formatear_cafe(cafe: Cafe, currency: str) -> str:
             para = "1 día" if cafe.cuantos == 1 else f"{cafe.cuantos} días"
         texto.append(f"Uno al día, tienes para {para}")
     texto.append(f"<i>A {simbolo}{_num(PRECIO_CAFE)} cada uno</i>")
+    return "\n".join(texto)
+
+
+def formatear_gasolina(g: Gasolina, currency: str) -> str:
+    """Respuesta de /gasolina."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["⛽ <b>Tu cartera en gasolina</b>", f"Vale {simbolo}{_num(g.valor)}"]
+    if g.litros == 0:
+        texto.append("No te da ni para un litro 😅")
+    else:
+        litros = f"{g.litros:,}".replace(",", ".")
+        texto.append(f"Te da para <b>{litros} litro{'s' if g.litros > 1 else ''}</b>")
+        if g.depositos:
+            depositos = f"{g.depositos:,}".replace(",", ".")
+            texto.append(
+                f"Son {depositos} depósito{'s' if g.depositos > 1 else ''} "
+                f"de {DEPOSITO} litros"
+            )
+    texto.append(f"<i>A unos {simbolo}{_num(PRECIO_GASOLINA)} el litro</i>")
     return "\n".join(texto)
 
 

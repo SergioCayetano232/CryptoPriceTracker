@@ -5596,6 +5596,25 @@ def test_sueldo(config, enviados, monkeypatch):
     assert "<b>8,4 meses</b>" in enviados[0]
 
 
+def test_gasolina(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    config = replace(config, cartera=(Posicion("bitcoin", 0.02),))
+    _precio_de(config, "bitcoin", 100000.0, 5)
+
+    main.atender(config, _mensaje("/gas"))
+
+    assert "Vale €2.000,00" in enviados[0]
+    assert "<b>1.111 litros</b>" in enviados[0]
+
+
+def test_gasolina_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/gasolina"))
+
+    assert "PORTFOLIO" in enviados[0]
+
+
 def test_sueldo_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/sueldo"))
 

@@ -50,6 +50,7 @@ from crypto_tracker import (
     extremos,
     frase,
     ganancias,
+    gasolina,
     grafica,
     halving,
     horas,
@@ -977,6 +978,9 @@ def responder(
 
     if nombre == "sueldo":
         return _sueldo(config)
+
+    if nombre == "gasolina":
+        return _gasolina(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -1922,6 +1926,13 @@ def _cafe(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_cafe(cafe.Cafe(valor), config.vs_currency)
+
+
+def _gasolina(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_gasolina(gasolina.Gasolina(valor), config.vs_currency)
 
 
 def _sueldo(config: Config) -> str:
