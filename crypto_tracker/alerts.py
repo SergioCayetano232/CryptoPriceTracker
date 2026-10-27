@@ -21,6 +21,7 @@ from .dia import Dia
 from .diasemana import NOMBRES, DiasSemana
 from .doble import Cartera as CarteraDoble
 from .equilibrio import Cartera
+from .frase import Frase
 from .ganancias import Ganancias
 from .halving import Halving
 from .horas import Horas
@@ -977,6 +978,12 @@ def formatear_sueldo(s: Sueldo) -> str:
         texto.append(f"Son <b>{cifra} {unidad}</b> de salario mínimo")
     texto.append(f"<i>El SMI de 2026: €{PAGA_SMI:,} en 14 pagas</i>".replace(",", "."))
     return "\n".join(texto)
+
+
+def formatear_frase(f: Frase) -> str:
+    """Respuesta de /frase."""
+    quien = f"{f.autor}, {f.año}" if f.año else f.autor
+    return f"💬 <i>«{escape(f.texto)}»</i>\n— {escape(quien)}"
 
 
 def formatear_caraocruz(lado: str, coin_id: str | None) -> str:

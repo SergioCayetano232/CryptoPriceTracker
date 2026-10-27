@@ -12,6 +12,7 @@ from crypto_tracker import (
     coingecko,
     comandos,
     database,
+    frase,
     grafica,
     miedo,
     telegram,
@@ -5492,6 +5493,18 @@ def test_caraocruz(config, enviados, monkeypatch):
 
     assert "🪙 Ha salido <b>cruz</b>: vende <b>Bitcoin</b>" in enviados[0]
     assert "<b>cruz</b>: vende\n" in enviados[1]
+
+
+# --- /frase ---
+
+
+def test_frase(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    monkeypatch.setattr(frase, "elegir", lambda: frase.FRASES[5])
+
+    main.atender(config, _mensaje("/cita"))
+
+    assert "💬 <i>«Running bitcoin»</i>\n— Hal Finney, 2009" in enviados[0]
 
 
 # --- /lambo ---

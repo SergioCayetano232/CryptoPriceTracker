@@ -48,6 +48,7 @@ from crypto_tracker import (
     equilibrio,
     exportar,
     extremos,
+    frase,
     ganancias,
     grafica,
     halving,
@@ -886,6 +887,9 @@ def responder(
 
     if nombre == "aleatoria":
         return _aleatoria(config)
+
+    if nombre == "frase":
+        return alerts.formatear_frase(frase.elegir())
 
     if nombre == "caraocruz":
         return alerts.formatear_caraocruz(
