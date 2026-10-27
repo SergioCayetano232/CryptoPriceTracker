@@ -23,6 +23,7 @@ from .doble import Cartera as CarteraDoble
 from .equilibrio import Cartera
 from .frase import Frase
 from .ganancias import Ganancias
+from .glosario import TERMINOS, buscar, parecido
 from .halving import Halving
 from .horas import Horas
 from .hoy import Hoy
@@ -984,6 +985,24 @@ def formatear_frase(f: Frase) -> str:
     """Respuesta de /frase."""
     quien = f"{f.autor}, {f.año}" if f.año else f.autor
     return f"💬 <i>«{escape(f.texto)}»</i>\n— {escape(quien)}"
+
+
+def formatear_glosario(argumento: str) -> str:
+    """Respuesta de /glosario: la lista a secas, o lo que significa una palabra."""
+    if not argumento.strip():
+        return (
+            "📖 <b>Las palabras que sé</b>\n"
+            + ", ".join(TERMINOS)
+            + "\n<i>Pide una: /glosario hodl</i>"
+        )
+    termino = buscar(argumento)
+    if termino:
+        return f"📖 <b>{termino}</b>\n{TERMINOS[termino]}"
+    pedido = escape(argumento.strip())
+    cerca = parecido(argumento)
+    if cerca:
+        return f"No sé qué es «{pedido}». ¿Querías decir /glosario {cerca}?"
+    return f"No sé qué es «{pedido}». Con /glosario te salen las que sé."
 
 
 def formatear_caraocruz(lado: str, coin_id: str | None) -> str:

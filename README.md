@@ -241,6 +241,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/aleatoria` | Una de las 100 más grandes al azar, con su puesto, su precio y cómo va hoy. No saca las que ya vigilas ni las estables. Con un botón para pedir otra |
 | `/caraocruz` | ¿Compro o vendo? Lo decide una moneda al aire (`/caraocruz btc`, con la cripto). Es de broma y no gasta consultas |
 | `/frase` | Una frase famosa del mundo cripto al azar, de Satoshi, Hal Finney, Buffett y otros, con quién la dijo y cuándo. No gasta consultas |
+| `/glosario fomo` | Lo que significa una palabra cripto: hodl, fomo, fud, dca, ath, ballena... A secas, la lista de las que sabe |
 | `/miedo` | El índice de miedo y codicia del mercado (0 pánico, 100 euforia), con el de ayer y el de hace una semana. Viene de alternative.me y no gasta consultas de CoinGecko |
 | `/buscar btc` | Encuentra el id de CoinGecko de una cripto |
 | `/copia` | Las líneas `WATCHLIST`, `PORTFOLIO` y `RESUMEN_DIARIO` como están ahora, con lo cambiado por Telegram, listas para pegar en el `.env`. Para guardarlo por si cambias de servidor |
@@ -595,6 +596,7 @@ crypto_tracker/
   aleatoria.py   una de las más grandes al azar, para /aleatoria
   caraocruz.py   la moneda al aire de /caraocruz
   frase.py       las frases famosas de /frase
+  glosario.py    las palabras que explica /glosario
   mercado.py     el mercado entero, para /mercado
   halving.py     cuánto falta para el próximo halving, para /halving
   cumple.py      los años de Bitcoin, para /cumple

@@ -888,6 +888,9 @@ def responder(
     if nombre == "aleatoria":
         return _aleatoria(config)
 
+    if nombre == "glosario":
+        return alerts.formatear_glosario(argumento)
+
     if nombre == "frase":
         return alerts.formatear_frase(frase.elegir())
 

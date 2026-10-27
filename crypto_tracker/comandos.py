@@ -69,6 +69,7 @@ COMANDOS = {
     "aleatoria": "Una de las 100 más grandes al azar, para descubrir alguna",
     "caraocruz": "¿Compro o vendo? Una moneda al aire (ej: /caraocruz btc)",
     "frase": "Una frase famosa del mundo cripto, al azar",
+    "glosario": "Qué significa hodl, fomo, dca... (ej: /glosario fomo)",
     "miedo": "El índice de miedo y codicia del mercado",
     "buscar": "Encuentra el id de una cripto (ej: /buscar btc)",
     "copia": "Lo que vigilo y tu cartera, listo para pegar en el .env",
@@ -164,6 +165,9 @@ ALIAS = {
     "flip": "caraocruz",
     "cita": "frase",
     "quote": "frase",
+    # Sin "hodl": se parece tanto a "hola" que a un saludo le sugería /glosario.
+    "glossary": "glosario",
+    "diccionario": "glosario",
     "sats": "sat",
     "satoshi": "sat",
     "summary": "resumen",

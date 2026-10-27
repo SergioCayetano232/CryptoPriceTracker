@@ -5507,6 +5507,19 @@ def test_frase(config, enviados, monkeypatch):
     assert "💬 <i>«Running bitcoin»</i>\n— Hal Finney, 2009" in enviados[0]
 
 
+# --- /glosario ---
+
+
+def test_glosario(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+
+    main.atender(config, _mensaje("/diccionario fomo"))
+    main.atender(config, _mensaje("/glosario"))
+
+    assert enviados[0].startswith("📖 <b>FOMO</b>")
+    assert "Las palabras que sé" in enviados[1]
+
+
 # --- /lambo ---
 
 
