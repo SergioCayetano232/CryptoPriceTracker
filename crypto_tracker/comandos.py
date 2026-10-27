@@ -58,6 +58,7 @@ COMANDOS = {
     "halving": "Cuánto falta para el próximo halving de Bitcoin",
     "cumple": "Los años de Bitcoin y cuánto falta para su cumpleaños",
     "whitepaper": "Los años del whitepaper de Satoshi y cuánto falta para cumplir",
+    "merge": "Los años desde que Ethereum dejó la minería",
     "pizza": "Lo que valdrían hoy los 10.000 BTC de las pizzas de 2010",
     "millonario": "Cuánto necesitas para tener un millón (ej: /millonario eth)",
     "sat": "Lo que vale un satoshi y cuántos te dan 1, 10 y 100",

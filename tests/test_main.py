@@ -5460,6 +5460,17 @@ def test_paper_es_whitepaper(config, enviados):
     assert "whitepaper de Bitcoin" in enviados[0]
 
 
+# --- /merge ---
+
+
+def test_merge(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+
+    main.atender(config, _mensaje("/merge"))
+
+    assert "🐼 <b>The Merge cumple" in enviados[0]
+
+
 # --- /sat ---
 
 

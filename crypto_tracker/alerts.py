@@ -34,6 +34,7 @@ from .maximo import Maximo, hace
 from .media import lado_de_todas
 from .mejor import Extremo
 from .mercado import Mercado, grande
+from .merge import Merge
 from .miedo import Indice
 from .miedo import hace as dia_miedo
 from .miedo import nombre as nombre_miedo
@@ -1050,6 +1051,21 @@ def formatear_whitepaper(w: Whitepaper) -> str:
         return texto + "\n🎉 ¡Hoy es su cumpleaños!"
     falta = "1 día" if w.faltan == 1 else f"{w.faltan} días"
     return texto + f"\n<i>Faltan {falta} para que cumpla {w.años + 1}</i>"
+
+
+def formatear_merge(m: Merge) -> str:
+    """Respuesta de /merge."""
+    dias = f"{m.dias:,}".replace(",", ".")
+    años = "1 año" if m.años == 1 else f"{m.años} años"
+    texto = (
+        f"🐼 <b>The Merge cumple {años}</b>\n"
+        f"Ethereum dejó la minería el 15/09/2022, hace {dias} días. "
+        "Desde entonces gasta un 99,95 % menos de energía"
+    )
+    if m.faltan == 0:
+        return texto + "\n🎉 ¡Hoy es su aniversario!"
+    falta = "1 día" if m.faltan == 1 else f"{m.faltan} días"
+    return texto + f"\n<i>Faltan {falta} para que cumpla {m.años + 1}</i>"
 
 
 def formatear_millonario(

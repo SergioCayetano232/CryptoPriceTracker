@@ -59,6 +59,7 @@ from crypto_tracker import (
     maximo,
     media,
     mejor,
+    merge,
     miedo,
     millonario,
     moneda,
@@ -982,6 +983,9 @@ def responder(
 
     if nombre == "whitepaper":
         return alerts.formatear_whitepaper(whitepaper.Whitepaper(date.today()))
+
+    if nombre == "merge":
+        return alerts.formatear_merge(merge.Merge(date.today()))
 
     if nombre == "millonario":
         return _millonario(config, argumento)
