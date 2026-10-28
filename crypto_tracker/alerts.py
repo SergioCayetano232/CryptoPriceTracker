@@ -65,6 +65,8 @@ from .oro import Oro
 from .periodo import nombre as nombre_periodo
 from .pizza import BTC, Pizza
 from .primera import Primera
+from .ps5 import PRECIO as PRECIO_PS5
+from .ps5 import Ps5
 from .puntuales import CARTERA, Puntual, cumplidas, ejemplo, progreso
 from .racha import Racha
 from .rango import Rango, barra
@@ -1061,6 +1063,21 @@ def formatear_oro(o: Oro, currency: str) -> str:
 def _es(numero: str) -> str:
     """1,234.5 → 1.234,5"""
     return numero.replace(",", " ").replace(".", ",").replace(" ", ".")
+
+
+def formatear_ps5(p: Ps5, currency: str) -> str:
+    """Respuesta de /ps5."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["🎮 <b>Tu cartera en PS5</b>", f"Vale {simbolo}{_num(p.valor)}"]
+    if p.enteros == 0:
+        texto.append(f"Te da para el <b>{p.parte:.0f}%</b> de una")
+        siguiente = "la primera"
+    else:
+        texto.append(f"Te da para <b>{_es(f'{p.enteros:,}')} PS5</b>")
+        siguiente = "la siguiente"
+    texto.append(f"Para {siguiente} te faltan {simbolo}{_num(p.falta)}")
+    texto.append(f"<i>A unos {simbolo}{PRECIO_PS5} cada una, la Pro</i>")
+    return "\n".join(texto)
 
 
 def formatear_bigmac(b: BigMac, currency: str) -> str:

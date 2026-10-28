@@ -73,6 +73,7 @@ COMANDOS = {
     "alquiler": "Cuántos meses de alquiler te paga tu cartera",
     "oro": "Cuántos gramos de oro te da tu cartera",
     "netflix": "Cuántos meses de Netflix te paga tu cartera",
+    "ps5": "Cuántas PS5 te da tu cartera",
     "tendencias": "Las criptos que más se buscan hoy",
     "top": "Las 5 que más suben y las 5 que más bajan hoy",
     "aleatoria": "Una de las 100 más grandes al azar, para descubrir alguna",
@@ -158,6 +159,7 @@ ALIAS = {
     "gas": "gasolina",
     "burger": "bigmac",
     "hamburguesa": "bigmac",
+    "playstation": "ps5",
     "ganancia": "ganancias",
     "beneficios": "ganancias",
     # /maximo ya es /ath; el mínimo del tramo sale en lo primero de /sube.

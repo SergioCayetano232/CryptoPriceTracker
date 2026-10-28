@@ -5742,6 +5742,24 @@ def test_netflix_sin_cartera(config, enviados):
     assert "PORTFOLIO" in enviados[0]
 
 
+def test_ps5(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    config = replace(config, cartera=(Posicion("bitcoin", 0.02),))
+    _precio_de(config, "bitcoin", 100000.0, 5)
+
+    main.atender(config, _mensaje("/playstation"))
+
+    assert "Te da para <b>2 PS5</b>" in enviados[0]
+
+
+def test_ps5_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/ps5"))
+
+    assert "PORTFOLIO" in enviados[0]
+
+
 def test_bigmac_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/bigmac"))
 

@@ -78,6 +78,7 @@ from crypto_tracker import (
     pizza,
     primera,
     proximo,
+    ps5,
     puntuales,
     racha,
     rango,
@@ -1011,6 +1012,9 @@ def responder(
 
     if nombre == "netflix":
         return _netflix(config)
+
+    if nombre == "ps5":
+        return _ps5(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -1997,6 +2001,13 @@ def _netflix(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_netflix(netflix.Netflix(valor), config.vs_currency)
+
+
+def _ps5(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_ps5(ps5.Ps5(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:
