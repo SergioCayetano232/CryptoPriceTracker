@@ -233,6 +233,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/merge` | Los años desde The Merge, cuando Ethereum dejó la minería, los días que lleva y cuánto falta para el aniversario (el 15 de septiembre) |
 | `/adios` | El tiempo que lleva Satoshi sin aparecer desde su último mensaje en el foro (el 12 de diciembre de 2010) y cuánto falta para que se cumpla otro año |
 | `/pizza` | Lo que valdrían hoy los 10.000 BTC que se pagaron por dos pizzas en 2010, y cuánto falta para el Bitcoin Pizza Day |
+| `/mundo` | Lo que le tocaría a cada persona del mundo si se repartieran los 21 millones de bitcoin, en sats y en dinero al precio de hoy |
 | `/millonario` | Cuánto bitcoin (u otra, `/millonario eth`) necesitas para tener un millón al precio de hoy y, si la tienes en la cartera, cuánto llevas del camino |
 | `/sat` | Lo que vale un satoshi (la cien millonésima parte de un bitcoin) y cuántos te dan 1, 10 y 100. Para cantidades exactas, `/convertir 50 eur sats` |
 | `/lambo` | Cuántos Lamborghinis te da tu cartera, a unos 250.000 cada uno, y cuánto te falta para el siguiente |
@@ -609,6 +610,7 @@ crypto_tracker/
   merge.py       los años de The Merge de Ethereum, para /merge
   adios.py       el tiempo sin Satoshi, para /adios
   pizza.py       los 10.000 BTC de las pizzas, para /pizza
+  mundo.py       los bitcoin repartidos entre todos, para /mundo
   millonario.py  lo que hace falta para un millón, para /millonario
   lambo.py       tu cartera en Lamborghinis, para /lambo
   cafe.py        tu cartera en cafés, para /cafe

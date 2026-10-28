@@ -5287,6 +5287,29 @@ def test_halving(config, enviados, monkeypatch):
     assert "BTC" in enviados[0]
 
 
+# --- /mundo ---
+
+
+def test_mundo_con_lo_guardado(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    _precio_de(config, "bitcoin", 83000.0, 5)
+
+    main.atender(config, _mensaje("/mundo"))
+
+    assert "Hoy serían unos <b>€210,00</b>" in enviados[0]
+
+
+def test_mundo_sin_red(config, enviados, monkeypatch):
+    def falla(*a, **k):
+        raise coingecko.CoinGeckoError("sin conexión")
+
+    monkeypatch.setattr(coingecko, "get_prices", falla)
+
+    main.atender(config, _mensaje("/mundo"))
+
+    assert "No he podido mirar el precio ahora mismo: sin conexión" in enviados[0]
+
+
 # --- /pizza ---
 
 

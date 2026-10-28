@@ -61,6 +61,7 @@ COMANDOS = {
     "merge": "Los años desde que Ethereum dejó la minería",
     "adios": "El tiempo que lleva Satoshi sin aparecer",
     "pizza": "Lo que valdrían hoy los 10.000 BTC de las pizzas de 2010",
+    "mundo": "Lo que le tocaría a cada persona si se repartieran todos los bitcoin",
     "millonario": "Cuánto necesitas para tener un millón (ej: /millonario eth)",
     "sat": "Lo que vale un satoshi y cuántos te dan 1, 10 y 100",
     "lambo": "Cuántos Lamborghinis te da tu cartera",

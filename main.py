@@ -68,6 +68,7 @@ from crypto_tracker import (
     millonario,
     moneda,
     movimientos,
+    mundo,
     objetivo,
     periodo,
     pizza,
@@ -972,6 +973,9 @@ def responder(
 
     if nombre == "pizza":
         return _pizza(config)
+
+    if nombre == "mundo":
+        return _mundo(config)
 
     if nombre == "lambo":
         return _lambo(config)
@@ -1924,6 +1928,13 @@ def _pizza(config: Config) -> str:
     if isinstance(precio, str):
         return precio
     return alerts.formatear_pizza(pizza.Pizza(precio, date.today()), config.vs_currency)
+
+
+def _mundo(config: Config) -> str:
+    precio = _precio_o_pedirlo(config, "bitcoin")
+    if isinstance(precio, str):
+        return precio
+    return alerts.formatear_mundo(mundo.Mundo(precio), config.vs_currency)
 
 
 def _lambo(config: Config) -> str:

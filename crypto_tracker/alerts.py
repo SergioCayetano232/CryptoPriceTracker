@@ -46,6 +46,7 @@ from .miedo import Indice
 from .miedo import hace as dia_miedo
 from .miedo import nombre as nombre_miedo
 from .millonario import Millonario, cantidad
+from .mundo import PERSONAS, Mundo
 from .movimientos import (
     Movimiento,
     descuadre,
@@ -1157,6 +1158,20 @@ def formatear_millonario(
             f"el <b>{m.hecho:.2f}%</b>"
         )
     return texto
+
+
+def formatear_mundo(m: Mundo, currency: str) -> str:
+    """Respuesta de /mundo."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    personas = f"{PERSONAS // 1_000_000:,}".replace(",", ".")
+    sats = f"{m.sats:,}".replace(",", ".")
+    return (
+        "🌍 <b>Si se repartieran todos los bitcoin</b>\n"
+        f"Entre los {personas} millones de personas del mundo, a cada una le "
+        f"tocarían <b>{sats} sats</b> ({_num(m.btc)} BTC)\n"
+        f"Hoy serían unos <b>{simbolo}{_num(m.valor)}</b>\n"
+        "<i>Nunca habrá más de 21 millones de bitcoin</i>"
+    )
 
 
 def formatear_pizza(p: Pizza, currency: str) -> str:
