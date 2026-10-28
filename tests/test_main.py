@@ -11,6 +11,7 @@ from crypto_tracker import (
     caraocruz,
     coingecko,
     comandos,
+    dado,
     database,
     frase,
     grafica,
@@ -5538,6 +5539,20 @@ def test_caraocruz(config, enviados, monkeypatch):
 
     assert "🪙 Ha salido <b>cruz</b>: vende <b>Bitcoin</b>" in enviados[0]
     assert "<b>cruz</b>: vende\n" in enviados[1]
+
+
+# --- /dado ---
+
+
+def test_dado(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    monkeypatch.setattr(dado, "tirar", lambda: 2)
+
+    main.atender(config, _mensaje("/dado sol"))
+    main.atender(config, _mensaje("/dado"))
+
+    assert "<b>2</b> ⚁: vende un poco de <b>Solana</b>" in enviados[0]
+    assert "<b>2</b> ⚁: vende un poco\n" in enviados[1]
 
 
 # --- /frase ---

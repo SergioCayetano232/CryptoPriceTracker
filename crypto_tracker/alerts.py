@@ -22,6 +22,8 @@ from .config import Posicion, Watch
 from .correlacion import Correlacion
 from .cuando import Cuando
 from .cumple import Cumple
+from .dado import CARAS
+from .dado import QUE_HACER as QUE_HACER_DADO
 from .dia import Dia
 from .diasemana import NOMBRES, DiasSemana
 from .doble import Cartera as CarteraDoble
@@ -1138,6 +1140,16 @@ def formatear_caraocruz(lado: str, coin_id: str | None) -> str:
     if coin_id:
         texto += f" <b>{escape(coin_id.replace('-', ' ').title())}</b>"
     return texto + "\n<i>Es una moneda al aire. No es un consejo, que lo sepas.</i>"
+
+
+def formatear_dado(numero: int, coin_id: str | None) -> str:
+    """Respuesta de /dado."""
+    que, enlace = QUE_HACER_DADO[numero - 1]
+    texto = f"🎲 Ha salido un <b>{numero}</b> {CARAS[numero - 1]}: {que}"
+    if coin_id:
+        nombre = escape(coin_id.replace("-", " ").title())
+        texto += f" {enlace} <b>{nombre}</b>".replace("  ", " ")
+    return texto + "\n<i>Lo ha dicho un dado. No es un consejo, que lo sepas.</i>"
 
 
 def formatear_sat(s: Sat, currency: str) -> str:

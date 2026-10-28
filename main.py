@@ -42,6 +42,7 @@ from crypto_tracker import (
     cuando,
     cumple,
     cuota,
+    dado,
     database,
     dca,
     dia,
@@ -902,6 +903,10 @@ def responder(
 
     if nombre == "frase":
         return alerts.formatear_frase(frase.elegir())
+
+    if nombre == "dado":
+        # Lee la cripto igual que /caraocruz, así que uso su misma función.
+        return alerts.formatear_dado(dado.tirar(), caraocruz.interpretar(argumento))
 
     if nombre == "caraocruz":
         return alerts.formatear_caraocruz(

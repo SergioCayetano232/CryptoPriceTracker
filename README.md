@@ -249,6 +249,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/top` | Las 5 que más suben y las 5 que más bajan hoy de las 100 más grandes, con su precio |
 | `/aleatoria` | Una de las 100 más grandes al azar, con su puesto, su precio y cómo va hoy. No saca las que ya vigilas ni las estables. Con un botón para pedir otra |
 | `/caraocruz` | ¿Compro o vendo? Lo decide una moneda al aire (`/caraocruz btc`, con la cripto). Es de broma y no gasta consultas |
+| `/dado` | Qué hacer con tu cripto según un dado: del 1 (vende todo) al 6 (compra más). También con la cripto, `/dado sol`. De broma, como `/caraocruz` |
 | `/frase` | Una frase famosa del mundo cripto al azar, de Satoshi, Hal Finney, Buffett y otros, con quién la dijo y cuándo. No gasta consultas |
 | `/glosario fomo` | Lo que significa una palabra cripto: hodl, fomo, fud, dca, ath, ballena... A secas, la lista de las que sabe |
 | `/miedo` | El índice de miedo y codicia del mercado (0 pánico, 100 euforia), con el de ayer y el de hace una semana. Viene de alternative.me y no gasta consultas de CoinGecko |
@@ -604,6 +605,7 @@ crypto_tracker/
   tendencias.py  lo que más se busca, para /tendencias
   aleatoria.py   una de las más grandes al azar, para /aleatoria
   caraocruz.py   la moneda al aire de /caraocruz
+  dado.py        el dado de /dado
   frase.py       las frases famosas de /frase
   glosario.py    las palabras que explica /glosario
   mercado.py     el mercado entero, para /mercado

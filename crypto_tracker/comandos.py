@@ -77,6 +77,7 @@ COMANDOS = {
     "top": "Las 5 que más suben y las 5 que más bajan hoy",
     "aleatoria": "Una de las 100 más grandes al azar, para descubrir alguna",
     "caraocruz": "¿Compro o vendo? Una moneda al aire (ej: /caraocruz btc)",
+    "dado": "Qué hacer con tu cripto, a lo que diga un dado (ej: /dado sol)",
     "frase": "Una frase famosa del mundo cripto, al azar",
     "glosario": "Qué significa hodl, fomo, dca... (ej: /glosario fomo)",
     "miedo": "El índice de miedo y codicia del mercado",
