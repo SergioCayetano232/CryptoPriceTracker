@@ -56,6 +56,8 @@ from .movimientos import (
     totales,
 )
 from .mundo import PERSONAS, Mundo
+from .netflix import PRECIO as PRECIO_NETFLIX
+from .netflix import Netflix
 from .objetivo import Escenario
 from .oro import Oro
 from .periodo import nombre as nombre_periodo
@@ -1006,16 +1008,32 @@ def formatear_alquiler(a: Alquiler, currency: str) -> str:
         dias = "1 día" if a.dias == 1 else f"{a.dias} días"
         texto.append(f"No llega a un mes: te paga <b>{dias}</b>")
     else:
-        meses = "1 mes" if a.meses == 1 else f"{a.meses:,} meses".replace(",", ".")
-        linea = f"Te paga <b>{meses}</b>"
-        años = a.meses // 12
-        if años:
-            cuantos = "1 año" if años == 1 else f"{años:,} años".replace(",", ".")
-            linea += f", {'justo' if a.meses % 12 == 0 else 'más de'} {cuantos}"
-        texto.append(linea)
+        texto.append(f"Te paga {_meses(a.meses)}")
     precio = f"{PRECIO_ALQUILER:,}".replace(",", ".")
     texto.append(f"<i>A unos {simbolo}{precio} al mes, un piso normal en España</i>")
     return "\n".join(texto)
+
+
+def formatear_netflix(n: Netflix, currency: str) -> str:
+    """Respuesta de /netflix."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["🍿 <b>Tu cartera en Netflix</b>", f"Vale {simbolo}{_num(n.valor)}"]
+    if n.meses == 0:
+        texto.append("No te paga ni un mes 😅")
+    else:
+        texto.append(f"Te paga {_meses(n.meses)}")
+    texto.append(f"<i>A {simbolo}{_num(PRECIO_NETFLIX)} al mes, el plan Estándar</i>")
+    return "\n".join(texto)
+
+
+def _meses(meses: int) -> str:
+    """<b>30 meses</b>, más de 2 años"""
+    texto = "<b>1 mes</b>" if meses == 1 else f"<b>{_es(f'{meses:,}')} meses</b>"
+    años = meses // 12
+    if años:
+        cuantos = "1 año" if años == 1 else f"{_es(f'{años:,}')} años"
+        texto += f", {'justo' if meses % 12 == 0 else 'más de'} {cuantos}"
+    return texto
 
 
 def formatear_oro(o: Oro, currency: str) -> str:

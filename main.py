@@ -70,6 +70,7 @@ from crypto_tracker import (
     moneda,
     movimientos,
     mundo,
+    netflix,
     objetivo,
     oro,
     periodo,
@@ -1002,6 +1003,9 @@ def responder(
 
     if nombre == "oro":
         return _oro(config)
+
+    if nombre == "netflix":
+        return _netflix(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -1981,6 +1985,13 @@ def _oro(config: Config) -> str:
     if isinstance(onza, str):
         return onza
     return alerts.formatear_oro(oro.Oro(valor, onza), config.vs_currency)
+
+
+def _netflix(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_netflix(netflix.Netflix(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:
