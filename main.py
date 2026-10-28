@@ -71,6 +71,7 @@ from crypto_tracker import (
     movimientos,
     mundo,
     objetivo,
+    oro,
     periodo,
     pizza,
     primera,
@@ -998,6 +999,9 @@ def responder(
 
     if nombre == "alquiler":
         return _alquiler(config)
+
+    if nombre == "oro":
+        return _oro(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -1967,6 +1971,16 @@ def _alquiler(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_alquiler(alquiler.Alquiler(valor), config.vs_currency)
+
+
+def _oro(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    onza = _precio_o_pedirlo(config, oro.COIN_ID)
+    if isinstance(onza, str):
+        return onza
+    return alerts.formatear_oro(oro.Oro(valor, onza), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:

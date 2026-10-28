@@ -57,6 +57,7 @@ from .movimientos import (
 )
 from .mundo import PERSONAS, Mundo
 from .objetivo import Escenario
+from .oro import Oro
 from .periodo import nombre as nombre_periodo
 from .pizza import BTC, Pizza
 from .primera import Primera
@@ -1015,6 +1016,31 @@ def formatear_alquiler(a: Alquiler, currency: str) -> str:
     precio = f"{PRECIO_ALQUILER:,}".replace(",", ".")
     texto.append(f"<i>A unos {simbolo}{precio} al mes, un piso normal en España</i>")
     return "\n".join(texto)
+
+
+def formatear_oro(o: Oro, currency: str) -> str:
+    """Respuesta de /oro."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    if o.gramos >= 1000:
+        peso = _es(f"{o.gramos / 1000:,.1f}".removesuffix(".0")) + " kilos"
+    elif o.gramos >= 10:
+        peso = f"{o.gramos:.0f} gramos"
+    else:
+        peso = _es(f"{o.gramos:.1f}".removesuffix(".0")) + " gramos"
+    onzas = _es(f"{o.onzas:,.2f}")
+    return "\n".join(
+        [
+            "🥇 <b>Tu cartera en oro</b>",
+            f"Vale {simbolo}{_num(o.valor)}",
+            f"Son <b>{peso}</b>, {onzas} onzas",
+            f"<i>Con el gramo a {simbolo}{_num(o.gramo)}</i>",
+        ]
+    )
+
+
+def _es(numero: str) -> str:
+    """1,234.5 → 1.234,5"""
+    return numero.replace(",", " ").replace(".", ",").replace(" ", ".")
 
 
 def formatear_bigmac(b: BigMac, currency: str) -> str:
