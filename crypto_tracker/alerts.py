@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from datetime import date, datetime
 
 from .adios import Adios
+from .alquiler import PRECIO as PRECIO_ALQUILER
+from .alquiler import Alquiler
 from .avisados import Ultimo
 from .bigmac import PRECIO as PRECIO_BIGMAC
 from .bigmac import BigMac
@@ -46,7 +48,6 @@ from .miedo import Indice
 from .miedo import hace as dia_miedo
 from .miedo import nombre as nombre_miedo
 from .millonario import Millonario, cantidad
-from .mundo import PERSONAS, Mundo
 from .movimientos import (
     Movimiento,
     descuadre,
@@ -54,6 +55,7 @@ from .movimientos import (
     texto_cantidad,
     totales,
 )
+from .mundo import PERSONAS, Mundo
 from .objetivo import Escenario
 from .periodo import nombre as nombre_periodo
 from .pizza import BTC, Pizza
@@ -989,6 +991,29 @@ def formatear_iphone(i: Iphone, currency: str) -> str:
     texto.append(f"Para {siguiente} te faltan {simbolo}{_num(i.falta)}")
     precio = f"{PRECIO_IPHONE:,}".replace(",", ".")
     texto.append(f"<i>A unos {simbolo}{precio} cada uno, el Pro</i>")
+    return "\n".join(texto)
+
+
+def formatear_alquiler(a: Alquiler, currency: str) -> str:
+    """Respuesta de /alquiler."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = [
+        "🏠 <b>Tu cartera en meses de alquiler</b>",
+        f"Vale {simbolo}{_num(a.valor)}",
+    ]
+    if a.meses == 0:
+        dias = "1 día" if a.dias == 1 else f"{a.dias} días"
+        texto.append(f"No llega a un mes: te paga <b>{dias}</b>")
+    else:
+        meses = "1 mes" if a.meses == 1 else f"{a.meses:,} meses".replace(",", ".")
+        linea = f"Te paga <b>{meses}</b>"
+        años = a.meses // 12
+        if años:
+            cuantos = "1 año" if años == 1 else f"{años:,} años".replace(",", ".")
+            linea += f", {'justo' if a.meses % 12 == 0 else 'más de'} {cuantos}"
+        texto.append(linea)
+    precio = f"{PRECIO_ALQUILER:,}".replace(",", ".")
+    texto.append(f"<i>A unos {simbolo}{precio} al mes, un piso normal en España</i>")
     return "\n".join(texto)
 
 

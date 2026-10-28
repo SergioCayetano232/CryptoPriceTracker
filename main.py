@@ -23,6 +23,7 @@ from crypto_tracker import (
     ajustes,
     aleatoria,
     alerts,
+    alquiler,
     avisados,
     bigmac,
     botones,
@@ -995,6 +996,9 @@ def responder(
     if nombre == "iphone":
         return _iphone(config)
 
+    if nombre == "alquiler":
+        return _alquiler(config)
+
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
 
@@ -1956,6 +1960,13 @@ def _iphone(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_iphone(iphone.Iphone(valor), config.vs_currency)
+
+
+def _alquiler(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_alquiler(alquiler.Alquiler(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:

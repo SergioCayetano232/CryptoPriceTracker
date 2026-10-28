@@ -5673,6 +5673,24 @@ def test_iphone_sin_cartera(config, enviados):
     assert "PORTFOLIO" in enviados[0]
 
 
+def test_alquiler(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    config = replace(config, cartera=(Posicion("bitcoin", 0.04),))
+    _precio_de(config, "bitcoin", 100000.0, 5)
+
+    main.atender(config, _mensaje("/alquiler"))
+
+    assert "Te paga <b>3 meses</b>" in enviados[0]
+
+
+def test_alquiler_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/alquiler"))
+
+    assert "PORTFOLIO" in enviados[0]
+
+
 def test_bigmac_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/bigmac"))
 

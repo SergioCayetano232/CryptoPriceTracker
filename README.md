@@ -239,6 +239,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/lambo` | Cuántos Lamborghinis te da tu cartera, a unos 250.000 cada uno, y cuánto te falta para el siguiente |
 | `/cafe` | Cuántos cafés te da tu cartera, a 1,50 cada uno, y para cuánto tiempo tienes tomando uno al día |
 | `/iphone` | Cuántos iPhone Pro te da tu cartera, a unos 1.500 cada uno, y cuánto te falta para el siguiente |
+| `/alquiler` | Cuántos meses de alquiler te paga tu cartera, a unos 1.100 al mes, lo de un piso normal en España |
 | `/bigmac` | Cuántos Big Mac te da tu cartera, a unos 5,50 cada uno |
 | `/gasolina` | Cuántos litros de gasolina te da tu cartera, a unos 1,80 el litro, y cuántos depósitos de 50 litros son |
 | `/sueldo` | Cuántos meses (o años) de salario mínimo es tu cartera, con el SMI de 2026: 1.221 € en 14 pagas. Solo en euros |
@@ -618,6 +619,7 @@ crypto_tracker/
   gasolina.py    tu cartera en litros de gasolina, para /gasolina
   bigmac.py      tu cartera en Big Macs, para /bigmac
   iphone.py      tu cartera en iPhones, para /iphone
+  alquiler.py    tu cartera en meses de alquiler, para /alquiler
   sat.py         lo que vale un satoshi, para /sat
   puntuales.py   las alertas de /alerta
   vigiladas.py   lo que cambias con /vigilar
