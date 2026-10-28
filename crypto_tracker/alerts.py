@@ -5,6 +5,7 @@ import math
 from dataclasses import dataclass
 from datetime import date, datetime
 
+from .adios import Adios
 from .avisados import Ultimo
 from .bigmac import PRECIO as PRECIO_BIGMAC
 from .bigmac import BigMac
@@ -1121,6 +1122,21 @@ def formatear_merge(m: Merge) -> str:
         return texto + "\n🎉 ¡Hoy es su aniversario!"
     falta = "1 día" if m.faltan == 1 else f"{m.faltan} días"
     return texto + f"\n<i>Faltan {falta} para que cumpla {m.años + 1}</i>"
+
+
+def formatear_adios(a: Adios) -> str:
+    """Respuesta de /adios."""
+    dias = f"{a.dias:,}".replace(",", ".")
+    años = "1 año" if a.años == 1 else f"{a.años} años"
+    texto = (
+        f"👻 <b>Satoshi lleva {años} sin aparecer</b>\n"
+        f"Su último mensaje en el foro fue el 12/12/2010, hace {dias} días. "
+        "Nunca se ha sabido quién es"
+    )
+    if a.faltan == 0:
+        return texto + f"\n🕯️ Hoy hace {años} de su último mensaje"
+    falta = "1 día" if a.faltan == 1 else f"{a.faltan} días"
+    return texto + f"\n<i>Faltan {falta} para que se cumplan {a.años + 1}</i>"
 
 
 def formatear_millonario(

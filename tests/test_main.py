@@ -5471,6 +5471,17 @@ def test_merge(config, enviados, monkeypatch):
     assert "🐼 <b>The Merge cumple" in enviados[0]
 
 
+# --- /adios ---
+
+
+def test_adios(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+
+    main.atender(config, _mensaje("/adios"))
+
+    assert "👻 <b>Satoshi lleva" in enviados[0]
+
+
 # --- /sat ---
 
 

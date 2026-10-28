@@ -19,6 +19,7 @@ from dataclasses import replace
 from datetime import date, datetime, timedelta, timezone
 
 from crypto_tracker import (
+    adios,
     ajustes,
     aleatoria,
     alerts,
@@ -998,6 +999,9 @@ def responder(
 
     if nombre == "merge":
         return alerts.formatear_merge(merge.Merge(date.today()))
+
+    if nombre == "adios":
+        return alerts.formatear_adios(adios.Adios(date.today()))
 
     if nombre == "millonario":
         return _millonario(config, argumento)
