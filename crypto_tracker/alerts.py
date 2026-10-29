@@ -36,6 +36,8 @@ from .frase import Frase
 from .ganancias import Ganancias
 from .gasolina import DEPOSITO, Gasolina
 from .gasolina import PRECIO as PRECIO_GASOLINA
+from .gimnasio import PRECIO as PRECIO_GIMNASIO
+from .gimnasio import Gimnasio
 from .glosario import TERMINOS, buscar, parecido
 from .halving import Halving
 from .horas import Horas
@@ -1085,6 +1087,18 @@ def formatear_spotify(s: Spotify, currency: str) -> str:
         texto.append(f"Te paga {_meses(s.meses)}")
     precio = _num(PRECIO_SPOTIFY)
     texto.append(f"<i>A {simbolo}{precio} al mes, el Premium Individual</i>")
+    return "\n".join(texto)
+
+
+def formatear_gimnasio(g: Gimnasio, currency: str) -> str:
+    """Respuesta de /gimnasio."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["🏋️ <b>Tu cartera en gimnasio</b>", f"Vale {simbolo}{_num(g.valor)}"]
+    if g.meses == 0:
+        texto.append("No te paga ni un mes 😅")
+    else:
+        texto.append(f"Te paga {_meses(g.meses)}")
+    texto.append(f"<i>A unos {simbolo}{PRECIO_GIMNASIO} al mes</i>")
     return "\n".join(texto)
 
 

@@ -57,6 +57,7 @@ from crypto_tracker import (
     frase,
     ganancias,
     gasolina,
+    gimnasio,
     grafica,
     halving,
     horas,
@@ -1035,6 +1036,9 @@ def responder(
 
     if nombre == "cine":
         return _cine(config)
+
+    if nombre == "gimnasio":
+        return _gimnasio(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2063,6 +2067,13 @@ def _cine(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_cine(cine.Cine(valor), config.vs_currency)
+
+
+def _gimnasio(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_gimnasio(gimnasio.Gimnasio(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:
