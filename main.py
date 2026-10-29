@@ -96,6 +96,7 @@ from crypto_tracker import (
     spotify,
     sube,
     sueldo,
+    supermercado,
     switch,
     telegram,
     tesla,
@@ -1043,6 +1044,9 @@ def responder(
 
     if nombre == "vuelo":
         return _vuelo(config)
+
+    if nombre == "super":
+        return _super(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2085,6 +2089,13 @@ def _vuelo(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_vuelo(vuelo.Vuelo(valor), config.vs_currency)
+
+
+def _super(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_super(supermercado.Super(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:

@@ -5886,6 +5886,24 @@ def test_vuelo_sin_cartera(config, enviados):
     assert "PORTFOLIO" in enviados[0]
 
 
+def test_super(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    config = replace(config, cartera=(Posicion("bitcoin", 0.02),))
+    _precio_de(config, "bitcoin", 100000.0, 5)
+
+    main.atender(config, _mensaje("/supermercado"))
+
+    assert "Te da para <b>20 carros</b>" in enviados[0]
+
+
+def test_super_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/super"))
+
+    assert "PORTFOLIO" in enviados[0]
+
+
 def test_bigmac_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/bigmac"))
 

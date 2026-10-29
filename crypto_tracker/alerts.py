@@ -88,6 +88,8 @@ from .spotify import Spotify
 from .sube import Subida
 from .sueldo import PAGA as PAGA_SMI
 from .sueldo import Sueldo
+from .supermercado import PRECIO as PRECIO_SUPER
+from .supermercado import Super
 from .switch import PRECIO as PRECIO_SWITCH
 from .switch import Switch
 from .telegram import escape
@@ -1030,6 +1032,29 @@ def formatear_cine(c: Cine, currency: str) -> str:
             para = "1 semana" if c.entradas == 1 else f"{c.entradas} semanas"
         texto.append(f"Una peli a la semana, tienes para {para}")
     texto.append(f"<i>A unos {simbolo}{PRECIO_CINE} la entrada</i>")
+    return "\n".join(texto)
+
+
+def formatear_super(s: Super, currency: str) -> str:
+    """Respuesta de /super."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = [
+        "🛒 <b>Tu cartera en carros de la compra</b>",
+        f"Vale {simbolo}{_num(s.valor)}",
+    ]
+    if s.carros == 0:
+        texto.append("No te da ni para un carro 😅")
+    else:
+        plural = "s" if s.carros > 1 else ""
+        texto.append(f"Te da para <b>{_es(f'{s.carros:,}')} carro{plural}</b>")
+        if s.años >= 1:
+            # Sin esto, de 52 a 54 carros salía "1,0 años"
+            años = f"{s.años:.1f}".replace(".", ",").removesuffix(",0")
+            para = "1 año" if años == "1" else f"{años} años"
+        else:
+            para = "1 semana" if s.carros == 1 else f"{s.carros} semanas"
+        texto.append(f"Uno a la semana, comes {para}")
+    texto.append(f"<i>A unos {simbolo}{PRECIO_SUPER} el carro</i>")
     return "\n".join(texto)
 
 
