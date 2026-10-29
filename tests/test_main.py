@@ -5760,6 +5760,24 @@ def test_ps5_sin_cartera(config, enviados):
     assert "PORTFOLIO" in enviados[0]
 
 
+def test_tesla(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    config = replace(config, cartera=(Posicion("bitcoin", 1.0),))
+    _precio_de(config, "bitcoin", 100000.0, 5)
+
+    main.atender(config, _mensaje("/tesla"))
+
+    assert "Te da para <b>2 Teslas</b>" in enviados[0]
+
+
+def test_tesla_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/tesla"))
+
+    assert "PORTFOLIO" in enviados[0]
+
+
 def test_bigmac_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/bigmac"))
 

@@ -74,6 +74,7 @@ COMANDOS = {
     "oro": "Cuántos gramos de oro te da tu cartera",
     "netflix": "Cuántos meses de Netflix te paga tu cartera",
     "ps5": "Cuántas PS5 te da tu cartera",
+    "tesla": "Cuántos Tesla te da tu cartera",
     "tendencias": "Las criptos que más se buscan hoy",
     "top": "Las 5 que más suben y las 5 que más bajan hoy",
     "aleatoria": "Una de las 100 más grandes al azar, para descubrir alguna",

@@ -93,6 +93,7 @@ from crypto_tracker import (
     sube,
     sueldo,
     telegram,
+    tesla,
     top,
     verdes,
     vigiladas,
@@ -1015,6 +1016,9 @@ def responder(
 
     if nombre == "ps5":
         return _ps5(config)
+
+    if nombre == "tesla":
+        return _tesla(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2008,6 +2012,13 @@ def _ps5(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_ps5(ps5.Ps5(valor), config.vs_currency)
+
+
+def _tesla(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_tesla(tesla.Tesla(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:

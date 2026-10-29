@@ -243,6 +243,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/oro` | Cuántos gramos de oro te da tu cartera, con el precio de hoy (lo saca de PAX Gold, que es una onza por token) |
 | `/netflix` | Cuántos meses de Netflix te paga tu cartera, con el plan Estándar a 13,99 al mes |
 | `/ps5` | Cuántas PS5 Pro te da tu cartera, a unos 800 cada una, y cuánto te falta para la siguiente. También `/playstation` |
+| `/tesla` | Cuántos Tesla Model 3 te da tu cartera, a unos 40.000 cada uno, y cuánto te falta para el siguiente |
 | `/bigmac` | Cuántos Big Mac te da tu cartera, a unos 5,50 cada uno |
 | `/gasolina` | Cuántos litros de gasolina te da tu cartera, a unos 1,80 el litro, y cuántos depósitos de 50 litros son |
 | `/sueldo` | Cuántos meses (o años) de salario mínimo es tu cartera, con el SMI de 2026: 1.221 € en 14 pagas. Solo en euros |
@@ -628,6 +629,7 @@ crypto_tracker/
   oro.py         tu cartera en gramos de oro, para /oro
   netflix.py     tu cartera en meses de Netflix, para /netflix
   ps5.py         tu cartera en PS5, para /ps5
+  tesla.py       tu cartera en Teslas, para /tesla
   sat.py         lo que vale un satoshi, para /sat
   puntuales.py   las alertas de /alerta
   vigiladas.py   lo que cambias con /vigilar

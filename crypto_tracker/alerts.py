@@ -82,6 +82,8 @@ from .sueldo import PAGA as PAGA_SMI
 from .sueldo import Sueldo
 from .telegram import escape
 from .tendencias import Tendencia
+from .tesla import PRECIO as PRECIO_TESLA
+from .tesla import Tesla
 from .top import ENTRE, Movida
 from .verdes import Verdes
 from .whitepaper import Whitepaper
@@ -1077,6 +1079,23 @@ def formatear_ps5(p: Ps5, currency: str) -> str:
         siguiente = "la siguiente"
     texto.append(f"Para {siguiente} te faltan {simbolo}{_num(p.falta)}")
     texto.append(f"<i>A unos {simbolo}{PRECIO_PS5} cada una, la Pro</i>")
+    return "\n".join(texto)
+
+
+def formatear_tesla(t: Tesla, currency: str) -> str:
+    """Respuesta de /tesla."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["🚗 <b>Tu cartera en Teslas</b>", f"Vale {simbolo}{_num(t.valor)}"]
+    if t.enteros == 0:
+        texto.append(f"Te da para el <b>{t.parte:.0f}%</b> de uno")
+        siguiente = "el primero"
+    else:
+        cuantos = f"{_es(f'{t.enteros:,}')} Tesla{'s' if t.enteros > 1 else ''}"
+        texto.append(f"Te da para <b>{cuantos}</b>")
+        siguiente = "el siguiente"
+    texto.append(f"Para {siguiente} te faltan {simbolo}{_num(t.falta)}")
+    precio = _es(f"{PRECIO_TESLA:,}")
+    texto.append(f"<i>A unos {simbolo}{precio} cada uno, el Model 3</i>")
     return "\n".join(texto)
 
 
