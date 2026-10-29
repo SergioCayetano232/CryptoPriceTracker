@@ -5778,6 +5778,24 @@ def test_tesla_sin_cartera(config, enviados):
     assert "PORTFOLIO" in enviados[0]
 
 
+def test_spotify(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    config = replace(config, cartera=(Posicion("bitcoin", 0.001),))
+    _precio_de(config, "bitcoin", 100000.0, 5)
+
+    main.atender(config, _mensaje("/spotify"))
+
+    assert "Te paga <b>8 meses</b>" in enviados[0]
+
+
+def test_spotify_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/spotify"))
+
+    assert "PORTFOLIO" in enviados[0]
+
+
 def test_bigmac_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/bigmac"))
 

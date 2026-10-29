@@ -77,6 +77,8 @@ from .rsi import PERIODO, SOBRECOMPRA, SOBREVENTA, Rsi, hasta_zona
 from .sat import CANTIDADES as CANTIDADES_SAT
 from .sat import Sat
 from .semanal import Semana
+from .spotify import PRECIO as PRECIO_SPOTIFY
+from .spotify import Spotify
 from .sube import Subida
 from .sueldo import PAGA as PAGA_SMI
 from .sueldo import Sueldo
@@ -1029,6 +1031,19 @@ def formatear_netflix(n: Netflix, currency: str) -> str:
     else:
         texto.append(f"Te paga {_meses(n.meses)}")
     texto.append(f"<i>A {simbolo}{_num(PRECIO_NETFLIX)} al mes, el plan Estándar</i>")
+    return "\n".join(texto)
+
+
+def formatear_spotify(s: Spotify, currency: str) -> str:
+    """Respuesta de /spotify."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["🎧 <b>Tu cartera en Spotify</b>", f"Vale {simbolo}{_num(s.valor)}"]
+    if s.meses == 0:
+        texto.append("No te paga ni un mes 😅")
+    else:
+        texto.append(f"Te paga {_meses(s.meses)}")
+    precio = _num(PRECIO_SPOTIFY)
+    texto.append(f"<i>A {simbolo}{precio} al mes, el Premium Individual</i>")
     return "\n".join(texto)
 
 

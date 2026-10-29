@@ -90,6 +90,7 @@ from crypto_tracker import (
     sat,
     semanal,
     simbolos,
+    spotify,
     sube,
     sueldo,
     telegram,
@@ -1019,6 +1020,9 @@ def responder(
 
     if nombre == "tesla":
         return _tesla(config)
+
+    if nombre == "spotify":
+        return _spotify(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2019,6 +2023,13 @@ def _tesla(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_tesla(tesla.Tesla(valor), config.vs_currency)
+
+
+def _spotify(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_spotify(spotify.Spotify(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:
