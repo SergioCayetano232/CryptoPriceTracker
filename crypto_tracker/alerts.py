@@ -96,6 +96,8 @@ from .tesla import PRECIO as PRECIO_TESLA
 from .tesla import Tesla
 from .top import ENTRE, Movida
 from .verdes import Verdes
+from .vuelo import PRECIO as PRECIO_VUELO
+from .vuelo import Vuelo
 from .whitepaper import Whitepaper
 
 logger = logging.getLogger(__name__)
@@ -1181,6 +1183,25 @@ def formatear_tesla(t: Tesla, currency: str) -> str:
     texto.append(f"Para {siguiente} te faltan {simbolo}{_num(t.falta)}")
     precio = _es(f"{PRECIO_TESLA:,}")
     texto.append(f"<i>A unos {simbolo}{precio} cada uno, el Model 3</i>")
+    return "\n".join(texto)
+
+
+def formatear_vuelo(v: Vuelo, currency: str) -> str:
+    """Respuesta de /vuelo."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = [
+        "✈️ <b>Tu cartera en vuelos a Nueva York</b>",
+        f"Vale {simbolo}{_num(v.valor)}",
+    ]
+    if v.enteros == 0:
+        texto.append(f"Te da para el <b>{v.parte:.0f}%</b> de uno")
+        siguiente = "el primero"
+    else:
+        cuantos = f"{_es(f'{v.enteros:,}')} viaje{'s' if v.enteros > 1 else ''}"
+        texto.append(f"Te da para <b>{cuantos}</b>")
+        siguiente = "el siguiente"
+    texto.append(f"Para {siguiente} te faltan {simbolo}{_num(v.falta)}")
+    texto.append(f"<i>A unos {simbolo}{PRECIO_VUELO} ida y vuelta, desde Madrid</i>")
     return "\n".join(texto)
 
 

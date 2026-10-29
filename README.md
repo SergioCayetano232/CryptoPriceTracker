@@ -249,6 +249,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/switch` | Cuántas Nintendo Switch 2 te da tu cartera, a unos 470 cada una, y cuánto te falta para la siguiente. También `/nintendo` |
 | `/cine` | Cuántas entradas de cine te da tu cartera, a unos 9 cada una, y para cuánto tienes yendo una vez por semana. También `/peli` |
 | `/gimnasio` | Cuántos meses de gimnasio te paga tu cartera, a unos 40 al mes. También `/gym` |
+| `/vuelo` | Cuántos viajes a Nueva York te da tu cartera, a unos 600 ida y vuelta desde Madrid, y cuánto te falta para el siguiente. También `/viaje` y `/avion` |
 | `/bigmac` | Cuántos Big Mac te da tu cartera, a unos 5,50 cada uno |
 | `/gasolina` | Cuántos litros de gasolina te da tu cartera, a unos 1,80 el litro, y cuántos depósitos de 50 litros son |
 | `/sueldo` | Cuántos meses (o años) de salario mínimo es tu cartera, con el SMI de 2026: 1.221 € en 14 pagas. Solo en euros |
@@ -640,6 +641,7 @@ crypto_tracker/
   switch.py      tu cartera en Switch 2, para /switch
   cine.py        tu cartera en entradas de cine, para /cine
   gimnasio.py    tu cartera en meses de gimnasio, para /gimnasio
+  vuelo.py       tu cartera en vuelos a Nueva York, para /vuelo
   sat.py         lo que vale un satoshi, para /sat
   puntuales.py   las alertas de /alerta
   vigiladas.py   lo que cambias con /vigilar

@@ -103,6 +103,7 @@ from crypto_tracker import (
     verdes,
     vigiladas,
     volatilidad,
+    vuelo,
     whitepaper,
 )
 from crypto_tracker.config import (
@@ -1039,6 +1040,9 @@ def responder(
 
     if nombre == "gimnasio":
         return _gimnasio(config)
+
+    if nombre == "vuelo":
+        return _vuelo(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2074,6 +2078,13 @@ def _gimnasio(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_gimnasio(gimnasio.Gimnasio(valor), config.vs_currency)
+
+
+def _vuelo(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_vuelo(vuelo.Vuelo(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:
