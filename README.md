@@ -247,6 +247,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/spotify` | Cuántos meses de Spotify te paga tu cartera, con el Premium Individual a 11,99 al mes |
 | `/cana` | Cuántas cañas te da tu cartera, a unos 3 cada una, y cuántas rondas para cuatro si invitas tú. También `/caña` y `/cerveza` |
 | `/switch` | Cuántas Nintendo Switch 2 te da tu cartera, a unos 470 cada una, y cuánto te falta para la siguiente. También `/nintendo` |
+| `/cine` | Cuántas entradas de cine te da tu cartera, a unos 9 cada una, y para cuánto tienes yendo una vez por semana. También `/peli` |
 | `/bigmac` | Cuántos Big Mac te da tu cartera, a unos 5,50 cada uno |
 | `/gasolina` | Cuántos litros de gasolina te da tu cartera, a unos 1,80 el litro, y cuántos depósitos de 50 litros son |
 | `/sueldo` | Cuántos meses (o años) de salario mínimo es tu cartera, con el SMI de 2026: 1.221 € en 14 pagas. Solo en euros |
@@ -636,6 +637,7 @@ crypto_tracker/
   spotify.py     tu cartera en meses de Spotify, para /spotify
   cana.py        tu cartera en cañas, para /cana
   switch.py      tu cartera en Switch 2, para /switch
+  cine.py        tu cartera en entradas de cine, para /cine
   sat.py         lo que vale un satoshi, para /sat
   puntuales.py   las alertas de /alerta
   vigiladas.py   lo que cambias con /vigilar

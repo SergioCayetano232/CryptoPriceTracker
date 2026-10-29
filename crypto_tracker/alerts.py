@@ -18,6 +18,8 @@ from .cana import PRECIO as PRECIO_CANA
 from .cana import Cana
 from .caraocruz import QUE_HACER
 from .cartera import Valor, mejor_y_peor, peso
+from .cine import PRECIO as PRECIO_CINE
+from .cine import Cine
 from .comparar import Resultado
 from .comparar import media as media_comparar
 from .config import Posicion, Watch
@@ -1005,6 +1007,25 @@ def formatear_cana(c: Cana, currency: str) -> str:
         rondas = "1 ronda" if c.rondas == 1 else f"{_es(f'{c.rondas:,}')} rondas"
         texto.append(f"Si invitas tú, {rondas} para cuatro")
     texto.append(f"<i>A unos {simbolo}{PRECIO_CANA} cada una</i>")
+    return "\n".join(texto)
+
+
+def formatear_cine(c: Cine, currency: str) -> str:
+    """Respuesta de /cine."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["🎬 <b>Tu cartera en cine</b>", f"Vale {simbolo}{_num(c.valor)}"]
+    if c.entradas == 0:
+        texto.append("No te da ni para una entrada 😅")
+    else:
+        cuantas = _es(f"{c.entradas:,}")
+        plural = "s" if c.entradas > 1 else ""
+        texto.append(f"Te da para <b>{cuantas} entrada{plural}</b>")
+        if c.años >= 1:
+            para = f"{c.años:.1f} años".replace(".", ",")
+        else:
+            para = "1 semana" if c.entradas == 1 else f"{c.entradas} semanas"
+        texto.append(f"Una peli a la semana, tienes para {para}")
+    texto.append(f"<i>A unos {simbolo}{PRECIO_CINE} la entrada</i>")
     return "\n".join(texto)
 
 

@@ -34,6 +34,7 @@ from crypto_tracker import (
     cana,
     caraocruz,
     cartera,
+    cine,
     coingecko,
     comandos,
     comparar,
@@ -1031,6 +1032,9 @@ def responder(
 
     if nombre == "switch":
         return _switch(config)
+
+    if nombre == "cine":
+        return _cine(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2052,6 +2056,13 @@ def _switch(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_switch(switch.Switch(valor), config.vs_currency)
+
+
+def _cine(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_cine(cine.Cine(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:
