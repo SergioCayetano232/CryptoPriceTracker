@@ -31,6 +31,7 @@ from crypto_tracker import (
     cafe,
     caida,
     callar,
+    cana,
     caraocruz,
     cartera,
     coingecko,
@@ -1023,6 +1024,9 @@ def responder(
 
     if nombre == "spotify":
         return _spotify(config)
+
+    if nombre == "cana":
+        return _cana(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2030,6 +2034,13 @@ def _spotify(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_spotify(spotify.Spotify(valor), config.vs_currency)
+
+
+def _cana(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_cana(cana.Cana(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:

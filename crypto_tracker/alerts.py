@@ -14,6 +14,8 @@ from .bigmac import BigMac
 from .cafe import PRECIO as PRECIO_CAFE
 from .cafe import Cafe
 from .caida import Caida
+from .cana import PRECIO as PRECIO_CANA
+from .cana import Cana
 from .caraocruz import QUE_HACER
 from .cartera import Valor, mejor_y_peor, peso
 from .comparar import Resultado
@@ -985,6 +987,22 @@ def formatear_cafe(cafe: Cafe, currency: str) -> str:
             para = "1 día" if cafe.cuantos == 1 else f"{cafe.cuantos} días"
         texto.append(f"Uno al día, tienes para {para}")
     texto.append(f"<i>A {simbolo}{_num(PRECIO_CAFE)} cada uno</i>")
+    return "\n".join(texto)
+
+
+def formatear_cana(c: Cana, currency: str) -> str:
+    """Respuesta de /cana."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["🍺 <b>Tu cartera en cañas</b>", f"Vale {simbolo}{_num(c.valor)}"]
+    if c.cuantas == 0:
+        texto.append("No te da ni para una caña 😅")
+    else:
+        cuantas = _es(f"{c.cuantas:,}")
+        texto.append(f"Te da para <b>{cuantas} caña{'s' if c.cuantas > 1 else ''}</b>")
+    if c.rondas:
+        rondas = "1 ronda" if c.rondas == 1 else f"{_es(f'{c.rondas:,}')} rondas"
+        texto.append(f"Si invitas tú, {rondas} para cuatro")
+    texto.append(f"<i>A unos {simbolo}{PRECIO_CANA} cada una</i>")
     return "\n".join(texto)
 
 

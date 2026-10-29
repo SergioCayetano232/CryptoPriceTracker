@@ -245,6 +245,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/ps5` | Cuántas PS5 Pro te da tu cartera, a unos 800 cada una, y cuánto te falta para la siguiente. También `/playstation` |
 | `/tesla` | Cuántos Tesla Model 3 te da tu cartera, a unos 40.000 cada uno, y cuánto te falta para el siguiente |
 | `/spotify` | Cuántos meses de Spotify te paga tu cartera, con el Premium Individual a 11,99 al mes |
+| `/cana` | Cuántas cañas te da tu cartera, a unos 3 cada una, y cuántas rondas para cuatro si invitas tú. También `/caña` y `/cerveza` |
 | `/bigmac` | Cuántos Big Mac te da tu cartera, a unos 5,50 cada uno |
 | `/gasolina` | Cuántos litros de gasolina te da tu cartera, a unos 1,80 el litro, y cuántos depósitos de 50 litros son |
 | `/sueldo` | Cuántos meses (o años) de salario mínimo es tu cartera, con el SMI de 2026: 1.221 € en 14 pagas. Solo en euros |
@@ -632,6 +633,7 @@ crypto_tracker/
   ps5.py         tu cartera en PS5, para /ps5
   tesla.py       tu cartera en Teslas, para /tesla
   spotify.py     tu cartera en meses de Spotify, para /spotify
+  cana.py        tu cartera en cañas, para /cana
   sat.py         lo que vale un satoshi, para /sat
   puntuales.py   las alertas de /alerta
   vigiladas.py   lo que cambias con /vigilar
