@@ -94,6 +94,7 @@ from crypto_tracker import (
     spotify,
     sube,
     sueldo,
+    switch,
     telegram,
     tesla,
     top,
@@ -1027,6 +1028,9 @@ def responder(
 
     if nombre == "cana":
         return _cana(config)
+
+    if nombre == "switch":
+        return _switch(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2041,6 +2045,13 @@ def _cana(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_cana(cana.Cana(valor), config.vs_currency)
+
+
+def _switch(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_switch(switch.Switch(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:

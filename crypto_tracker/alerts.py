@@ -84,6 +84,8 @@ from .spotify import Spotify
 from .sube import Subida
 from .sueldo import PAGA as PAGA_SMI
 from .sueldo import Sueldo
+from .switch import PRECIO as PRECIO_SWITCH
+from .switch import Switch
 from .telegram import escape
 from .tendencias import Tendencia
 from .tesla import PRECIO as PRECIO_TESLA
@@ -1112,6 +1114,21 @@ def formatear_ps5(p: Ps5, currency: str) -> str:
         siguiente = "la siguiente"
     texto.append(f"Para {siguiente} te faltan {simbolo}{_num(p.falta)}")
     texto.append(f"<i>A unos {simbolo}{PRECIO_PS5} cada una, la Pro</i>")
+    return "\n".join(texto)
+
+
+def formatear_switch(s: Switch, currency: str) -> str:
+    """Respuesta de /switch."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["🕹️ <b>Tu cartera en Switch 2</b>", f"Vale {simbolo}{_num(s.valor)}"]
+    if s.enteros == 0:
+        texto.append(f"Te da para el <b>{s.parte:.0f}%</b> de una")
+        siguiente = "la primera"
+    else:
+        texto.append(f"Te da para <b>{_es(f'{s.enteros:,}')} Switch 2</b>")
+        siguiente = "la siguiente"
+    texto.append(f"Para {siguiente} te faltan {simbolo}{_num(s.falta)}")
+    texto.append(f"<i>A unos {simbolo}{PRECIO_SWITCH} cada una, sin juego</i>")
     return "\n".join(texto)
 
 
