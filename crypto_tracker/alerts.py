@@ -45,6 +45,8 @@ from .hoy import Hoy
 from .hoy import mejor_y_peor as extremos_hoy
 from .iphone import PRECIO as PRECIO_IPHONE
 from .iphone import Iphone
+from .kebab import PRECIO as PRECIO_KEBAB
+from .kebab import Kebab
 from .lambo import PRECIO as PRECIO_LAMBO
 from .lambo import Lambo
 from .maximo import Maximo, hace
@@ -1055,6 +1057,25 @@ def formatear_super(s: Super, currency: str) -> str:
             para = "1 semana" if s.carros == 1 else f"{s.carros} semanas"
         texto.append(f"Uno a la semana, comes {para}")
     texto.append(f"<i>A unos {simbolo}{PRECIO_SUPER} el carro</i>")
+    return "\n".join(texto)
+
+
+def formatear_kebab(k: Kebab, currency: str) -> str:
+    """Respuesta de /kebab."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["🥙 <b>Tu cartera en kebabs</b>", f"Vale {simbolo}{_num(k.valor)}"]
+    if k.kebabs == 0:
+        texto.append("No te da ni para un kebab 😅")
+    else:
+        plural = "s" if k.kebabs > 1 else ""
+        texto.append(f"Te da para <b>{_es(f'{k.kebabs:,}')} kebab{plural}</b>")
+        if k.años >= 1:
+            años = f"{k.años:.1f}".replace(".", ",").removesuffix(",0")
+            para = "1 año" if años == "1" else f"{años} años"
+        else:
+            para = f"{k.kebabs} viernes"
+        texto.append(f"Uno cada viernes, cenas {para}")
+    texto.append(f"<i>A unos {simbolo}{PRECIO_KEBAB} el kebab</i>")
     return "\n".join(texto)
 
 

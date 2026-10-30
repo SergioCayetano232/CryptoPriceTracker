@@ -64,6 +64,7 @@ from crypto_tracker import (
     hoy,
     hubiera,
     iphone,
+    kebab,
     lambo,
     maximo,
     media,
@@ -1047,6 +1048,9 @@ def responder(
 
     if nombre == "super":
         return _super(config)
+
+    if nombre == "kebab":
+        return _kebab(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2096,6 +2100,13 @@ def _super(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_super(supermercado.Super(valor), config.vs_currency)
+
+
+def _kebab(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_kebab(kebab.Kebab(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:

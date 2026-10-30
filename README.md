@@ -251,6 +251,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/gimnasio` | Cuántos meses de gimnasio te paga tu cartera, a unos 40 al mes. También `/gym` |
 | `/vuelo` | Cuántos viajes a Nueva York te da tu cartera, a unos 600 ida y vuelta desde Madrid, y cuánto te falta para el siguiente. También `/viaje` y `/avion` |
 | `/super` | Cuántos carros de la compra te da tu cartera, a unos 100 cada uno, y para cuánto comes con uno a la semana. También `/supermercado` |
+| `/kebab` | Cuántos kebabs te da tu cartera, a unos 6 cada uno, y para cuánto cenas con uno cada viernes. También `/doner` |
 | `/bigmac` | Cuántos Big Mac te da tu cartera, a unos 5,50 cada uno |
 | `/gasolina` | Cuántos litros de gasolina te da tu cartera, a unos 1,80 el litro, y cuántos depósitos de 50 litros son |
 | `/sueldo` | Cuántos meses (o años) de salario mínimo es tu cartera, con el SMI de 2026: 1.221 € en 14 pagas. Solo en euros |
@@ -644,6 +645,7 @@ crypto_tracker/
   gimnasio.py    tu cartera en meses de gimnasio, para /gimnasio
   vuelo.py       tu cartera en vuelos a Nueva York, para /vuelo
   supermercado.py tu cartera en carros de la compra, para /super
+  kebab.py       tu cartera en kebabs, para /kebab
   sat.py         lo que vale un satoshi, para /sat
   puntuales.py   las alertas de /alerta
   vigiladas.py   lo que cambias con /vigilar
