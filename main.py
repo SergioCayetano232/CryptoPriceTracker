@@ -70,6 +70,7 @@ from crypto_tracker import (
     media,
     mejor,
     merge,
+    metro,
     miedo,
     millonario,
     moneda,
@@ -1051,6 +1052,9 @@ def responder(
 
     if nombre == "kebab":
         return _kebab(config)
+
+    if nombre == "metro":
+        return _metro(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2107,6 +2111,13 @@ def _kebab(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_kebab(kebab.Kebab(valor), config.vs_currency)
+
+
+def _metro(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_metro(metro.Metro(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:

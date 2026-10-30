@@ -5922,6 +5922,24 @@ def test_kebab_sin_cartera(config, enviados):
     assert "PORTFOLIO" in enviados[0]
 
 
+def test_metro(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    config = replace(config, cartera=(Posicion("bitcoin", 0.01),))
+    _precio_de(config, "bitcoin", 100000.0, 5)
+
+    main.atender(config, _mensaje("/abono"))
+
+    assert "Te paga <b>33 meses</b>, más de 2 años" in enviados[0]
+
+
+def test_metro_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/metro"))
+
+    assert "PORTFOLIO" in enviados[0]
+
+
 def test_bigmac_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/bigmac"))
 

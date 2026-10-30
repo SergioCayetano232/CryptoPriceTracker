@@ -54,6 +54,8 @@ from .media import lado_de_todas
 from .mejor import Extremo
 from .mercado import Mercado, grande
 from .merge import Merge
+from .metro import PRECIO as PRECIO_METRO
+from .metro import Metro
 from .miedo import Indice
 from .miedo import hace as dia_miedo
 from .miedo import nombre as nombre_miedo
@@ -1147,6 +1149,21 @@ def formatear_gimnasio(g: Gimnasio, currency: str) -> str:
     else:
         texto.append(f"Te paga {_meses(g.meses)}")
     texto.append(f"<i>A unos {simbolo}{PRECIO_GIMNASIO} al mes</i>")
+    return "\n".join(texto)
+
+
+def formatear_metro(m: Metro, currency: str) -> str:
+    """Respuesta de /metro."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = [
+        "🚇 <b>Tu cartera en abonos de transporte</b>",
+        f"Vale {simbolo}{_num(m.valor)}",
+    ]
+    if m.meses == 0:
+        texto.append("No te paga ni un mes 😅")
+    else:
+        texto.append(f"Te paga {_meses(m.meses)}")
+    texto.append(f"<i>A unos {simbolo}{PRECIO_METRO} el abono mensual</i>")
     return "\n".join(texto)
 
 
