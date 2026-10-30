@@ -10,6 +10,8 @@ from .airpods import PRECIO as PRECIO_AIRPODS
 from .airpods import Airpods
 from .alquiler import PRECIO as PRECIO_ALQUILER
 from .alquiler import Alquiler
+from .ave import PRECIO as PRECIO_AVE
+from .ave import Ave
 from .avisados import Ultimo
 from .bigmac import PRECIO as PRECIO_BIGMAC
 from .bigmac import BigMac
@@ -1324,6 +1326,30 @@ def formatear_zapatillas(z: Zapatillas, currency: str) -> str:
             años = "1 año" if z.años == 1 else f"{_es(f'{z.años:,}')} años"
             texto.append(f"Estrenando unas cada temporada, vas calzado {años}")
     texto.append(f"<i>A unos {simbolo}{PRECIO_ZAPATILLAS} el par</i>")
+    return "\n".join(texto)
+
+
+def formatear_ave(a: Ave, currency: str) -> str:
+    """Respuesta de /ave."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = [
+        "🚄 <b>Tu cartera en AVE a Barcelona</b>",
+        f"Vale {simbolo}{_num(a.valor)}",
+    ]
+    if a.viajes == 0:
+        texto.append("No te da ni para un viaje 😅")
+    else:
+        plural = "s" if a.viajes > 1 else ""
+        texto.append(f"Te da para <b>{_es(f'{a.viajes:,}')} viaje{plural}</b>")
+        años, resto = divmod(a.viajes, 12)
+        if años:
+            para = "1 año" if años == 1 else f"{_es(f'{años:,}')} años"
+            if resto:
+                para += " y pico"
+        else:
+            para = "1 mes" if resto == 1 else f"{resto} meses"
+        texto.append(f"Un finde al mes, tienes escapadas para {para}")
+    texto.append(f"<i>A unos {simbolo}{PRECIO_AVE} ida y vuelta, desde Madrid</i>")
     return "\n".join(texto)
 
 

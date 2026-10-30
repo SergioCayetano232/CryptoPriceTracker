@@ -258,6 +258,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/concierto` | Cuántas entradas de concierto te da tu cartera, a unos 50 cada una, y cuántos conciertos para dos si invitas tú. También `/musica` |
 | `/airpods` | Cuántos AirPods Pro te da tu cartera, a unos 250 cada uno, y cuánto te falta para los siguientes. También `/auriculares` |
 | `/zapatillas` | Cuántos pares de zapatillas te da tu cartera, a unos 120 cada par, y cuántos años vas calzado estrenando unas cada temporada. También `/zapas` |
+| `/ave` | Cuántos viajes en AVE a Barcelona te da tu cartera, a unos 80 ida y vuelta desde Madrid, y para cuánto tienes con una escapada al mes. También `/tren` |
 | `/bigmac` | Cuántos Big Mac te da tu cartera, a unos 5,50 cada uno |
 | `/gasolina` | Cuántos litros de gasolina te da tu cartera, a unos 1,80 el litro, y cuántos depósitos de 50 litros son |
 | `/sueldo` | Cuántos meses (o años) de salario mínimo es tu cartera, con el SMI de 2026: 1.221 € en 14 pagas. Solo en euros |
@@ -658,6 +659,7 @@ crypto_tracker/
   concierto.py   tu cartera en entradas de concierto, para /concierto
   airpods.py     tu cartera en AirPods Pro, para /airpods
   zapatillas.py  tu cartera en pares de zapatillas, para /zapatillas
+  ave.py         tu cartera en viajes en AVE a Barcelona, para /ave
   sat.py         lo que vale un satoshi, para /sat
   puntuales.py   las alertas de /alerta
   vigiladas.py   lo que cambias con /vigilar

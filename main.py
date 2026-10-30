@@ -25,6 +25,7 @@ from crypto_tracker import (
     aleatoria,
     alerts,
     alquiler,
+    ave,
     avisados,
     bigmac,
     botones,
@@ -1075,6 +1076,9 @@ def responder(
 
     if nombre == "zapatillas":
         return _zapatillas(config)
+
+    if nombre == "ave":
+        return _ave(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2174,6 +2178,13 @@ def _zapatillas(config: Config) -> str:
         return valor
     z = zapatillas.Zapatillas(valor)
     return alerts.formatear_zapatillas(z, config.vs_currency)
+
+
+def _ave(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_ave(ave.Ave(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:
