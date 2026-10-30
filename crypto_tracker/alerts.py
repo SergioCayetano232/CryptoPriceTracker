@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from datetime import date, datetime
 
 from .adios import Adios
+from .airpods import PRECIO as PRECIO_AIRPODS
+from .airpods import Airpods
 from .alquiler import PRECIO as PRECIO_ALQUILER
 from .alquiler import Alquiler
 from .avisados import Ultimo
@@ -1288,6 +1290,21 @@ def formatear_switch(s: Switch, currency: str) -> str:
         siguiente = "la siguiente"
     texto.append(f"Para {siguiente} te faltan {simbolo}{_num(s.falta)}")
     texto.append(f"<i>A unos {simbolo}{PRECIO_SWITCH} cada una, sin juego</i>")
+    return "\n".join(texto)
+
+
+def formatear_airpods(a: Airpods, currency: str) -> str:
+    """Respuesta de /airpods."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["🎧 <b>Tu cartera en AirPods Pro</b>", f"Vale {simbolo}{_num(a.valor)}"]
+    if a.enteros == 0:
+        texto.append(f"Te da para el <b>{a.parte:.0f}%</b> de unos")
+        siguiente = "los primeros"
+    else:
+        texto.append(f"Te da para <b>{_es(f'{a.enteros:,}')} AirPods Pro</b>")
+        siguiente = "los siguientes"
+    texto.append(f"Para {siguiente} te faltan {simbolo}{_num(a.falta)}")
+    texto.append(f"<i>A unos {simbolo}{PRECIO_AIRPODS} cada uno</i>")
     return "\n".join(texto)
 
 

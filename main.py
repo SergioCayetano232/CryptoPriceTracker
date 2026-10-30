@@ -20,6 +20,7 @@ from datetime import date, datetime, timedelta, timezone
 
 from crypto_tracker import (
     adios,
+    airpods,
     ajustes,
     aleatoria,
     alerts,
@@ -1067,6 +1068,9 @@ def responder(
 
     if nombre == "concierto":
         return _concierto(config)
+
+    if nombre == "airpods":
+        return _airpods(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2151,6 +2155,13 @@ def _concierto(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_concierto(concierto.Concierto(valor), config.vs_currency)
+
+
+def _airpods(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_airpods(airpods.Airpods(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:
