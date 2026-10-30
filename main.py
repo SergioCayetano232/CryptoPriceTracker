@@ -112,6 +112,7 @@ from crypto_tracker import (
     volatilidad,
     vuelo,
     whitepaper,
+    zapatillas,
 )
 from crypto_tracker.config import (
     Config,
@@ -1071,6 +1072,9 @@ def responder(
 
     if nombre == "airpods":
         return _airpods(config)
+
+    if nombre == "zapatillas":
+        return _zapatillas(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2162,6 +2166,14 @@ def _airpods(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_airpods(airpods.Airpods(valor), config.vs_currency)
+
+
+def _zapatillas(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    z = zapatillas.Zapatillas(valor)
+    return alerts.formatear_zapatillas(z, config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:

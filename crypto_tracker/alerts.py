@@ -113,6 +113,8 @@ from .verdes import Verdes
 from .vuelo import PRECIO as PRECIO_VUELO
 from .vuelo import Vuelo
 from .whitepaper import Whitepaper
+from .zapatillas import PRECIO as PRECIO_ZAPATILLAS
+from .zapatillas import Zapatillas
 
 logger = logging.getLogger(__name__)
 
@@ -1305,6 +1307,23 @@ def formatear_airpods(a: Airpods, currency: str) -> str:
         siguiente = "los siguientes"
     texto.append(f"Para {siguiente} te faltan {simbolo}{_num(a.falta)}")
     texto.append(f"<i>A unos {simbolo}{PRECIO_AIRPODS} cada uno</i>")
+    return "\n".join(texto)
+
+
+def formatear_zapatillas(z: Zapatillas, currency: str) -> str:
+    """Respuesta de /zapatillas."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["👟 <b>Tu cartera en zapatillas</b>", f"Vale {simbolo}{_num(z.valor)}"]
+    if z.pares == 0:
+        texto.append("No te da ni para un par 😅")
+    else:
+        cuantos = "1 par" if z.pares == 1 else f"{_es(f'{z.pares:,}')} pares"
+        texto.append(f"Te da para <b>{cuantos}</b>")
+        # Con menos de un año queda raro, se ve ya con los pares
+        if z.años:
+            años = "1 año" if z.años == 1 else f"{_es(f'{z.años:,}')} años"
+            texto.append(f"Estrenando unas cada temporada, vas calzado {años}")
+    texto.append(f"<i>A unos {simbolo}{PRECIO_ZAPATILLAS} el par</i>")
     return "\n".join(texto)
 
 
