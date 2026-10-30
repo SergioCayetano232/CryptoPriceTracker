@@ -22,6 +22,8 @@ from .cine import PRECIO as PRECIO_CINE
 from .cine import Cine
 from .comparar import Resultado
 from .comparar import media as media_comparar
+from .concierto import PRECIO as PRECIO_CONCIERTO
+from .concierto import Concierto
 from .config import Posicion, Watch
 from .correlacion import Correlacion
 from .cuando import Cuando
@@ -1204,6 +1206,23 @@ def formatear_libro(li: Libro, currency: str) -> str:
             para = "1 mes" if resto == 1 else f"{resto} meses"
         texto.append(f"Leyendo uno al mes, tienes para {para}")
     texto.append(f"<i>A unos {simbolo}{PRECIO_LIBRO} el libro</i>")
+    return "\n".join(texto)
+
+
+def formatear_concierto(c: Concierto, currency: str) -> str:
+    """Respuesta de /concierto."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["🎤 <b>Tu cartera en conciertos</b>", f"Vale {simbolo}{_num(c.valor)}"]
+    if c.entradas == 0:
+        texto.append("No te da ni para una entrada 😅")
+    else:
+        plural = "s" if c.entradas > 1 else ""
+        texto.append(f"Te da para <b>{_es(f'{c.entradas:,}')} entrada{plural}</b>")
+        if c.para_dos:
+            cuantos = _es(f"{c.para_dos:,}")
+            plural = "s" if c.para_dos > 1 else ""
+            texto.append(f"Si invitas tú, {cuantos} concierto{plural} para dos")
+    texto.append(f"<i>A unos {simbolo}{PRECIO_CONCIERTO} la entrada</i>")
     return "\n".join(texto)
 
 

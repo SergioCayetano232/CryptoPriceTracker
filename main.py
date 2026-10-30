@@ -38,6 +38,7 @@ from crypto_tracker import (
     coingecko,
     comandos,
     comparar,
+    concierto,
     convertir,
     copia,
     correlacion,
@@ -1063,6 +1064,9 @@ def responder(
 
     if nombre == "libro":
         return _libro(config)
+
+    if nombre == "concierto":
+        return _concierto(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2140,6 +2144,13 @@ def _libro(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_libro(libro.Libro(valor), config.vs_currency)
+
+
+def _concierto(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_concierto(concierto.Concierto(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:

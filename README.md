@@ -255,6 +255,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/metro` | Cuántos meses de abono de transporte te paga tu cartera, a unos 30 al mes. También `/abono` y `/bus` |
 | `/luz` | Cuántos meses de factura de la luz te paga tu cartera, a unos 60 al mes. También `/factura` |
 | `/libro` | Cuántos libros te da tu cartera, a unos 20 cada uno, y para cuánto tienes leyendo uno al mes. También `/leer` |
+| `/concierto` | Cuántas entradas de concierto te da tu cartera, a unos 50 cada una, y cuántos conciertos para dos si invitas tú. También `/musica` |
 | `/bigmac` | Cuántos Big Mac te da tu cartera, a unos 5,50 cada uno |
 | `/gasolina` | Cuántos litros de gasolina te da tu cartera, a unos 1,80 el litro, y cuántos depósitos de 50 litros son |
 | `/sueldo` | Cuántos meses (o años) de salario mínimo es tu cartera, con el SMI de 2026: 1.221 € en 14 pagas. Solo en euros |
@@ -652,6 +653,7 @@ crypto_tracker/
   metro.py       tu cartera en meses de abono de transporte, para /metro
   luz.py         tu cartera en facturas de la luz, para /luz
   libro.py       tu cartera en libros, para /libro
+  concierto.py   tu cartera en entradas de concierto, para /concierto
   sat.py         lo que vale un satoshi, para /sat
   puntuales.py   las alertas de /alerta
   vigiladas.py   lo que cambias con /vigilar
