@@ -49,6 +49,8 @@ from .kebab import PRECIO as PRECIO_KEBAB
 from .kebab import Kebab
 from .lambo import PRECIO as PRECIO_LAMBO
 from .lambo import Lambo
+from .luz import PRECIO as PRECIO_LUZ
+from .luz import Luz
 from .maximo import Maximo, hace
 from .media import lado_de_todas
 from .mejor import Extremo
@@ -1164,6 +1166,21 @@ def formatear_metro(m: Metro, currency: str) -> str:
     else:
         texto.append(f"Te paga {_meses(m.meses)}")
     texto.append(f"<i>A unos {simbolo}{PRECIO_METRO} el abono mensual</i>")
+    return "\n".join(texto)
+
+
+def formatear_luz(luz: Luz, currency: str) -> str:
+    """Respuesta de /luz."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = [
+        "💡 <b>Tu cartera en facturas de la luz</b>",
+        f"Vale {simbolo}{_num(luz.valor)}",
+    ]
+    if luz.meses == 0:
+        texto.append("No te paga ni un mes 😅")
+    else:
+        texto.append(f"Te paga {_meses(luz.meses)}")
+    texto.append(f"<i>A unos {simbolo}{PRECIO_LUZ} la factura del mes</i>")
     return "\n".join(texto)
 
 

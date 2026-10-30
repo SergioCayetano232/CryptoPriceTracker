@@ -66,6 +66,7 @@ from crypto_tracker import (
     iphone,
     kebab,
     lambo,
+    luz,
     maximo,
     media,
     mejor,
@@ -1055,6 +1056,9 @@ def responder(
 
     if nombre == "metro":
         return _metro(config)
+
+    if nombre == "luz":
+        return _luz(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2118,6 +2122,13 @@ def _metro(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_metro(metro.Metro(valor), config.vs_currency)
+
+
+def _luz(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_luz(luz.Luz(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:
