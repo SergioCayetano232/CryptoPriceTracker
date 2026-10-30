@@ -49,6 +49,8 @@ from .kebab import PRECIO as PRECIO_KEBAB
 from .kebab import Kebab
 from .lambo import PRECIO as PRECIO_LAMBO
 from .lambo import Lambo
+from .libro import PRECIO as PRECIO_LIBRO
+from .libro import Libro
 from .luz import PRECIO as PRECIO_LUZ
 from .luz import Luz
 from .maximo import Maximo, hace
@@ -1181,6 +1183,27 @@ def formatear_luz(luz: Luz, currency: str) -> str:
     else:
         texto.append(f"Te paga {_meses(luz.meses)}")
     texto.append(f"<i>A unos {simbolo}{PRECIO_LUZ} la factura del mes</i>")
+    return "\n".join(texto)
+
+
+def formatear_libro(li: Libro, currency: str) -> str:
+    """Respuesta de /libro."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["📚 <b>Tu cartera en libros</b>", f"Vale {simbolo}{_num(li.valor)}"]
+    if li.libros == 0:
+        texto.append("No te da ni para un libro 😅")
+    else:
+        plural = "s" if li.libros > 1 else ""
+        texto.append(f"Te da para <b>{_es(f'{li.libros:,}')} libro{plural}</b>")
+        años, resto = divmod(li.libros, 12)
+        if años:
+            para = "1 año" if años == 1 else f"{_es(f'{años:,}')} años"
+            if resto:
+                para += " y pico"
+        else:
+            para = "1 mes" if resto == 1 else f"{resto} meses"
+        texto.append(f"Leyendo uno al mes, tienes para {para}")
+    texto.append(f"<i>A unos {simbolo}{PRECIO_LIBRO} el libro</i>")
     return "\n".join(texto)
 
 
