@@ -6048,6 +6048,24 @@ def test_ave_sin_cartera(config, enviados):
     assert "PORTFOLIO" in enviados[0]
 
 
+def test_menu(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    config = replace(config, cartera=(Posicion("bitcoin", 0.01),))
+    _precio_de(config, "bitcoin", 100000.0, 5)
+
+    main.atender(config, _mensaje("/menú"))
+
+    assert "Te da para <b>76 menús</b>" in enviados[0]
+
+
+def test_menu_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/menu"))
+
+    assert "PORTFOLIO" in enviados[0]
+
+
 def test_bigmac_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/bigmac"))
 

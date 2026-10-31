@@ -74,6 +74,7 @@ from crypto_tracker import (
     maximo,
     media,
     mejor,
+    menu,
     merge,
     metro,
     miedo,
@@ -1079,6 +1080,9 @@ def responder(
 
     if nombre == "ave":
         return _ave(config)
+
+    if nombre == "menu":
+        return _menu(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2185,6 +2189,13 @@ def _ave(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_ave(ave.Ave(valor), config.vs_currency)
+
+
+def _menu(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_menu(menu.Menu(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:

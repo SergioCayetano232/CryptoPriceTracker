@@ -62,6 +62,8 @@ from .luz import Luz
 from .maximo import Maximo, hace
 from .media import lado_de_todas
 from .mejor import Extremo
+from .menu import PRECIO as PRECIO_MENU
+from .menu import Menu
 from .mercado import Mercado, grande
 from .merge import Merge
 from .metro import PRECIO as PRECIO_METRO
@@ -1350,6 +1352,30 @@ def formatear_ave(a: Ave, currency: str) -> str:
             para = "1 mes" if resto == 1 else f"{resto} meses"
         texto.append(f"Un finde al mes, tienes escapadas para {para}")
     texto.append(f"<i>A unos {simbolo}{PRECIO_AVE} ida y vuelta, desde Madrid</i>")
+    return "\n".join(texto)
+
+
+def formatear_menu(m: Menu, currency: str) -> str:
+    """Respuesta de /menu."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = [
+        "🍽 <b>Tu cartera en menús del día</b>",
+        f"Vale {simbolo}{_num(m.valor)}",
+    ]
+    if m.menus == 0:
+        texto.append("No te da ni para un menú 😅")
+    else:
+        plural = "s" if m.menus > 1 else ""
+        texto.append(f"Te da para <b>{_es(f'{m.menus:,}')} menú{plural}</b>")
+        if m.años >= 1:
+            años = f"{m.años:.1f}".replace(".", ",").removesuffix(",0")
+            para = "1 año" if años == "1" else f"{años} años"
+        elif m.semanas:
+            para = "1 semana" if m.semanas == 1 else f"{m.semanas} semanas"
+        else:
+            para = "1 día" if m.menus == 1 else f"{m.menus} días"
+        texto.append(f"De lunes a viernes, comes fuera {para}")
+    texto.append(f"<i>A unos {simbolo}{PRECIO_MENU} el menú, con bebida y postre</i>")
     return "\n".join(texto)
 
 
