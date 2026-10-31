@@ -86,6 +86,7 @@ from crypto_tracker import (
     netflix,
     objetivo,
     oro,
+    peluqueria,
     periodo,
     pizza,
     primera,
@@ -1087,6 +1088,9 @@ def responder(
 
     if nombre == "hotel":
         return _hotel(config)
+
+    if nombre == "peluqueria":
+        return _peluqueria(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2207,6 +2211,14 @@ def _hotel(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_hotel(hotel.Hotel(valor), config.vs_currency)
+
+
+def _peluqueria(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    p = peluqueria.Peluqueria(valor)
+    return alerts.formatear_peluqueria(p, config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:

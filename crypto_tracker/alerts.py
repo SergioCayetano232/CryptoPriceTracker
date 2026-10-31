@@ -86,6 +86,8 @@ from .netflix import PRECIO as PRECIO_NETFLIX
 from .netflix import Netflix
 from .objetivo import Escenario
 from .oro import Oro
+from .peluqueria import PRECIO as PRECIO_PELUQUERIA
+from .peluqueria import Peluqueria
 from .periodo import nombre as nombre_periodo
 from .pizza import BTC, Pizza
 from .primera import Primera
@@ -1401,6 +1403,30 @@ def formatear_hotel(h: Hotel, currency: str) -> str:
             cuantas = _es(f"{h.findes:,}")
             texto.append(f"Son {cuantas} escapadas de finde, de viernes a domingo")
     texto.append(f"<i>A unos {simbolo}{PRECIO_HOTEL} la noche, en habitación doble</i>")
+    return "\n".join(texto)
+
+
+def formatear_peluqueria(p: Peluqueria, currency: str) -> str:
+    """Respuesta de /peluqueria."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = [
+        "💈 <b>Tu cartera en cortes de pelo</b>",
+        f"Vale {simbolo}{_num(p.valor)}",
+    ]
+    if p.cortes == 0:
+        texto.append("No te da ni para un corte 😅")
+    else:
+        plural = "s" if p.cortes > 1 else ""
+        texto.append(f"Te da para <b>{_es(f'{p.cortes:,}')} corte{plural}</b>")
+        años, resto = divmod(p.cortes, 12)
+        if años:
+            para = "<b>1 año</b>" if años == 1 else f"<b>{_es(f'{años:,}')} años</b>"
+            if resto:
+                para += " y pico"
+        else:
+            para = "<b>1 mes</b>" if resto == 1 else f"<b>{resto} meses</b>"
+        texto.append(f"Uno al mes, vas bien peinado {para}")
+    texto.append(f"<i>A unos {simbolo}{PRECIO_PELUQUERIA} el corte</i>")
     return "\n".join(texto)
 
 
