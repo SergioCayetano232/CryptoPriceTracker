@@ -24,6 +24,8 @@ from .cana import PRECIO as PRECIO_CANA
 from .cana import Cana
 from .caraocruz import QUE_HACER
 from .cartera import Valor, mejor_y_peor, peso
+from .churros import PRECIO as PRECIO_CHURROS
+from .churros import Churros
 from .cine import PRECIO as PRECIO_CINE
 from .cine import Cine
 from .comparar import Resultado
@@ -1100,6 +1102,29 @@ def formatear_kebab(k: Kebab, currency: str) -> str:
             para = f"{k.kebabs} viernes"
         texto.append(f"Uno cada viernes, cenas {para}")
     texto.append(f"<i>A unos {simbolo}{PRECIO_KEBAB} el kebab</i>")
+    return "\n".join(texto)
+
+
+def formatear_churros(c: Churros, currency: str) -> str:
+    """Respuesta de /churros."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = [
+        "🍫 <b>Tu cartera en chocolate con churros</b>",
+        f"Vale {simbolo}{_num(c.valor)}",
+    ]
+    if c.raciones == 0:
+        texto.append("No te da ni para un chocolate con churros 😅")
+    else:
+        cuantos = _es(f"{c.raciones:,}")
+        plural = "s" if c.raciones > 1 else ""
+        texto.append(f"Te da para <b>{cuantos} chocolate{plural} con churros</b>")
+        if c.años >= 1:
+            años = f"{c.años:.1f}".replace(".", ",").removesuffix(",0")
+            para = "1 año" if años == "1" else f"{años} años"
+        else:
+            para = "1 semana" if c.raciones == 1 else f"{c.raciones} semanas"
+        texto.append(f"Unos cada domingo, tienes para {para}")
+    texto.append(f"<i>A unos {simbolo}{PRECIO_CHURROS} la taza con media docena</i>")
     return "\n".join(texto)
 
 

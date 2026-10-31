@@ -37,6 +37,7 @@ from crypto_tracker import (
     cana,
     caraocruz,
     cartera,
+    churros,
     cine,
     coingecko,
     comandos,
@@ -1099,6 +1100,9 @@ def responder(
 
     if nombre == "bici":
         return _bici(config)
+
+    if nombre == "churros":
+        return _churros(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2241,6 +2245,13 @@ def _bici(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_bici(bici.Bici(valor), config.vs_currency)
+
+
+def _churros(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_churros(churros.Churros(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:

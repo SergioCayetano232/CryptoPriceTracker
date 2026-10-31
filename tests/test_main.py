@@ -6138,6 +6138,24 @@ def test_bici_sin_cartera(config, enviados):
     assert "PORTFOLIO" in enviados[0]
 
 
+def test_churros(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    config = replace(config, cartera=(Posicion("bitcoin", 0.01),))
+    _precio_de(config, "bitcoin", 100000.0, 5)
+
+    main.atender(config, _mensaje("/chocolate"))
+
+    assert "Te da para <b>250 chocolates con churros</b>" in enviados[0]
+
+
+def test_churros_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/churros"))
+
+    assert "PORTFOLIO" in enviados[0]
+
+
 def test_bigmac_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/bigmac"))
 
