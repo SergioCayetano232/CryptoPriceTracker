@@ -260,6 +260,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/zapatillas` | Cuántos pares de zapatillas te da tu cartera, a unos 120 cada par, y cuántos años vas calzado estrenando unas cada temporada. También `/zapas` |
 | `/ave` | Cuántos viajes en AVE a Barcelona te da tu cartera, a unos 80 ida y vuelta desde Madrid, y para cuánto tienes con una escapada al mes. También `/tren` |
 | `/menu` | Cuántos menús del día te da tu cartera, a unos 13 cada uno, y para cuánto comes fuera de lunes a viernes. También `/comida` |
+| `/hotel` | Cuántas noches de hotel te da tu cartera, a unos 100 cada una, y cuántas escapadas de finde son. También `/noche` |
 | `/bigmac` | Cuántos Big Mac te da tu cartera, a unos 5,50 cada uno |
 | `/gasolina` | Cuántos litros de gasolina te da tu cartera, a unos 1,80 el litro, y cuántos depósitos de 50 litros son |
 | `/sueldo` | Cuántos meses (o años) de salario mínimo es tu cartera, con el SMI de 2026: 1.221 € en 14 pagas. Solo en euros |
@@ -662,6 +663,7 @@ crypto_tracker/
   zapatillas.py  tu cartera en pares de zapatillas, para /zapatillas
   ave.py         tu cartera en viajes en AVE a Barcelona, para /ave
   menu.py        tu cartera en menús del día, para /menu
+  hotel.py       tu cartera en noches de hotel, para /hotel
   sat.py         lo que vale un satoshi, para /sat
   puntuales.py   las alertas de /alerta
   vigiladas.py   lo que cambias con /vigilar

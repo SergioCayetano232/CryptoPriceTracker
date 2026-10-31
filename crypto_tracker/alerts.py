@@ -47,6 +47,8 @@ from .gimnasio import Gimnasio
 from .glosario import TERMINOS, buscar, parecido
 from .halving import Halving
 from .horas import Horas
+from .hotel import PRECIO as PRECIO_HOTEL
+from .hotel import Hotel
 from .hoy import Hoy
 from .hoy import mejor_y_peor as extremos_hoy
 from .iphone import PRECIO as PRECIO_IPHONE
@@ -1376,6 +1378,29 @@ def formatear_menu(m: Menu, currency: str) -> str:
             para = "1 día" if m.menus == 1 else f"{m.menus} días"
         texto.append(f"De lunes a viernes, comes fuera {para}")
     texto.append(f"<i>A unos {simbolo}{PRECIO_MENU} el menú, con bebida y postre</i>")
+    return "\n".join(texto)
+
+
+def formatear_hotel(h: Hotel, currency: str) -> str:
+    """Respuesta de /hotel."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = [
+        "🏨 <b>Tu cartera en noches de hotel</b>",
+        f"Vale {simbolo}{_num(h.valor)}",
+    ]
+    if h.noches == 0:
+        texto.append("No te da ni para una noche 😅")
+    else:
+        plural = "s" if h.noches > 1 else ""
+        texto.append(f"Te da para <b>{_es(f'{h.noches:,}')} noche{plural}</b>")
+        if h.findes == 0:
+            texto.append("Para un finde entero te falta otra")
+        elif h.findes == 1:
+            texto.append("Es 1 escapada de finde, de viernes a domingo")
+        else:
+            cuantas = _es(f"{h.findes:,}")
+            texto.append(f"Son {cuantas} escapadas de finde, de viernes a domingo")
+    texto.append(f"<i>A unos {simbolo}{PRECIO_HOTEL} la noche, en habitación doble</i>")
     return "\n".join(texto)
 
 

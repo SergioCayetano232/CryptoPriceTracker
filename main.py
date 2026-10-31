@@ -64,6 +64,7 @@ from crypto_tracker import (
     grafica,
     halving,
     horas,
+    hotel,
     hoy,
     hubiera,
     iphone,
@@ -1083,6 +1084,9 @@ def responder(
 
     if nombre == "menu":
         return _menu(config)
+
+    if nombre == "hotel":
+        return _hotel(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2196,6 +2200,13 @@ def _menu(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_menu(menu.Menu(valor), config.vs_currency)
+
+
+def _hotel(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_hotel(hotel.Hotel(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:
