@@ -263,6 +263,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/hotel` | Cuántas noches de hotel te da tu cartera, a unos 100 cada una, y cuántas escapadas de finde son. También `/noche` |
 | `/peluqueria` | Cuántos cortes de pelo te da tu cartera, a unos 15 cada uno, y para cuánto vas peinado cortándote una vez al mes. También `/pelo` |
 | `/macbook` | Cuántos MacBook Air te da tu cartera, a unos 1.300 cada uno, y cuánto te falta para el siguiente. También `/portatil` y `/mac` |
+| `/bici` | Cuántas bicis de carretera te da tu cartera, a unos 800 cada una, y cuánto te falta para la siguiente. También `/bicicleta` |
 | `/bigmac` | Cuántos Big Mac te da tu cartera, a unos 5,50 cada uno |
 | `/gasolina` | Cuántos litros de gasolina te da tu cartera, a unos 1,80 el litro, y cuántos depósitos de 50 litros son |
 | `/sueldo` | Cuántos meses (o años) de salario mínimo es tu cartera, con el SMI de 2026: 1.221 € en 14 pagas. Solo en euros |
@@ -668,6 +669,7 @@ crypto_tracker/
   hotel.py       tu cartera en noches de hotel, para /hotel
   peluqueria.py  tu cartera en cortes de pelo, para /peluqueria
   macbook.py     tu cartera en MacBooks, para /macbook
+  bici.py        tu cartera en bicis de carretera, para /bici
   sat.py         lo que vale un satoshi, para /sat
   puntuales.py   las alertas de /alerta
   vigiladas.py   lo que cambias con /vigilar

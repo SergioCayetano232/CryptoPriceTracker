@@ -13,6 +13,8 @@ from .alquiler import Alquiler
 from .ave import PRECIO as PRECIO_AVE
 from .ave import Ave
 from .avisados import Ultimo
+from .bici import PRECIO as PRECIO_BICI
+from .bici import Bici
 from .bigmac import PRECIO as PRECIO_BIGMAC
 from .bigmac import BigMac
 from .cafe import PRECIO as PRECIO_CAFE
@@ -1131,6 +1133,25 @@ def formatear_macbook(m: Macbook, currency: str) -> str:
     texto.append(f"Para {siguiente} te faltan {simbolo}{_num(m.falta)}")
     precio = _es(f"{PRECIO_MACBOOK:,}")
     texto.append(f'<i>A unos {simbolo}{precio} cada uno, el Air de 13"</i>')
+    return "\n".join(texto)
+
+
+def formatear_bici(b: Bici, currency: str) -> str:
+    """Respuesta de /bici."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["🚴 <b>Tu cartera en bicis</b>", f"Vale {simbolo}{_num(b.valor)}"]
+    if b.enteras == 0:
+        texto.append(f"Te da para el <b>{b.parte:.0f}%</b> de una")
+        siguiente = "la primera"
+    else:
+        cuantas = _es(f"{b.enteras:,}")
+        plural = "s" if b.enteras > 1 else ""
+        texto.append(f"Te da para <b>{cuantas} bici{plural} de carretera</b>")
+        siguiente = "la siguiente"
+    texto.append(f"Para {siguiente} te faltan {simbolo}{_num(b.falta)}")
+    texto.append(
+        f"<i>A unos {simbolo}{PRECIO_BICI} cada una, de aluminio para empezar</i>"
+    )
     return "\n".join(texto)
 
 

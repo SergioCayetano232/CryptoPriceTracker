@@ -27,6 +27,7 @@ from crypto_tracker import (
     alquiler,
     ave,
     avisados,
+    bici,
     bigmac,
     botones,
     brusco,
@@ -1095,6 +1096,9 @@ def responder(
 
     if nombre == "macbook":
         return _macbook(config)
+
+    if nombre == "bici":
+        return _bici(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2230,6 +2234,13 @@ def _macbook(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_macbook(macbook.Macbook(valor), config.vs_currency)
+
+
+def _bici(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_bici(bici.Bici(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:
