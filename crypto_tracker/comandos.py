@@ -59,6 +59,7 @@ COMANDOS = {
     "cumple": "Los años de Bitcoin y cuánto falta para su cumpleaños",
     "whitepaper": "Los años del whitepaper de Satoshi y cuánto falta para cumplir",
     "merge": "Los años desde que Ethereum dejó la minería",
+    "ethereum": "Los años de Ethereum y cuánto falta para su cumpleaños",
     "adios": "El tiempo que lleva Satoshi sin aparecer",
     "pizza": "Lo que valdrían hoy los 10.000 BTC de las pizzas de 2010",
     "mundo": "Lo que le tocaría a cada persona si se repartieran todos los bitcoin",

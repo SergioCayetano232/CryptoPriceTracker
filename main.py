@@ -57,6 +57,7 @@ from crypto_tracker import (
     diasemana,
     doble,
     equilibrio,
+    ethereum,
     exportar,
     extremos,
     frase,
@@ -1112,6 +1113,9 @@ def responder(
 
     if nombre == "merge":
         return alerts.formatear_merge(merge.Merge(date.today()))
+
+    if nombre == "ethereum":
+        return alerts.formatear_ethereum(ethereum.Ethereum(date.today()))
 
     if nombre == "adios":
         return alerts.formatear_adios(adios.Adios(date.today()))

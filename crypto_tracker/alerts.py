@@ -42,6 +42,7 @@ from .dia import Dia
 from .diasemana import NOMBRES, DiasSemana
 from .doble import Cartera as CarteraDoble
 from .equilibrio import Cartera
+from .ethereum import Ethereum
 from .frase import Frase
 from .ganancias import Ganancias
 from .gasolina import DEPOSITO, Gasolina
@@ -1671,6 +1672,21 @@ def formatear_merge(m: Merge) -> str:
         return texto + "\n🎉 ¡Hoy es su aniversario!"
     falta = "1 día" if m.faltan == 1 else f"{m.faltan} días"
     return texto + f"\n<i>Faltan {falta} para que cumpla {m.años + 1}</i>"
+
+
+def formatear_ethereum(e: Ethereum) -> str:
+    """Respuesta de /ethereum."""
+    dias = _es(f"{e.dias:,}")
+    años = "1 año" if e.años == 1 else f"{e.años} años"
+    texto = (
+        f"⟠ <b>Ethereum cumple {años}</b>\n"
+        f"Arrancó el 30/07/2015, hace {dias} días. "
+        "En la preventa de 2014 el ether salía a unos 0,31 $"
+    )
+    if e.faltan == 0:
+        return texto + "\n🎉 ¡Hoy es su cumpleaños!"
+    falta = "1 día" if e.faltan == 1 else f"{e.faltan} días"
+    return texto + f"\n<i>Faltan {falta} para que cumpla {e.años + 1}</i>"
 
 
 def formatear_adios(a: Adios) -> str:

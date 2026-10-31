@@ -5495,6 +5495,17 @@ def test_merge(config, enviados, monkeypatch):
     assert "🐼 <b>The Merge cumple" in enviados[0]
 
 
+# --- /ethereum ---
+
+
+def test_ethereum(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+
+    main.atender(config, _mensaje("/ethereum"))
+
+    assert "⟠ <b>Ethereum cumple" in enviados[0]
+
+
 # --- /adios ---
 
 
