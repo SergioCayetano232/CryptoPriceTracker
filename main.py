@@ -43,6 +43,7 @@ from crypto_tracker import (
     comandos,
     comparar,
     concierto,
+    consejo,
     convertir,
     copia,
     correlacion,
@@ -927,6 +928,9 @@ def responder(
 
     if nombre == "frase":
         return alerts.formatear_frase(frase.elegir())
+
+    if nombre == "consejo":
+        return alerts.formatear_consejo(consejo.elegir())
 
     if nombre == "dado":
         # Lee la cripto igual que /caraocruz, así que uso su misma función.

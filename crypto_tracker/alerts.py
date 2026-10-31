@@ -1584,6 +1584,15 @@ def formatear_frase(f: Frase) -> str:
     return f"💬 <i>«{escape(f.texto)}»</i>\n— {escape(quien)}"
 
 
+def formatear_consejo(consejo: str) -> str:
+    """Respuesta de /consejo."""
+    return (
+        "🧠 <b>Consejo de inversión</b>\n"
+        f"<i>«{escape(consejo)}»</i>\n"
+        "<i>Es de broma, no le hagas caso</i>"
+    )
+
+
 def formatear_glosario(argumento: str) -> str:
     """Respuesta de /glosario: la lista a secas, o lo que significa una palabra."""
     if not argumento.strip():

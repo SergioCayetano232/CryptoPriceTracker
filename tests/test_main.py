@@ -11,6 +11,7 @@ from crypto_tracker import (
     caraocruz,
     coingecko,
     comandos,
+    consejo,
     dado,
     database,
     frase,
@@ -5576,6 +5577,18 @@ def test_frase(config, enviados, monkeypatch):
     main.atender(config, _mensaje("/cita"))
 
     assert "💬 <i>«Running bitcoin»</i>\n— Hal Finney, 2009" in enviados[0]
+
+
+# --- /consejo ---
+
+
+def test_consejo(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    monkeypatch.setattr(consejo, "elegir", lambda: consejo.CONSEJOS[4])
+
+    main.atender(config, _mensaje("/consejos"))
+
+    assert "<i>«No vendas nunca. Ni siquiera cuando" in enviados[0]
 
 
 # --- /glosario ---
