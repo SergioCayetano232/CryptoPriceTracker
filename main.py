@@ -72,6 +72,7 @@ from crypto_tracker import (
     lambo,
     libro,
     luz,
+    macbook,
     maximo,
     media,
     mejor,
@@ -1091,6 +1092,9 @@ def responder(
 
     if nombre == "peluqueria":
         return _peluqueria(config)
+
+    if nombre == "macbook":
+        return _macbook(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2219,6 +2223,13 @@ def _peluqueria(config: Config) -> str:
         return valor
     p = peluqueria.Peluqueria(valor)
     return alerts.formatear_peluqueria(p, config.vs_currency)
+
+
+def _macbook(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_macbook(macbook.Macbook(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:

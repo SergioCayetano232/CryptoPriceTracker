@@ -61,6 +61,8 @@ from .libro import PRECIO as PRECIO_LIBRO
 from .libro import Libro
 from .luz import PRECIO as PRECIO_LUZ
 from .luz import Luz
+from .macbook import PRECIO as PRECIO_MACBOOK
+from .macbook import Macbook
 from .maximo import Maximo, hace
 from .media import lado_de_todas
 from .mejor import Extremo
@@ -1113,6 +1115,22 @@ def formatear_iphone(i: Iphone, currency: str) -> str:
     texto.append(f"Para {siguiente} te faltan {simbolo}{_num(i.falta)}")
     precio = f"{PRECIO_IPHONE:,}".replace(",", ".")
     texto.append(f"<i>A unos {simbolo}{precio} cada uno, el Pro</i>")
+    return "\n".join(texto)
+
+
+def formatear_macbook(m: Macbook, currency: str) -> str:
+    """Respuesta de /macbook."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["💻 <b>Tu cartera en MacBooks</b>", f"Vale {simbolo}{_num(m.valor)}"]
+    if m.enteros == 0:
+        texto.append(f"Te da para el <b>{m.parte:.0f}%</b> de uno")
+        siguiente = "el primero"
+    else:
+        texto.append(f"Te da para <b>{_es(f'{m.enteros:,}')} MacBook Air</b>")
+        siguiente = "el siguiente"
+    texto.append(f"Para {siguiente} te faltan {simbolo}{_num(m.falta)}")
+    precio = _es(f"{PRECIO_MACBOOK:,}")
+    texto.append(f'<i>A unos {simbolo}{precio} cada uno, el Air de 13"</i>')
     return "\n".join(texto)
 
 
