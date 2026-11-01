@@ -62,6 +62,7 @@ from crypto_tracker import (
     exportar,
     extremos,
     frase,
+    futbol,
     ganancias,
     gasolina,
     gimnasio,
@@ -1116,6 +1117,9 @@ def responder(
 
     if nombre == "piso":
         return _piso(config)
+
+    if nombre == "futbol":
+        return _futbol(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2283,6 +2287,13 @@ def _piso(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_piso(piso.Piso(valor), config.vs_currency)
+
+
+def _futbol(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_futbol(futbol.Futbol(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:

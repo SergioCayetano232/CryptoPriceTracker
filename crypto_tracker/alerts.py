@@ -44,6 +44,8 @@ from .doble import Cartera as CarteraDoble
 from .equilibrio import Cartera
 from .ethereum import Ethereum
 from .frase import Frase
+from .futbol import PRECIO as PRECIO_FUTBOL
+from .futbol import Futbol
 from .ganancias import Ganancias
 from .gasolina import DEPOSITO, Gasolina
 from .gasolina import PRECIO as PRECIO_GASOLINA
@@ -1175,6 +1177,30 @@ def formatear_piso(p: Piso, currency: str) -> str:
         texto.append(f"Son <b>{pisos} piso{plural}</b> de {METROS_PISO} m²")
     precio = _es(f"{PRECIO_PISO:,}")
     texto.append(f"<i>A unos {simbolo}{precio} el m², en Madrid capital</i>")
+    return "\n".join(texto)
+
+
+def formatear_futbol(f: Futbol, currency: str) -> str:
+    """Respuesta de /futbol."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = [
+        "⚽ <b>Tu cartera en entradas de fútbol</b>",
+        f"Vale {simbolo}{_num(f.valor)}",
+    ]
+    if f.entradas == 0:
+        texto.append("No te da ni para una entrada 😅")
+    else:
+        plural = "s" if f.entradas > 1 else ""
+        texto.append(f"Te da para <b>{_es(f'{f.entradas:,}')} entrada{plural}</b>")
+        if f.temporadas >= 1:
+            temporadas = f"{f.temporadas:.1f}".replace(".", ",").removesuffix(",0")
+            para = "1 temporada" if temporadas == "1" else f"{temporadas} temporadas"
+        else:
+            para = "1 partido" if f.entradas == 1 else f"{f.entradas} partidos"
+        texto.append(f"Yendo a todos los partidos en casa, tienes para {para}")
+    texto.append(
+        f"<i>A unos {simbolo}{PRECIO_FUTBOL} la entrada, en un partido de liga</i>"
+    )
     return "\n".join(texto)
 
 
