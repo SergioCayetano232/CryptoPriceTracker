@@ -117,6 +117,8 @@ from .rsi import PERIODO, SOBRECOMPRA, SOBREVENTA, Rsi, hasta_zona
 from .sat import CANTIDADES as CANTIDADES_SAT
 from .sat import Sat
 from .semanal import Semana
+from .sofa import PRECIO as PRECIO_SOFA
+from .sofa import Sofa
 from .spotify import PRECIO as PRECIO_SPOTIFY
 from .spotify import Spotify
 from .sube import Subida
@@ -1274,6 +1276,25 @@ def formatear_videojuego(v: Videojuego, currency: str) -> str:
             para = "1 mes" if v.juegos == 1 else f"{v.juegos} meses"
         texto.append(f"Comprando uno al mes, tienes para {para}")
     texto.append(f"<i>A unos {simbolo}{PRECIO_VIDEOJUEGO} el juego, recién salido</i>")
+    return "\n".join(texto)
+
+
+def formatear_sofa(s: Sofa, currency: str) -> str:
+    """Respuesta de /sofa."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["🛋️ <b>Tu cartera en sofás</b>", f"Vale {simbolo}{_num(s.valor)}"]
+    if s.enteros == 0:
+        texto.append(f"Te da para el <b>{s.parte:.0f}%</b> de uno")
+        siguiente = "el primero"
+    else:
+        cuantos = _es(f"{s.enteros:,}")
+        plural = "s" if s.enteros > 1 else ""
+        texto.append(f"Te da para <b>{cuantos} sofá{plural}</b>")
+        siguiente = "el siguiente"
+    texto.append(f"Para {siguiente} te faltan {simbolo}{_num(s.falta)}")
+    texto.append(
+        f"<i>A unos {simbolo}{PRECIO_SOFA} cada uno, de tres plazas de IKEA</i>"
+    )
     return "\n".join(texto)
 
 

@@ -111,6 +111,7 @@ from crypto_tracker import (
     sat,
     semanal,
     simbolos,
+    sofa,
     spotify,
     sube,
     sueldo,
@@ -1132,6 +1133,9 @@ def responder(
 
     if nombre == "videojuego":
         return _videojuego(config)
+
+    if nombre == "sofa":
+        return _sofa(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2327,6 +2331,13 @@ def _videojuego(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_videojuego(videojuego.Videojuego(valor), config.vs_currency)
+
+
+def _sofa(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_sofa(sofa.Sofa(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:
