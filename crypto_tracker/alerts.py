@@ -136,6 +136,8 @@ from .top import ENTRE, Movida
 from .tortilla import PRECIO as PRECIO_TORTILLA
 from .tortilla import Tortilla
 from .verdes import Verdes
+from .videojuego import PRECIO as PRECIO_VIDEOJUEGO
+from .videojuego import Videojuego
 from .vuelo import PRECIO as PRECIO_VUELO
 from .vuelo import Vuelo
 from .whitepaper import Whitepaper
@@ -1253,6 +1255,25 @@ def formatear_tortilla(t: Tortilla, currency: str) -> str:
     texto.append(
         f"<i>A unos {simbolo}{PRECIO_TORTILLA} el pincho, en un bar de barrio</i>"
     )
+    return "\n".join(texto)
+
+
+def formatear_videojuego(v: Videojuego, currency: str) -> str:
+    """Respuesta de /videojuego."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["🎮 <b>Tu cartera en videojuegos</b>", f"Vale {simbolo}{_num(v.valor)}"]
+    if v.juegos == 0:
+        texto.append("No te da ni para un juego 😅")
+    else:
+        plural = "s" if v.juegos > 1 else ""
+        texto.append(f"Te da para <b>{_es(f'{v.juegos:,}')} juego{plural}</b>")
+        if v.años >= 1:
+            años = f"{v.años:.1f}".replace(".", ",").removesuffix(",0")
+            para = "1 año" if años == "1" else f"{años} años"
+        else:
+            para = "1 mes" if v.juegos == 1 else f"{v.juegos} meses"
+        texto.append(f"Comprando uno al mes, tienes para {para}")
+    texto.append(f"<i>A unos {simbolo}{PRECIO_VIDEOJUEGO} el juego, recién salido</i>")
     return "\n".join(texto)
 
 

@@ -122,6 +122,7 @@ from crypto_tracker import (
     top,
     tortilla,
     verdes,
+    videojuego,
     vigiladas,
     volatilidad,
     vuelo,
@@ -1128,6 +1129,9 @@ def responder(
 
     if nombre == "tortilla":
         return _tortilla(config)
+
+    if nombre == "videojuego":
+        return _videojuego(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2316,6 +2320,13 @@ def _tortilla(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_tortilla(tortilla.Tortilla(valor), config.vs_currency)
+
+
+def _videojuego(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_videojuego(videojuego.Videojuego(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:
