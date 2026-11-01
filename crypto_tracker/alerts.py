@@ -64,6 +64,8 @@ from .lambo import PRECIO as PRECIO_LAMBO
 from .lambo import Lambo
 from .libro import PRECIO as PRECIO_LIBRO
 from .libro import Libro
+from .loteria import PRECIO as PRECIO_LOTERIA
+from .loteria import Loteria
 from .luz import PRECIO as PRECIO_LUZ
 from .luz import Luz
 from .macbook import PRECIO as PRECIO_MACBOOK
@@ -1126,6 +1128,28 @@ def formatear_churros(c: Churros, currency: str) -> str:
             para = "1 semana" if c.raciones == 1 else f"{c.raciones} semanas"
         texto.append(f"Unos cada domingo, tienes para {para}")
     texto.append(f"<i>A unos {simbolo}{PRECIO_CHURROS} la taza con media docena</i>")
+    return "\n".join(texto)
+
+
+def formatear_loteria(lo: Loteria, currency: str) -> str:
+    """Respuesta de /loteria."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = [
+        "🎄 <b>Tu cartera en décimos de Navidad</b>",
+        f"Vale {simbolo}{_num(lo.valor)}",
+    ]
+    if lo.decimos == 0:
+        texto.append("No te da ni para un décimo 😅")
+    else:
+        plural = "s" if lo.decimos > 1 else ""
+        texto.append(f"Te da para <b>{_es(f'{lo.decimos:,}')} décimo{plural}</b>")
+    if lo.faltan == 0:
+        texto.append("🎉 ¡El sorteo es hoy!")
+    elif lo.faltan == 1:
+        texto.append("Falta 1 día para el sorteo del 22 de diciembre")
+    else:
+        texto.append(f"Faltan {lo.faltan} días para el sorteo del 22 de diciembre")
+    texto.append(f"<i>A {simbolo}{PRECIO_LOTERIA} el décimo</i>")
     return "\n".join(texto)
 
 

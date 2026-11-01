@@ -75,6 +75,7 @@ from crypto_tracker import (
     kebab,
     lambo,
     libro,
+    loteria,
     luz,
     macbook,
     maximo,
@@ -1108,6 +1109,9 @@ def responder(
 
     if nombre == "churros":
         return _churros(config)
+
+    if nombre == "loteria":
+        return _loteria(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2260,6 +2264,14 @@ def _churros(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_churros(churros.Churros(valor), config.vs_currency)
+
+
+def _loteria(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    decimos = loteria.Loteria(valor, date.today())
+    return alerts.formatear_loteria(decimos, config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:

@@ -266,6 +266,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/macbook` | Cuántos MacBook Air te da tu cartera, a unos 1.300 cada uno, y cuánto te falta para el siguiente. También `/portatil` y `/mac` |
 | `/bici` | Cuántas bicis de carretera te da tu cartera, a unos 800 cada una, y cuánto te falta para la siguiente. También `/bicicleta` |
 | `/churros` | Cuántos chocolates con churros te da tu cartera, a unos 4 cada uno, y para cuánto tienes desayunando unos cada domingo. También `/chocolate` |
+| `/loteria` | Cuántos décimos de Navidad te da tu cartera, a 20 cada uno, y los días que faltan para el sorteo del 22 de diciembre. También `/lotería` y `/decimo` |
 | `/bigmac` | Cuántos Big Mac te da tu cartera, a unos 5,50 cada uno |
 | `/gasolina` | Cuántos litros de gasolina te da tu cartera, a unos 1,80 el litro, y cuántos depósitos de 50 litros son |
 | `/sueldo` | Cuántos meses (o años) de salario mínimo es tu cartera, con el SMI de 2026: 1.221 € en 14 pagas. Solo en euros |
@@ -676,6 +677,7 @@ crypto_tracker/
   macbook.py     tu cartera en MacBooks, para /macbook
   bici.py        tu cartera en bicis de carretera, para /bici
   churros.py     tu cartera en chocolate con churros, para /churros
+  loteria.py     tu cartera en décimos de Navidad, para /loteria
   sat.py         lo que vale un satoshi, para /sat
   puntuales.py   las alertas de /alerta
   vigiladas.py   lo que cambias con /vigilar
