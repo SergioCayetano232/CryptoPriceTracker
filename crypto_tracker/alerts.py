@@ -133,6 +133,8 @@ from .tendencias import Tendencia
 from .tesla import PRECIO as PRECIO_TESLA
 from .tesla import Tesla
 from .top import ENTRE, Movida
+from .tortilla import PRECIO as PRECIO_TORTILLA
+from .tortilla import Tortilla
 from .verdes import Verdes
 from .vuelo import PRECIO as PRECIO_VUELO
 from .vuelo import Vuelo
@@ -1226,6 +1228,30 @@ def formatear_taxi(t: Taxi, currency: str) -> str:
             texto.append(f"Contando ida y vuelta, son {escapadas} escapada{plural}")
     texto.append(
         f"<i>A {simbolo}{PRECIO_TAXI} el viaje, la tarifa fija de Madrid a Barajas</i>"
+    )
+    return "\n".join(texto)
+
+
+def formatear_tortilla(t: Tortilla, currency: str) -> str:
+    """Respuesta de /tortilla."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = [
+        "🥔 <b>Tu cartera en pinchos de tortilla</b>",
+        f"Vale {simbolo}{_num(t.valor)}",
+    ]
+    if t.pinchos == 0:
+        texto.append("No te da ni para un pincho 😅")
+    else:
+        plural = "s" if t.pinchos > 1 else ""
+        texto.append(f"Te da para <b>{_es(f'{t.pinchos:,}')} pincho{plural}</b>")
+        if t.años >= 1:
+            años = f"{t.años:.1f}".replace(".", ",").removesuffix(",0")
+            para = "1 año" if años == "1" else f"{años} años"
+        else:
+            para = "1 día" if t.pinchos == 1 else f"{t.pinchos} días"
+        texto.append(f"Uno cada mañana con el café, tienes para {para}")
+    texto.append(
+        f"<i>A unos {simbolo}{PRECIO_TORTILLA} el pincho, en un bar de barrio</i>"
     )
     return "\n".join(texto)
 

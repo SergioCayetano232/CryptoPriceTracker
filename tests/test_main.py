@@ -6252,6 +6252,24 @@ def test_taxi_sin_cartera(config, enviados):
     assert "PORTFOLIO" in enviados[0]
 
 
+def test_tortilla(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    config = replace(config, cartera=(Posicion("bitcoin", 0.01),))
+    _precio_de(config, "bitcoin", 100000.0, 5)
+
+    main.atender(config, _mensaje("/pincho"))
+
+    assert "Te da para <b>333 pinchos</b>" in enviados[0]
+
+
+def test_tortilla_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/tortilla"))
+
+    assert "PORTFOLIO" in enviados[0]
+
+
 def test_bigmac_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/bigmac"))
 

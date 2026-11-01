@@ -270,6 +270,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/piso` | Cuántos metros cuadrados de piso en Madrid te da tu cartera, a unos 5.500 el m², y cuánto te falta para uno de 70 m². También `/casa` y `/vivienda` |
 | `/futbol` | Cuántas entradas de fútbol te da tu cartera, a unos 60 cada una, y para cuántas temporadas tienes yendo a todos los partidos en casa. También `/fútbol` y `/partido` |
 | `/taxi` | Cuántos taxis al aeropuerto te da tu cartera, con la tarifa fija de 33 de Madrid a Barajas, y cuántas escapadas son contando ida y vuelta. También `/aeropuerto` y `/cabify` |
+| `/tortilla` | Cuántos pinchos de tortilla te da tu cartera, a unos 3 cada uno, y para cuánto tienes con uno cada mañana. También `/pincho` |
 | `/bigmac` | Cuántos Big Mac te da tu cartera, a unos 5,50 cada uno |
 | `/gasolina` | Cuántos litros de gasolina te da tu cartera, a unos 1,80 el litro, y cuántos depósitos de 50 litros son |
 | `/sueldo` | Cuántos meses (o años) de salario mínimo es tu cartera, con el SMI de 2026: 1.221 € en 14 pagas. Solo en euros |
@@ -684,6 +685,7 @@ crypto_tracker/
   piso.py        tu cartera en metros de piso en Madrid, para /piso
   futbol.py      tu cartera en entradas de fútbol, para /futbol
   taxi.py        tu cartera en taxis al aeropuerto, para /taxi
+  tortilla.py    tu cartera en pinchos de tortilla, para /tortilla
   sat.py         lo que vale un satoshi, para /sat
   puntuales.py   las alertas de /alerta
   vigiladas.py   lo que cambias con /vigilar

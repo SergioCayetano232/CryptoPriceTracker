@@ -120,6 +120,7 @@ from crypto_tracker import (
     telegram,
     tesla,
     top,
+    tortilla,
     verdes,
     vigiladas,
     volatilidad,
@@ -1124,6 +1125,9 @@ def responder(
 
     if nombre == "taxi":
         return _taxi(config)
+
+    if nombre == "tortilla":
+        return _tortilla(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2305,6 +2309,13 @@ def _taxi(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_taxi(taxi.Taxi(valor), config.vs_currency)
+
+
+def _tortilla(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_tortilla(tortilla.Tortilla(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:
