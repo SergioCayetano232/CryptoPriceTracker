@@ -90,6 +90,7 @@ from crypto_tracker import (
     moneda,
     movimientos,
     mundo,
+    navidad,
     netflix,
     objetivo,
     oro,
@@ -1136,6 +1137,9 @@ def responder(
 
     if nombre == "sofa":
         return _sofa(config)
+
+    if nombre == "navidad":
+        return _navidad(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2338,6 +2342,14 @@ def _sofa(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_sofa(sofa.Sofa(valor), config.vs_currency)
+
+
+def _navidad(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    n = navidad.Navidad(valor, date.today())
+    return alerts.formatear_navidad(n, config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:

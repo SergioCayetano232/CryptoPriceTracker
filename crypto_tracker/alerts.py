@@ -93,6 +93,8 @@ from .movimientos import (
     totales,
 )
 from .mundo import PERSONAS, Mundo
+from .navidad import PRECIO as PRECIO_NAVIDAD
+from .navidad import Navidad
 from .netflix import PRECIO as PRECIO_NETFLIX
 from .netflix import Netflix
 from .objetivo import Escenario
@@ -1294,6 +1296,28 @@ def formatear_sofa(s: Sofa, currency: str) -> str:
     texto.append(f"Para {siguiente} te faltan {simbolo}{_num(s.falta)}")
     texto.append(
         f"<i>A unos {simbolo}{PRECIO_SOFA} cada uno, de tres plazas de IKEA</i>"
+    )
+    return "\n".join(texto)
+
+
+def formatear_navidad(n: Navidad, currency: str) -> str:
+    """Respuesta de /navidad."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    if n.faltan == 0:
+        titulo = "🎄 <b>¡Feliz Navidad!</b>"
+    elif n.faltan == 1:
+        titulo = "🎅 <b>Mañana es Navidad</b>"
+    else:
+        titulo = f"🎅 <b>Faltan {n.faltan} días para Navidad</b>"
+    texto = [titulo, f"Tu cartera vale {simbolo}{_num(n.valor)}"]
+    if n.cestas == 0:
+        texto.append("No te da ni para una cesta 😅")
+    elif n.cestas == 1:
+        texto.append("Te da para <b>1 cesta navideña</b>")
+    else:
+        texto.append(f"Te da para <b>{_es(f'{n.cestas:,}')} cestas navideñas</b>")
+    texto.append(
+        f"<i>A unos {simbolo}{PRECIO_NAVIDAD} la cesta, con turrón, embutido y cava</i>"
     )
     return "\n".join(texto)
 
