@@ -94,6 +94,7 @@ from crypto_tracker import (
     oro,
     peluqueria,
     periodo,
+    piso,
     pizza,
     primera,
     proximo,
@@ -1112,6 +1113,9 @@ def responder(
 
     if nombre == "loteria":
         return _loteria(config)
+
+    if nombre == "piso":
+        return _piso(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2272,6 +2276,13 @@ def _loteria(config: Config) -> str:
         return valor
     decimos = loteria.Loteria(valor, date.today())
     return alerts.formatear_loteria(decimos, config.vs_currency)
+
+
+def _piso(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_piso(piso.Piso(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:

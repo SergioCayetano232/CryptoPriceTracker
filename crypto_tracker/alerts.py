@@ -98,6 +98,9 @@ from .oro import Oro
 from .peluqueria import PRECIO as PRECIO_PELUQUERIA
 from .peluqueria import Peluqueria
 from .periodo import nombre as nombre_periodo
+from .piso import METROS as METROS_PISO
+from .piso import PRECIO as PRECIO_PISO
+from .piso import Piso
 from .pizza import BTC, Pizza
 from .primera import Primera
 from .ps5 import PRECIO as PRECIO_PS5
@@ -1150,6 +1153,28 @@ def formatear_loteria(lo: Loteria, currency: str) -> str:
     else:
         texto.append(f"Faltan {lo.faltan} días para el sorteo del 22 de diciembre")
     texto.append(f"<i>A {simbolo}{PRECIO_LOTERIA} el décimo</i>")
+    return "\n".join(texto)
+
+
+def formatear_piso(p: Piso, currency: str) -> str:
+    """Respuesta de /piso."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["🏠 <b>Tu cartera en metros de piso</b>", f"Vale {simbolo}{_num(p.valor)}"]
+    # Por debajo de 0,1 m² saldría "0 m²", que queda raro.
+    if p.metros < 0.1:
+        texto.append("No llega ni a una baldosa 😅")
+    else:
+        metros = _es(f"{p.metros:,.1f}").removesuffix(",0")
+        texto.append(f"Te da para <b>{metros} m²</b> en Madrid")
+    if p.pisos == 0:
+        falta = f"{simbolo}{_num(p.falta)}"
+        texto.append(f"Para un piso de {METROS_PISO} m² te faltan {falta}")
+    else:
+        plural = "s" if p.pisos > 1 else ""
+        pisos = _es(f"{p.pisos:,}")
+        texto.append(f"Son <b>{pisos} piso{plural}</b> de {METROS_PISO} m²")
+    precio = _es(f"{PRECIO_PISO:,}")
+    texto.append(f"<i>A unos {simbolo}{precio} el m², en Madrid capital</i>")
     return "\n".join(texto)
 
 
