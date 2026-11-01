@@ -126,6 +126,8 @@ from .supermercado import PRECIO as PRECIO_SUPER
 from .supermercado import Super
 from .switch import PRECIO as PRECIO_SWITCH
 from .switch import Switch
+from .taxi import PRECIO as PRECIO_TAXI
+from .taxi import Taxi
 from .telegram import escape
 from .tendencias import Tendencia
 from .tesla import PRECIO as PRECIO_TESLA
@@ -1200,6 +1202,30 @@ def formatear_futbol(f: Futbol, currency: str) -> str:
         texto.append(f"Yendo a todos los partidos en casa, tienes para {para}")
     texto.append(
         f"<i>A unos {simbolo}{PRECIO_FUTBOL} la entrada, en un partido de liga</i>"
+    )
+    return "\n".join(texto)
+
+
+def formatear_taxi(t: Taxi, currency: str) -> str:
+    """Respuesta de /taxi."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = [
+        "🚕 <b>Tu cartera en taxis al aeropuerto</b>",
+        f"Vale {simbolo}{_num(t.valor)}",
+    ]
+    if t.viajes == 0:
+        texto.append("No te da ni para un taxi 😅")
+    else:
+        plural = "s" if t.viajes > 1 else ""
+        texto.append(f"Te da para <b>{_es(f'{t.viajes:,}')} viaje{plural}</b>")
+        if t.escapadas == 0:
+            texto.append("Solo la ida, la vuelta en metro")
+        else:
+            plural = "s" if t.escapadas > 1 else ""
+            escapadas = _es(f"{t.escapadas:,}")
+            texto.append(f"Contando ida y vuelta, son {escapadas} escapada{plural}")
+    texto.append(
+        f"<i>A {simbolo}{PRECIO_TAXI} el viaje, la tarifa fija de Madrid a Barajas</i>"
     )
     return "\n".join(texto)
 

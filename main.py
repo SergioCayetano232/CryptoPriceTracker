@@ -116,6 +116,7 @@ from crypto_tracker import (
     sueldo,
     supermercado,
     switch,
+    taxi,
     telegram,
     tesla,
     top,
@@ -1120,6 +1121,9 @@ def responder(
 
     if nombre == "futbol":
         return _futbol(config)
+
+    if nombre == "taxi":
+        return _taxi(config)
 
     if nombre == "cumple":
         return alerts.formatear_cumple(cumple.Cumple(date.today()))
@@ -2294,6 +2298,13 @@ def _futbol(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_futbol(futbol.Futbol(valor), config.vs_currency)
+
+
+def _taxi(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_taxi(taxi.Taxi(valor), config.vs_currency)
 
 
 def _bigmac(config: Config) -> str:
