@@ -125,6 +125,7 @@ COMANDOS = {
     "mute": "Callar los avisos un rato (ej: /mute 2h o /mute bitcoin hasta 8:00)",
     "unmute": "Volver a avisar",
     "bot": "Si sigo funcionando: desde cuándo y el último ciclo",
+    "version": "Qué versión del bot está corriendo",
     "ayuda": "Lo que sé hacer",
 }
 
@@ -328,6 +329,7 @@ ALIAS = {
     "last": "ultimo",
     "ping": "bot",
     "uptime": "bot",
+    "versión": "version",
     "millon": "millonario",
     "millón": "millonario",
     "cumpleaños": "cumple",

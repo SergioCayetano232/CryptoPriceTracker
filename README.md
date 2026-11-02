@@ -295,6 +295,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/ajustes` | Lo que tienes puesto en el `.env`: la moneda, cada cuánto consulta, los días que guarda, el resumen, el aviso de movimientos bruscos, el de máximos y mínimos y las horas tranquilas |
 | `/consultas` | Cuántas consultas a CoinGecko llevas este mes |
 | `/bot` | Si sigue funcionando: desde cuándo está encendido, cuándo fue el último ciclo y las consultas del mes. También con `/ping` |
+| `/version` | Qué versión del bot está corriendo y, si lo bajaste con git, de qué día es el último cambio. También `/versión` |
 | `/mute` | Te pregunta cuánto tiempo callarse, con botones: 1 h, 4 h o hasta las 8:00 (si ya está callado, o tienes alguna cripto callada, te dice hasta cuándo) |
 | `/mute 2h` | Calla los avisos ese rato, con un botón para deshacerlo |
 | `/mute hasta 8:00` | Calla los avisos hasta esa hora (si ya ha pasado, la de mañana) |
@@ -732,6 +733,7 @@ crypto_tracker/
   hoy.py         cómo van desde las 00:00, para /hoy
   semanal.py     el resumen de la semana de la cartera
   salud.py       avisa si el bot deja de funcionar
+  version.py     la versión del bot, para /version
   copia.py       lo de ahora escrito como va en el .env, para /copia
   ajustes.py     lo que tienes puesto en el .env, para /ajustes
   cuota.py       cuenta las consultas a CoinGecko

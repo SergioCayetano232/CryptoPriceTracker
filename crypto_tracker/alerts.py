@@ -146,6 +146,7 @@ from .top import ENTRE, Movida
 from .tortilla import PRECIO as PRECIO_TORTILLA
 from .tortilla import Tortilla
 from .verdes import Verdes
+from .version import Version
 from .videojuego import PRECIO as PRECIO_VIDEOJUEGO
 from .videojuego import Videojuego
 from .vuelo import PRECIO as PRECIO_VUELO
@@ -1839,6 +1840,17 @@ def formatear_frase(f: Frase) -> str:
     """Respuesta de /frase."""
     quien = f"{f.autor}, {f.año}" if f.año else f.autor
     return f"💬 <i>«{escape(f.texto)}»</i>\n— {escape(quien)}"
+
+
+def formatear_version(v: Version) -> str:
+    """Respuesta de /version."""
+    if v.numero is None:
+        return "🏷️ <b>CryptoPriceTracker</b>\nNo he encontrado el número de versión."
+    texto = [f"🏷️ <b>CryptoPriceTracker {escape(v.numero)}</b>"]
+    if v.commit and v.fecha:
+        año, mes, dia = v.fecha.split("-")
+        texto.append(f"Último cambio: {v.commit}, del {dia}/{mes}/{año}")
+    return "\n".join(texto)
 
 
 def formatear_chiste(chiste: str) -> str:

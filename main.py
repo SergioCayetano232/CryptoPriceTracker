@@ -128,6 +128,7 @@ from crypto_tracker import (
     top,
     tortilla,
     verdes,
+    version,
     videojuego,
     vigiladas,
     volatilidad,
@@ -943,6 +944,9 @@ def responder(
 
     if nombre == "consejo":
         return alerts.formatear_consejo(consejo.elegir())
+
+    if nombre == "version":
+        return alerts.formatear_version(version.leer())
 
     if nombre == "chiste":
         return alerts.formatear_chiste(chiste.elegir())
