@@ -103,6 +103,8 @@ from .navidad import PRECIO as PRECIO_NAVIDAD
 from .navidad import Navidad
 from .netflix import PRECIO as PRECIO_NETFLIX
 from .netflix import Netflix
+from .nochevieja import PRECIO as PRECIO_CAVA
+from .nochevieja import Nochevieja
 from .objetivo import Escenario
 from .oro import Oro
 from .peluqueria import PRECIO as PRECIO_PELUQUERIA
@@ -1384,6 +1386,31 @@ def formatear_navidad(n: Navidad, currency: str) -> str:
     texto.append(
         f"<i>A unos {simbolo}{PRECIO_NAVIDAD} la cesta, con turrón, embutido y cava</i>"
     )
+    return "\n".join(texto)
+
+
+def formatear_nochevieja(n: Nochevieja, currency: str) -> str:
+    """Respuesta de /nochevieja."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    if n.faltan == 0:
+        titulo = "🎉 <b>¡Hoy es Nochevieja!</b>"
+    elif n.faltan == 1:
+        titulo = "🍇 <b>Mañana es Nochevieja</b>"
+    else:
+        titulo = f"🥂 <b>Faltan {n.faltan} días para Nochevieja</b>"
+    llenas = round(n.pasado / 10)
+    texto = [
+        titulo,
+        f"{'▰' * llenas}{'▱' * (10 - llenas)} llevas el {n.pasado:.0f}% del año",
+        f"Tu cartera vale {simbolo}{_num(n.valor)}",
+    ]
+    if n.botellas == 0:
+        texto.append("No te da ni para una botella 😅")
+    elif n.botellas == 1:
+        texto.append("Te da para <b>1 botella de cava</b>")
+    else:
+        texto.append(f"Te da para <b>{_es(f'{n.botellas:,}')} botellas de cava</b>")
+    texto.append(f"<i>A unos {simbolo}{PRECIO_CAVA} la botella, de supermercado</i>")
     return "\n".join(texto)
 
 

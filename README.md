@@ -277,6 +277,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/boda` | Cuántas bodas te da tu cartera, a unos 25.000 una con cien invitados, y cuánto te falta para la siguiente. También `/bodas` y `/casarse` |
 | `/carnet` | Cuántos carnets de conducir te da tu cartera, a unos 800 en autoescuela aprobando a la primera, y cuánto te falta para el siguiente. También `/carne` y `/autoescuela` |
 | `/navidad` | Los días que faltan para Navidad y cuántas cestas navideñas te da tu cartera, a unos 100 cada una. También `/cesta` y `/xmas` |
+| `/nochevieja` | Los días que faltan para Nochevieja, cuánto llevas de año y cuántas botellas de cava te da tu cartera, a unos 10 cada una. También `/findeaño` y `/uvas` |
 | `/bigmac` | Cuántos Big Mac te da tu cartera, a unos 5,50 cada uno |
 | `/gasolina` | Cuántos litros de gasolina te da tu cartera, a unos 1,80 el litro, y cuántos depósitos de 50 litros son |
 | `/sueldo` | Cuántos meses (o años) de salario mínimo es tu cartera, con el SMI de 2026: 1.221 € en 14 pagas. Solo en euros |
@@ -701,6 +702,7 @@ crypto_tracker/
   boda.py        tu cartera en bodas, para /boda
   carnet.py      tu cartera en carnets de conducir, para /carnet
   navidad.py     los días que faltan para Navidad, para /navidad
+  nochevieja.py  lo que queda de año, para /nochevieja
   sat.py         lo que vale un satoshi, para /sat
   puntuales.py   las alertas de /alerta
   vigiladas.py   lo que cambias con /vigilar

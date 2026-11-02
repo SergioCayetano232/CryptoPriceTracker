@@ -96,6 +96,7 @@ from crypto_tracker import (
     mundo,
     navidad,
     netflix,
+    nochevieja,
     objetivo,
     oro,
     peluqueria,
@@ -1157,6 +1158,9 @@ def responder(
 
     if nombre == "carnet":
         return _carnet(config)
+
+    if nombre == "nochevieja":
+        return _nochevieja(config)
 
     if nombre == "navidad":
         return _navidad(config)
@@ -2383,6 +2387,14 @@ def _coche(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_coche(coche.Coche(valor), config.vs_currency)
+
+
+def _nochevieja(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    n = nochevieja.Nochevieja(valor, date.today())
+    return alerts.formatear_nochevieja(n, config.vs_currency)
 
 
 def _navidad(config: Config) -> str:
