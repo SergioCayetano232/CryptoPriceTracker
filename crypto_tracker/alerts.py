@@ -1777,6 +1777,11 @@ def formatear_frase(f: Frase) -> str:
     return f"💬 <i>«{escape(f.texto)}»</i>\n— {escape(quien)}"
 
 
+def formatear_chiste(chiste: str) -> str:
+    """Respuesta de /chiste."""
+    return f"😂 {escape(chiste)}"
+
+
 def formatear_consejo(consejo: str) -> str:
     """Respuesta de /consejo."""
     return (

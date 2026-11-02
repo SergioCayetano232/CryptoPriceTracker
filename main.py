@@ -37,6 +37,7 @@ from crypto_tracker import (
     cana,
     caraocruz,
     cartera,
+    chiste,
     churros,
     cine,
     coingecko,
@@ -939,6 +940,9 @@ def responder(
 
     if nombre == "consejo":
         return alerts.formatear_consejo(consejo.elegir())
+
+    if nombre == "chiste":
+        return alerts.formatear_chiste(chiste.elegir())
 
     if nombre == "dado":
         # Lee la cripto igual que /caraocruz, así que uso su misma función.
