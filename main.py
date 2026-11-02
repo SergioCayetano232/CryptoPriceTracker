@@ -37,6 +37,7 @@ from crypto_tracker import (
     callar,
     cana,
     caraocruz,
+    carnet,
     cartera,
     chiste,
     churros,
@@ -1149,6 +1150,9 @@ def responder(
 
     if nombre == "boda":
         return _boda(config)
+
+    if nombre == "carnet":
+        return _carnet(config)
 
     if nombre == "navidad":
         return _navidad(config)
@@ -2354,6 +2358,13 @@ def _sofa(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_sofa(sofa.Sofa(valor), config.vs_currency)
+
+
+def _carnet(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_carnet(carnet.Carnet(valor), config.vs_currency)
 
 
 def _boda(config: Config) -> str:

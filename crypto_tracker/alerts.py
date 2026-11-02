@@ -25,6 +25,8 @@ from .caida import Caida
 from .cana import PRECIO as PRECIO_CANA
 from .cana import Cana
 from .caraocruz import QUE_HACER
+from .carnet import PRECIO as PRECIO_CARNET
+from .carnet import Carnet
 from .cartera import Valor, mejor_y_peor, peso
 from .churros import PRECIO as PRECIO_CHURROS
 from .churros import Churros
@@ -1282,6 +1284,28 @@ def formatear_videojuego(v: Videojuego, currency: str) -> str:
             para = "1 mes" if v.juegos == 1 else f"{v.juegos} meses"
         texto.append(f"Comprando uno al mes, tienes para {para}")
     texto.append(f"<i>A unos {simbolo}{PRECIO_VIDEOJUEGO} el juego, recién salido</i>")
+    return "\n".join(texto)
+
+
+def formatear_carnet(c: Carnet, currency: str) -> str:
+    """Respuesta de /carnet."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = [
+        "🚦 <b>Tu cartera en carnets de conducir</b>",
+        f"Vale {simbolo}{_num(c.valor)}",
+    ]
+    if c.enteros == 0:
+        texto.append(f"Te da para el <b>{c.parte:.0f}%</b> de uno")
+        siguiente = "el primero"
+    else:
+        cuantos = _es(f"{c.enteros:,}")
+        plural = "s" if c.enteros > 1 else ""
+        texto.append(f"Te da para <b>{cuantos} carnet{plural}</b>")
+        siguiente = "el siguiente"
+    texto.append(f"Para {siguiente} te faltan {simbolo}{_num(c.falta)}")
+    texto.append(
+        f"<i>A unos {simbolo}{PRECIO_CARNET} cada uno, aprobando a la primera</i>"
+    )
     return "\n".join(texto)
 
 
