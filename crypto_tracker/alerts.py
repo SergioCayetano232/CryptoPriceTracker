@@ -17,6 +17,8 @@ from .bici import PRECIO as PRECIO_BICI
 from .bici import Bici
 from .bigmac import PRECIO as PRECIO_BIGMAC
 from .bigmac import BigMac
+from .boda import PRECIO as PRECIO_BODA
+from .boda import Boda
 from .cafe import PRECIO as PRECIO_CAFE
 from .cafe import Cafe
 from .caida import Caida
@@ -1280,6 +1282,24 @@ def formatear_videojuego(v: Videojuego, currency: str) -> str:
             para = "1 mes" if v.juegos == 1 else f"{v.juegos} meses"
         texto.append(f"Comprando uno al mes, tienes para {para}")
     texto.append(f"<i>A unos {simbolo}{PRECIO_VIDEOJUEGO} el juego, recién salido</i>")
+    return "\n".join(texto)
+
+
+def formatear_boda(b: Boda, currency: str) -> str:
+    """Respuesta de /boda."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["💍 <b>Tu cartera en bodas</b>", f"Vale {simbolo}{_num(b.valor)}"]
+    if b.enteros == 0:
+        texto.append(f"Te da para el <b>{b.parte:.0f}%</b> de una")
+        siguiente = "la primera"
+    else:
+        cuantas = _es(f"{b.enteros:,}")
+        plural = "s" if b.enteros > 1 else ""
+        texto.append(f"Te da para <b>{cuantas} boda{plural}</b>")
+        siguiente = "la siguiente"
+    texto.append(f"Para {siguiente} te faltan {simbolo}{_num(b.falta)}")
+    precio = _es(f"{PRECIO_BODA:,}")
+    texto.append(f"<i>A unos {simbolo}{precio} cada una, con cien invitados</i>")
     return "\n".join(texto)
 
 

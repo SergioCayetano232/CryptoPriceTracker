@@ -274,6 +274,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/videojuego` | Cuántos videojuegos nuevos te da tu cartera, a unos 80 cada uno, y para cuánto tienes comprando uno al mes. También `/juego` y `/juegos` |
 | `/sofa` | Cuántos sofás de tres plazas de IKEA te da tu cartera, a unos 500 cada uno, y cuánto te falta para el siguiente. También `/sofá` y `/ikea` |
 | `/coche` | Cuántos coches nuevos te da tu cartera, a unos 20.000 un utilitario, y cuánto te falta para el siguiente. También `/coches` y `/auto` |
+| `/boda` | Cuántas bodas te da tu cartera, a unos 25.000 una con cien invitados, y cuánto te falta para la siguiente. También `/bodas` y `/casarse` |
 | `/navidad` | Los días que faltan para Navidad y cuántas cestas navideñas te da tu cartera, a unos 100 cada una. También `/cesta` y `/xmas` |
 | `/bigmac` | Cuántos Big Mac te da tu cartera, a unos 5,50 cada uno |
 | `/gasolina` | Cuántos litros de gasolina te da tu cartera, a unos 1,80 el litro, y cuántos depósitos de 50 litros son |
@@ -695,6 +696,7 @@ crypto_tracker/
   videojuego.py  tu cartera en videojuegos, para /videojuego
   sofa.py        tu cartera en sofás, para /sofa
   coche.py       tu cartera en coches, para /coche
+  boda.py        tu cartera en bodas, para /boda
   navidad.py     los días que faltan para Navidad, para /navidad
   sat.py         lo que vale un satoshi, para /sat
   puntuales.py   las alertas de /alerta
