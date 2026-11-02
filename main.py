@@ -40,6 +40,7 @@ from crypto_tracker import (
     chiste,
     churros,
     cine,
+    coche,
     coingecko,
     comandos,
     comparar,
@@ -1141,6 +1142,9 @@ def responder(
 
     if nombre == "sofa":
         return _sofa(config)
+
+    if nombre == "coche":
+        return _coche(config)
 
     if nombre == "navidad":
         return _navidad(config)
@@ -2346,6 +2350,13 @@ def _sofa(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_sofa(sofa.Sofa(valor), config.vs_currency)
+
+
+def _coche(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_coche(coche.Coche(valor), config.vs_currency)
 
 
 def _navidad(config: Config) -> str:

@@ -28,6 +28,8 @@ from .churros import PRECIO as PRECIO_CHURROS
 from .churros import Churros
 from .cine import PRECIO as PRECIO_CINE
 from .cine import Cine
+from .coche import PRECIO as PRECIO_COCHE
+from .coche import Coche
 from .comparar import Resultado
 from .comparar import media as media_comparar
 from .concierto import PRECIO as PRECIO_CONCIERTO
@@ -1278,6 +1280,24 @@ def formatear_videojuego(v: Videojuego, currency: str) -> str:
             para = "1 mes" if v.juegos == 1 else f"{v.juegos} meses"
         texto.append(f"Comprando uno al mes, tienes para {para}")
     texto.append(f"<i>A unos {simbolo}{PRECIO_VIDEOJUEGO} el juego, recién salido</i>")
+    return "\n".join(texto)
+
+
+def formatear_coche(c: Coche, currency: str) -> str:
+    """Respuesta de /coche."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["🚗 <b>Tu cartera en coches</b>", f"Vale {simbolo}{_num(c.valor)}"]
+    if c.enteros == 0:
+        texto.append(f"Te da para el <b>{c.parte:.0f}%</b> de uno")
+        siguiente = "el primero"
+    else:
+        cuantos = _es(f"{c.enteros:,}")
+        plural = "s" if c.enteros > 1 else ""
+        texto.append(f"Te da para <b>{cuantos} coche{plural}</b>")
+        siguiente = "el siguiente"
+    texto.append(f"Para {siguiente} te faltan {simbolo}{_num(c.falta)}")
+    precio = _es(f"{PRECIO_COCHE:,}")
+    texto.append(f"<i>A unos {simbolo}{precio} cada uno, un utilitario nuevo</i>")
     return "\n".join(texto)
 
 
