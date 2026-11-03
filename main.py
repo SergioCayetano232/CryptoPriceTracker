@@ -116,6 +116,7 @@ from crypto_tracker import (
     ratio,
     redondo,
     reparto,
+    rolex,
     rsi,
     salud,
     sat,
@@ -1171,6 +1172,9 @@ def responder(
 
     if nombre == "jamon":
         return _jamon(config)
+
+    if nombre == "rolex":
+        return _rolex(config)
 
     if nombre == "carnet":
         return _carnet(config)
@@ -2433,6 +2437,13 @@ def _jamon(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_jamon(jamon.Jamon(valor), config.vs_currency)
+
+
+def _rolex(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_rolex(rolex.Rolex(valor), config.vs_currency)
 
 
 def _coche(config: Config) -> str:

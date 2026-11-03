@@ -128,6 +128,8 @@ from .rango import Rango, barra
 from .ratio import Ratio
 from .redondo import Redondo
 from .reparto import Trozo, demasiado
+from .rolex import PRECIO as PRECIO_ROLEX
+from .rolex import Rolex
 from .rsi import PERIODO, SOBRECOMPRA, SOBREVENTA, Rsi, hasta_zona
 from .sat import CANTIDADES as CANTIDADES_SAT
 from .sat import Sat
@@ -1394,6 +1396,23 @@ def formatear_jamon(j: Jamon, currency: str) -> str:
     texto.append(
         f"<i>A unos {simbolo}{PRECIO_JAMON} la pata de bellota 100% ibérica</i>"
     )
+    return "\n".join(texto)
+
+
+def formatear_rolex(r: Rolex, currency: str) -> str:
+    """Respuesta de /rolex."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["⌚ <b>Tu cartera en Rolex</b>", f"Vale {simbolo}{_num(r.valor)}"]
+    if r.enteros == 0:
+        texto.append(f"Te da para el <b>{r.parte:.0f}%</b> de uno")
+        siguiente = "el primero"
+    else:
+        # Rolex no cambia en plural
+        texto.append(f"Te da para <b>{_es(f'{r.enteros:,}')} Rolex</b>")
+        siguiente = "el siguiente"
+    texto.append(f"Para {siguiente} te faltan {simbolo}{_num(r.falta)}")
+    precio = _es(f"{PRECIO_ROLEX:,}")
+    texto.append(f"<i>A unos {simbolo}{precio} un Submariner nuevo</i>")
     return "\n".join(texto)
 
 

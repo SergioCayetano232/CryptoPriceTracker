@@ -279,6 +279,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/coche` | Cuántos coches nuevos te da tu cartera, a unos 20.000 un utilitario, y cuánto te falta para el siguiente. También `/coches` y `/auto` |
 | `/boda` | Cuántas bodas te da tu cartera, a unos 25.000 una con cien invitados, y cuánto te falta para la siguiente. También `/bodas` y `/casarse` |
 | `/jamon` | Cuántos jamones ibéricos te da tu cartera, a unos 500 la pata de bellota, y cuánto te falta para el siguiente. También `/jamón` y `/jamones` |
+| `/rolex` | Cuántos Rolex te da tu cartera, a unos 10.000 un Submariner nuevo, y cuánto te falta para el siguiente. También `/reloj` |
 | `/carnet` | Cuántos carnets de conducir te da tu cartera, a unos 800 en autoescuela aprobando a la primera, y cuánto te falta para el siguiente. También `/carne` y `/autoescuela` |
 | `/navidad` | Los días que faltan para Navidad y cuántas cestas navideñas te da tu cartera, a unos 100 cada una. También `/cesta` y `/xmas` |
 | `/nochevieja` | Los días que faltan para Nochevieja, cuánto llevas de año y cuántas botellas de cava te da tu cartera, a unos 10 cada una. También `/findeaño` y `/uvas` |
@@ -707,6 +708,7 @@ crypto_tracker/
   coche.py       tu cartera en coches, para /coche
   boda.py        tu cartera en bodas, para /boda
   jamon.py       tu cartera en jamones, para /jamon
+  rolex.py       tu cartera en Rolex, para /rolex
   carnet.py      tu cartera en carnets de conducir, para /carnet
   navidad.py     los días que faltan para Navidad, para /navidad
   nochevieja.py  lo que queda de año, para /nochevieja
