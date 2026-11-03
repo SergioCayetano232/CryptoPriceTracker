@@ -61,6 +61,7 @@ from crypto_tracker import (
     diario,
     diasemana,
     doble,
+    emoji,
     equilibrio,
     ethereum,
     exportar,
@@ -1175,6 +1176,9 @@ def responder(
 
     if nombre == "rolex":
         return _rolex(config)
+
+    if nombre == "emoji":
+        return _emoji(config)
 
     if nombre == "carnet":
         return _carnet(config)
@@ -2444,6 +2448,37 @@ def _rolex(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_rolex(rolex.Rolex(valor), config.vs_currency)
+
+
+def _emoji(config: Config) -> str | comandos.ConBotones:
+    config = _con_cambios(config)
+    if not config.cartera:
+        return SIN_CARTERA
+
+    precios = _consultar(config, [p.coin_id for p in config.cartera])
+    if precios is None:
+        return "No he podido consultar los precios. Prueba en un rato."
+    valores, faltan = cartera.valorar(list(config.cartera), precios)
+    if faltan:
+        return (
+            "Ahora mismo no tengo el precio de todo lo que tienes. Prueba en un rato."
+        )
+
+    pares = []
+    for v in valores:
+        variacion = _variacion(config, v.coin_id, precios[v.coin_id])
+        # Sin la de una, la cara sería de otra cartera: mejor no ponerla.
+        if variacion is None:
+            nombre = telegram.escape(v.coin_id.replace("-", " ").title())
+            return f"No sé cómo iba {nombre} hace 24 h. Prueba en un rato."
+        pares.append((v.valor, variacion))
+
+    cambio = emoji.cambio(pares)
+    if cambio is None:
+        return "Tu cartera ahora mismo no vale nada, así que no hay cara que poner."
+    return comandos.ConBotones(
+        alerts.formatear_emoji(cambio), botones.actualizar("/emoji")
+    )
 
 
 def _coche(config: Config) -> str:

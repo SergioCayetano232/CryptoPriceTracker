@@ -47,6 +47,7 @@ from .dado import QUE_HACER as QUE_HACER_DADO
 from .dia import Dia
 from .diasemana import NOMBRES, DiasSemana
 from .doble import Cartera as CarteraDoble
+from .emoji import cara as cara_emoji
 from .equilibrio import Cartera
 from .ethereum import Ethereum
 from .frase import Frase
@@ -1397,6 +1398,12 @@ def formatear_jamon(j: Jamon, currency: str) -> str:
         f"<i>A unos {simbolo}{PRECIO_JAMON} la pata de bellota 100% ibérica</i>"
     )
     return "\n".join(texto)
+
+
+def formatear_emoji(cambio: float) -> str:
+    """Respuesta de /emoji: la cara grande y debajo el porqué."""
+    emoji, frase = cara_emoji(cambio)
+    return f"{emoji}\n\n<b>{frase}</b>\nTu cartera va <b>{cambio:+.2f}%</b> en 24 h"
 
 
 def formatear_rolex(r: Rolex, currency: str) -> str:

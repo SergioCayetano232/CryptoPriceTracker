@@ -6510,3 +6510,50 @@ def test_rolex_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/rolex"))
 
     assert "No tienes cartera puesta" in enviados[0]
+
+
+# --- /emoji ---
+
+
+def test_emoji(con_cartera, enviados, monkeypatch):
+    monkeypatch.setattr(
+        coingecko, "get_prices", lambda ids, cur: {"bitcoin": 70000.0, "solana": 150.0}
+    )
+    monkeypatch.setattr(
+        coingecko, "cambio_24h", lambda c: {"bitcoin": 8.0, "solana": 6.0}[c]
+    )
+
+    main.atender(con_cartera, _mensaje("/emoji"))
+
+    assert enviados[0].startswith("🤑")
+    assert "Tu cartera va <b>+7.02%</b> en 24 h" in enviados[0]
+
+
+def test_emoji_lleva_boton_de_actualizar(con_cartera, con_teclado, monkeypatch):
+    monkeypatch.setattr(
+        coingecko, "get_prices", lambda ids, cur: {"bitcoin": 70000.0, "solana": 150.0}
+    )
+    monkeypatch.setattr(coingecko, "cambio_24h", lambda c: 0.0)
+
+    main.atender(con_cartera, _mensaje("/emoji"))
+
+    assert con_teclado[0][1]["botones"] == [[("🔄 Actualizar", "/emoji")]]
+
+
+def test_emoji_sin_el_cambio_de_una(con_cartera, enviados, monkeypatch):
+    monkeypatch.setattr(
+        coingecko, "get_prices", lambda ids, cur: {"bitcoin": 70000.0, "solana": 150.0}
+    )
+    monkeypatch.setattr(
+        coingecko, "cambio_24h", lambda c: 3.0 if c == "bitcoin" else None
+    )
+
+    main.atender(con_cartera, _mensaje("/emoji"))
+
+    assert enviados[0] == "No sé cómo iba Solana hace 24 h. Prueba en un rato."
+
+
+def test_emoji_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/emoji"))
+
+    assert "PORTFOLIO" in enviados[0]
