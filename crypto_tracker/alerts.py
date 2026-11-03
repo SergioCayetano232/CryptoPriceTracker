@@ -91,6 +91,7 @@ from .miedo import Indice
 from .miedo import hace as dia_miedo
 from .miedo import nombre as nombre_miedo
 from .millonario import Millonario, cantidad
+from .mitad import Cartera as CarteraMitad
 from .movimientos import (
     Movimiento,
     descuadre,
@@ -2510,6 +2511,38 @@ def formatear_doble(c: CarteraDoble, currency: str) -> str:
             texto.append(f"\n📦 Todo junto tendría que subir un <b>{c.total:+.2f}%</b>")
         else:
             texto.append("\n📦 Todo junto ya lo has doblado 🎉")
+    if c.sin_coste:
+        nombres = ", ".join(escape(x.replace("-", " ").title()) for x in c.sin_coste)
+        texto.append(f"\n<i>De {nombres} no sé lo que te costó.</i>")
+    return "\n".join(texto)
+
+
+def formatear_mitad(c: CarteraMitad, currency: str) -> str:
+    """Respuesta de /mitad."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["🪓 <b>Para perder la mitad de lo que metiste</b>", ""]
+    for m in c.criptos:
+        nombre = escape(m.coin_id.replace("-", " ").title())
+        if m.aguanta > 0:
+            como = f"aguanta <b>{-m.aguanta:+.2f}%</b>"
+        else:
+            como = "ya está por debajo"
+        texto.append(
+            f"{'🟢' if m.aguanta > 0 else '🔴'} <b>{nombre}</b> a "
+            f"{simbolo}{_num(m.objetivo)} · {como}"
+        )
+        texto.append(
+            f"   <i>ahora {simbolo}{_num(m.precio)}, te salió a "
+            f"{simbolo}{_num(m.medio)}</i>"
+        )
+
+    if c.total is not None:
+        if c.total > 0:
+            texto.append(
+                f"\n📦 Todo junto aguanta una bajada del <b>{c.total:.2f}%</b>"
+            )
+        else:
+            texto.append("\n📦 Todo junto ya vale menos de la mitad de lo que metiste")
     if c.sin_coste:
         nombres = ", ".join(escape(x.replace("-", " ").title()) for x in c.sin_coste)
         texto.append(f"\n<i>De {nombres} no sé lo que te costó.</i>")

@@ -91,6 +91,7 @@ from crypto_tracker import (
     metro,
     miedo,
     millonario,
+    mitad,
     moneda,
     movimientos,
     mundo,
@@ -1008,6 +1009,9 @@ def responder(
 
     if nombre == "doble":
         return _doble(config)
+
+    if nombre == "mitad":
+        return _mitad(config)
 
     if nombre == "rsi":
         return _rsi(config, argumento)
@@ -2820,6 +2824,29 @@ def _doble(config: Config) -> str | comandos.ConBotones:
         )
     texto = alerts.con_fuente(alerts.formatear_doble(resultado, config.vs_currency))
     return comandos.ConBotones(texto, botones.actualizar("/doble"))
+
+
+def _mitad(config: Config) -> str | comandos.ConBotones:
+    config = _con_cambios(config)
+    if not config.cartera:
+        return SIN_CARTERA
+
+    precios = _consultar(config, [p.coin_id for p in config.cartera])
+    if precios is None:
+        return "No he podido consultar los precios. Prueba en un rato."
+    valores, faltan = cartera.valorar(list(config.cartera), precios)
+    if faltan:
+        return (
+            "Ahora mismo no tengo el precio de todo lo que tienes. Prueba en un rato."
+        )
+    resultado = mitad.calcular(valores)
+    if not resultado.criptos:
+        return (
+            "No sé lo que te costó nada de la cartera. Apúntalo al comprar: "
+            "/compra bitcoin 0.01 600"
+        )
+    texto = alerts.con_fuente(alerts.formatear_mitad(resultado, config.vs_currency))
+    return comandos.ConBotones(texto, botones.actualizar("/mitad"))
 
 
 def _objetivo(config: Config, argumento: str) -> str:

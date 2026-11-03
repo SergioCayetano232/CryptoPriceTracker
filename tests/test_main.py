@@ -4633,6 +4633,36 @@ def test_doble_sin_cartera(config, enviados):
     assert "PORTFOLIO" in enviados[0]
 
 
+def test_mitad(con_cartera, enviados, monkeypatch):
+    monkeypatch.setattr(
+        coingecko, "get_prices", lambda ids, cur: {"bitcoin": 70000.0, "solana": 120.0}
+    )
+
+    main.atender(con_cartera, _mensaje("/mitad"))
+
+    # Bitcoin te salió a 62.500 y Solana a 142,86: la mitad, 31.250 y 71,43.
+    assert "<b>Bitcoin</b> a €31.250,00 · aguanta <b>-55.36%</b>" in enviados[0]
+    assert "<b>Solana</b> a €71,43 · aguanta <b>-40.48%</b>" in enviados[0]
+    assert enviados[0].index("Solana") < enviados[0].index("Bitcoin")
+    assert "coingecko.com" in enviados[0]
+
+
+def test_mitad_lleva_boton_de_actualizar(con_cartera, con_teclado, monkeypatch):
+    monkeypatch.setattr(
+        coingecko, "get_prices", lambda ids, cur: {"bitcoin": 70000.0, "solana": 120.0}
+    )
+
+    main.atender(con_cartera, _mensaje("/mitad"))
+
+    assert con_teclado[0][1]["botones"] == [[("🔄 Actualizar", "/mitad")]]
+
+
+def test_mitad_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/mitad"))
+
+    assert "PORTFOLIO" in enviados[0]
+
+
 def test_equilibrio_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/equilibrio"))
 

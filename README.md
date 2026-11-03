@@ -225,6 +225,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/objetivo bitcoin 100000` | Cuánto valdría tu cartera si bitcoin llegara a ese precio, y cuánto ganarías sobre lo invertido. Vale `100k`, y también para ver una bajada |
 | `/equilibrio` | A qué precio dejas de perder con cada cripto de tu cartera y cuánto le falta, de la que más lejos está a la que menos, y cuánto tendría que subir todo junto. Solo con las que dicen lo que te costaron |
 | `/doble` | A qué precio tiene que llegar cada cripto de tu cartera para que dobles lo que metiste, cuánto le falta y cuánto tendría que subir todo junto. Solo con las que dicen lo que te costaron |
+| `/mitad` | Al revés que `/doble`: a qué precio perderías la mitad de lo que metiste en cada cripto y cuánto puede bajar hasta ahí, la que menos aguanta primero. Solo con las que dicen lo que te costaron |
 | `/exportar bitcoin 30d` | Te manda un CSV con los precios guardados (sin tramo, 30 días) |
 | `/mercado` | Lo que vale todo el mercado cripto, cómo va en 24 h y qué parte es de Bitcoin, Ethereum y las estables |
 | `/halving` | Cuántos días faltan para el próximo halving de Bitcoin, cuánto va de ciclo y cuánto bajará lo que se paga por bloque. La fecha es aproximada y no gasta consultas |
@@ -638,6 +639,7 @@ crypto_tracker/
   objetivo.py    lo que valdría tu cartera, para /objetivo
   equilibrio.py  a qué precio dejas de perder, para /equilibrio
   doble.py       a qué precio doblas lo que metiste, para /doble
+  mitad.py       a qué precio pierdes la mitad, para /mitad
   callar.py      entiende /mute con una sola cripto
   dca.py         las compras periódicas de /dca
   maximo.py      el máximo histórico de /ath
