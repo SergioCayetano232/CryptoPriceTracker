@@ -14,6 +14,7 @@ from crypto_tracker import (
     consejo,
     dado,
     database,
+    excusa,
     frase,
     grafica,
     miedo,
@@ -6557,3 +6558,15 @@ def test_emoji_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/emoji"))
 
     assert "PORTFOLIO" in enviados[0]
+
+
+# --- /excusa ---
+
+
+def test_excusa(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    monkeypatch.setattr(excusa, "elegir", lambda: excusa.EXCUSAS[0])
+
+    main.atender(config, _mensaje("/excusa"))
+
+    assert "<i>«Es culpa de la Fed." in enviados[0]

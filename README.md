@@ -294,6 +294,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/dado` | Qué hacer con tu cripto según un dado: del 1 (vende todo) al 6 (compra más). También con la cripto, `/dado sol`. De broma, como `/caraocruz` |
 | `/frase` | Una frase famosa del mundo cripto al azar, de Satoshi, Hal Finney, Buffett y otros, con quién la dijo y cuándo. No gasta consultas |
 | `/consejo` | Un consejo de inversión malísimo al azar, de broma, como el de comprar en máximos o apalancarse x100. No gasta consultas |
+| `/excusa` | Una excusa al azar para cuando la cartera va mal, de broma, como que es culpa de la Fed o que los lunes no cuentan. No gasta consultas |
 | `/chiste` | Un chiste de cripto al azar. No gasta consultas |
 | `/glosario fomo` | Lo que significa una palabra cripto: hodl, fomo, fud, dca, ath, ballena... A secas, la lista de las que sabe |
 | `/miedo` | El índice de miedo y codicia del mercado (0 pánico, 100 euforia), con el de ayer y el de hace una semana. Viene de alternative.me y no gasta consultas de CoinGecko |
@@ -655,6 +656,7 @@ crypto_tracker/
   dado.py        el dado de /dado
   frase.py       las frases famosas de /frase
   consejo.py     los consejos malos de /consejo
+  excusa.py      las excusas de /excusa
   chiste.py      los chistes de /chiste
   glosario.py    las palabras que explica /glosario
   mercado.py     el mercado entero, para /mercado

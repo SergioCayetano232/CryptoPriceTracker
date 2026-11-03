@@ -1987,6 +1987,15 @@ def formatear_consejo(consejo: str) -> str:
     )
 
 
+def formatear_excusa(excusa: str) -> str:
+    """Respuesta de /excusa."""
+    return (
+        "🤷 <b>Excusa para hoy</b>\n"
+        f"<i>«{escape(excusa)}»</i>\n"
+        "<i>Cópiala y pégala en el grupo, que nadie pregunte más</i>"
+    )
+
+
 def formatear_glosario(argumento: str) -> str:
     """Respuesta de /glosario: la lista a secas, o lo que significa una palabra."""
     if not argumento.strip():

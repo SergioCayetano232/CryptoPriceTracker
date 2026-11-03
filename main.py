@@ -64,6 +64,7 @@ from crypto_tracker import (
     emoji,
     equilibrio,
     ethereum,
+    excusa,
     exportar,
     extremos,
     frase,
@@ -954,6 +955,9 @@ def responder(
 
     if nombre == "consejo":
         return alerts.formatear_consejo(consejo.elegir())
+
+    if nombre == "excusa":
+        return alerts.formatear_excusa(excusa.elegir())
 
     if nombre == "version":
         return alerts.formatear_version(version.leer())
