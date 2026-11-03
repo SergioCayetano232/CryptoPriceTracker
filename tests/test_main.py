@@ -6570,3 +6570,21 @@ def test_excusa(config, enviados, monkeypatch):
     main.atender(config, _mensaje("/excusa"))
 
     assert "<i>«Es culpa de la Fed." in enviados[0]
+
+
+# --- /horoscopo ---
+
+
+def test_horoscopo(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+
+    main.atender(config, _mensaje("/horoscopo Géminis"))
+
+    assert enviados[0].startswith("🔮 <b>♊ Géminis</b>")
+    assert "Cripto de la suerte" in enviados[0]
+
+
+def test_horoscopo_sin_signo(config, enviados):
+    main.atender(config, _mensaje("/horoscopo"))
+
+    assert enviados[0] == "¿De qué signo? Por ejemplo: /horoscopo aries"

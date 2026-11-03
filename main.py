@@ -75,6 +75,7 @@ from crypto_tracker import (
     grafica,
     halving,
     horas,
+    horoscopo,
     hotel,
     hoy,
     hubiera,
@@ -958,6 +959,13 @@ def responder(
 
     if nombre == "excusa":
         return alerts.formatear_excusa(excusa.elegir())
+
+    if nombre == "horoscopo":
+        try:
+            signo = horoscopo.interpretar(argumento)
+        except horoscopo.HoroscopoError as e:
+            return telegram.escape(str(e))
+        return alerts.formatear_horoscopo(horoscopo.leer(signo, date.today()))
 
     if nombre == "version":
         return alerts.formatear_version(version.leer())

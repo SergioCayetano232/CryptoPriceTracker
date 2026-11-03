@@ -61,6 +61,7 @@ from .gimnasio import Gimnasio
 from .glosario import TERMINOS, buscar, parecido
 from .halving import Halving
 from .horas import Horas
+from .horoscopo import Horoscopo
 from .hotel import PRECIO as PRECIO_HOTEL
 from .hotel import Hotel
 from .hoy import Hoy
@@ -1993,6 +1994,17 @@ def formatear_excusa(excusa: str) -> str:
         "🤷 <b>Excusa para hoy</b>\n"
         f"<i>«{escape(excusa)}»</i>\n"
         "<i>Cópiala y pégala en el grupo, que nadie pregunte más</i>"
+    )
+
+
+def formatear_horoscopo(h: Horoscopo) -> str:
+    """Respuesta de /horoscopo."""
+    return (
+        f"🔮 <b>{h.signo}</b>\n"
+        f"<i>«{escape(h.prediccion)}»</i>\n\n"
+        f"Cripto de la suerte: <b>{h.cripto}</b>\n"
+        f"Número de la suerte: <b>{h.numero}</b>\n"
+        "<i>Es de broma: los astros no saben de criptos</i>"
     )
 
 
