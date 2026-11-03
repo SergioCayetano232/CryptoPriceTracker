@@ -2162,6 +2162,38 @@ def test_ganancias_sin_ventas(config, enviados):
     assert "Todavía no has vendido nada" in enviados[0]
 
 
+def test_impuestos_de_lo_vendido(config, enviados, monkeypatch):
+    config = _con_cartera(
+        config, Posicion("bitcoin", 0.02, 1000), Posicion("solana", 10, 2000)
+    )
+    _precio(monkeypatch, {})
+
+    main.atender(config, _mensaje("/venta bitcoin 0.01 7500"))
+    main.atender(config, _mensaje("/venta solana todo 1500"))
+    main.atender(config, _mensaje("/impuestos"))
+
+    # +7.000 con bitcoin y -500 con solana: 6.500, que pasa del primer tramo.
+    texto = enviados[2]
+    assert "Has ganado vendiendo <b>+€6.500,00</b>" in texto
+    assert "Al 19%: €6.000,00 → €1.140,00" in texto
+    assert "Al 21%: €500,00 → €105,00" in texto
+    assert "A Hacienda, unos <b>€1.245,00</b>" in texto
+
+
+def test_impuestos_de_otro_año_sin_ventas(config, enviados):
+    main.atender(config, _mensaje("/hacienda 2020"))
+
+    assert enviados[0] == (
+        "En 2020 no has vendido nada, así que no hay nada que declarar."
+    )
+
+
+def test_impuestos_año_que_no_vale(config, enviados):
+    main.atender(config, _mensaje("/impuestos mañana"))
+
+    assert "Dime un año" in enviados[0]
+
+
 def test_ganancias_con_ventas_de_antes_sin_precio(config, enviados):
     btc = Posicion("bitcoin", 0.02, 1000)
     database.apuntar_movimiento(
@@ -6390,3 +6422,47 @@ def test_lambo_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/lambo"))
 
     assert "No tienes cartera puesta" in enviados[0]
+
+
+# --- /quieta ---
+
+
+def test_quieta(dos_vigiladas, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    _guardar(dos_vigiladas, "bitcoin", 100.0, 10)
+    _guardar(dos_vigiladas, "bitcoin", 101.0, 1)
+    # Solana acaba igual que empezó, pero por el camino ha subido un 10%
+    _guardar(dos_vigiladas, "solana", 100.0, 10)
+    _guardar(dos_vigiladas, "solana", 110.0, 5)
+    _guardar(dos_vigiladas, "solana", 100.0, 1)
+
+    main.atender(dos_vigiladas, _mensaje("/quieta"))
+
+    assert "La más quieta en 24 h: Bitcoin" in enviados[0]
+    assert "un <b>1.00%</b>" in enviados[0]
+    assert "· Solana  10.00%" in enviados[0]
+
+
+def test_quieta_no_cuenta_lo_de_hace_mas_de_un_dia(config, enviados):
+    _guardar(config, "bitcoin", 50.0, 30)
+    _guardar(config, "bitcoin", 100.0, 2)
+    _guardar(config, "bitcoin", 100.0, 1)
+
+    main.atender(config, _mensaje("/calma"))
+
+    assert "un <b>0.00%</b>" in enviados[0]
+
+
+def test_quieta_lleva_boton_de_actualizar(config, con_teclado):
+    _guardar(config, "bitcoin", 100.0, 2)
+    _guardar(config, "bitcoin", 101.0, 1)
+
+    main.atender(config, _mensaje("/quieta"))
+
+    assert con_teclado[0][1]["botones"] == [[("🔄 Actualizar", "/quieta")]]
+
+
+def test_quieta_sin_precios(config, enviados):
+    main.atender(config, _mensaje("/quieta"))
+
+    assert "No tengo precios guardados" in enviados[0]

@@ -76,6 +76,7 @@ from crypto_tracker import (
     hotel,
     hoy,
     hubiera,
+    impuestos,
     iphone,
     kebab,
     lambo,
@@ -108,6 +109,7 @@ from crypto_tracker import (
     proximo,
     ps5,
     puntuales,
+    quieta,
     racha,
     rango,
     ratio,
@@ -838,6 +840,9 @@ def responder(
     if nombre == "ganancias":
         return _ganancias(config)
 
+    if nombre == "impuestos":
+        return _impuestos(config, argumento)
+
     if nombre == "deshacer":
         return _deshacer(config, argumento)
 
@@ -970,6 +975,9 @@ def responder(
 
     if nombre == "comparar":
         return _comparar(config, argumento)
+
+    if nombre == "quieta":
+        return _quieta(config)
 
     if nombre == "volatilidad":
         return _volatilidad(config, argumento)
@@ -1425,6 +1433,17 @@ def _ganancias(config: Config) -> str:
     return alerts.formatear_ganancias(ganancias.calcular(ventas), config.vs_currency)
 
 
+def _impuestos(config: Config, argumento: str) -> str:
+    try:
+        año = impuestos.interpretar(argumento, date.today().year)
+    except impuestos.ImpuestosError as e:
+        return telegram.escape(str(e))
+    ventas = database.get_ventas(config.database_path)
+    return alerts.formatear_impuestos(
+        impuestos.calcular(ventas, año), config.vs_currency
+    )
+
+
 def _deshacer(config: Config, argumento: str) -> str:
     try:
         numero = movimientos.interpretar_deshacer(argumento)
@@ -1773,6 +1792,25 @@ def _comparar(config: Config, argumento: str) -> str:
             "Solo sé de las que vigilo: míralas con /vigilar"
         )
     return alerts.con_fuente(alerts.formatear_comparar(resultados, sin_datos, horas))
+
+
+def _quieta(config: Config) -> str | comandos.ConBotones:
+    coin_ids = [w.coin_id for w in _con_cambios(config).watchlist]
+    if not coin_ids:
+        return "No vigilo ninguna. Añade alguna con /vigilar solana %5"
+
+    series = {
+        c: database.get_serie(config.database_path, c, quieta.HORAS, config.vs_currency)
+        for c in coin_ids
+    }
+    quietas = quieta.calcular(series)
+    if not quietas:
+        return (
+            "No tengo precios guardados de las últimas 24 h. Solo los guardo "
+            "mientras estoy encendido."
+        )
+    texto = alerts.formatear_quieta(quietas, config.vs_currency)
+    return comandos.ConBotones(texto, botones.actualizar("/quieta"))
 
 
 def _volatilidad(config: Config, argumento: str) -> str:

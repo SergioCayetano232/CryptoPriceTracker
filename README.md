@@ -181,6 +181,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/compra bitcoin 0.01 @60000` | Lo mismo, con el precio de cada una en vez del total |
 | `/venta bitcoin 0.005 350` | Apunta una venta y lo que te dieron (`/venta bitcoin todo` la saca de la cartera) |
 | `/ganancias` | Lo que has ganado o perdido de verdad con lo que ya vendiste |
+| `/impuestos` | Lo que le tocaría a Hacienda de lo que ganaste vendiendo este año, tramo a tramo (19, 21, 23, 27 y 30 %). `/impuestos 2025`, el año que digas. Es orientativo: Hacienda cuenta con FIFO y aquí va con precio medio |
 | `/primera` | Tu primera compra, cuánto hace, cuánto ha cambiado el precio desde entonces y lo que vale hoy lo que compraste (`/primera btc`, la primera de esa). Solo las apuntadas con `/compra` |
 | `/movimientos` | Tus últimas compras y ventas, con un botón para deshacer la última (`/movimientos btc`, solo las de esa) |
 | `/deshacer` | Quita la última compra o venta y deja la cripto como estaba |
@@ -214,6 +215,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/caida bitcoin 30d` | Cuánto ha bajado desde el máximo del tramo y cuál fue su peor caída, de qué precio a cuál (sin tramo, 30 días). Sale de lo guardado y no gasta consultas |
 | `/sube bitcoin 30d` | Lo contrario: cuánto ha subido desde el mínimo del tramo y cuál fue su mejor subida, de qué precio a cuál (sin tramo, 30 días). También con `/minimo`. Sale de lo guardado y no gasta consultas |
 | `/comparar btc eth sol 7d` | Qué tal le ha ido a cada una en ese tramo, de la mejor a la peor (sin tramo, 7 días; sin criptos, las que vigilas) |
+| `/quieta` | La que menos se ha movido en las últimas 24 h de las que vigilas, del mínimo al máximo, y debajo las demás. Sale de lo guardado y no gasta consultas |
 | `/correlacion btc eth 30d` | Si dos criptos suben y bajan a la vez (de -1 a +1), para saber si tu cartera está repartida de verdad (sin tramo, 30 días; sin criptos, las dos primeras que vigilas). Sale de lo guardado y no gasta consultas |
 | `/ratio eth btc 30d` | Cuánto vale una en la otra (1 ethereum = 0,03 bitcoin) y cuánto ha cambiado en ese tramo, con barritas, el máximo, el mínimo y en qué punto del rango está. Si sube, a la primera le ha ido mejor (sin tramo, 30 días; sin criptos, las dos primeras que vigilas). Sale de lo guardado y no gasta consultas |
 | `/convertir 0.05 bitcoin` | Cuánto es en euros al precio de ahora |
@@ -631,6 +633,7 @@ crypto_tracker/
   brusco.py      los movimientos bruscos
   extremos.py    los máximos y mínimos de los últimos días
   comparar.py    el ranking de /comparar
+  quieta.py      la que menos se mueve, para /quieta
   correlacion.py si dos criptos se mueven juntas, para /correlacion
   ratio.py       lo que vale una cripto en otra, para /ratio
   convertir.py   entiende lo que le pides a /convertir
@@ -711,6 +714,7 @@ crypto_tracker/
   volatilidad.py lo que se mueve cada día, para /volatilidad
   movimientos.py las compras y ventas de /compra y /venta
   ganancias.py   lo ganado con lo vendido, para /ganancias
+  impuestos.py   los tramos del IRPF, para /impuestos
   primera.py     tu primera compra, para /primera
   proximo.py     a qué precio salta el siguiente aviso
   cartera.py     cuánto vale lo que tienes

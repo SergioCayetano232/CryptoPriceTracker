@@ -64,6 +64,7 @@ from .hotel import PRECIO as PRECIO_HOTEL
 from .hotel import Hotel
 from .hoy import Hoy
 from .hoy import mejor_y_peor as extremos_hoy
+from .impuestos import Impuestos
 from .iphone import PRECIO as PRECIO_IPHONE
 from .iphone import Iphone
 from .kebab import PRECIO as PRECIO_KEBAB
@@ -119,6 +120,7 @@ from .primera import Primera
 from .ps5 import PRECIO as PRECIO_PS5
 from .ps5 import Ps5
 from .puntuales import CARTERA, Puntual, cumplidas, ejemplo, progreso
+from .quieta import Quieta
 from .racha import Racha
 from .rango import Rango, barra
 from .ratio import Ratio
@@ -789,6 +791,48 @@ def formatear_ganancias(g: Ganancias, currency: str) -> str:
             f"<i>No cuento {cuantas}: sin a cuánto vendiste o sin lo que te costó.</i>"
         )
     lineas.append("\nLo que aún tienes no entra, eso está en /cartera")
+    return "\n".join(lineas)
+
+
+def formatear_impuestos(i: Impuestos, currency: str) -> str:
+    """Respuesta de /impuestos."""
+    if not i.ventas:
+        return f"En {i.año} no has vendido nada, así que no hay nada que declarar."
+    if i.ventas == i.sin_datos:
+        return (
+            f"Tus ventas de {i.año} no dicen a cuánto vendiste o lo que te costó, "
+            "así que no puedo sacar cuentas."
+        )
+
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    lineas = [f"🏛️ <b>Impuestos de {i.año}</b>", ""]
+    if i.ganancia <= 0:
+        lineas.append(f"Vendiendo has perdido <b>{_ganancia(i.ganancia, simbolo)}</b>")
+        lineas.append(
+            "No pagas nada, y esa pérdida la puedes restar de lo que ganes "
+            "los próximos 4 años."
+        )
+    else:
+        lineas.append(f"Has ganado vendiendo <b>{_ganancia(i.ganancia, simbolo)}</b>")
+        lineas.append("")
+        for tipo, base, cuota in i.tramos:
+            lineas.append(f"Al {tipo}%: {simbolo}{_num(base)} → {simbolo}{_num(cuota)}")
+        lineas.append(
+            f"\n💸 A Hacienda, unos <b>{simbolo}{_num(i.total)}</b>  "
+            f"<i>({i.tipo_medio:.2f}% de media)</i>"
+        )
+
+    if i.sin_datos:
+        cuantas = "1 venta" if i.sin_datos == 1 else f"{i.sin_datos} ventas"
+        lineas.append(f"<i>No cuento {cuantas}: les falta el precio.</i>")
+    if currency.lower() != "eur":
+        lineas.append(
+            f"<i>Ojo: va en {currency.upper()}, y Hacienda lo quiere en euros.</i>"
+        )
+    lineas.append(
+        "\n<i>Es orientativo: Hacienda cuenta con FIFO (lo primero que compras "
+        "es lo primero que vendes) y aquí va con precio medio.</i>"
+    )
     return "\n".join(lineas)
 
 
@@ -2979,6 +3023,25 @@ def formatear_mercado(m: Mercado, currency: str) -> str:
         ]
     if m.estables is not None:
         texto.append("<i>Estables son USDT y USDC: dinero aparcado esperando</i>")
+    return "\n".join(texto)
+
+
+def formatear_quieta(quietas: list[Quieta], currency: str) -> str:
+    """Respuesta de /quieta: la más tranquila arriba y el resto debajo."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    q = quietas[0]
+    nombre = escape(q.coin_id.replace("-", " ").title())
+    texto = [
+        f"😴 <b>La más quieta en 24 h: {nombre}</b>",
+        f"Se ha movido entre {simbolo}{_num(q.minimo)} y {simbolo}{_num(q.maximo)}, "
+        f"un <b>{q.rango:.2f}%</b>",
+    ]
+    if len(quietas) > 1:
+        texto.append("")
+        for o in quietas[1:]:
+            otra = escape(o.coin_id.replace("-", " ").title())
+            texto.append(f"· {otra}  {o.rango:.2f}%")
+    texto.append("\n<i>Del mínimo al máximo, con lo que tengo guardado</i>")
     return "\n".join(texto)
 
 
