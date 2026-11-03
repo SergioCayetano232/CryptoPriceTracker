@@ -78,6 +78,7 @@ from crypto_tracker import (
     hubiera,
     impuestos,
     iphone,
+    jamon,
     kebab,
     lambo,
     libro,
@@ -1167,6 +1168,9 @@ def responder(
 
     if nombre == "boda":
         return _boda(config)
+
+    if nombre == "jamon":
+        return _jamon(config)
 
     if nombre == "carnet":
         return _carnet(config)
@@ -2422,6 +2426,13 @@ def _boda(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_boda(boda.Boda(valor), config.vs_currency)
+
+
+def _jamon(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_jamon(jamon.Jamon(valor), config.vs_currency)
 
 
 def _coche(config: Config) -> str:

@@ -6466,3 +6466,25 @@ def test_quieta_sin_precios(config, enviados):
     main.atender(config, _mensaje("/quieta"))
 
     assert "No tengo precios guardados" in enviados[0]
+
+
+# --- /jamon ---
+
+
+def test_jamon(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    config = replace(config, cartera=(Posicion("bitcoin", 0.02),))
+    _precio_de(config, "bitcoin", 100000.0, 5)
+
+    main.atender(config, _mensaje("/jamón"))
+
+    assert "Vale €2.000,00" in enviados[0]
+    assert "<b>4 jamones</b>" in enviados[0]
+
+
+def test_jamon_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/jamon"))
+
+    assert "No tienes cartera puesta" in enviados[0]

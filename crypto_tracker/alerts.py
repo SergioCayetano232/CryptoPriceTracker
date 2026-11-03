@@ -67,6 +67,8 @@ from .hoy import mejor_y_peor as extremos_hoy
 from .impuestos import Impuestos
 from .iphone import PRECIO as PRECIO_IPHONE
 from .iphone import Iphone
+from .jamon import PRECIO as PRECIO_JAMON
+from .jamon import Jamon
 from .kebab import PRECIO as PRECIO_KEBAB
 from .kebab import Kebab
 from .lambo import PRECIO as PRECIO_LAMBO
@@ -1372,6 +1374,26 @@ def formatear_boda(b: Boda, currency: str) -> str:
     texto.append(f"Para {siguiente} te faltan {simbolo}{_num(b.falta)}")
     precio = _es(f"{PRECIO_BODA:,}")
     texto.append(f"<i>A unos {simbolo}{precio} cada una, con cien invitados</i>")
+    return "\n".join(texto)
+
+
+def formatear_jamon(j: Jamon, currency: str) -> str:
+    """Respuesta de /jamon."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["🍖 <b>Tu cartera en jamones</b>", f"Vale {simbolo}{_num(j.valor)}"]
+    if j.enteros == 0:
+        texto.append(f"Te da para el <b>{j.parte:.0f}%</b> de uno")
+        siguiente = "el primero"
+    else:
+        cuantos = _es(f"{j.enteros:,}")
+        texto.append(
+            f"Te da para <b>{cuantos} {'jamones' if j.enteros > 1 else 'jamón'}</b>"
+        )
+        siguiente = "el siguiente"
+    texto.append(f"Para {siguiente} te faltan {simbolo}{_num(j.falta)}")
+    texto.append(
+        f"<i>A unos {simbolo}{PRECIO_JAMON} la pata de bellota 100% ibérica</i>"
+    )
     return "\n".join(texto)
 
 
