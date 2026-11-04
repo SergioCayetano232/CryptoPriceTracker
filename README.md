@@ -299,6 +299,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/refran` | Un refrán de toda la vida cambiado al mundo cripto, como «A quien madruga, el halving le ayuda». También `/refrán` y `/dicho`. No gasta consultas |
 | `/horoscopo aries` | Tu horóscopo cripto de hoy, de broma, con la cripto y el número de la suerte. Vale con tilde (`/horóscopo géminis`) y en todo el día te dice lo mismo. No gasta consultas |
 | `/galleta` | Tu galleta de la suerte, de broma, con una frase y seis números de la suerte. En todo el día te sale la misma. También `/fortuna`. No gasta consultas |
+| `/tarot` | Sacas una carta del tarot cripto, de broma, como La Ballena o El Rug Pull, con lo que significa. También `/carta`. No gasta consultas |
 | `/bola ¿vendo?` | La bola mágica contesta a lo que le preguntes, de broma: sí, no o que esperes al halving. También `/bola8`. No gasta consultas |
 | `/chiste` | Un chiste de cripto al azar. No gasta consultas |
 | `/glosario fomo` | Lo que significa una palabra cripto: hodl, fomo, fud, dca, ath, ballena... A secas, la lista de las que sabe |
@@ -666,6 +667,7 @@ crypto_tracker/
   horoscopo.py   los signos y predicciones de /horoscopo
   bola.py        las respuestas de /bola
   galleta.py     las frases de /galleta
+  tarot.py       las cartas de /tarot
   chiste.py      los chistes de /chiste
   glosario.py    las palabras que explica /glosario
   mercado.py     el mercado entero, para /mercado

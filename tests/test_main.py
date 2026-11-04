@@ -20,6 +20,7 @@ from crypto_tracker import (
     grafica,
     miedo,
     refran,
+    tarot,
     telegram,
 )
 from crypto_tracker.config import Config, Posicion, Watch
@@ -6656,3 +6657,15 @@ def test_galleta(config, enviados, monkeypatch):
 
     assert "🥠 <b>Tu galleta de la suerte</b>" in enviados[0]
     assert enviados[0] == enviados[1]
+
+
+# --- /tarot ---
+
+
+def test_tarot(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    monkeypatch.setattr(tarot, "sacar", lambda: tarot.CARTAS[0])
+
+    main.atender(config, _mensaje("/carta"))
+
+    assert "🐋 <b>La Ballena</b>" in enviados[0]

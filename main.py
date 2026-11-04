@@ -135,6 +135,7 @@ from crypto_tracker import (
     sueldo,
     supermercado,
     switch,
+    tarot,
     taxi,
     telegram,
     tesla,
@@ -976,6 +977,9 @@ def responder(
 
     if nombre == "galleta":
         return alerts.formatear_galleta(galleta.abrir(date.today()))
+
+    if nombre == "tarot":
+        return alerts.formatear_tarot(tarot.sacar())
 
     if nombre == "bola":
         try:

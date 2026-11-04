@@ -150,6 +150,7 @@ from .supermercado import PRECIO as PRECIO_SUPER
 from .supermercado import Super
 from .switch import PRECIO as PRECIO_SWITCH
 from .switch import Switch
+from .tarot import Carta
 from .taxi import PRECIO as PRECIO_TAXI
 from .taxi import Taxi
 from .telegram import escape
@@ -2047,6 +2048,16 @@ def formatear_galleta(g: Galleta) -> str:
         f"<i>«{escape(g.frase)}»</i>\n\n"
         f"Números de la suerte: <b>{numeros}</b>\n"
         "<i>Hasta mañana no te toca otra</i>"
+    )
+
+
+def formatear_tarot(c: Carta) -> str:
+    """Respuesta de /tarot."""
+    return (
+        "🃏 <b>Tu carta del tarot cripto</b>\n\n"
+        f"{c.emoji} <b>{escape(c.nombre)}</b>\n"
+        f"<i>«{escape(c.significado)}»</i>\n"
+        "<i>Es de broma: las cartas no saben de criptos</i>"
     )
 
 
