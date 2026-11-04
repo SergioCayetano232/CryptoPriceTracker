@@ -108,6 +108,7 @@ from crypto_tracker import (
     nochevieja,
     objetivo,
     oro,
+    paella,
     peluqueria,
     periodo,
     piso,
@@ -1209,6 +1210,9 @@ def responder(
 
     if nombre == "aceite":
         return _aceite(config)
+
+    if nombre == "paella":
+        return _paella(config)
 
     if nombre == "rolex":
         return _rolex(config)
@@ -2484,6 +2488,13 @@ def _aceite(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_aceite(aceite.Aceite(valor), config.vs_currency)
+
+
+def _paella(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_paella(paella.Paella(valor), config.vs_currency)
 
 
 def _rolex(config: Config) -> str:

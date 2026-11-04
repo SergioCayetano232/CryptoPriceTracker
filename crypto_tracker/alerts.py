@@ -116,6 +116,8 @@ from .nochevieja import PRECIO as PRECIO_CAVA
 from .nochevieja import Nochevieja
 from .objetivo import Escenario
 from .oro import Oro
+from .paella import PRECIO as PRECIO_PAELLA
+from .paella import Paella
 from .peluqueria import PRECIO as PRECIO_PELUQUERIA
 from .peluqueria import Peluqueria
 from .periodo import nombre as nombre_periodo
@@ -1446,6 +1448,26 @@ def formatear_aceite(a: Aceite, currency: str) -> str:
         siguiente = "el siguiente"
     texto.append(f"Para {siguiente} te faltan {simbolo}{_num(a.falta)}")
     texto.append(f"<i>A unos {simbolo}{PRECIO_ACEITE} el litro de virgen extra</i>")
+    return "\n".join(texto)
+
+
+def formatear_paella(p: Paella, currency: str) -> str:
+    """Respuesta de /paella."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["🥘 <b>Tu cartera en paellas</b>", f"Vale {simbolo}{_num(p.valor)}"]
+    if p.enteros == 0:
+        texto.append(f"Te da para el <b>{p.parte:.0f}%</b> de una")
+        siguiente = "la primera"
+    else:
+        cuantos = _es(f"{p.enteros:,}")
+        texto.append(
+            f"Te da para <b>{cuantos} {'paellas' if p.enteros > 1 else 'paella'}</b>"
+        )
+        siguiente = "la siguiente"
+    texto.append(f"Para {siguiente} te faltan {simbolo}{_num(p.falta)}")
+    texto.append(
+        f"<i>A unos {simbolo}{PRECIO_PAELLA} la de cuatro en un restaurante</i>"
+    )
     return "\n".join(texto)
 
 

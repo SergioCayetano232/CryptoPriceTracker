@@ -6669,3 +6669,25 @@ def test_tarot(config, enviados, monkeypatch):
     main.atender(config, _mensaje("/carta"))
 
     assert "🐋 <b>La Ballena</b>" in enviados[0]
+
+
+# --- /paella ---
+
+
+def test_paella(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    config = replace(config, cartera=(Posicion("bitcoin", 0.02),))
+    _precio_de(config, "bitcoin", 100000.0, 5)
+
+    main.atender(config, _mensaje("/paellas"))
+
+    assert "Vale €2.000,00" in enviados[0]
+    assert "<b>33 paellas</b>" in enviados[0]
+
+
+def test_paella_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/paella"))
+
+    assert "No tienes cartera puesta" in enviados[0]
