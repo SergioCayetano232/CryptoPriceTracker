@@ -280,6 +280,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/boda` | Cuántas bodas te da tu cartera, a unos 25.000 una con cien invitados, y cuánto te falta para la siguiente. También `/bodas` y `/casarse` |
 | `/jamon` | Cuántos jamones ibéricos te da tu cartera, a unos 500 la pata de bellota, y cuánto te falta para el siguiente. También `/jamón` y `/jamones` |
 | `/rolex` | Cuántos Rolex te da tu cartera, a unos 10.000 un Submariner nuevo, y cuánto te falta para el siguiente. También `/reloj` |
+| `/aceite` | Cuántos litros de aceite de oliva virgen extra te da tu cartera, a unos 8 el litro, y cuánto te falta para el siguiente. También `/aove` y `/oliva` |
 | `/emoji` | Cómo va tu cartera en las últimas 24 h, en una cara: de 💀 si baja más de un 10% a 🚀 si sube más de un 10%, pasando por 😐 si casi no se mueve. También `/cara` y `/animo` |
 | `/carnet` | Cuántos carnets de conducir te da tu cartera, a unos 800 en autoescuela aprobando a la primera, y cuánto te falta para el siguiente. También `/carne` y `/autoescuela` |
 | `/navidad` | Los días que faltan para Navidad y cuántas cestas navideñas te da tu cartera, a unos 100 cada una. También `/cesta` y `/xmas` |
@@ -296,6 +297,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/consejo` | Un consejo de inversión malísimo al azar, de broma, como el de comprar en máximos o apalancarse x100. No gasta consultas |
 | `/excusa` | Una excusa al azar para cuando la cartera va mal, de broma, como que es culpa de la Fed o que los lunes no cuentan. No gasta consultas |
 | `/horoscopo aries` | Tu horóscopo cripto de hoy, de broma, con la cripto y el número de la suerte. Vale con tilde (`/horóscopo géminis`) y en todo el día te dice lo mismo. No gasta consultas |
+| `/bola ¿vendo?` | La bola mágica contesta a lo que le preguntes, de broma: sí, no o que esperes al halving. También `/bola8`. No gasta consultas |
 | `/chiste` | Un chiste de cripto al azar. No gasta consultas |
 | `/glosario fomo` | Lo que significa una palabra cripto: hodl, fomo, fud, dca, ath, ballena... A secas, la lista de las que sabe |
 | `/miedo` | El índice de miedo y codicia del mercado (0 pánico, 100 euforia), con el de ayer y el de hace una semana. Viene de alternative.me y no gasta consultas de CoinGecko |
@@ -659,6 +661,7 @@ crypto_tracker/
   consejo.py     los consejos malos de /consejo
   excusa.py      las excusas de /excusa
   horoscopo.py   los signos y predicciones de /horoscopo
+  bola.py        las respuestas de /bola
   chiste.py      los chistes de /chiste
   glosario.py    las palabras que explica /glosario
   mercado.py     el mercado entero, para /mercado
@@ -714,6 +717,7 @@ crypto_tracker/
   boda.py        tu cartera en bodas, para /boda
   jamon.py       tu cartera en jamones, para /jamon
   rolex.py       tu cartera en Rolex, para /rolex
+  aceite.py      tu cartera en aceite de oliva, para /aceite
   emoji.py       la cara de tu cartera hoy, para /emoji
   carnet.py      tu cartera en carnets de conducir, para /carnet
   navidad.py     los días que faltan para Navidad, para /navidad

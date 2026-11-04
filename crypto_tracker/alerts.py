@@ -5,6 +5,8 @@ import math
 from dataclasses import dataclass
 from datetime import date, datetime
 
+from .aceite import PRECIO as PRECIO_ACEITE
+from .aceite import Aceite
 from .adios import Adios
 from .airpods import PRECIO as PRECIO_AIRPODS
 from .airpods import Airpods
@@ -1424,6 +1426,27 @@ def formatear_rolex(r: Rolex, currency: str) -> str:
     return "\n".join(texto)
 
 
+def formatear_aceite(a: Aceite, currency: str) -> str:
+    """Respuesta de /aceite."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = [
+        "🫒 <b>Tu cartera en aceite de oliva</b>",
+        f"Vale {simbolo}{_num(a.valor)}",
+    ]
+    if a.enteros == 0:
+        texto.append(f"Te da para el <b>{a.parte:.0f}%</b> de uno")
+        siguiente = "el primero"
+    else:
+        cuantos = _es(f"{a.enteros:,}")
+        texto.append(
+            f"Te da para <b>{cuantos} {'litros' if a.enteros > 1 else 'litro'}</b>"
+        )
+        siguiente = "el siguiente"
+    texto.append(f"Para {siguiente} te faltan {simbolo}{_num(a.falta)}")
+    texto.append(f"<i>A unos {simbolo}{PRECIO_ACEITE} el litro de virgen extra</i>")
+    return "\n".join(texto)
+
+
 def formatear_coche(c: Coche, currency: str) -> str:
     """Respuesta de /coche."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
@@ -1994,6 +2017,15 @@ def formatear_excusa(excusa: str) -> str:
         "🤷 <b>Excusa para hoy</b>\n"
         f"<i>«{escape(excusa)}»</i>\n"
         "<i>Cópiala y pégala en el grupo, que nadie pregunte más</i>"
+    )
+
+
+def formatear_bola(pregunta: str, respuesta: str) -> str:
+    """Respuesta de /bola."""
+    return (
+        f"🎱 <b>{escape(pregunta)}</b>\n"
+        f"<i>«{escape(respuesta)}»</i>\n"
+        "<i>Es de broma: no le hagas caso a una bola</i>"
     )
 
 

@@ -84,7 +84,7 @@ def test_no_entiendo_sugiere_el_parecido(nombre, argumento, esperado):
     assert no_entiendo(nombre, argumento).endswith(f"¿Querías decir {esperado}?")
 
 
-@pytest.mark.parametrize("nombre", ["xyzzy", "bailar", "borrar", "hola"])
+@pytest.mark.parametrize("nombre", ["xyzzy", "bailar", "borrar", "saludo"])
 def test_no_entiendo_sin_nada_parecido(nombre):
     assert no_entiendo(nombre) == NO_ENTIENDO
 

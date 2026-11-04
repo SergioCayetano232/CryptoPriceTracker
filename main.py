@@ -19,6 +19,7 @@ from dataclasses import replace
 from datetime import date, datetime, timedelta, timezone
 
 from crypto_tracker import (
+    aceite,
     adios,
     airpods,
     ajustes,
@@ -30,6 +31,7 @@ from crypto_tracker import (
     bici,
     bigmac,
     boda,
+    bola,
     botones,
     brusco,
     cafe,
@@ -967,6 +969,13 @@ def responder(
             return telegram.escape(str(e))
         return alerts.formatear_horoscopo(horoscopo.leer(signo, date.today()))
 
+    if nombre == "bola":
+        try:
+            pregunta = bola.interpretar(argumento)
+        except bola.BolaError as e:
+            return telegram.escape(str(e))
+        return alerts.formatear_bola(pregunta, bola.agitar())
+
     if nombre == "version":
         return alerts.formatear_version(version.leer())
 
@@ -1185,6 +1194,9 @@ def responder(
 
     if nombre == "jamon":
         return _jamon(config)
+
+    if nombre == "aceite":
+        return _aceite(config)
 
     if nombre == "rolex":
         return _rolex(config)
@@ -2453,6 +2465,13 @@ def _jamon(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_jamon(jamon.Jamon(valor), config.vs_currency)
+
+
+def _aceite(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_aceite(aceite.Aceite(valor), config.vs_currency)
 
 
 def _rolex(config: Config) -> str:

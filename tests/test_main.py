@@ -8,6 +8,7 @@ import pytest
 
 import main
 from crypto_tracker import (
+    bola,
     caraocruz,
     coingecko,
     comandos,
@@ -6588,3 +6589,44 @@ def test_horoscopo_sin_signo(config, enviados):
     main.atender(config, _mensaje("/horoscopo"))
 
     assert enviados[0] == "¿De qué signo? Por ejemplo: /horoscopo aries"
+
+
+# --- /aceite ---
+
+
+def test_aceite(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    config = replace(config, cartera=(Posicion("bitcoin", 0.02),))
+    _precio_de(config, "bitcoin", 100000.0, 5)
+
+    main.atender(config, _mensaje("/aove"))
+
+    assert "Vale €2.000,00" in enviados[0]
+    assert "<b>250 litros</b>" in enviados[0]
+
+
+def test_aceite_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/aceite"))
+
+    assert "No tienes cartera puesta" in enviados[0]
+
+
+# --- /bola ---
+
+
+def test_bola(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    monkeypatch.setattr(bola, "agitar", lambda: "Mejor no.")
+
+    main.atender(config, _mensaje("/bola ¿Vendo ya?"))
+
+    assert "<b>¿Vendo ya?</b>" in enviados[0]
+    assert "<i>«Mejor no.»</i>" in enviados[0]
+
+
+def test_bola_sin_pregunta(config, enviados):
+    main.atender(config, _mensaje("/bola"))
+
+    assert "Pregúntame algo" in enviados[0]
