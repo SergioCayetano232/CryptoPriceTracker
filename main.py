@@ -71,6 +71,7 @@ from crypto_tracker import (
     extremos,
     frase,
     futbol,
+    galleta,
     ganancias,
     gasolina,
     gimnasio,
@@ -972,6 +973,9 @@ def responder(
         except horoscopo.HoroscopoError as e:
             return telegram.escape(str(e))
         return alerts.formatear_horoscopo(horoscopo.leer(signo, date.today()))
+
+    if nombre == "galleta":
+        return alerts.formatear_galleta(galleta.abrir(date.today()))
 
     if nombre == "bola":
         try:

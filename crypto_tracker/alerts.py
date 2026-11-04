@@ -55,6 +55,7 @@ from .ethereum import Ethereum
 from .frase import Frase
 from .futbol import PRECIO as PRECIO_FUTBOL
 from .futbol import Futbol
+from .galleta import Galleta
 from .ganancias import Ganancias
 from .gasolina import DEPOSITO, Gasolina
 from .gasolina import PRECIO as PRECIO_GASOLINA
@@ -2035,6 +2036,17 @@ def formatear_bola(pregunta: str, respuesta: str) -> str:
         f"🎱 <b>{escape(pregunta)}</b>\n"
         f"<i>«{escape(respuesta)}»</i>\n"
         "<i>Es de broma: no le hagas caso a una bola</i>"
+    )
+
+
+def formatear_galleta(g: Galleta) -> str:
+    """Respuesta de /galleta."""
+    numeros = " · ".join(str(n) for n in g.numeros)
+    return (
+        "🥠 <b>Tu galleta de la suerte</b>\n"
+        f"<i>«{escape(g.frase)}»</i>\n\n"
+        f"Números de la suerte: <b>{numeros}</b>\n"
+        "<i>Hasta mañana no te toca otra</i>"
     )
 
 

@@ -6643,3 +6643,16 @@ def test_refran(config, enviados, monkeypatch):
     main.atender(config, _mensaje("/refrán"))
 
     assert "<i>«A quien madruga, el halving le ayuda.»</i>" in enviados[0]
+
+
+# --- /galleta ---
+
+
+def test_galleta(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+
+    main.atender(config, _mensaje("/fortuna"))
+    main.atender(config, _mensaje("/galleta"))
+
+    assert "🥠 <b>Tu galleta de la suerte</b>" in enviados[0]
+    assert enviados[0] == enviados[1]
