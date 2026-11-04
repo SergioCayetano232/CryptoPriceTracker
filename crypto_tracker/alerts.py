@@ -2011,6 +2011,15 @@ def formatear_consejo(consejo: str) -> str:
     )
 
 
+def formatear_refran(refran: str) -> str:
+    """Respuesta de /refran."""
+    return (
+        "📜 <b>Refranero cripto</b>\n"
+        f"<i>«{escape(refran)}»</i>\n"
+        "<i>Como decía mi abuela, que no tenía ni un bitcoin</i>"
+    )
+
+
 def formatear_excusa(excusa: str) -> str:
     """Respuesta de /excusa."""
     return (

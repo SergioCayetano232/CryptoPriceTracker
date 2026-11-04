@@ -19,6 +19,7 @@ from crypto_tracker import (
     frase,
     grafica,
     miedo,
+    refran,
     telegram,
 )
 from crypto_tracker.config import Config, Posicion, Watch
@@ -6630,3 +6631,15 @@ def test_bola_sin_pregunta(config, enviados):
     main.atender(config, _mensaje("/bola"))
 
     assert "Pregúntame algo" in enviados[0]
+
+
+# --- /refran ---
+
+
+def test_refran(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    monkeypatch.setattr(refran, "elegir", lambda: refran.REFRANES[0])
+
+    main.atender(config, _mensaje("/refrán"))
+
+    assert "<i>«A quien madruga, el halving le ayuda.»</i>" in enviados[0]

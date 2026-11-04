@@ -120,6 +120,7 @@ from crypto_tracker import (
     rango,
     ratio,
     redondo,
+    refran,
     reparto,
     rolex,
     rsi,
@@ -961,6 +962,9 @@ def responder(
 
     if nombre == "excusa":
         return alerts.formatear_excusa(excusa.elegir())
+
+    if nombre == "refran":
+        return alerts.formatear_refran(refran.elegir())
 
     if nombre == "horoscopo":
         try:

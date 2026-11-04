@@ -296,6 +296,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/frase` | Una frase famosa del mundo cripto al azar, de Satoshi, Hal Finney, Buffett y otros, con quién la dijo y cuándo. No gasta consultas |
 | `/consejo` | Un consejo de inversión malísimo al azar, de broma, como el de comprar en máximos o apalancarse x100. No gasta consultas |
 | `/excusa` | Una excusa al azar para cuando la cartera va mal, de broma, como que es culpa de la Fed o que los lunes no cuentan. No gasta consultas |
+| `/refran` | Un refrán de toda la vida cambiado al mundo cripto, como «A quien madruga, el halving le ayuda». También `/refrán` y `/dicho`. No gasta consultas |
 | `/horoscopo aries` | Tu horóscopo cripto de hoy, de broma, con la cripto y el número de la suerte. Vale con tilde (`/horóscopo géminis`) y en todo el día te dice lo mismo. No gasta consultas |
 | `/bola ¿vendo?` | La bola mágica contesta a lo que le preguntes, de broma: sí, no o que esperes al halving. También `/bola8`. No gasta consultas |
 | `/chiste` | Un chiste de cripto al azar. No gasta consultas |
@@ -660,6 +661,7 @@ crypto_tracker/
   frase.py       las frases famosas de /frase
   consejo.py     los consejos malos de /consejo
   excusa.py      las excusas de /excusa
+  refran.py      los refranes de /refran
   horoscopo.py   los signos y predicciones de /horoscopo
   bola.py        las respuestas de /bola
   chiste.py      los chistes de /chiste
