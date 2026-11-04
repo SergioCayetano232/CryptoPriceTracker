@@ -110,6 +110,7 @@ from crypto_tracker import (
     objetivo,
     oro,
     paella,
+    pan,
     peluqueria,
     periodo,
     piso,
@@ -1217,6 +1218,9 @@ def responder(
 
     if nombre == "croquetas":
         return _croquetas(config)
+
+    if nombre == "pan":
+        return _pan(config)
 
     if nombre == "rolex":
         return _rolex(config)
@@ -2506,6 +2510,13 @@ def _croquetas(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_croquetas(croquetas.Croquetas(valor), config.vs_currency)
+
+
+def _pan(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_pan(pan.Pan(valor), config.vs_currency)
 
 
 def _rolex(config: Config) -> str:

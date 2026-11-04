@@ -120,6 +120,8 @@ from .objetivo import Escenario
 from .oro import Oro
 from .paella import PRECIO as PRECIO_PAELLA
 from .paella import Paella
+from .pan import PRECIO as PRECIO_PAN
+from .pan import Pan
 from .peluqueria import PRECIO as PRECIO_PELUQUERIA
 from .peluqueria import Peluqueria
 from .periodo import nombre as nombre_periodo
@@ -1488,6 +1490,27 @@ def formatear_croquetas(c: Croquetas, currency: str) -> str:
         siguiente = "la siguiente"
     texto.append(f"Para {siguiente} te faltan {simbolo}{_num(c.falta)}")
     texto.append(f"<i>A unos {simbolo}{PRECIO_CROQUETAS} la ración de ocho caseras</i>")
+    return "\n".join(texto)
+
+
+def formatear_pan(p: Pan, currency: str) -> str:
+    """Respuesta de /pan."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["🥖 <b>Tu cartera en barras de pan</b>", f"Vale {simbolo}{_num(p.valor)}"]
+    if p.enteros == 0:
+        texto.append(f"Te da para el <b>{p.parte:.0f}%</b> de una")
+        siguiente = "la primera"
+    else:
+        cuantos = _es(f"{p.enteros:,}")
+        texto.append(
+            f"Te da para <b>{cuantos} {'barras' if p.enteros > 1 else 'barra'}</b>"
+        )
+        siguiente = "la siguiente"
+    # Siempre con dos decimales: _num pone cuatro por debajo de 1 y aquí casi siempre
+    # falta menos de un euro.
+    falta = _es(f"{p.falta:,.2f}")
+    texto.append(f"Para {siguiente} te faltan {simbolo}{falta}")
+    texto.append(f"<i>A unos {simbolo}{_num(PRECIO_PAN)} la barra en la panadería</i>")
     return "\n".join(texto)
 
 

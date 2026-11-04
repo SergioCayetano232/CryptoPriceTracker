@@ -6713,3 +6713,25 @@ def test_croquetas_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/croquetas"))
 
     assert "No tienes cartera puesta" in enviados[0]
+
+
+# --- /pan ---
+
+
+def test_pan(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    config = replace(config, cartera=(Posicion("bitcoin", 0.02),))
+    _precio_de(config, "bitcoin", 100000.0, 5)
+
+    main.atender(config, _mensaje("/barras"))
+
+    assert "Vale €2.000,00" in enviados[0]
+    assert "<b>1.666 barras</b>" in enviados[0]
+
+
+def test_pan_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/pan"))
+
+    assert "No tienes cartera puesta" in enviados[0]
