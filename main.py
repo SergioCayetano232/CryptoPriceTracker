@@ -53,6 +53,7 @@ from crypto_tracker import (
     convertir,
     copia,
     correlacion,
+    croquetas,
     cuando,
     cumple,
     cuota,
@@ -1213,6 +1214,9 @@ def responder(
 
     if nombre == "paella":
         return _paella(config)
+
+    if nombre == "croquetas":
+        return _croquetas(config)
 
     if nombre == "rolex":
         return _rolex(config)
@@ -2495,6 +2499,13 @@ def _paella(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_paella(paella.Paella(valor), config.vs_currency)
+
+
+def _croquetas(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_croquetas(croquetas.Croquetas(valor), config.vs_currency)
 
 
 def _rolex(config: Config) -> str:

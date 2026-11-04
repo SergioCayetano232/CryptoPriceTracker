@@ -282,6 +282,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/rolex` | Cuántos Rolex te da tu cartera, a unos 10.000 un Submariner nuevo, y cuánto te falta para el siguiente. También `/reloj` |
 | `/aceite` | Cuántos litros de aceite de oliva virgen extra te da tu cartera, a unos 8 el litro, y cuánto te falta para el siguiente. También `/aove` y `/oliva` |
 | `/paella` | Cuántas paellas para cuatro te da tu cartera, a unos 60 en un restaurante, y cuánto te falta para la siguiente. También `/paellas` |
+| `/croquetas` | Cuántas raciones de croquetas te da tu cartera, a unos 10 la de ocho caseras, y cuánto te falta para la siguiente. También `/croqueta` |
 | `/emoji` | Cómo va tu cartera en las últimas 24 h, en una cara: de 💀 si baja más de un 10% a 🚀 si sube más de un 10%, pasando por 😐 si casi no se mueve. También `/cara` y `/animo` |
 | `/carnet` | Cuántos carnets de conducir te da tu cartera, a unos 800 en autoescuela aprobando a la primera, y cuánto te falta para el siguiente. También `/carne` y `/autoescuela` |
 | `/navidad` | Los días que faltan para Navidad y cuántas cestas navideñas te da tu cartera, a unos 100 cada una. También `/cesta` y `/xmas` |
@@ -726,6 +727,7 @@ crypto_tracker/
   rolex.py       tu cartera en Rolex, para /rolex
   aceite.py      tu cartera en aceite de oliva, para /aceite
   paella.py      tu cartera en paellas, para /paella
+  croquetas.py   tu cartera en croquetas, para /croquetas
   emoji.py       la cara de tu cartera hoy, para /emoji
   carnet.py      tu cartera en carnets de conducir, para /carnet
   navidad.py     los días que faltan para Navidad, para /navidad

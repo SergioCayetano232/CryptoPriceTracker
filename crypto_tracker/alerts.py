@@ -42,6 +42,8 @@ from .concierto import PRECIO as PRECIO_CONCIERTO
 from .concierto import Concierto
 from .config import Posicion, Watch
 from .correlacion import Correlacion
+from .croquetas import PRECIO as PRECIO_CROQUETAS
+from .croquetas import Croquetas
 from .cuando import Cuando
 from .cumple import Cumple
 from .dado import CARAS
@@ -1468,6 +1470,24 @@ def formatear_paella(p: Paella, currency: str) -> str:
     texto.append(
         f"<i>A unos {simbolo}{PRECIO_PAELLA} la de cuatro en un restaurante</i>"
     )
+    return "\n".join(texto)
+
+
+def formatear_croquetas(c: Croquetas, currency: str) -> str:
+    """Respuesta de /croquetas."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["🧆 <b>Tu cartera en croquetas</b>", f"Vale {simbolo}{_num(c.valor)}"]
+    if c.enteros == 0:
+        texto.append(f"Te da para el <b>{c.parte:.0f}%</b> de una")
+        siguiente = "la primera"
+    else:
+        cuantos = _es(f"{c.enteros:,}")
+        texto.append(
+            f"Te da para <b>{cuantos} {'raciones' if c.enteros > 1 else 'ración'}</b>"
+        )
+        siguiente = "la siguiente"
+    texto.append(f"Para {siguiente} te faltan {simbolo}{_num(c.falta)}")
+    texto.append(f"<i>A unos {simbolo}{PRECIO_CROQUETAS} la ración de ocho caseras</i>")
     return "\n".join(texto)
 
 
