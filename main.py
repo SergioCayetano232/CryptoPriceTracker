@@ -127,6 +127,7 @@ from crypto_tracker import (
     racha,
     rango,
     ratio,
+    record,
     redondo,
     refran,
     reparto,
@@ -957,6 +958,9 @@ def responder(
     if nombre == "hodl":
         return _hodl(config)
 
+    if nombre == "record":
+        return _record(config)
+
     if nombre == "ath":
         return _ath(config, argumento)
 
@@ -1597,6 +1601,22 @@ def _hodl(config: Config) -> str:
             f"fecha. Apunta lo que compres así: {movimientos.EJEMPLO_COMPRA}"
         )
     return alerts.formatear_hodl(lista, sin_fecha, date.today())
+
+
+def _record(config: Config) -> str:
+    posiciones = list(_con_cambios(config).cartera)
+    if not posiciones:
+        return SIN_CARTERA
+    filas = database.get_series(
+        config.database_path,
+        [p.coin_id for p in posiciones],
+        record.horas(config.history_days),
+        config.vs_currency,
+    )
+    resultado = record.calcular(cartera.serie_valor(posiciones, filas))
+    if resultado is None:
+        return "Aún no tengo precios guardados de tu cartera. Vuelve en un rato."
+    return alerts.formatear_record(resultado, config.vs_currency)
 
 
 def _crear_alerta(config: Config, argumento: str) -> str:

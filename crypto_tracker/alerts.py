@@ -141,6 +141,7 @@ from .quieta import Quieta
 from .racha import Racha
 from .rango import Rango, barra
 from .ratio import Ratio
+from .record import Record
 from .redondo import Redondo
 from .reparto import Trozo, demasiado
 from .rolex import PRECIO as PRECIO_ROLEX
@@ -766,6 +767,29 @@ def formatear_hodl(lista: list[Hodl], sin_fecha: list[str], hoy: date) -> str:
             f"\n<i>De {nombres} no sé desde cuándo la tienes: viene del .env y "
             "no has apuntado ninguna compra</i>"
         )
+    return "\n".join(texto)
+
+
+def formatear_record(r: Record, currency: str) -> str:
+    """Respuesta de /record."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    cuando = r.cuando.astimezone()
+    texto = ["🏆 <b>El récord de tu cartera</b>"]
+    if r.en_record:
+        texto.append(f"🎉 Lo tienes ahora mismo: <b>{simbolo}{_num(r.ahora)}</b>")
+    else:
+        texto.append(
+            f"<b>{simbolo}{_num(r.maximo)}</b>, el {cuando:%d/%m/%Y a las %H:%M}"
+        )
+        texto.append(
+            f"Ahora vale {simbolo}{_num(r.ahora)}: 🔻 {r.caida:.2f}%, "
+            f"le faltan <b>{simbolo}{_num(r.falta)}</b> para volver"
+        )
+    # No sé lo que tenías cada día: es lo de hoy a los precios de entonces.
+    texto.append(
+        f"<i>Con lo que tienes hoy y los precios que guardo desde el "
+        f"{r.desde.astimezone():%d/%m/%Y}</i>"
+    )
     return "\n".join(texto)
 
 

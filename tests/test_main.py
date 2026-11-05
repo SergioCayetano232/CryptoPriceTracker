@@ -6910,3 +6910,34 @@ def test_ppt_sin_decir_nada(config, enviados):
     main.atender(config, _mensaje("/ppt"))
 
     assert "Saca piedra, papel o tijera" in enviados[0]
+
+
+# --- /record ---
+
+
+def test_record(con_semana, enviados):
+    _guardar(con_semana, "bitcoin", 60000.0, 50)
+    _guardar(con_semana, "solana", 100.0, 50)
+    _guardar(con_semana, "bitcoin", 70000.0, 30)
+    _guardar(con_semana, "solana", 120.0, 30)
+    _guardar(con_semana, "bitcoin", 65000.0, 0)
+    _guardar(con_semana, "solana", 110.0, 0)
+
+    main.atender(con_semana, _mensaje("/pico"))
+
+    # 0,1 BTC y 10 SOL: 8.200 en el pico y 7.600 ahora.
+    assert "<b>€8.200,00</b>" in enviados[0]
+    assert "Ahora vale €7.600,00: 🔻 -7.32%" in enviados[0]
+    assert "le faltan <b>€600,00</b>" in enviados[0]
+
+
+def test_record_sin_precios(con_semana, enviados):
+    main.atender(con_semana, _mensaje("/record"))
+
+    assert "Aún no tengo precios guardados" in enviados[0]
+
+
+def test_record_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/record"))
+
+    assert enviados[0] == main.SIN_CARTERA
