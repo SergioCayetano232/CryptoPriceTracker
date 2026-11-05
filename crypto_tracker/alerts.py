@@ -131,6 +131,8 @@ from .piso import METROS as METROS_PISO
 from .piso import PRECIO as PRECIO_PISO
 from .piso import Piso
 from .pizza import BTC, Pizza
+from .ppt import EMOJIS as EMOJIS_PPT
+from .ppt import QUE_HACER as QUE_HACER_PPT
 from .primera import Primera
 from .ps5 import PRECIO as PRECIO_PS5
 from .ps5 import Ps5
@@ -2194,6 +2196,15 @@ def formatear_caraocruz(lado: str, coin_id: str | None) -> str:
     if coin_id:
         texto += f" <b>{escape(coin_id.replace('-', ' ').title())}</b>"
     return texto + "\n<i>Es una moneda al aire. No es un consejo, que lo sepas.</i>"
+
+
+def formatear_ppt(tuya: str, del_bot: str, como: str) -> str:
+    """Respuesta de /ppt. como es ganas, pierdes o empate."""
+    return (
+        f"Tú {EMOJIS_PPT[tuya]} {tuya} · yo {EMOJIS_PPT[del_bot]} {del_bot}\n"
+        f"<b>{QUE_HACER_PPT[como]}</b>\n"
+        "<i>Es piedra, papel o tijera. No es un consejo, que lo sepas.</i>"
+    )
 
 
 def formatear_dado(numero: int, coin_id: str | None) -> str:

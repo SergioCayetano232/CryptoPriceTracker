@@ -300,6 +300,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/aleatoria` | Una de las 100 más grandes al azar, con su puesto, su precio y cómo va hoy. No saca las que ya vigilas ni las estables. Con un botón para pedir otra |
 | `/caraocruz` | ¿Compro o vendo? Lo decide una moneda al aire (`/caraocruz btc`, con la cripto). Es de broma y no gasta consultas |
 | `/dado` | Qué hacer con tu cripto según un dado: del 1 (vende todo) al 6 (compra más). También con la cripto, `/dado sol`. De broma, como `/caraocruz` |
+| `/ppt piedra` | Piedra, papel o tijera contra el bot: si ganas, compra; si gana él, ni la toques; si empatáis, HODL. Vale `tijeras` y los emojis ✊ ✋ ✌️. También `/jugar` |
 | `/frase` | Una frase famosa del mundo cripto al azar, de Satoshi, Hal Finney, Buffett y otros, con quién la dijo y cuándo. No gasta consultas |
 | `/consejo` | Un consejo de inversión malísimo al azar, de broma, como el de comprar en máximos o apalancarse x100. No gasta consultas |
 | `/excusa` | Una excusa al azar para cuando la cartera va mal, de broma, como que es culpa de la Fed o que los lunes no cuentan. No gasta consultas |
@@ -667,6 +668,7 @@ crypto_tracker/
   tendencias.py  lo que más se busca, para /tendencias
   aleatoria.py   una de las más grandes al azar, para /aleatoria
   caraocruz.py   la moneda al aire de /caraocruz
+  ppt.py         piedra, papel o tijera, para /ppt
   dado.py        el dado de /dado
   frase.py       las frases famosas de /frase
   consejo.py     los consejos malos de /consejo

@@ -118,6 +118,7 @@ from crypto_tracker import (
     periodo,
     piso,
     pizza,
+    ppt,
     primera,
     proximo,
     ps5,
@@ -1020,6 +1021,14 @@ def responder(
         return alerts.formatear_caraocruz(
             caraocruz.lanzar(), caraocruz.interpretar(argumento)
         )
+
+    if nombre == "ppt":
+        try:
+            tuya = ppt.interpretar(argumento)
+        except ppt.PptError as e:
+            return telegram.escape(str(e))
+        del_bot = ppt.sacar()
+        return alerts.formatear_ppt(tuya, del_bot, ppt.resultado(tuya, del_bot))
 
     if nombre == "ultimo":
         return _ultimo(config)

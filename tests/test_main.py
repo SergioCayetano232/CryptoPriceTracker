@@ -6890,3 +6890,23 @@ def test_hodl_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/hodl"))
 
     assert enviados[0] == main.SIN_CARTERA
+
+
+# --- /ppt ---
+
+
+def test_ppt(config, enviados, monkeypatch):
+    from crypto_tracker import ppt
+
+    monkeypatch.setattr(ppt, "sacar", lambda: "piedra")
+
+    main.atender(config, _mensaje("/jugar tijeras"))
+
+    assert "Tú ✌️ tijera · yo ✊ piedra" in enviados[0]
+    assert "Gana el bot" in enviados[0]
+
+
+def test_ppt_sin_decir_nada(config, enviados):
+    main.atender(config, _mensaje("/ppt"))
+
+    assert "Saca piedra, papel o tijera" in enviados[0]
