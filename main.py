@@ -949,6 +949,9 @@ def responder(
     if nombre == "mes":
         return _mes(config)
 
+    if nombre == "anual":
+        return _anual(config)
+
     if nombre == "ath":
         return _ath(config, argumento)
 
@@ -3266,14 +3269,22 @@ def _foto_semana(
     tramo: str = "en la semana",
     emoji: str = "📅",
     subtitulo: str | None = None,
+    pista: str | None = None,
 ) -> str | comandos.Foto:
     primero = semana.serie[0][0]
     # Contra la hora de verdad, que es con la que se leyeron los precios.
     ahora = datetime.now(timezone.utc)
     desde = primero if periodo.falta_principio(primero, ahora, horas) else None
+    if desde and subtitulo:
+        subtitulo = f"Desde el {desde.astimezone():%d/%m}"
     texto = alerts.con_fuente(
         alerts.formatear_semana(
-            semana, config.vs_currency, desde, f"{emoji} <b>{titulo}</b>", tramo
+            semana,
+            config.vs_currency,
+            desde,
+            f"{emoji} <b>{titulo}</b>",
+            tramo,
+            pista,
         )
     )
 
@@ -3328,23 +3339,43 @@ def _semana(config: Config) -> str | comandos.Foto:
 
 
 def _mes(config: Config) -> str | comandos.Foto:
+    ahora = datetime.now(timezone.utc)
+    nombre = mes.nombre(ahora)
+    return _desde_el_principio(
+        config, mes.horas(ahora), f"Tu {nombre}", "mes", f"Desde el 1 de {nombre}"
+    )
+
+
+def _anual(config: Config) -> str | comandos.Foto:
+    ahora = datetime.now(timezone.utc)
+    return _desde_el_principio(
+        config,
+        mes.horas_del_ano(ahora),
+        f"Tu {ahora.astimezone().year}",
+        "año",
+        "Desde el 1 de enero",
+    )
+
+
+def _desde_el_principio(
+    config: Config, horas: float, titulo: str, que: str, subtitulo: str
+) -> str | comandos.Foto:
     config = _con_cambios(config)
     if not config.cartera:
         return SIN_CARTERA
-    ahora = datetime.now(timezone.utc)
-    horas = mes.horas(ahora)
     resultado = _leer_semana(config, horas)
     if resultado is None:
-        return "Aún no tengo precios de este mes. Vuelve a preguntar en un rato."
+        return f"Aún no tengo precios de este {que}. Vuelve a preguntar en un rato."
     return _foto_semana(
         config,
         resultado,
         horas,
-        f"Tu {mes.nombre(ahora)}",
-        "en lo que va de mes",
+        titulo,
+        f"en lo que va de {que}",
         "🗓️",
         # Si no, pondría "últimas 113,361 h".
-        f"Desde el 1 de {mes.nombre(ahora)}",
+        subtitulo,
+        mes.pista(config.history_days, horas),
     )
 
 

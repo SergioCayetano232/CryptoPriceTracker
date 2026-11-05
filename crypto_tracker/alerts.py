@@ -3348,6 +3348,7 @@ def formatear_semana(
     desde: datetime | None = None,
     titulo: str = "📅 <b>Tu semana</b>",
     tramo: str = "en la semana",
+    pista: str | None = None,
 ) -> str:
     """El resumen de los domingos y /mes. desde va solo si falta el principio."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
@@ -3365,6 +3366,8 @@ def formatear_semana(
     if desde is not None:
         cuando = desde.astimezone()
         texto.append(f"<i>Solo tengo precios desde el {cuando:%d/%m a las %H:%M}.</i>")
+        if pista:
+            texto.append(f"<i>{escape(pista)}</i>")
 
     if semana.cambios:
         texto.append("")

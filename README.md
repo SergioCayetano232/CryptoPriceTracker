@@ -178,6 +178,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/semana` | El resumen de tu semana sin esperar al domingo. No gasta consultas |
 | `/semana bitcoin` | La semana de una sola: lo mismo que `/historico bitcoin 7d` |
 | `/mes` | Cómo va tu cartera desde el día 1 del mes, con gráfica, no en los últimos 30 días como `/cartera 30d`. No gasta consultas. También `/mensual` |
+| `/anual` | Lo mismo desde el 1 de enero, para compararlo con la bolsa. Con `HISTORY_DAYS=90`, que es lo que viene, a partir de abril no tiene el año entero y te lo dice: pon `366`. También `/año` y `/ytd` |
 | `/compra bitcoin 0.01 600` | Apunta en la cartera que has comprado 0,01 por 600 € |
 | `/compra bitcoin 0.01 @60000` | Lo mismo, con el precio de cada una en vez del total |
 | `/venta bitcoin 0.005 350` | Apunta una venta y lo que te dieron (`/venta bitcoin todo` la saca de la cartera) |
@@ -769,7 +770,7 @@ crypto_tracker/
   diario.py      el resumen diario y las horas tranquilas
   hoy.py         cómo van desde las 00:00, para /hoy
   semanal.py     el resumen de la semana de la cartera
-  mes.py         desde cuándo cuenta el mes, para /mes
+  mes.py         desde cuándo cuentan el mes y el año, para /mes y /anual
   salud.py       avisa si el bot deja de funcionar
   version.py     la versión del bot, para /version
   copia.py       lo de ahora escrito como va en el .env, para /copia

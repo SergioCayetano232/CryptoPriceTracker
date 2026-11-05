@@ -6800,3 +6800,55 @@ def test_mes_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/mes"))
 
     assert enviados[0] == main.SIN_CARTERA
+
+
+# --- /anual ---
+
+
+def test_anual(con_semana, enviados, sin_fotos_de_verdad, monkeypatch):
+    from datetime import datetime
+
+    from crypto_tracker import mes
+
+    monkeypatch.setattr(mes, "horas_del_ano", lambda ahora: 48)
+    _guardar(con_semana, "bitcoin", 10000.0, 60)
+    _guardar(con_semana, "solana", 10.0, 60)
+    _semana_guardada(con_semana, 47)
+
+    main.atender(con_semana, _mensaje("/año"))
+
+    [(png, pie)] = sin_fotos_de_verdad
+    assert png
+    assert f"🗓️ <b>Tu {datetime.now().year}</b>" in pie
+    assert "+3.57% (+€250,00) en lo que va de año" in pie
+    assert "HISTORY_DAYS" not in pie
+
+
+def test_anual_avisa_si_borra_los_precios_antes(
+    con_semana, sin_fotos_de_verdad, monkeypatch
+):
+    from dataclasses import replace
+
+    from crypto_tracker import mes
+
+    monkeypatch.setattr(mes, "horas_del_ano", lambda ahora: 200 * 24)
+    dibujadas = []
+    monkeypatch.setattr(
+        main.grafica, "dibujar", lambda *a, **k: dibujadas.append(k) or b"png"
+    )
+    _semana_guardada(con_semana, 47)
+
+    main.atender(replace(con_semana, history_days=90), _mensaje("/anual"))
+
+    [(_, pie)] = sin_fotos_de_verdad
+    assert "Solo tengo precios desde" in pie
+    assert "HISTORY_DAYS=366" in pie
+    # La gráfica no puede decir "desde el 1 de enero" si empieza más tarde.
+    assert dibujadas[0]["subtitulo"].startswith("Desde el ")
+    assert "enero" not in dibujadas[0]["subtitulo"]
+
+
+def test_anual_sin_precios(con_semana, enviados):
+    main.atender(con_semana, _mensaje("/ytd"))
+
+    assert "Aún no tengo precios de este año" in enviados[0]
