@@ -95,6 +95,7 @@ from .menu import PRECIO as PRECIO_MENU
 from .menu import Menu
 from .mercado import Mercado, grande
 from .merge import Merge
+from .meta import Meta
 from .metro import PRECIO as PRECIO_METRO
 from .metro import Metro
 from .miedo import Indice
@@ -2814,6 +2815,29 @@ def formatear_objetivo(e: Escenario, currency: str) -> str:
         f"{simbolo}{_num(e.cantidad * e.precio)} a "
         f"{simbolo}{_num(e.cantidad * e.objetivo)}</i>"
     )
+
+
+def formatear_meta(m: Meta, currency: str) -> str:
+    """Respuesta de /meta."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = [f"🏁 <b>Tu cartera hacia {simbolo}{_num(m.meta)}</b>"]
+    if m.falta <= 0:
+        texto.append(
+            f"🎉 Ya está: vale {simbolo}{_num(m.valor)}, "
+            f"{simbolo}{_num(-m.falta)} por encima"
+        )
+        return "\n".join(texto)
+
+    texto.append(f"Vale {simbolo}{_num(m.valor)}")
+    texto.append(f"{barra(m.hecho)}  {m.hecho:.0f}% del camino")
+    texto.append(
+        f"Te faltan <b>{simbolo}{_num(m.falta)}</b>: tiene que subir un "
+        f"<b>{m.cambio:+.2f}%</b>"
+    )
+    # Desde x2 se entiende mejor así que con un +250%.
+    if m.veces >= 2:
+        texto.append(f"<i>O sea, multiplicarse por {_es(f'{m.veces:,.1f}')}</i>")
+    return "\n".join(texto)
 
 
 def formatear_hubiera(

@@ -6735,3 +6735,32 @@ def test_pan_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/pan"))
 
     assert "No tienes cartera puesta" in enviados[0]
+
+
+# --- /meta ---
+
+
+def test_meta(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    config = replace(config, cartera=(Posicion("bitcoin", 0.02),))
+    _precio_de(config, "bitcoin", 100000.0, 5)
+
+    main.atender(config, _mensaje("/goal 10k"))
+
+    assert "Vale €2.000,00" in enviados[0]
+    assert "Te faltan <b>€8.000,00</b>" in enviados[0]
+    assert "+400.00%" in enviados[0]
+
+
+def test_meta_mal_escrita(config, enviados):
+    main.atender(config, _mensaje("/meta"))
+
+    assert "/meta 10000" in enviados[0]
+
+
+def test_meta_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/meta 10000"))
+
+    assert "No tienes cartera puesta" in enviados[0]

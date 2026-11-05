@@ -53,6 +53,7 @@ COMANDOS = {
     "si": "Cuánto tendrías si hubieras invertido (ej: /si 1000 bitcoin 30d)",
     "dca": "Lo mismo, metiendo un poco cada semana (ej: /dca 50 bitcoin 90d)",
     "objetivo": "Cuánto valdría tu cartera a ese precio (ej: /objetivo btc 100000)",
+    "meta": "Cuánto le falta a tu cartera para una cifra (ej: /meta 10000)",
     "equilibrio": "A qué precio dejas de perder con cada una de tu cartera",
     "doble": "A qué precio doblas lo que metiste en cada una de tu cartera",
     "mitad": "A qué precio pierdes la mitad de lo que metiste en cada una",
@@ -169,6 +170,7 @@ ALIAS = {
     "estado": "status",
     "p": "precio",
     "target": "objetivo",
+    "goal": "meta",
     "maximo": "ath",
     "trending": "tendencias",
     "moda": "tendencias",
@@ -531,6 +533,10 @@ EJEMPLOS = {
     "objetivo": [
         ("/objetivo bitcoin 100000", "lo que valdría tu cartera si llega a 100.000"),
         ("/objetivo eth 1500", "también vale para ver qué pasa si baja"),
+    ],
+    "meta": [
+        ("/meta 10000", "cuánto le falta a tu cartera para llegar a 10.000"),
+        ("/meta 10k", "también vale con k o con el €"),
     ],
     "mute": [
         ("/mute", "te pregunto cuánto, con botones"),

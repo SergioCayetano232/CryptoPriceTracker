@@ -225,6 +225,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/si 1000 bitcoin 30d` | Cuánto tendrías hoy si hubieras metido 1.000 € hace 30 días (sin tramo, 30 días) |
 | `/dca 50 bitcoin semanal 90d` | Lo mismo metiendo 50 € cada semana, con lo invertido y el precio medio. También `diario` o `mensual`; sin decirlo, semanal y 90 días |
 | `/objetivo bitcoin 100000` | Cuánto valdría tu cartera si bitcoin llegara a ese precio, y cuánto ganarías sobre lo invertido. Vale `100k`, y también para ver una bajada |
+| `/meta 10000` | Cuánto le falta a tu cartera para llegar a esa cifra, en dinero y en %, con una barra de lo que llevas. Vale `10k`. También `/goal` |
 | `/equilibrio` | A qué precio dejas de perder con cada cripto de tu cartera y cuánto le falta, de la que más lejos está a la que menos, y cuánto tendría que subir todo junto. Solo con las que dicen lo que te costaron |
 | `/doble` | A qué precio tiene que llegar cada cripto de tu cartera para que dobles lo que metiste, cuánto le falta y cuánto tendría que subir todo junto. Solo con las que dicen lo que te costaron |
 | `/mitad` | Al revés que `/doble`: a qué precio perderías la mitad de lo que metiste en cada cripto y cuánto puede bajar hasta ahí, la que menos aguanta primero. Solo con las que dicen lo que te costaron |
@@ -653,6 +654,7 @@ crypto_tracker/
   exportar.py    el CSV de /exportar
   hubiera.py     entiende lo que le pides a /si
   objetivo.py    lo que valdría tu cartera, para /objetivo
+  meta.py        cuánto le falta a tu cartera para una cifra, para /meta
   equilibrio.py  a qué precio dejas de perder, para /equilibrio
   doble.py       a qué precio doblas lo que metiste, para /doble
   mitad.py       a qué precio pierdes la mitad, para /mitad

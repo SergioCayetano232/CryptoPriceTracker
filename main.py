@@ -97,6 +97,7 @@ from crypto_tracker import (
     mejor,
     menu,
     merge,
+    meta,
     metro,
     miedo,
     millonario,
@@ -940,6 +941,9 @@ def responder(
 
     if nombre == "objetivo":
         return _objetivo(config, argumento)
+
+    if nombre == "meta":
+        return _meta(config, argumento)
 
     if nombre == "ath":
         return _ath(config, argumento)
@@ -3018,6 +3022,19 @@ def _mitad(config: Config) -> str | comandos.ConBotones:
         )
     texto = alerts.con_fuente(alerts.formatear_mitad(resultado, config.vs_currency))
     return comandos.ConBotones(texto, botones.actualizar("/mitad"))
+
+
+def _meta(config: Config, argumento: str) -> str:
+    try:
+        cifra = meta.interpretar(argumento)
+    except meta.MetaError as e:
+        return telegram.escape(str(e))
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    if valor <= 0:
+        return "Tu cartera ahora mismo vale 0, así que no hay por dónde empezar."
+    return alerts.formatear_meta(meta.Meta(valor, cifra), config.vs_currency)
 
 
 def _objetivo(config: Config, argumento: str) -> str:
