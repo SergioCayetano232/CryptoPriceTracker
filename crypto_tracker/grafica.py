@@ -31,6 +31,7 @@ def dibujar(
     horas: float,
     titulo: str | None = None,
     invertido: float | None = None,
+    subtitulo: str | None = None,
 ) -> bytes:
     """Devuelve el PNG de la serie, que va del precio mas viejo al de ahora.
 
@@ -132,7 +133,7 @@ def dibujar(
 
     nombre = titulo or coin_id.replace("-", " ").title()
     fig.text(0.08, 0.89, nombre, fontsize=16, weight="bold", color=TEXTO)
-    periodo = nombre_periodo(horas)
+    periodo = subtitulo or nombre_periodo(horas)
     fig.text(0.08, 0.83, periodo[0].upper() + periodo[1:], fontsize=9, color=SUAVE)
     fig.text(
         0.94,

@@ -4321,9 +4321,9 @@ def _guardar(config, coin_id, precio, horas_atras):
     conn.close()
 
 
-def _semana_guardada(config):
+def _semana_guardada(config, horas_atras=7 * 24 - 1):
     for coin_id, antes, ahora in (("bitcoin", 60000.0, 63000.0), ("solana", 100, 95)):
-        _guardar(config, coin_id, antes, 7 * 24 - 1)
+        _guardar(config, coin_id, antes, horas_atras)
         _guardar(config, coin_id, ahora, 0)
 
 
@@ -6764,3 +6764,39 @@ def test_meta_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/meta 10000"))
 
     assert "No tienes cartera puesta" in enviados[0]
+
+
+# --- /mes ---
+
+
+def test_mes(con_semana, enviados, sin_fotos_de_verdad, monkeypatch):
+    from datetime import datetime
+
+    from crypto_tracker import mes
+
+    monkeypatch.setattr(mes, "horas", lambda ahora: 48)
+    # Del mes pasado: no tiene que contar.
+    _guardar(con_semana, "bitcoin", 10000.0, 60)
+    _guardar(con_semana, "solana", 10.0, 60)
+    _semana_guardada(con_semana, 47)
+
+    main.atender(con_semana, _mensaje("/mensual"))
+
+    [(png, pie)] = sin_fotos_de_verdad
+    assert png
+    assert f"🗓️ <b>Tu {mes.nombre(datetime.now())}</b>" in pie
+    assert "+3.57% (+€250,00) en lo que va de mes" in pie
+    assert "semana" not in pie
+    assert enviados == []
+
+
+def test_mes_sin_precios(con_semana, enviados):
+    main.atender(con_semana, _mensaje("/mes"))
+
+    assert "Aún no tengo precios de este mes" in enviados[0]
+
+
+def test_mes_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/mes"))
+
+    assert enviados[0] == main.SIN_CARTERA

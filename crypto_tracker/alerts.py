@@ -3343,18 +3343,22 @@ def formatear_no_encuentro(coin_ids: list[str]) -> str:
 
 
 def formatear_semana(
-    semana: Semana, currency: str, desde: datetime | None = None
+    semana: Semana,
+    currency: str,
+    desde: datetime | None = None,
+    titulo: str = "📅 <b>Tu semana</b>",
+    tramo: str = "en la semana",
 ) -> str:
-    """El resumen de los domingos. desde va solo si falta el principio."""
+    """El resumen de los domingos y /mes. desde va solo si falta el principio."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
-    texto = ["📅 <b>Tu semana</b>", ""]
+    texto = [titulo, ""]
 
     linea = f"Tu cartera vale <b>{simbolo}{_num(semana.fin)}</b>"
     if semana.porcentaje is not None:
         signo = "+" if semana.ganancia >= 0 else "-"
         linea += (
             f"\n{_flecha(semana.porcentaje)} {semana.porcentaje:+.2f}% "
-            f"({signo}{simbolo}{_num(abs(semana.ganancia))}) en la semana"
+            f"({signo}{simbolo}{_num(abs(semana.ganancia))}) {tramo}"
         )
     texto.append(linea)
 

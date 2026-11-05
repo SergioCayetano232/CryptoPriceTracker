@@ -97,6 +97,7 @@ from crypto_tracker import (
     mejor,
     menu,
     merge,
+    mes,
     meta,
     metro,
     miedo,
@@ -944,6 +945,9 @@ def responder(
 
     if nombre == "meta":
         return _meta(config, argumento)
+
+    if nombre == "mes":
+        return _mes(config)
 
     if nombre == "ath":
         return _ath(config, argumento)
@@ -3243,24 +3247,34 @@ def resumen_semanal(config: Config, ahora: datetime | None = None) -> None:
         logger.error("No se pudo apuntar el resumen semanal: %s", e)
 
 
-def _leer_semana(config: Config) -> semanal.Semana | None:
+def _leer_semana(config: Config, horas: float = semanal.HORAS) -> semanal.Semana | None:
     posiciones = list(config.cartera)
     filas = database.get_series(
         config.database_path,
         [p.coin_id for p in posiciones],
-        semanal.HORAS,
+        horas,
         config.vs_currency,
     )
     return semanal.semana(posiciones, filas)
 
 
-def _foto_semana(config: Config, semana: semanal.Semana) -> str | comandos.Foto:
+def _foto_semana(
+    config: Config,
+    semana: semanal.Semana,
+    horas: float = semanal.HORAS,
+    titulo: str = "Tu semana",
+    tramo: str = "en la semana",
+    emoji: str = "📅",
+    subtitulo: str | None = None,
+) -> str | comandos.Foto:
     primero = semana.serie[0][0]
     # Contra la hora de verdad, que es con la que se leyeron los precios.
     ahora = datetime.now(timezone.utc)
-    desde = primero if periodo.falta_principio(primero, ahora, semanal.HORAS) else None
+    desde = primero if periodo.falta_principio(primero, ahora, horas) else None
     texto = alerts.con_fuente(
-        alerts.formatear_semana(semana, config.vs_currency, desde)
+        alerts.formatear_semana(
+            semana, config.vs_currency, desde, f"{emoji} <b>{titulo}</b>", tramo
+        )
     )
 
     invertidos = [p.invertido for p in config.cartera]
@@ -3270,9 +3284,10 @@ def _foto_semana(config: Config, semana: semanal.Semana) -> str | comandos.Foto:
             "cartera",
             semana.serie,
             config.vs_currency,
-            semanal.HORAS,
-            titulo="Tu semana",
+            horas,
+            titulo=titulo,
             invertido=invertido,
+            subtitulo=subtitulo,
         )
     except Exception as e:
         logger.warning("Resumen semanal sin imagen: %s", e)
@@ -3310,6 +3325,27 @@ def _semana(config: Config) -> str | comandos.Foto:
     if semana is None:
         return "Aún no tengo precios de esta semana. Vuelve a preguntar en un rato."
     return _foto_semana(config, semana)
+
+
+def _mes(config: Config) -> str | comandos.Foto:
+    config = _con_cambios(config)
+    if not config.cartera:
+        return SIN_CARTERA
+    ahora = datetime.now(timezone.utc)
+    horas = mes.horas(ahora)
+    resultado = _leer_semana(config, horas)
+    if resultado is None:
+        return "Aún no tengo precios de este mes. Vuelve a preguntar en un rato."
+    return _foto_semana(
+        config,
+        resultado,
+        horas,
+        f"Tu {mes.nombre(ahora)}",
+        "en lo que va de mes",
+        "🗓️",
+        # Si no, pondría "últimas 113,361 h".
+        f"Desde el 1 de {mes.nombre(ahora)}",
+    )
 
 
 def _avisar_salud(config: Config, texto: str) -> bool:
