@@ -128,3 +128,12 @@ def test_formatear_sin_el_principio_no_compara():
     texto = formatear_racha("bitcoin", r, "eur", 3, date(2026, 7, 14))
 
     assert "más larga" not in texto
+
+
+def test_formatear_la_cartera():
+    r = Racha(True, 3, HOY - timedelta(days=3), 1000, 1100, True)
+
+    texto = formatear_racha("cartera", r, "eur")
+
+    assert "<b>Tu cartera</b> lleva <b>3 días</b> seguidos subiendo" in texto
+    assert "Con lo que tienes hoy" in texto

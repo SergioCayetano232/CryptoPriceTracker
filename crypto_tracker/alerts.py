@@ -1030,7 +1030,8 @@ def formatear_racha(
 ) -> str:
     """Respuesta de /racha. record es la más larga hacia ese lado desde ese día."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
-    nombre = escape(coin_id.replace("-", " ").title())
+    cartera = coin_id == CARTERA
+    nombre = "Tu cartera" if cartera else escape(coin_id.replace("-", " ").title())
     hacia = "subiendo" if r.sube else "bajando"
     dias = "1 día" if r.dias == 1 else f"{r.dias} días"
     # Si los datos se acaban antes que la racha, puede ser más larga.
@@ -1051,6 +1052,8 @@ def formatear_racha(
             texto += (
                 f"La más larga {hacia} desde el {desde:%d/%m} fue de {record} días\n"
             )
+    if cartera:
+        return texto + "<i>Con lo que tienes hoy, al precio del final de cada día</i>"
     return texto + "<i>Con el precio del final de cada día</i>"
 
 

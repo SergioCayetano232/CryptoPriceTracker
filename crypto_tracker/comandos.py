@@ -487,6 +487,7 @@ EJEMPLOS = {
     "racha": [
         ("/racha bitcoin", "cuántos días seguidos lleva subiendo o bajando"),
         ("/racha", "a secas, la primera que vigilo"),
+        ("/racha cartera", "lo mismo con tu cartera entera"),
     ],
     "extremo": [
         ("/extremo bitcoin", "el día que más subió y el que más bajó en 30 días"),

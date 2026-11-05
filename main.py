@@ -2178,6 +2178,8 @@ def _media(config: Config, argumento: str) -> str:
 def _racha(config: Config, argumento: str) -> str:
     if len(argumento.split()) > 1:
         return "De una en una. Por ejemplo: /racha bitcoin"
+    if argumento.lower() == puntuales.CARTERA:
+        return _racha_cartera(config)
     if argumento:
         coin_id = simbolos.a_id(argumento)
     else:
@@ -2200,6 +2202,29 @@ def _racha(config: Config, argumento: str) -> str:
     record = racha.mas_larga(dias, resultado.sube)
     return alerts.formatear_racha(
         coin_id, resultado, config.vs_currency, record, dias[0][0]
+    )
+
+
+def _racha_cartera(config: Config) -> str:
+    posiciones = list(_con_cambios(config).cartera)
+    if not posiciones:
+        return SIN_CARTERA
+    filas = database.get_series(
+        config.database_path,
+        [p.coin_id for p in posiciones],
+        racha.HORAS,
+        config.vs_currency,
+    )
+    dias = volatilidad.por_dias(cartera.serie_valor(posiciones, filas))
+    resultado = racha.calcular(dias)
+    if resultado is None:
+        return (
+            "No tengo precios guardados de tu cartera de dos días seguidos que "
+            "hayan cambiado. Vuelve mañana."
+        )
+    record = racha.mas_larga(dias, resultado.sube)
+    return alerts.formatear_racha(
+        puntuales.CARTERA, resultado, config.vs_currency, record, dias[0][0]
     )
 
 

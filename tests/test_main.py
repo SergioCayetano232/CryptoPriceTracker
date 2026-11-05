@@ -6968,3 +6968,32 @@ def test_adivina_mal_escrito(config, enviados):
     main.atender(config, _mensaje("/adivina"))
 
     assert "/adivina 70000" in enviados[0]
+
+
+# --- /racha cartera ---
+
+
+def test_racha_cartera(con_semana, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    # 0,1 BTC y 10 SOL: 7.000, 6.900, 7.100 y 7.200.
+    for dias, btc in [(3, 60000.0), (2, 59000.0), (1, 61000.0), (0, 62000.0)]:
+        _precio_de(con_semana, "bitcoin", btc, dias * 24 * 60 + 5)
+        _precio_de(con_semana, "solana", 100.0, dias * 24 * 60 + 5)
+
+    main.atender(con_semana, _mensaje("/racha Cartera"))
+
+    assert "<b>Tu cartera</b> lleva <b>2 días</b> seguidos subiendo" in enviados[0]
+    assert "€6.900,00 → €7.200,00" in enviados[0]
+    assert "Con lo que tienes hoy" in enviados[0]
+
+
+def test_racha_cartera_sin_precios(con_semana, enviados):
+    main.atender(con_semana, _mensaje("/racha cartera"))
+
+    assert "No tengo precios guardados de tu cartera" in enviados[0]
+
+
+def test_racha_cartera_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/racha cartera"))
+
+    assert enviados[0] == main.SIN_CARTERA
