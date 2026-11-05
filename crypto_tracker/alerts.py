@@ -8,6 +8,7 @@ from datetime import date, datetime
 from .aceite import PRECIO as PRECIO_ACEITE
 from .aceite import Aceite
 from .adios import Adios
+from .adivina import Intento
 from .airpods import PRECIO as PRECIO_AIRPODS
 from .airpods import Airpods
 from .alquiler import PRECIO as PRECIO_ALQUILER
@@ -2229,6 +2230,25 @@ def formatear_ppt(tuya: str, del_bot: str, como: str) -> str:
         f"<b>{QUE_HACER_PPT[como]}</b>\n"
         "<i>Es piedra, papel o tijera. No es un consejo, que lo sepas.</i>"
     )
+
+
+def formatear_adivina(i: Intento, currency: str) -> str:
+    """Respuesta de /adivina."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(i.coin_id.replace("-", " ").title())
+    emoji, nota = i.nota
+    texto = [
+        f"{emoji} <b>{nota}</b>",
+        f"Dijiste {simbolo}{_num(i.dicho)} y <b>{nombre}</b> está a "
+        f"<b>{simbolo}{_num(i.precio)}</b>",
+    ]
+    if i.dicho != i.precio:
+        lado = "corto" if i.corto else "pasado"
+        texto.append(
+            f"Te has quedado {lado} por {simbolo}{_num(abs(i.precio - i.dicho))} "
+            f"({i.error:.2f}%)"
+        )
+    return "\n".join(texto)
 
 
 def formatear_dado(numero: int, coin_id: str | None) -> str:

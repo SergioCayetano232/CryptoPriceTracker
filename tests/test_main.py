@@ -6941,3 +6941,30 @@ def test_record_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/record"))
 
     assert enviados[0] == main.SIN_CARTERA
+
+
+# --- /adivina ---
+
+
+def test_adivina(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    _precio_de(config, "bitcoin", 70000.0, 5)
+
+    main.atender(config, _mensaje("/adivinar 67k"))
+
+    assert "🙂 <b>Caliente</b>" in enviados[0]
+    assert "corto por €3.000,00 (4.29%)" in enviados[0]
+
+
+def test_adivina_otra_la_pide(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: {"ethereum": 2500.0})
+
+    main.atender(config, _mensaje("/adivina eth 2500"))
+
+    assert "🎯 <b>¡Clavado!</b>" in enviados[0]
+
+
+def test_adivina_mal_escrito(config, enviados):
+    main.atender(config, _mensaje("/adivina"))
+
+    assert "/adivina 70000" in enviados[0]

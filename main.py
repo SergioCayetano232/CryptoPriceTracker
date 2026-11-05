@@ -21,6 +21,7 @@ from datetime import date, datetime, timedelta, timezone
 from crypto_tracker import (
     aceite,
     adios,
+    adivina,
     airpods,
     ajustes,
     aleatoria,
@@ -1025,6 +1026,9 @@ def responder(
         return alerts.formatear_caraocruz(
             caraocruz.lanzar(), caraocruz.interpretar(argumento)
         )
+
+    if nombre == "adivina":
+        return _adivina(config, argumento)
 
     if nombre == "ppt":
         try:
@@ -2254,6 +2258,18 @@ def _precio_o_pedirlo(config: Config, coin_id: str) -> float | str:
     if not precio:
         return alerts.formatear_no_encuentro([coin_id])
     return precio
+
+
+def _adivina(config: Config, argumento: str) -> str:
+    try:
+        coin_id, dicho = adivina.interpretar(argumento)
+    except adivina.AdivinaError as e:
+        return telegram.escape(str(e))
+    precio = _precio_o_pedirlo(config, coin_id)
+    if isinstance(precio, str):
+        return precio
+    intento = adivina.Intento(coin_id, dicho, precio)
+    return alerts.formatear_adivina(intento, config.vs_currency)
 
 
 def _pizza(config: Config) -> str:
