@@ -185,6 +185,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/ganancias` | Lo que has ganado o perdido de verdad con lo que ya vendiste |
 | `/impuestos` | Lo que le tocaría a Hacienda de lo que ganaste vendiendo este año, tramo a tramo (19, 21, 23, 27 y 30 %). `/impuestos 2025`, el año que digas. Es orientativo: Hacienda cuenta con FIFO y aquí va con precio medio |
 | `/primera` | Tu primera compra, cuánto hace, cuánto ha cambiado el precio desde entonces y lo que vale hoy lo que compraste (`/primera btc`, la primera de esa). Solo las apuntadas con `/compra` |
+| `/hodl` | Cuántos días llevas sin vender cada cripto de tu cartera, de la que más a la que menos: desde la última venta o, si nunca vendiste, desde la primera compra. Si lo vendiste todo y volviste a comprar, cuenta desde la nueva compra. También `/diamante` |
 | `/movimientos` | Tus últimas compras y ventas, con un botón para deshacer la última (`/movimientos btc`, solo las de esa) |
 | `/deshacer` | Quita la última compra o venta y deja la cripto como estaba |
 | `/alerta bitcoin 70000` | Te avisa una vez cuando llegue a ese precio |
@@ -746,6 +747,7 @@ crypto_tracker/
   ganancias.py   lo ganado con lo vendido, para /ganancias
   impuestos.py   los tramos del IRPF, para /impuestos
   primera.py     tu primera compra, para /primera
+  hodl.py        los días que llevas sin vender, para /hodl
   proximo.py     a qué precio salta el siguiente aviso
   cartera.py     cuánto vale lo que tienes
   grafica.py     las imágenes de /historico y /cartera

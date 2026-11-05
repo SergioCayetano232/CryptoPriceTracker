@@ -78,6 +78,7 @@ from crypto_tracker import (
     gimnasio,
     grafica,
     halving,
+    hodl,
     horas,
     horoscopo,
     hotel,
@@ -952,6 +953,9 @@ def responder(
     if nombre == "anual":
         return _anual(config)
 
+    if nombre == "hodl":
+        return _hodl(config)
+
     if nombre == "ath":
         return _ath(config, argumento)
 
@@ -1570,6 +1574,20 @@ def _primera(config: Config, argumento: str) -> str:
     resultado = primera.Primera(compra, precios.get(compra.coin_id), date.today())
     texto = alerts.formatear_primera(resultado, config.vs_currency)
     return alerts.con_fuente(texto) if resultado.precio is not None else texto
+
+
+def _hodl(config: Config) -> str:
+    posiciones = list(_con_cambios(config).cartera)
+    if not posiciones:
+        return SIN_CARTERA
+    todos = database.get_movimientos(config.database_path, None)
+    lista, sin_fecha = hodl.calcular(posiciones, todos, date.today())
+    if not lista:
+        return (
+            "No sé desde cuándo tienes nada: lo del PORTFOLIO del .env no lleva "
+            f"fecha. Apunta lo que compres así: {movimientos.EJEMPLO_COMPRA}"
+        )
+    return alerts.formatear_hodl(lista, sin_fecha, date.today())
 
 
 def _crear_alerta(config: Config, argumento: str) -> str:

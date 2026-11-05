@@ -6852,3 +6852,41 @@ def test_anual_sin_precios(con_semana, enviados):
     main.atender(con_semana, _mensaje("/ytd"))
 
     assert "Aún no tengo precios de este año" in enviados[0]
+
+
+# --- /hodl ---
+
+
+def test_hodl(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"solana": 150.0, "bitcoin": 60000.0, "ethereum": 3000.0})
+    main.atender(config, _mensaje("/compra solana 1 100"))
+    main.atender(config, _mensaje("/compra bitcoin 0.02 1200"))
+    main.atender(config, _mensaje("/venta bitcoin 0.005 350"))
+    main.atender(config, _mensaje("/compra ethereum 1 3000"))
+    main.atender(config, _mensaje("/venta ethereum todo"))
+
+    main.atender(config, _mensaje("/diamante"))
+
+    texto = enviados[-1]
+    assert "<b>Solana</b>  hoy" in texto
+    assert "desde la compra del" in texto
+    assert "<b>Bitcoin</b>  hoy" in texto
+    assert "desde que vendiste un poco el" in texto
+    # Ya no la tienes: no sale.
+    assert "Ethereum" not in texto
+
+
+def test_hodl_solo_con_el_env(config, enviados):
+    from dataclasses import replace
+
+    config = replace(config, cartera=(Posicion("bitcoin", 0.02),))
+
+    main.atender(config, _mensaje("/hodl"))
+
+    assert "No sé desde cuándo tienes nada" in enviados[0]
+
+
+def test_hodl_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/hodl"))
+
+    assert enviados[0] == main.SIN_CARTERA

@@ -65,6 +65,7 @@ from .gimnasio import PRECIO as PRECIO_GIMNASIO
 from .gimnasio import Gimnasio
 from .glosario import TERMINOS, buscar, parecido
 from .halving import Halving
+from .hodl import Hodl
 from .horas import Horas
 from .horoscopo import Horoscopo
 from .hotel import PRECIO as PRECIO_HOTEL
@@ -733,6 +734,37 @@ def formatear_movimientos(
             f"{simbolo}{_num(vendido)} vendido"
         )
     return "\n".join(lineas)
+
+
+def formatear_hodl(lista: list[Hodl], sin_fecha: list[str], hoy: date) -> str:
+    """Respuesta de /hodl."""
+    texto = ["💎 <b>Lo que llevas sin vender</b>", ""]
+    for h in lista:
+        nombre = escape(h.coin_id.replace("-", " ").title())
+        dias = h.dias(hoy)
+        cuanto = (
+            "hoy"
+            if dias == 0
+            else _es(f"{dias:,}") + (" día" if dias == 1 else " días")
+        )
+        if h.minimo:
+            cuanto = f"más de {cuanto}"
+        fecha = f"{h.desde.astimezone():%d/%m/%Y}"
+        if h.venta:
+            de_cuando = f"desde que vendiste un poco el {fecha}"
+        elif h.minimo:
+            de_cuando = f"ya la tenías antes de apuntar la compra del {fecha}"
+        else:
+            de_cuando = f"desde la compra del {fecha}"
+        texto.append(f"<b>{nombre}</b>  {cuanto}")
+        texto.append(f"   <i>{de_cuando}</i>")
+    if sin_fecha:
+        nombres = ", ".join(escape(c.replace("-", " ").title()) for c in sin_fecha)
+        texto.append(
+            f"\n<i>De {nombres} no sé desde cuándo la tienes: viene del .env y "
+            "no has apuntado ninguna compra</i>"
+        )
+    return "\n".join(texto)
 
 
 def formatear_primera(p: Primera, currency: str) -> str:
