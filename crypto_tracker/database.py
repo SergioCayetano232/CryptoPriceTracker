@@ -98,6 +98,7 @@ ULTIMO_SEMANAL = "ultimo_semanal"
 
 # La hora del resumen puesta con /horario, encima de la del .env. Vacio es sin resumen.
 HORA_RESUMEN = "hora_resumen"
+BAJON = "bajon_cartera"
 
 
 class DatabaseError(Exception):
@@ -528,6 +529,31 @@ def guardar_brusco(db_path: str, coin_id: str, cuando: datetime) -> None:
         conn.execute(
             "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
             (f"brusco:{coin_id}", cuando.isoformat(timespec="seconds")),
+        )
+
+
+def ultimo_bajon(db_path: str) -> tuple[datetime, int] | None:
+    """(cuándo fue el récord, escalón) del último aviso de CAIDA_CARTERA."""
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT valor FROM ajustes WHERE clave = ?", (BAJON,)
+        ).fetchone()
+
+    if not fila:
+        return None
+
+    cuando, _, escalon = fila["valor"].partition("|")
+    try:
+        return datetime.fromisoformat(cuando), int(escalon)
+    except ValueError:
+        return None
+
+
+def guardar_bajon(db_path: str, record: datetime, escalon: int) -> None:
+    with _connect(db_path) as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (BAJON, f"{record.isoformat()}|{escalon}"),
         )
 
 

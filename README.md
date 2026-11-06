@@ -516,6 +516,16 @@ Avisa como mucho una vez al día de cada cosa, que en plena subida cada ciclo es
 un máximo nuevo. Tiene que ser de 2 días o más, y no más de los que guarda
 `HISTORY_DAYS`.
 
+**Enterarte si tu cartera se hunde:**
+
+```
+CAIDA_CARTERA=20%
+```
+Si tienes `PORTFOLIO`, te avisa cuando tu cartera vale un 20% menos que su
+récord, el mismo de `/record`. Si sigue bajando, vuelve a avisar al 40%, al
+60%... pero no en cada ciclo. Cuando marca un récord nuevo, empieza de cero.
+Con `/mute cartera 1d` lo callas; si al volver sigue igual de abajo, te llega.
+
 **Recibir un resumen cada mañana:**
 
 Pon la hora en el `.env`:
@@ -600,6 +610,7 @@ Todo lo que va haciendo queda apuntado en `data/tracker.log`.
 | `MAXIMOS_MINIMOS` | Aviso al marcar el máximo o mínimo de esos días (`30d`). Vacío, sin aviso | vacío |
 | `HORAS_TRANQUILAS` | Tramo en que los avisos llegan sin sonar (`23-8`) | vacío |
 | `PORTFOLIO` | Lo que tienes, para ver cuánto vale (`bitcoin:0.016:1000`) | vacío |
+| `CAIDA_CARTERA` | Aviso si la cartera cae ese % desde su récord (`20%`). Vacío, sin aviso | vacío |
 
 No bajes mucho `CHECK_INTERVAL`. La clave gratuita de CoinGecko da 10.000
 consultas al mes y cada ciclo gasta una: con `330` (cinco minutos y medio) te

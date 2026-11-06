@@ -783,6 +783,95 @@ def test_extremo_llega_por_telegram(con_extremos, enviados, monkeypatch):
     assert "🏔 <b>Bitcoin</b> marca su máximo de 30 días" in enviados[0]
 
 
+# --- caida de la cartera desde su record ---
+
+
+@pytest.fixture
+def con_bajon(config):
+    from dataclasses import replace
+
+    config = replace(config, caida_cartera=20.0, cartera=(Posicion("bitcoin", 0.01),))
+    # Récord de 1.000 € hace tres días; luego baja a 900.
+    _precio_hace(config, 80000.0, 5 * 24 * 60)
+    _precio_hace(config, 100000.0, 3 * 24 * 60)
+    _precio_hace(config, 90000.0, 60)
+    return config
+
+
+def test_bajon_avisa(con_bajon, enviados):
+    main.revisar_bajon(con_bajon, 750.0, set())
+
+    assert len(enviados) == 1
+    assert "caído un 25,0% desde su récord" in enviados[0]
+
+
+def test_bajon_no_repite(con_bajon, enviados):
+    main.revisar_bajon(con_bajon, 750.0, set())
+    main.revisar_bajon(con_bajon, 700.0, set())
+
+    assert len(enviados) == 1
+
+
+def test_bajon_otro_escalon(con_bajon, enviados):
+    main.revisar_bajon(con_bajon, 750.0, set())
+    main.revisar_bajon(con_bajon, 590.0, set())
+
+    assert len(enviados) == 2
+    assert "Ya pasa del 40%" in enviados[1]
+
+
+def test_bajon_poca_caida(con_bajon, enviados):
+    main.revisar_bajon(con_bajon, 850.0, set())
+
+    assert enviados == []
+
+
+def test_bajon_desactivado(con_bajon, enviados):
+    from dataclasses import replace
+
+    main.revisar_bajon(replace(con_bajon, caida_cartera=None), 500.0, set())
+
+    assert enviados == []
+
+
+def test_bajon_callado_avisa_al_volver(con_bajon, enviados):
+    main.revisar_bajon(con_bajon, 750.0, {"cartera"})
+    assert enviados == []
+
+    main.revisar_bajon(con_bajon, 750.0, set())
+    assert len(enviados) == 1
+
+
+def test_bajon_si_falla_telegram_lo_intenta_luego(con_bajon, monkeypatch):
+    lista = []
+    monkeypatch.setattr(telegram, "send_message", lambda *a, **kw: False)
+    main.revisar_bajon(con_bajon, 750.0, set())
+
+    monkeypatch.setattr(
+        telegram, "send_message", lambda t, c, texto, **kw: lista.append(texto) or True
+    )
+    main.revisar_bajon(con_bajon, 750.0, set())
+    assert len(lista) == 1
+
+
+def test_bajon_record_nuevo_vuelve_a_empezar(con_bajon, enviados):
+    main.revisar_bajon(con_bajon, 750.0, set())
+    _precio_hace(con_bajon, 120000.0, 30)
+
+    main.revisar_bajon(con_bajon, 900.0, set())
+
+    assert len(enviados) == 2
+    assert "€1.200,00" in enviados[1]
+
+
+def test_bajon_llega_en_el_ciclo(con_bajon, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 75000.0})
+
+    main.ejecutar_ciclo(con_bajon, {"bitcoin": "%75000.0"})
+
+    assert any("desde su récord" in t for t in enviados)
+
+
 # --- horas tranquilas ---
 
 

@@ -794,6 +794,25 @@ def formatear_record(r: Record, currency: str) -> str:
     return "\n".join(texto)
 
 
+def formatear_bajon(r: Record, escalon: int, porcentaje: float, currency: str) -> str:
+    """El aviso de CAIDA_CARTERA."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    caida = f"{-r.caida:.1f}".replace(".", ",")
+    texto = [
+        f"📉 <b>Tu cartera ha caído un {caida}% desde su récord</b>",
+        f"De {simbolo}{_num(r.maximo)} el {r.cuando.astimezone():%d/%m/%Y} "
+        f"a <b>{simbolo}{_num(r.ahora)}</b> ahora",
+        f"Le faltan {simbolo}{_num(r.falta)} para volver",
+        f"<i>Ya pasa del {_pct(escalon * porcentaje)}%. "
+        f"El siguiente aviso, al {_pct((escalon + 1) * porcentaje)}%</i>",
+    ]
+    return "\n".join(texto)
+
+
+def _pct(valor: float) -> str:
+    return f"{valor:g}".replace(".", ",")
+
+
 def formatear_primera(p: Primera, currency: str) -> str:
     """Respuesta de /primera."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")

@@ -60,6 +60,8 @@ class Config:
     cartera: tuple[Posicion, ...] = ()
     # None = sin aviso de maximos y minimos
     extremos_dias: int | None = None
+    # None = sin aviso de caida de la cartera desde su record
+    caida_cartera: float | None = None
 
 
 def _require(name: str) -> str:
@@ -381,6 +383,25 @@ def parse_extremos(raw: str) -> int | None:
     return dias
 
 
+def parse_caida_cartera(raw: str) -> float | None:
+    """'20%' -> 20.0. Vacio es None."""
+    raw = raw.strip()
+    if not raw:
+        return None
+
+    try:
+        porcentaje = float(raw.strip("%").replace(",", "."))
+    except ValueError:
+        raise ConfigError(
+            f"CAIDA_CARTERA tiene que ser un porcentaje, como 20%, no '{raw}'"
+        ) from None
+    if not 0 < porcentaje < 100:
+        raise ConfigError(
+            f"CAIDA_CARTERA tiene que estar entre 0 y 100, no {porcentaje:g}."
+        )
+    return porcentaje
+
+
 def load_config() -> Config:
     """Monta la configuracion. Lanza ConfigError si algo falta o esta mal."""
     # Con 300 la clave gratuita de CoinGecko va muy justa a final de mes.
@@ -419,4 +440,5 @@ def load_config() -> Config:
         horas_tranquilas=parse_tramo(os.getenv("HORAS_TRANQUILAS", "")),
         cartera=parse_cartera(os.getenv("PORTFOLIO", "")),
         extremos_dias=extremos,
+        caida_cartera=parse_caida_cartera(os.getenv("CAIDA_CARTERA", "")),
     )

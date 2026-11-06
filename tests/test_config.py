@@ -321,3 +321,20 @@ def test_sin_check_interval_va_a_330(monkeypatch):
     monkeypatch.delenv("CHECK_INTERVAL", raising=False)
 
     assert load_config().check_interval == 330
+
+
+def test_parse_caida_cartera():
+    from crypto_tracker.config import parse_caida_cartera
+
+    assert parse_caida_cartera("20%") == 20.0
+    assert parse_caida_cartera(" 15 ") == 15.0
+    assert parse_caida_cartera("12,5%") == 12.5
+    assert parse_caida_cartera("") is None
+
+
+@pytest.mark.parametrize("entrada", ["mucho", "0", "100%", "-5%"])
+def test_parse_caida_cartera_mal(entrada):
+    from crypto_tracker.config import ConfigError, parse_caida_cartera
+
+    with pytest.raises(ConfigError, match="CAIDA_CARTERA"):
+        parse_caida_cartera(entrada)

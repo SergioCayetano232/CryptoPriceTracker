@@ -29,6 +29,7 @@ from crypto_tracker import (
     alquiler,
     ave,
     avisados,
+    bajon,
     bici,
     bigmac,
     boda,
@@ -285,6 +286,7 @@ def ejecutar_ciclo(
 
     # Como con el /mute de todas: las de /alerta no se borran y saltan al volver.
     calladas = _calladas(config)
+    revisar_bajon(config, valor, calladas)
     if calladas:
         avisos = [a for a in avisos if a.coin_id not in calladas]
         hechas = [p for p in hechas if p.coin_id not in calladas]
@@ -550,6 +552,56 @@ def revisar_extremos(
         avisos.append(aviso)
 
     return avisos
+
+
+def revisar_bajon(config: Config, valor: float | None, calladas: set[str]) -> None:
+    """Avisa si la cartera ha caído CAIDA_CARTERA desde su récord. Va aparte."""
+    if config.caida_cartera is None or valor is None:
+        return
+    # Callado no se apunta: si sigue igual de abajo, avisa al volver.
+    if puntuales.CARTERA in calladas or _silenciado(config):
+        return
+
+    posiciones = list(config.cartera)
+    try:
+        filas = database.get_series(
+            config.database_path,
+            [p.coin_id for p in posiciones],
+            record.horas(config.history_days),
+            config.vs_currency,
+        )
+        avisado = database.ultimo_bajon(config.database_path)
+    except database.DatabaseError as e:
+        logger.error("No se pudo mirar el récord de la cartera: %s", e)
+        return
+
+    # El de ahora al final por si no se pudo guardar.
+    serie = cartera.serie_valor(posiciones, filas)
+    serie.append((datetime.now(timezone.utc), valor))
+    resultado = record.calcular(serie)
+    if resultado is None:
+        return
+    escalon = bajon.toca(resultado, config.caida_cartera, avisado)
+    if escalon is None:
+        return
+
+    texto = alerts.formatear_bajon(
+        resultado, escalon, config.caida_cartera, config.vs_currency
+    )
+    if not telegram.send_message(
+        config.telegram_token,
+        config.telegram_chat_id,
+        texto,
+        sin_sonido=_sin_sonido(config),
+    ):
+        logger.error("No se pudo avisar de la caída de la cartera")
+        return
+
+    logger.info("Aviso de caída de la cartera: %.2f%%", resultado.caida)
+    try:
+        database.guardar_bajon(config.database_path, resultado.cuando, escalon)
+    except database.DatabaseError as e:
+        logger.error("No se pudo apuntar el aviso de caída de la cartera: %s", e)
 
 
 def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:

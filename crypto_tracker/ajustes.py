@@ -35,6 +35,12 @@ def lineas(config: Config) -> list[str]:
     else:
         texto.append("📈 Sin aviso de máximos y mínimos")
 
+    if config.caida_cartera:
+        pct = f"{config.caida_cartera:g}".replace(".", ",")
+        texto.append(f"📉 Aviso si la cartera cae un {pct}% desde su récord")
+    else:
+        texto.append("📉 Sin aviso de caída de la cartera")
+
     if config.horas_tranquilas:
         inicio, fin = config.horas_tranquilas
         texto.append(f"🌙 Sin sonar de {inicio:%H:%M} a {fin:%H:%M}")
