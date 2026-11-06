@@ -7185,3 +7185,67 @@ def test_vsbtc_sin_precio_de_hoy_de_una(config, enviados, monkeypatch):
     main.atender(config, _mensaje("/vsbtc"))
 
     assert "No he podido consultar los precios" in enviados[0]
+
+
+# --- /rebalanceo ---
+
+
+PRECIOS_REBALANCEO = {"bitcoin": 60000.0, "ethereum": 3000.0, "solana": 150.0}
+
+
+@pytest.fixture
+def para_rebalanceo(config, monkeypatch):
+    from dataclasses import replace
+
+    from crypto_tracker.config import parse_cartera
+
+    monkeypatch.setattr(
+        coingecko,
+        "get_prices",
+        lambda ids, cur: {c: p for c, p in PRECIOS_REBALANCEO.items() if c in ids},
+    )
+    # 0,1 BTC = 6.000 y 1 ETH = 3.000 y 6,666 SOL = 1.000
+    return replace(
+        config, cartera=parse_cartera("bitcoin:0.1,ethereum:1,solana:6.6666666667")
+    )
+
+
+def test_rebalanceo(para_rebalanceo, enviados):
+    main.atender(para_rebalanceo, _mensaje("/rebalanceo btc 50 eth 30 sol 20"))
+
+    assert "Vende <b>€1.000,00</b> de Bitcoin" in enviados[0]
+    assert "Compra <b>€1.000,00</b> de Solana" in enviados[0]
+    assert "Ethereum ya está bien: 30%" in enviados[0]
+
+
+def test_rebalanceo_a_secas(para_rebalanceo, enviados):
+    main.atender(para_rebalanceo, _mensaje("/rebalancear"))
+
+    assert "a partes iguales" in enviados[0]
+    assert "Vende <b>€2.666,67</b> de Bitcoin" in enviados[0]
+
+
+def test_rebalanceo_con_una_nueva(para_rebalanceo, enviados):
+    main.atender(para_rebalanceo, _mensaje("/rebalanceo btc 100"))
+
+    assert "Vende toda la de Ethereum" in enviados[0]
+    assert "Vende toda la de Solana" in enviados[0]
+    assert "Compra <b>€4.000,00</b> de Bitcoin" in enviados[0]
+
+
+def test_rebalanceo_nombre_mal(para_rebalanceo, enviados):
+    main.atender(para_rebalanceo, _mensaje("/rebalanceo btc 50 bitcon 50"))
+
+    assert "No encuentro <b>bitcon</b>" in enviados[0]
+
+
+def test_rebalanceo_no_suma(para_rebalanceo, enviados):
+    main.atender(para_rebalanceo, _mensaje("/rebalanceo btc 50 eth 30"))
+
+    assert "suma 80%" in enviados[0]
+
+
+def test_rebalanceo_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/rebalanceo btc 100"))
+
+    assert enviados[0] == main.SIN_CARTERA

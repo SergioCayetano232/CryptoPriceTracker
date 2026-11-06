@@ -16,6 +16,7 @@ COMANDOS = {
     "ath": "El máximo y el mínimo histórico (ej: /ath bitcoin)",
     "cartera": "Cuánto vale lo que tienes, con gráfica (ej: /cartera 30d)",
     "reparto": "Qué parte de tu cartera es cada cripto, con gráfica",
+    "rebalanceo": "Qué mover para un reparto (ej: /rebalanceo btc 60 eth 40)",
     "semana": "Cómo le ha ido a tu cartera esta semana, o a una (ej: /semana btc)",
     "mes": "Cómo va tu cartera desde el día 1 del mes",
     "anual": "Cómo va tu cartera desde el 1 de enero",
@@ -206,6 +207,8 @@ ALIAS = {
     "fecha": "dia",
     "backup": "copia",
     "tarta": "reparto",
+    "rebalancear": "rebalanceo",
+    "rebalance": "rebalanceo",
     "pesos": "reparto",
     "correlación": "correlacion",
     "correlation": "correlacion",
@@ -443,6 +446,11 @@ EJEMPLOS = {
         ("/cartera", "cuánto vale, con la gráfica de 7 días"),
         ("/cartera 30d", "con la gráfica del tramo que digas"),
         ("/cartera usd", "lo que vale en dólares, sin lo que ganas"),
+    ],
+    "rebalanceo": [
+        ("/rebalanceo btc 60 eth 40", "qué mover para quedarte con ese reparto"),
+        ("/rebalanceo btc 100", "lo que no nombres, a venderlo entero"),
+        ("/rebalanceo", "a secas, a partes iguales entre lo que tienes"),
     ],
     "compra": [
         ("/compra bitcoin 0.01 600", "0,01 por 600 € en total"),

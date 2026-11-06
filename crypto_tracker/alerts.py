@@ -142,6 +142,8 @@ from .quieta import Quieta
 from .racha import Racha
 from .rango import Rango, barra
 from .ratio import Ratio
+from .rebalanceo import EJEMPLO as EJEMPLO_REBALANCEO
+from .rebalanceo import Paso
 from .record import Record
 from .redondo import Redondo
 from .reparto import Trozo, demasiado
@@ -2578,6 +2580,43 @@ def formatear_reparto(trozos: list[Trozo], total: float, currency: str) -> str:
             f"\n⚖️ Más de la mitad es <b>{nombre}</b>. "
             "Si cae, lo notará toda la cartera."
         )
+    return "\n".join(lineas)
+
+
+def formatear_rebalanceo(
+    pasos: list[Paso], total: float, currency: str, iguales: bool
+) -> str:
+    """Respuesta de /rebalanceo."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    titulo = "a partes iguales" if iguales else "en tu reparto"
+    lineas = [
+        f"⚖️ <b>Para dejar tu cartera {titulo}</b>",
+        f"Ahora vale {simbolo}{_num(total)}",
+        "",
+    ]
+    for p in pasos:
+        nombre = escape(p.coin_id.replace("-", " ").title())
+        cambio = f"{p.peso:.0f}% → {p.objetivo:.0f}%"
+        if not p.mover:
+            lineas.append(f"✅ {nombre} ya está bien: {p.peso:.0f}%")
+        elif not p.objetivo:
+            lineas.append(
+                f"💸 Vende toda la de {nombre}: {texto_cantidad(p.cantidad)}, "
+                f"<b>{simbolo}{_num(p.ahora)}</b> · {cambio}"
+            )
+        else:
+            verbo = "🛒 Compra" if p.mover > 0 else "💸 Vende"
+            lineas.append(
+                f"{verbo} <b>{simbolo}{_num(abs(p.mover))}</b> de {nombre} "
+                f"({texto_cantidad(p.cantidad)}) · {cambio}"
+            )
+    if all(not p.mover for p in pasos):
+        lineas = lineas[:2] + ["", "👌 Ya la tienes así, no hay nada que mover"]
+
+    pie = "Al precio de ahora y sin contar comisiones."
+    if iguales:
+        pie += f" Para otro reparto: {EJEMPLO_REBALANCEO}"
+    lineas += ["", f"<i>{pie}</i>"]
     return "\n".join(lineas)
 
 

@@ -129,6 +129,7 @@ from crypto_tracker import (
     racha,
     rango,
     ratio,
+    rebalanceo,
     record,
     redondo,
     refran,
@@ -896,6 +897,12 @@ def responder(
         if not config.cartera:
             return SIN_CARTERA
         return _reparto(config)
+
+    if nombre == "rebalanceo":
+        config = _con_cambios(config)
+        if not config.cartera:
+            return SIN_CARTERA
+        return _rebalanceo(config, argumento)
 
     if nombre == "compra":
         return _comprar(config, argumento)
@@ -3828,6 +3835,44 @@ def _reparto(config: Config) -> str | comandos.Foto:
         logger.warning("Mando /reparto sin imagen: %s", e)
         return texto
     return comandos.Foto(png, texto, texto)
+
+
+def _rebalanceo(config: Config, argumento: str) -> str:
+    try:
+        reparto = rebalanceo.interpretar(argumento)
+    except rebalanceo.RebalanceoError as e:
+        return telegram.escape(str(e))
+    iguales = reparto is None
+    if reparto is None:
+        reparto = rebalanceo.iguales([p.coin_id for p in config.cartera])
+
+    tienes = [p.coin_id for p in config.cartera]
+    precios = _consultar(config, list(dict.fromkeys([*tienes, *reparto])))
+    if precios is None:
+        return "No he podido consultar los precios. Prueba en un rato."
+    # Una que no tienes y no sale suele ser un nombre mal escrito.
+    nuevas = [c for c in reparto if c not in tienes and c not in precios]
+    if nuevas:
+        return (
+            "No encuentro "
+            + ", ".join(f"<b>{telegram.escape(c)}</b>" for c in nuevas)
+            + ". Ponla con su símbolo (btc) o su id de CoinGecko (bitcoin)."
+        )
+    valores, faltan = cartera.valorar(list(config.cartera), precios)
+    if faltan:
+        return (
+            "No tengo el precio de "
+            + ", ".join(f"<b>{telegram.escape(c)}</b>" for c in faltan)
+            + " y sin ella las cuentas saldrían mal. Prueba en un rato."
+        )
+
+    pasos = rebalanceo.calcular(valores, reparto, precios)
+    if not pasos:
+        return "Tu cartera ahora mismo no vale nada, no hay nada que repartir."
+    total = cartera.total(valores).valor
+    return alerts.con_fuente(
+        alerts.formatear_rebalanceo(pasos, total, config.vs_currency, iguales)
+    )
 
 
 def montar_cartera(config: Config) -> str | None:
