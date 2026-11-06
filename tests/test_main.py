@@ -7249,3 +7249,45 @@ def test_rebalanceo_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/rebalanceo btc 100"))
 
     assert enviados[0] == main.SIN_CARTERA
+
+
+# --- /compras ---
+
+
+def test_compras(config, enviados, monkeypatch):
+    _movimiento_hace(config, "bitcoin", "compra", 0.01, 400, 48)
+    _movimiento_hace(config, "ethereum", "compra", 1, 4000, 24)
+    precios = {"bitcoin": 60000.0, "ethereum": 3000.0}
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: precios)
+
+    main.atender(config, _mensaje("/compras"))
+
+    assert "🥇 La mejor: 0,01 de Bitcoin" in enviados[0]
+    assert "🥴 La peor: 1 de Ethereum" in enviados[0]
+    assert "De 2 compras, 1 van ganando y 1 perdiendo" in enviados[0]
+
+
+def test_compras_de_una(config, enviados, monkeypatch):
+    _movimiento_hace(config, "bitcoin", "compra", 0.01, 400, 48)
+    _movimiento_hace(config, "ethereum", "compra", 1, 4000, 24)
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 60000.0})
+
+    main.atender(config, _mensaje("/compras btc"))
+
+    assert "Tus compras de Bitcoin" in enviados[0]
+    assert "Solo tienes una compra" in enviados[0]
+
+
+def test_compras_no_confunde_con_compra(config, enviados):
+    main.atender(config, _mensaje("/compras"))
+
+    assert "No has apuntado ninguna compra" in enviados[0]
+
+
+def test_compras_sin_lo_que_costaron(config, enviados, monkeypatch):
+    _movimiento_hace(config, "bitcoin", "compra", 0.01, None, 48)
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 60000.0})
+
+    main.atender(config, _mensaje("/compras"))
+
+    assert "no llevan lo que costaron" in enviados[0]

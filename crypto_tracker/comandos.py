@@ -23,6 +23,7 @@ COMANDOS = {
     "compra": "Apuntar una compra en la cartera (ej: /compra bitcoin 0.01 600)",
     "venta": "Apuntar una venta (ej: /venta bitcoin 0.005 350 o todo)",
     "movimientos": "Tus últimas compras y ventas (ej: /movimientos btc)",
+    "compras": "Tu mejor y tu peor compra (ej: /compras o /compras btc)",
     "ganancias": "Lo que has ganado o perdido con lo que ya vendiste",
     "impuestos": "Lo que le tocaría a Hacienda de lo que ganaste vendiendo",
     "primera": "Tu primera compra y cuánto ha cambiado desde entonces",

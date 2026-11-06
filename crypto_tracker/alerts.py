@@ -39,6 +39,7 @@ from .coche import PRECIO as PRECIO_COCHE
 from .coche import Coche
 from .comparar import Resultado
 from .comparar import media as media_comparar
+from .compras import Compra, Resumen
 from .concierto import PRECIO as PRECIO_CONCIERTO
 from .concierto import Concierto
 from .config import Posicion, Watch
@@ -810,6 +811,48 @@ def formatear_bajon(r: Record, escalon: int, porcentaje: float, currency: str) -
         f"El siguiente aviso, al {_pct((escalon + 1) * porcentaje)}%</i>",
     ]
     return "\n".join(texto)
+
+
+def formatear_compras(r: Resumen, currency: str, coin_id: str | None) -> str:
+    """Respuesta de /compras."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    de = f" de {escape(coin_id.replace('-', ' ').title())}" if coin_id else ""
+    texto = [f"🧾 <b>Tus compras{de}</b>", ""]
+
+    if r.total == 1:
+        texto += _una_compra("📌 Solo tienes una compra", r.mejor, simbolo)
+    else:
+        texto += _una_compra("🥇 La mejor", r.mejor, simbolo)
+        texto.append("")
+        texto += _una_compra("🥴 La peor", r.peor, simbolo)
+        texto.append("")
+        if not r.rojas:
+            texto.append(f"De {r.total} compras, las {r.total} van ganando")
+        elif not r.verdes:
+            texto.append(f"De {r.total} compras, las {r.total} van perdiendo")
+        else:
+            texto.append(
+                f"De {r.total} compras, {r.verdes} van ganando y {r.rojas} perdiendo"
+            )
+
+    if r.sin_precio:
+        cuantas = "1 sin" if r.sin_precio == 1 else f"{r.sin_precio} sin"
+        cuenta = "no cuenta" if r.sin_precio == 1 else "no cuentan"
+        texto.append(f"<i>{cuantas} lo que costó o sin precio de hoy, {cuenta}</i>")
+    cada = "A precio de hoy" if r.total == 1 else "Cada una a precio de hoy"
+    texto.append(f"<i>{cada}, aunque ya la hayas vendido</i>")
+    return "\n".join(texto)
+
+
+def _una_compra(titulo: str, c: Compra, simbolo: str) -> list[str]:
+    m = c.movimiento
+    nombre = escape(m.coin_id.replace("-", " ").title())
+    cambio = f"{c.cambio:+.1f}".replace(".", ",")
+    return [
+        f"{titulo}: {texto_cantidad(m.cantidad)} de {nombre} el "
+        f"{m.cuando.astimezone():%d/%m/%Y} a {simbolo}{_num(c.pagado)}",
+        f"{_flecha(c.cambio)} {cambio}%, <b>{_ganancia(c.ganancia, simbolo)}</b>",
+    ]
 
 
 def formatear_vsbtc(c: Contra, currency: str) -> str:

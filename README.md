@@ -189,6 +189,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/hodl` | Cuántos días llevas sin vender cada cripto de tu cartera, de la que más a la que menos: desde la última venta o, si nunca vendiste, desde la primera compra. Si lo vendiste todo y volviste a comprar, cuenta desde la nueva compra. También `/diamante` |
 | `/record` | Lo máximo que ha valido tu cartera con los precios guardados, qué día fue y cuánto le falta para volver. Ojo: es lo que tienes hoy a los precios de entonces, no lo que tenías ese día. No gasta consultas. También `/pico` |
 | `/vsbtc` | Lo que vale hoy lo que has comprado por Telegram, contra haber metido ese mismo dinero en bitcoin los mismos días (y sacado lo mismo al vender). Usa el precio de bitcoin que tiene guardado, así que necesita llevar vigilándolo desde tus compras. Lo del `PORTFOLIO` del `.env` no cuenta, porque no lleva fecha. También `/vsbitcoin` |
+| `/compras` | Tu mejor y tu peor compra, con el % y lo que va ganando o perdiendo cada una a precio de hoy, y cuántas van en verde. Con `/compras btc`, solo las de esa. Solo las apuntadas por Telegram con lo que costaron |
 | `/movimientos` | Tus últimas compras y ventas, con un botón para deshacer la última (`/movimientos btc`, solo las de esa) |
 | `/deshacer` | Quita la última compra o venta y deja la cripto como estaba |
 | `/alerta bitcoin 70000` | Te avisa una vez cuando llegue a ese precio |

@@ -50,6 +50,7 @@ from crypto_tracker import (
     coingecko,
     comandos,
     comparar,
+    compras,
     concierto,
     consejo,
     convertir,
@@ -1025,6 +1026,9 @@ def responder(
     if nombre == "vsbtc":
         return _vsbtc(config)
 
+    if nombre == "compras":
+        return _compras(config, argumento)
+
     if nombre == "ath":
         return _ath(config, argumento)
 
@@ -1684,6 +1688,29 @@ def _record(config: Config) -> str:
     if resultado is None:
         return "Aún no tengo precios guardados de tu cartera. Vuelve en un rato."
     return alerts.formatear_record(resultado, config.vs_currency)
+
+
+def _compras(config: Config, argumento: str) -> str:
+    coin_id = simbolos.a_id(argumento) if argumento else None
+    todos = database.get_movimientos(config.database_path, None, coin_id)
+    if not any(m.tipo == "compra" for m in todos):
+        de = f" de <b>{telegram.escape(coin_id)}</b>" if coin_id else ""
+        return (
+            f"No has apuntado ninguna compra{de} por aquí. Lo del PORTFOLIO "
+            f"del .env no sale. Apúntala así: {movimientos.EJEMPLO_COMPRA}"
+        )
+    precios = _consultar(config, list({m.coin_id for m in todos}))
+    if precios is None:
+        return "No he podido consultar los precios. Prueba en un rato."
+    resultado = compras.calcular(todos, precios)
+    if resultado is None:
+        return (
+            "Tus compras no llevan lo que costaron, así que no puedo saber si "
+            f"fueron buenas. La próxima, con precio: {movimientos.EJEMPLO_COMPRA}"
+        )
+    return alerts.con_fuente(
+        alerts.formatear_compras(resultado, config.vs_currency, coin_id)
+    )
 
 
 def _vsbtc(config: Config) -> str:
