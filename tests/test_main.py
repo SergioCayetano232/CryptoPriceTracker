@@ -7291,3 +7291,61 @@ def test_compras_sin_lo_que_costaron(config, enviados, monkeypatch):
     main.atender(config, _mensaje("/compras"))
 
     assert "no llevan lo que costaron" in enviados[0]
+
+
+# --- /rentabilidad ---
+
+
+def test_rentabilidad(config, enviados, monkeypatch):
+    _movimiento_hace(config, "bitcoin", "compra", 0.02, 1000, 365 * 24)
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 55000.0})
+
+    main.atender(config, _mensaje("/rentabilidad"))
+
+    assert "Has metido €1.000,00. Hoy vale €1.100,00" in enviados[0]
+    assert "(+10,0%) en 365 días" in enviados[0]
+    assert "Al año, un <b>+10,0%</b>" in enviados[0]
+
+
+def test_rentabilidad_por_tir(config, enviados, monkeypatch):
+    _movimiento_hace(config, "bitcoin", "compra", 0.02, 1000, 5 * 24)
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 55000.0})
+
+    main.atender(config, _mensaje("/tir"))
+
+    assert "Con menos de un mes no lo paso a anual" in enviados[0]
+
+
+def test_rentabilidad_vendido_todo_no_consulta(config, enviados, monkeypatch):
+    _movimiento_hace(config, "bitcoin", "compra", 0.02, 1000, 400 * 24)
+    _movimiento_hace(config, "bitcoin", "venta", 0.02, 1200, 35 * 24)
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+
+    main.atender(config, _mensaje("/rentabilidad"))
+
+    assert "sacado €1.200,00" in enviados[0]
+    assert "Ganas <b>+€200,00</b>" in enviados[0]
+
+
+def test_rentabilidad_sin_compras(config, enviados):
+    main.atender(config, _mensaje("/rentabilidad"))
+
+    assert "No has apuntado ninguna compra" in enviados[0]
+
+
+def test_rentabilidad_sin_lo_que_costaron(config, enviados, monkeypatch):
+    _movimiento_hace(config, "bitcoin", "compra", 0.02, None, 48)
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+
+    main.atender(config, _mensaje("/rentabilidad"))
+
+    assert "no llevan lo que costaron" in enviados[0]
+
+
+def test_rentabilidad_sin_conexion(config, enviados, monkeypatch):
+    _movimiento_hace(config, "bitcoin", "compra", 0.02, 1000, 48)
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {})
+
+    main.atender(config, _mensaje("/rentabilidad"))
+
+    assert "No he podido consultar los precios" in enviados[0]

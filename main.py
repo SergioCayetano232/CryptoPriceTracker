@@ -134,6 +134,7 @@ from crypto_tracker import (
     record,
     redondo,
     refran,
+    rentabilidad,
     reparto,
     rolex,
     rsi,
@@ -1029,6 +1030,9 @@ def responder(
     if nombre == "compras":
         return _compras(config, argumento)
 
+    if nombre == "rentabilidad":
+        return _rentabilidad(config)
+
     if nombre == "ath":
         return _ath(config, argumento)
 
@@ -1688,6 +1692,28 @@ def _record(config: Config) -> str:
     if resultado is None:
         return "Aún no tengo precios guardados de tu cartera. Vuelve en un rato."
     return alerts.formatear_record(resultado, config.vs_currency)
+
+
+def _rentabilidad(config: Config) -> str:
+    todos = database.get_movimientos(config.database_path, None)
+    if not any(m.tipo == "compra" for m in todos):
+        return (
+            "No has apuntado ninguna compra por aquí, y lo del PORTFOLIO del .env "
+            f"no lleva fecha. Apúntalas así: {movimientos.EJEMPLO_COMPRA}"
+        )
+    _, tienes = rentabilidad.contables(todos)
+    precios = _consultar(config, list(tienes)) if tienes else {}
+    if precios is None:
+        return "No he podido consultar los precios. Prueba en un rato."
+    resultado = rentabilidad.calcular(todos, precios, datetime.now(timezone.utc))
+    if resultado is None:
+        if not rentabilidad.contables(todos)[0]:
+            return (
+                "Tus compras no llevan lo que costaron, así que no puedo sacar la "
+                f"rentabilidad. La próxima, con precio: {movimientos.EJEMPLO_COMPRA}"
+            )
+        return "No he podido consultar los precios. Prueba en un rato."
+    return alerts.formatear_rentabilidad(resultado, config.vs_currency)
 
 
 def _compras(config: Config, argumento: str) -> str:

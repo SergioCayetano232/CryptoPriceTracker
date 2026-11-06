@@ -147,6 +147,8 @@ from .rebalanceo import EJEMPLO as EJEMPLO_REBALANCEO
 from .rebalanceo import Paso
 from .record import Record
 from .redondo import Redondo
+from .rentabilidad import MIN_DIAS as MIN_DIAS_RENTABILIDAD
+from .rentabilidad import Rentabilidad
 from .reparto import Trozo, demasiado
 from .rolex import PRECIO as PRECIO_ROLEX
 from .rolex import Rolex
@@ -810,6 +812,60 @@ def formatear_bajon(r: Record, escalon: int, porcentaje: float, currency: str) -
         f"<i>Ya pasa del {_pct(escalon * porcentaje)}%. "
         f"El siguiente aviso, al {_pct((escalon + 1) * porcentaje)}%</i>",
     ]
+    return "\n".join(texto)
+
+
+def formatear_rentabilidad(r: Rentabilidad, currency: str) -> str:
+    """Respuesta de /rentabilidad."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    if r.sacado:
+        dinero = [
+            f"Has metido {simbolo}{_num(r.metido)} y sacado {simbolo}{_num(r.sacado)}",
+            f"Lo que te queda vale {simbolo}{_num(r.vale)}",
+        ]
+    else:
+        dinero = [
+            f"Has metido {simbolo}{_num(r.metido)}. Hoy vale {simbolo}{_num(r.vale)}"
+        ]
+
+    if r.dias == 0:
+        tiempo = "hoy"
+    elif r.dias == 1:
+        tiempo = "en 1 día"
+    else:
+        tiempo = f"en {r.dias:,} días".replace(",", ".")
+    verbo = "Ganas" if r.ganancia >= 0 else "Pierdes"
+    pct = f"{r.porcentaje:+.1f}".replace(".", ",")
+    texto = [
+        "📈 <b>Tu rentabilidad</b>",
+        "",
+        *dinero,
+        f"{_flecha(r.ganancia)} {verbo} <b>{_ganancia(r.ganancia, simbolo)}</b> "
+        f"({pct}%) {tiempo}",
+    ]
+
+    if r.anual is not None:
+        anual = f"{r.anual:+,.1f}".replace(",", "@").replace(".", ",").replace("@", ".")
+        texto.append(f"📅 Al año, un <b>{anual}%</b>")
+        texto.append(
+            "<i>Cuenta cuándo metiste y sacaste cada euro: no es lo mismo un 10% "
+            "en un mes que en tres años</i>"
+        )
+    elif r.dias < MIN_DIAS_RENTABILIDAD:
+        texto.append(
+            "<i>Con menos de un mes no lo paso a anual: una buena semana saldría "
+            "como un +1.000% al año</i>"
+        )
+
+    if r.fuera:
+        cuantos = (
+            "1 movimiento no cuenta"
+            if r.fuera == 1
+            else (f"{r.fuera} movimientos no cuentan")
+        )
+        texto.append(
+            f"<i>{cuantos}: sin precio, o ventas de lo que tenías en el .env</i>"
+        )
     return "\n".join(texto)
 
 
