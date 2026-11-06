@@ -95,6 +95,7 @@ SILENCIO = "silenciado_hasta"
 # Dia del ultimo resumen diario, para no mandarlo dos veces si se reinicia.
 ULTIMO_RESUMEN = "ultimo_resumen"
 ULTIMO_SEMANAL = "ultimo_semanal"
+ULTIMO_MENSUAL = "ultimo_mensual"
 
 # La hora del resumen puesta con /horario, encima de la del .env. Vacio es sin resumen.
 HORA_RESUMEN = "hora_resumen"
@@ -446,7 +447,7 @@ def hora_resumen(db_path: str) -> tuple[bool, time | None]:
 
 
 def ultimo_resumen(db_path: str, clave: str = ULTIMO_RESUMEN) -> date | None:
-    """Dia en que se mando el ultimo resumen, el diario o el semanal."""
+    """Dia en que se mando el ultimo resumen: el diario, el semanal o el mensual."""
     with _connect(db_path) as conn:
         fila = conn.execute(
             "SELECT valor FROM ajustes WHERE clave = ?", (clave,)

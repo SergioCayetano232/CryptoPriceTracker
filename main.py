@@ -99,6 +99,7 @@ from crypto_tracker import (
     maximo,
     media,
     mejor,
+    mensual,
     menu,
     merge,
     mes,
@@ -635,6 +636,7 @@ def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:
             fallos = 0
             resumen_diario(config)
             resumen_semanal(config)
+            resumen_mensual(config)
         except KeyboardInterrupt:
             raise
         except Exception as e:
@@ -3482,6 +3484,65 @@ def resumen_semanal(config: Config, ahora: datetime | None = None) -> None:
         logger.error("No se pudo apuntar el resumen semanal: %s", e)
 
 
+def resumen_mensual(config: Config, ahora: datetime | None = None) -> None:
+    """El día 1, a la hora del diario, cómo le fue a la cartera el mes pasado."""
+    config = _con_cambios(config)
+    if config.resumen_diario is None or not config.cartera:
+        return
+
+    ahora = ahora or datetime.now().astimezone()
+    try:
+        ultimo = database.ultimo_resumen(config.database_path, database.ULTIMO_MENSUAL)
+    except database.DatabaseError as e:
+        logger.error("No se pudo leer el ultimo resumen mensual: %s", e)
+        return
+
+    if not mensual.toca(ahora, config.resumen_diario, ultimo) or _silenciado(config):
+        return
+
+    desde, hasta = mensual.tramo(ahora)
+    horas = (datetime.now(timezone.utc) - desde).total_seconds() / 3600
+    posiciones = list(config.cartera)
+    try:
+        filas = database.get_series(
+            config.database_path,
+            [p.coin_id for p in posiciones],
+            horas,
+            config.vs_currency,
+        )
+    except database.DatabaseError as e:
+        logger.error("No se pudieron leer los precios del mes: %s", e)
+        return
+    # Lo de esta mañana ya es del mes nuevo.
+    resultado = semanal.semana(posiciones, [f for f in filas if f[0] < hasta])
+
+    nombre = mes.nombre(desde)
+    if resultado is None:
+        logger.info("Toca el resumen mensual, pero no hay precios de %s", nombre)
+    else:
+        respuesta = _foto_semana(
+            config,
+            resultado,
+            horas,
+            titulo=f"Tu {nombre}",
+            tramo=f"en {nombre}",
+            emoji="🗓",
+            subtitulo=f"Del 1 al {(hasta - timedelta(days=1)).day} de {nombre}",
+            pista=mes.pista(config.history_days, horas),
+        )
+        if not _mandar_foto(config, respuesta):
+            logger.error("No se pudo enviar el resumen mensual, lo reintento luego")
+            return
+        logger.info("Resumen mensual enviado")
+
+    try:
+        database.guardar_resumen(
+            config.database_path, ahora.date(), database.ULTIMO_MENSUAL
+        )
+    except database.DatabaseError as e:
+        logger.error("No se pudo apuntar el resumen mensual: %s", e)
+
+
 def _leer_semana(config: Config, horas: float = semanal.HORAS) -> semanal.Semana | None:
     posiciones = list(config.cartera)
     filas = database.get_series(
@@ -3539,7 +3600,10 @@ def _foto_semana(
 
 
 def _mandar_semana(config: Config, semana: semanal.Semana) -> bool:
-    respuesta = _foto_semana(config, semana)
+    return _mandar_foto(config, _foto_semana(config, semana))
+
+
+def _mandar_foto(config: Config, respuesta: str | comandos.Foto) -> bool:
     sin_sonido = _sin_sonido(config)
     if isinstance(respuesta, comandos.Foto):
         if telegram.send_photo(

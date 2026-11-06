@@ -4530,6 +4530,123 @@ def test_semanal_avisa_si_no_hay_semana_entera(con_semana, sin_fotos_de_verdad):
     assert "Solo tengo precios desde" in sin_fotos_de_verdad[0][1]
 
 
+# --- resumen mensual ---
+
+
+def _dia_1():
+    """El día 1 de este mes a las 9:30: el mes pasado es el que acaba de cerrar."""
+    from datetime import datetime
+
+    hoy = datetime.now().astimezone()
+    return datetime(hoy.year, hoy.month, 1, 9, 30).astimezone()
+
+
+def _mes_pasado_guardado(config):
+    from datetime import datetime
+
+    # Horas desde el 1 a las 00:00: lo de más atrás es del mes pasado.
+    van = (datetime.now().astimezone() - _dia_1()).total_seconds() / 3600 + 9.5
+    for coin_id, antes, despues in (("bitcoin", 60000.0, 63000.0), ("solana", 100, 95)):
+        _guardar(config, coin_id, antes, van + 48)
+        _guardar(config, coin_id, despues, van + 2)
+        # esto ya es del mes nuevo y no tiene que contar
+        _guardar(config, coin_id, despues * 10, 0)
+
+
+def _nombre_mes_pasado():
+    from datetime import timedelta
+
+    from crypto_tracker import mes
+
+    return mes.nombre(_dia_1() - timedelta(days=1))
+
+
+def test_mensual_el_dia_1(con_semana, enviados, sin_fotos_de_verdad):
+    _mes_pasado_guardado(con_semana)
+
+    main.resumen_mensual(con_semana, _dia_1())
+
+    [(png, pie)] = sin_fotos_de_verdad
+    nombre = _nombre_mes_pasado()
+    assert png
+    assert f"🗓 <b>Tu {nombre}</b>" in pie
+    assert f"+3.57% (+€250,00) en {nombre}" in pie
+    assert enviados == []
+
+
+def test_mensual_una_vez(con_semana, sin_fotos_de_verdad):
+    _mes_pasado_guardado(con_semana)
+
+    main.resumen_mensual(con_semana, _dia_1())
+    main.resumen_mensual(con_semana, _dia_1())
+
+    assert len(sin_fotos_de_verdad) == 1
+
+
+def test_mensual_solo_el_dia_1(con_semana, sin_fotos_de_verdad):
+    from datetime import timedelta
+
+    _mes_pasado_guardado(con_semana)
+
+    main.resumen_mensual(con_semana, _dia_1() + timedelta(days=1))
+
+    assert sin_fotos_de_verdad == []
+
+
+def test_mensual_sin_cartera(con_resumen, enviados, sin_fotos_de_verdad):
+    main.resumen_mensual(con_resumen, _dia_1())
+
+    assert enviados == [] and sin_fotos_de_verdad == []
+
+
+def test_mensual_sin_precios_no_insiste(con_semana, enviados, sin_fotos_de_verdad):
+    main.resumen_mensual(con_semana, _dia_1())
+
+    assert enviados == [] and sin_fotos_de_verdad == []
+    ultimo = database.ultimo_resumen(con_semana.database_path, database.ULTIMO_MENSUAL)
+    assert ultimo == _dia_1().date()
+
+
+def test_mensual_callado_llega_al_volver(con_semana, sin_fotos_de_verdad):
+    from datetime import datetime, timedelta, timezone
+
+    _mes_pasado_guardado(con_semana)
+    database.silenciar_hasta(
+        con_semana.database_path, datetime.now(timezone.utc) + timedelta(hours=1)
+    )
+
+    main.resumen_mensual(con_semana, _dia_1())
+    assert sin_fotos_de_verdad == []
+
+    database.silenciar_hasta(con_semana.database_path, None)
+    main.resumen_mensual(con_semana, _dia_1())
+    assert len(sin_fotos_de_verdad) == 1
+
+
+def test_mensual_reintenta_si_telegram_falla(con_semana, monkeypatch):
+    monkeypatch.setattr(telegram, "send_photo", lambda *a, **k: False)
+    monkeypatch.setattr(telegram, "send_message", lambda *a, **k: False)
+    _mes_pasado_guardado(con_semana)
+
+    main.resumen_mensual(con_semana, _dia_1())
+
+    assert (
+        database.ultimo_resumen(con_semana.database_path, database.ULTIMO_MENSUAL)
+        is None
+    )
+
+
+def test_mensual_y_semanal_no_se_pisan(con_semana, sin_fotos_de_verdad):
+    _mes_pasado_guardado(con_semana)
+
+    main.resumen_mensual(con_semana, _dia_1())
+
+    assert (
+        database.ultimo_resumen(con_semana.database_path, database.ULTIMO_SEMANAL)
+        is None
+    )
+
+
 def test_semana_cuando_la_pides(con_semana, enviados, sin_fotos_de_verdad):
     _semana_guardada(con_semana)
 

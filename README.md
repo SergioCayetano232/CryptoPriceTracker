@@ -549,6 +549,10 @@ mejor ha ido a la que peor y la gráfica de la semana. Sale de los precios que y
 tiene guardados, así que no gasta consultas, pero necesita que el bot lleve
 unos días en `--loop`. Con `/semana` lo pides cuando quieras.
 
+Y el día 1 de cada mes, también a esa hora, te llega **tu mes**: lo mismo, pero
+del mes que acaba de terminar, del día 1 al último. Con `/mes` ves el que va en
+curso. Si `HISTORY_DAYS` es menor de 31, saldrá solo el trozo que tenga.
+
 **Que no te despierte:**
 ```
 HORAS_TRANQUILAS=23-8
