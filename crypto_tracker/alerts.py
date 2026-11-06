@@ -25,6 +25,7 @@ from .boda import Boda
 from .cafe import PRECIO as PRECIO_CAFE
 from .cafe import Cafe
 from .caida import Caida
+from .calendario import Mes
 from .cana import PRECIO as PRECIO_CANA
 from .cana import Cana
 from .caraocruz import QUE_HACER
@@ -98,6 +99,7 @@ from .menu import PRECIO as PRECIO_MENU
 from .menu import Menu
 from .mercado import Mercado, grande
 from .merge import Merge
+from .mes import MESES
 from .meta import Meta
 from .metro import PRECIO as PRECIO_METRO
 from .metro import Metro
@@ -812,6 +814,33 @@ def formatear_bajon(r: Record, escalon: int, porcentaje: float, currency: str) -
         f"<i>Ya pasa del {_pct(escalon * porcentaje)}%. "
         f"El siguiente aviso, al {_pct((escalon + 1) * porcentaje)}%</i>",
     ]
+    return "\n".join(texto)
+
+
+def formatear_calendario(coin_id: str, m: Mes) -> str:
+    """El pie de /calendario, y lo que va si la imagen no sale."""
+    nombre = escape(coin_id.replace("-", " ").title())
+    texto = [f"🗓 <b>{nombre} en {MESES[m.mes - 1]} de {m.año}</b>", ""]
+    if not m.con_dato:
+        texto.append(
+            "No tengo dos días seguidos con precio en este mes. Solo sé de las que "
+            "vigilo, y desde que las vigilo."
+        )
+        return "\n".join(texto)
+
+    dias = "1 día" if m.verdes == 1 else f"{m.verdes} días"
+    texto.append(f"🟩 {dias} en verde · 🟥 {m.rojos} en rojo")
+    for titulo, c in (("Mejor", m.mejor), ("Peor", m.peor)):
+        pct = f"{c.cambio:+.1f}".replace(".", ",")
+        texto.append(f"{titulo}, el {c.dia.day}: {_flecha(c.cambio)} {pct}%")
+    if m.cambio is not None:
+        pct = f"{m.cambio:+.1f}".replace(".", ",")
+        texto.append(f"En el mes: {_flecha(m.cambio)} {pct}%")
+
+    sin = sum(1 for c in m.casillas if not c.futuro and c.cambio is None)
+    if sin:
+        cuantos = "1 día sin precio" if sin == 1 else f"{sin} días sin precio"
+        texto.append(f"<i>{cuantos}, o sin el del día anterior: van en gris</i>")
     return "\n".join(texto)
 
 

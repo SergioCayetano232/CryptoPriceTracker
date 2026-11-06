@@ -40,6 +40,7 @@ COMANDOS = {
     "media": "Las medias de 7, 30 y 90 días y si está por encima (ej: /media btc)",
     "racha": "Cuántos días seguidos lleva subiendo o bajando (ej: /racha btc)",
     "extremo": "Su mejor y su peor día del tramo (ej: /extremo btc 30d)",
+    "calendario": "El mes día a día, en verde o en rojo (ej: /calendario btc)",
     "verdes": "Cuántos días ha subido y cuántos ha bajado (ej: /verdes btc 30d)",
     "diasemana": "Qué día de la semana suele subir más (ej: /diasemana btc 90d)",
     "horas": "A qué hora suele estar más barata (ej: /horas btc 30d)",
@@ -508,6 +509,11 @@ EJEMPLOS = {
         ("/extremo bitcoin", "el día que más subió y el que más bajó en 30 días"),
         ("/extremo bitcoin 7d", "del tramo que digas"),
         ("/extremo", "a secas, la primera que vigilo"),
+    ],
+    "calendario": [
+        ("/calendario bitcoin", "este mes, cada día en verde o en rojo"),
+        ("/calendario bitcoin octubre", "un mes que ya ha pasado"),
+        ("/calendario", "a secas, la primera que vigilo"),
     ],
     "verdes": [
         ("/verdes bitcoin", "cuántos días subió y cuántos bajó en 30 días"),

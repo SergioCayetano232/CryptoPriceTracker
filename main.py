@@ -38,6 +38,7 @@ from crypto_tracker import (
     brusco,
     cafe,
     caida,
+    calendario,
     callar,
     cana,
     caraocruz,
@@ -1032,6 +1033,9 @@ def responder(
     if nombre == "compras":
         return _compras(config, argumento)
 
+    if nombre == "calendario":
+        return _calendario(config, argumento)
+
     if nombre == "rentabilidad":
         return _rentabilidad(config)
 
@@ -1716,6 +1720,34 @@ def _rentabilidad(config: Config) -> str:
             )
         return "No he podido consultar los precios. Prueba en un rato."
     return alerts.formatear_rentabilidad(resultado, config.vs_currency)
+
+
+def _calendario(config: Config, argumento: str) -> str | comandos.Foto:
+    hoy = date.today()
+    try:
+        coin_id, año, numero = calendario.interpretar(argumento, hoy)
+    except calendario.CalendarioError as e:
+        return telegram.escape(str(e))
+    if not coin_id:
+        vigiladas = _con_cambios(config).watchlist
+        if not vigiladas:
+            return f"¿De cuál? Por ejemplo: {calendario.EJEMPLO}"
+        coin_id = vigiladas[0].coin_id
+
+    # Desde el día antes del 1, que hace falta para saber cómo fue el 1.
+    desde = datetime(año, numero, 1).astimezone() - timedelta(days=1)
+    horas = (datetime.now(timezone.utc) - desde).total_seconds() / 3600
+    serie = database.get_serie(config.database_path, coin_id, horas, config.vs_currency)
+    resultado = calendario.calcular(volatilidad.por_dias(serie), año, numero, hoy)
+    texto = alerts.formatear_calendario(coin_id, resultado)
+    if not resultado.con_dato:
+        return texto
+    try:
+        png = grafica.dibujar_calendario(coin_id, resultado)
+    except Exception as e:
+        logger.warning("Mando /calendario sin imagen: %s", e)
+        return texto
+    return comandos.Foto(png, texto, texto)
 
 
 def _compras(config: Config, argumento: str) -> str:

@@ -4,6 +4,8 @@ import io
 from datetime import datetime
 
 from .alerts import SIMBOLOS, _num
+from .calendario import Mes, semanas
+from .mes import MESES
 from .periodo import nombre as nombre_periodo
 from .reparto import Trozo
 
@@ -240,6 +242,101 @@ def dibujar_reparto(trozos: list[Trozo], total: float, currency: str) -> bytes:
     salida = io.BytesIO()
     fig.savefig(salida, format="png", facecolor=FONDO)
     return salida.getvalue()
+
+
+# Un día que se mueve esto o más sale con el color a tope.
+TOPE_CALENDARIO = 5
+# Entre el gris de "sin precio" y el de las letras, que se distinga de los dos.
+IGUAL = "#cbd5e1"
+DIAS_SEMANA = ("L", "M", "X", "J", "V", "S", "D")
+
+
+def dibujar_calendario(coin_id: str, m: Mes) -> bytes:
+    """El mes en casillas de lunes a domingo, cada día en verde o en rojo."""
+    try:
+        from matplotlib.figure import Figure
+        from matplotlib.patches import FancyBboxPatch
+    except ImportError as e:
+        raise GraficaError(
+            "Falta matplotlib. Ejecuta: pip install -r requirements.txt"
+        ) from e
+
+    filas = semanas(m)
+    alto = 1.3 + 0.95 * len(filas)
+    fig = Figure(figsize=(8, alto), dpi=150, facecolor=FONDO)
+
+    def y(pulgadas: float) -> float:
+        return 1 - pulgadas / alto
+
+    nombre = coin_id.replace("-", " ").title()
+    fig.text(0.06, y(0.5), nombre, fontsize=16, weight="bold", color=TEXTO)
+    fig.text(0.06, y(0.82), f"{MESES[m.mes - 1]} de {m.año}", fontsize=10, color=SUAVE)
+    if m.cambio is not None:
+        color = VERDE if m.cambio >= 0 else ROJO
+        pct = f"{m.cambio:+.1f}%".replace(".", ",")
+        fig.text(0.94, y(0.5), pct, fontsize=16, weight="bold", color=color, ha="right")
+        fig.text(0.94, y(0.82), "en el mes", fontsize=10, color=SUAVE, ha="right")
+
+    ax = fig.add_axes((0.06, 0.2 / alto, 0.88, (alto - 1.25) / alto))
+    ax.set_xlim(0, 7)
+    ax.set_ylim(len(filas), -0.35)
+    ax.axis("off")
+    for col, letra in enumerate(DIAS_SEMANA):
+        ax.text(col + 0.5, -0.12, letra, ha="center", fontsize=10, color=SUAVE)
+
+    for fila, semana in enumerate(filas):
+        for col, c in enumerate(semana):
+            if c is None:
+                continue
+            fondo, borde, letra = _casilla(c.cambio, c.futuro)
+            ax.add_patch(
+                FancyBboxPatch(
+                    (col + 0.06, fila + 0.06),
+                    0.88,
+                    0.88,
+                    boxstyle="round,pad=0,rounding_size=0.12",
+                    facecolor=fondo,
+                    edgecolor=borde,
+                    lw=1,
+                )
+            )
+            ax.text(col + 0.16, fila + 0.27, str(c.dia.day), fontsize=8, color=letra)
+            if c.cambio is not None:
+                pct = f"{c.cambio:+.1f}%".replace(".", ",") if c.cambio else "0,0%"
+                ax.text(
+                    col + 0.5,
+                    fila + 0.62,
+                    pct,
+                    ha="center",
+                    fontsize=9,
+                    weight="bold",
+                    color=letra,
+                )
+
+    salida = io.BytesIO()
+    fig.savefig(salida, format="png", facecolor=FONDO)
+    return salida.getvalue()
+
+
+def _casilla(cambio: float | None, futuro: bool) -> tuple[str, str, str]:
+    """(fondo, borde, letra) de un día."""
+    if futuro:
+        return FONDO, REJILLA, GRIS
+    if cambio is None:
+        return REJILLA, REJILLA, SUAVE
+    if cambio == 0:
+        return IGUAL, IGUAL, TEXTO
+    fuerza = 0.2 + 0.8 * min(abs(cambio) / TOPE_CALENDARIO, 1)
+    fondo = _mezcla(VERDE if cambio > 0 else ROJO, fuerza)
+    # En los suaves el blanco no se lee; a partir de media fuerza, sí.
+    return fondo, fondo, FONDO if fuerza >= 0.55 else TEXTO
+
+
+def _mezcla(color: str, fuerza: float) -> str:
+    """El color aclarado hacia el blanco: con fuerza 1 sale tal cual."""
+    r, g, b = (int(color[i : i + 2], 16) for i in (1, 3, 5))
+    r, g, b = (round(255 - (255 - v) * fuerza) for v in (r, g, b))
+    return f"#{r:02x}{g:02x}{b:02x}"
 
 
 def _formato_eje(horas: float) -> str:

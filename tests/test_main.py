@@ -7466,3 +7466,59 @@ def test_rentabilidad_sin_conexion(config, enviados, monkeypatch):
     main.atender(config, _mensaje("/rentabilidad"))
 
     assert "No he podido consultar los precios" in enviados[0]
+
+
+# --- /calendario ---
+
+
+def test_calendario(config, enviados, sin_fotos_de_verdad):
+    from datetime import datetime
+
+    from crypto_tracker import mes
+
+    # ayer a 60.000 y hoy a 63.000: hoy sale +5%
+    _precio_de(config, "bitcoin", 60000.0, 24 * 60)
+    _precio_de(config, "bitcoin", 63000.0, 1)
+
+    main.atender(config, _mensaje("/calendario btc"))
+
+    [(png, pie)] = sin_fotos_de_verdad
+    nombre = mes.nombre(datetime.now().astimezone())
+    assert png
+    assert f"Bitcoin en {nombre}" in pie
+    assert "+5,0%" in pie
+
+
+def test_calendario_a_secas_la_primera(config, enviados, sin_fotos_de_verdad):
+    _precio_de(config, "bitcoin", 60000.0, 24 * 60)
+    _precio_de(config, "bitcoin", 63000.0, 1)
+
+    main.atender(config, _mensaje("/calendario"))
+
+    assert "Bitcoin en" in sin_fotos_de_verdad[0][1]
+
+
+def test_calendario_sin_precios(config, enviados, sin_fotos_de_verdad):
+    main.atender(config, _mensaje("/calendario solana"))
+
+    assert sin_fotos_de_verdad == []
+    assert "No tengo dos días seguidos con precio" in enviados[0]
+
+
+def test_calendario_mal_escrito(config, enviados):
+    main.atender(config, _mensaje("/calendario btc eth octubre"))
+
+    assert "Escríbelo así" in enviados[0]
+
+
+def test_calendario_sin_imagen_manda_texto(config, enviados, monkeypatch):
+    def falla(*a, **k):
+        raise grafica.GraficaError("Falta matplotlib")
+
+    monkeypatch.setattr(grafica, "dibujar_calendario", falla)
+    _precio_de(config, "bitcoin", 60000.0, 24 * 60)
+    _precio_de(config, "bitcoin", 63000.0, 1)
+
+    main.atender(config, _mensaje("/calendario btc"))
+
+    assert "Bitcoin en" in enviados[0]
