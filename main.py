@@ -156,6 +156,7 @@ from crypto_tracker import (
     videojuego,
     vigiladas,
     volatilidad,
+    vsbtc,
     vuelo,
     whitepaper,
     zapatillas,
@@ -1014,6 +1015,9 @@ def responder(
     if nombre == "record":
         return _record(config)
 
+    if nombre == "vsbtc":
+        return _vsbtc(config)
+
     if nombre == "ath":
         return _ath(config, argumento)
 
@@ -1673,6 +1677,34 @@ def _record(config: Config) -> str:
     if resultado is None:
         return "Aún no tengo precios guardados de tu cartera. Vuelve en un rato."
     return alerts.formatear_record(resultado, config.vs_currency)
+
+
+def _vsbtc(config: Config) -> str:
+    todos = database.get_movimientos(config.database_path, None)
+    if not todos:
+        return (
+            "No has apuntado ninguna compra por aquí, y lo del PORTFOLIO del .env "
+            f"no lleva fecha. Apúntalas así: {movimientos.EJEMPLO_COMPRA}"
+        )
+    # Primero lo de ahora, que se guarda: así cuenta lo que apuntaste hace un rato.
+    precios = _consultar(config, list({vsbtc.BITCOIN, *(m.coin_id for m in todos)}))
+    if precios is None:
+        return "No he podido consultar los precios. Prueba en un rato."
+
+    primero = min(m.cuando for m in todos)
+    horas = (datetime.now(timezone.utc) - primero).total_seconds() / 3600 + 24
+    serie = database.get_serie(
+        config.database_path, vsbtc.BITCOIN, horas, config.vs_currency
+    )
+    if not vsbtc.a_contar(todos, serie):
+        return (
+            "No tengo el precio de bitcoin de cuando apuntaste tus compras, o no "
+            "llevan precio. Solo guardo el de las que vigilo: /vigilar bitcoin"
+        )
+    resultado = vsbtc.calcular(todos, serie, precios)
+    if resultado is None:
+        return "No he podido consultar los precios. Prueba en un rato."
+    return alerts.con_fuente(alerts.formatear_vsbtc(resultado, config.vs_currency))
 
 
 def _crear_alerta(config: Config, argumento: str) -> str:

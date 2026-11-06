@@ -7086,3 +7086,102 @@ def test_racha_cartera_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/racha cartera"))
 
     assert enviados[0] == main.SIN_CARTERA
+
+
+# --- /vsbtc ---
+
+
+def _movimiento_hace(config, coin_id, tipo, cantidad, coste, horas_atras):
+    import sqlite3
+    from datetime import datetime, timedelta, timezone
+
+    cuando = datetime.now(timezone.utc) - timedelta(hours=horas_atras)
+    conn = sqlite3.connect(config.database_path)
+    conn.execute(
+        "INSERT INTO movimientos (coin_id, tipo, cantidad, coste, created_at) "
+        "VALUES (?,?,?,?,?)",
+        (coin_id, tipo, cantidad, coste, cuando.isoformat(timespec="seconds")),
+    )
+    conn.commit()
+    conn.close()
+
+
+def test_vsbtc(config, enviados, monkeypatch):
+    _guardar(config, "bitcoin", 50000.0, 48)
+    _movimiento_hace(config, "solana", "compra", 10, 1000, 48)
+    monkeypatch.setattr(
+        coingecko, "get_prices", lambda ids, cur: {"bitcoin": 60000.0, "solana": 150.0}
+    )
+
+    main.atender(config, _mensaje("/vsbtc"))
+
+    # 1.000 € en SOL valen 1.500; en BTC serían 0,02 a 60.000 = 1.200.
+    assert "<b>€1.500,00</b>" in enviados[0]
+    assert "0,02 BTC: €1.200,00" in enviados[0]
+    assert "Le ganas a bitcoin por <b>€300,00</b> (+25,0%)" in enviados[0]
+
+
+def test_vsbtc_por_su_otro_nombre(config, enviados, monkeypatch):
+    _guardar(config, "bitcoin", 50000.0, 48)
+    _movimiento_hace(config, "bitcoin", "compra", 0.02, 1000, 48)
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 60000.0})
+
+    main.atender(config, _mensaje("/vsbitcoin"))
+
+    assert "Vas igual que bitcoin" in enviados[0]
+
+
+def test_vsbtc_sin_movimientos(config, enviados):
+    main.atender(config, _mensaje("/vsbtc"))
+
+    assert "No has apuntado ninguna compra" in enviados[0]
+
+
+def test_vsbtc_sin_bitcoin_guardado(config, enviados, monkeypatch):
+    monkeypatch.setattr(
+        coingecko, "get_prices", lambda ids, cur: {"bitcoin": 60000.0, "solana": 150.0}
+    )
+    _movimiento_hace(config, "solana", "compra", 10, 1000, 48)
+
+    main.atender(config, _mensaje("/vsbtc"))
+
+    assert "No tengo el precio de bitcoin" in enviados[0]
+
+
+def test_vsbtc_sin_conexion(config, enviados, monkeypatch):
+    _guardar(config, "bitcoin", 50000.0, 48)
+    _movimiento_hace(config, "solana", "compra", 10, 1000, 48)
+
+    def falla(*a, **k):
+        raise coingecko.CoinGeckoError("sin red")
+
+    monkeypatch.setattr(coingecko, "get_prices", falla)
+    main.atender(config, _mensaje("/vsbtc"))
+
+    assert "No he podido consultar los precios" in enviados[0]
+
+
+def test_vsbtc_cuenta_lo_que_acabas_de_apuntar(config, enviados, monkeypatch):
+    _guardar(config, "bitcoin", 50000.0, 48)
+    _movimiento_hace(config, "solana", "compra", 10, 1000, 48)
+    # vendida hace nada: el bitcoin de ahora sale de la consulta
+    _movimiento_hace(config, "solana", "venta", 5, 750, 0)
+    monkeypatch.setattr(
+        coingecko, "get_prices", lambda ids, cur: {"bitcoin": 60000.0, "solana": 150.0}
+    )
+
+    main.atender(config, _mensaje("/vsbtc"))
+
+    assert "no cuenta" not in enviados[0]
+    # 0,02 BTC menos 750/60.000 = 0,0075
+    assert "0,0075 BTC" in enviados[0]
+
+
+def test_vsbtc_sin_precio_de_hoy_de_una(config, enviados, monkeypatch):
+    _guardar(config, "bitcoin", 50000.0, 48)
+    _movimiento_hace(config, "solana", "compra", 10, 1000, 48)
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 60000.0})
+
+    main.atender(config, _mensaje("/vsbtc"))
+
+    assert "No he podido consultar los precios" in enviados[0]

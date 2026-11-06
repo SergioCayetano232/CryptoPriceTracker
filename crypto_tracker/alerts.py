@@ -176,6 +176,7 @@ from .verdes import Verdes
 from .version import Version
 from .videojuego import PRECIO as PRECIO_VIDEOJUEGO
 from .videojuego import Videojuego
+from .vsbtc import Contra
 from .vuelo import PRECIO as PRECIO_VUELO
 from .vuelo import Vuelo
 from .whitepaper import Whitepaper
@@ -806,6 +807,39 @@ def formatear_bajon(r: Record, escalon: int, porcentaje: float, currency: str) -
         f"<i>Ya pasa del {_pct(escalon * porcentaje)}%. "
         f"El siguiente aviso, al {_pct((escalon + 1) * porcentaje)}%</i>",
     ]
+    return "\n".join(texto)
+
+
+def formatear_vsbtc(c: Contra, currency: str) -> str:
+    """Respuesta de /vsbtc."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = [
+        "🥊 <b>Tu cartera contra bitcoin</b>",
+        f"Lo que compraste vale hoy <b>{simbolo}{_num(c.real)}</b>",
+        f"Con ese dinero en bitcoin, en las mismas fechas, tendrías "
+        f"{texto_cantidad(c.sats)} BTC: {simbolo}{_num(c.btc)}",
+        "",
+    ]
+    # Por debajo de un céntimo son restos de los decimales: cuenta como empate.
+    if abs(c.diferencia) < 0.01 or c.ventaja is None:
+        texto.append("🤝 Vas igual que bitcoin")
+    else:
+        pct = f"{c.ventaja:+.1f}".replace(".", ",")
+        diferencia = f"<b>{simbolo}{_num(abs(c.diferencia))}</b> ({pct}%)"
+        if c.diferencia > 0:
+            texto.append(f"🏆 Le ganas a bitcoin por {diferencia}")
+        else:
+            texto.append(f"🟠 Bitcoin te gana por {diferencia}")
+
+    pie = f"Con tus compras y ventas desde el {c.desde.astimezone():%d/%m/%Y}"
+    if c.fuera == 1:
+        pie += ". 1 movimiento no cuenta: sin precio o sin bitcoin guardado de ese día"
+    elif c.fuera:
+        pie += (
+            f". {c.fuera} movimientos no cuentan: sin precio o sin bitcoin "
+            "guardado de ese día"
+        )
+    texto.append(f"<i>{pie}</i>")
     return "\n".join(texto)
 
 
