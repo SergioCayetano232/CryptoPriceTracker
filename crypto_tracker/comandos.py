@@ -16,6 +16,7 @@ COMANDOS = {
     "ath": "El máximo y el mínimo histórico (ej: /ath bitcoin)",
     "cartera": "Cuánto vale lo que tienes, con gráfica (ej: /cartera 30d)",
     "reparto": "Qué parte de tu cartera es cada cripto, con gráfica",
+    "riesgo": "Cuánto depende tu cartera de una cripto y cuánto se mueve",
     "rebalanceo": "Qué mover para un reparto (ej: /rebalanceo btc 60 eth 40)",
     "semana": "Cómo le ha ido a tu cartera esta semana, o a una (ej: /semana btc)",
     "mes": "Cómo va tu cartera desde el día 1 del mes",

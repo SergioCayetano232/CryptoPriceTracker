@@ -7522,3 +7522,50 @@ def test_calendario_sin_imagen_manda_texto(config, enviados, monkeypatch):
     main.atender(config, _mensaje("/calendario btc"))
 
     assert "Bitcoin en" in enviados[0]
+
+
+# --- /riesgo ---
+
+
+def test_riesgo(con_semana, enviados, monkeypatch):
+    # 0,1 BTC y 10 SOL; ayer 6.000 + 1.000 y hoy 6.600 + 1.000
+    for coin_id, ayer, hoy in (("bitcoin", 60000.0, 66000.0), ("solana", 100, 100)):
+        _guardar(con_semana, coin_id, ayer, 24)
+        _guardar(con_semana, coin_id, hoy, 0)
+    monkeypatch.setattr(
+        coingecko, "get_prices", lambda ids, cur: {"bitcoin": 66000.0, "solana": 100.0}
+    )
+
+    main.atender(con_semana, _mensaje("/riesgo"))
+
+    assert "<b>Bitcoin</b> es el 87% de lo que tienes" in enviados[0]
+    assert "Con 2 criptos, es como tener 1,3 a partes iguales" in enviados[0]
+    # de 7.000 a 7.600: un 8,6% en el día
+    assert "Se mueve de media un 8,6% al día" in enviados[0]
+    assert "Se mueve menos que bitcoin (10,0%)" in enviados[0]
+    assert "🔴 Riesgo alto" in enviados[0]
+
+
+def test_riesgo_sin_historico(con_semana, enviados, monkeypatch):
+    monkeypatch.setattr(
+        coingecko, "get_prices", lambda ids, cur: {"bitcoin": 66000.0, "solana": 100.0}
+    )
+
+    main.atender(con_semana, _mensaje("/riesgo"))
+
+    assert "es el 87%" in enviados[0]
+    assert "Aún no tengo dos días de precios" in enviados[0]
+
+
+def test_riesgo_sin_precio_de_una(con_semana, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 66000.0})
+
+    main.atender(con_semana, _mensaje("/riesgo"))
+
+    assert "No tengo el precio de <b>solana</b>" in enviados[0]
+
+
+def test_riesgo_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/riesgo"))
+
+    assert enviados[0] == main.SIN_CARTERA

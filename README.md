@@ -176,6 +176,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/cartera usd` | Lo que vale en otra moneda (`eur`, `usd` o `gbp`). Sin lo que ganas ni gráfica, que lo que te costó va en la moneda del `.env` |
 | `/reparto` | Qué parte de tu cartera es cada cripto, con una imagen de barras. Si tienes más de 6, las pequeñas van juntas en "Otras" |
 | `/rebalanceo btc 60 eth 40` | Qué comprar y qué vender, en dinero y en cantidad, para dejar tu cartera con ese reparto. Lo que tienes y no nombras, a venderlo entero. A secas, a partes iguales entre lo que tienes. Al precio de ahora y sin comisiones. También `/rebalancear` |
+| `/riesgo` | Cuánto pesa tu cripto más grande y lo que caería la cartera si esa cae un 20%, a cuántas criptos a partes iguales equivale tu reparto, cuánto se mueve la cartera al día en los últimos 30 días (en % y en dinero), su peor día, si se mueve más o menos que bitcoin, y un nivel: bajo, medio o alto |
 | `/semana` | El resumen de tu semana sin esperar al domingo. No gasta consultas |
 | `/semana bitcoin` | La semana de una sola: lo mismo que `/historico bitcoin 7d` |
 | `/mes` | Cómo va tu cartera desde el día 1 del mes, con gráfica, no en los últimos 30 días como `/cartera 30d`. No gasta consultas. También `/mensual` |

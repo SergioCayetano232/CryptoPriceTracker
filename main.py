@@ -138,6 +138,7 @@ from crypto_tracker import (
     refran,
     rentabilidad,
     reparto,
+    riesgo,
     rolex,
     rsi,
     salud,
@@ -902,6 +903,12 @@ def responder(
         if not config.cartera:
             return SIN_CARTERA
         return _reparto(config)
+
+    if nombre == "riesgo":
+        config = _con_cambios(config)
+        if not config.cartera:
+            return SIN_CARTERA
+        return _riesgo(config)
 
     if nombre == "rebalanceo":
         config = _con_cambios(config)
@@ -3984,6 +3991,36 @@ def _reparto(config: Config) -> str | comandos.Foto:
         logger.warning("Mando /reparto sin imagen: %s", e)
         return texto
     return comandos.Foto(png, texto, texto)
+
+
+def _riesgo(config: Config) -> str:
+    posiciones = list(config.cartera)
+    coin_ids = [p.coin_id for p in posiciones]
+    precios = _consultar(config, coin_ids)
+    if precios is None:
+        return "No he podido consultar los precios. Prueba en un rato."
+    valores, faltan = cartera.valorar(posiciones, precios)
+    if faltan:
+        return (
+            "No tengo el precio de "
+            + ", ".join(f"<b>{telegram.escape(c)}</b>" for c in faltan)
+            + " y sin ella las cuentas saldrían mal. Prueba en un rato."
+        )
+
+    filas = database.get_series(
+        config.database_path, coin_ids, riesgo.HORAS, config.vs_currency
+    )
+    movimiento = volatilidad.calcular(cartera.serie_valor(posiciones, filas))
+    # Para comparar; si no vigilas bitcoin, sale sin esa línea.
+    btc = volatilidad.calcular(
+        database.get_serie(
+            config.database_path, "bitcoin", riesgo.HORAS, config.vs_currency
+        )
+    )
+    resultado = riesgo.calcular(valores, movimiento, btc.media if btc else None)
+    if resultado is None:
+        return "Tu cartera ahora mismo no vale nada, no hay riesgo que medir."
+    return alerts.con_fuente(alerts.formatear_riesgo(resultado, config.vs_currency))
 
 
 def _rebalanceo(config: Config, argumento: str) -> str:

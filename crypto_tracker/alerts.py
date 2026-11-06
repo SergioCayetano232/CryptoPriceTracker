@@ -152,6 +152,8 @@ from .redondo import Redondo
 from .rentabilidad import MIN_DIAS as MIN_DIAS_RENTABILIDAD
 from .rentabilidad import Rentabilidad
 from .reparto import Trozo, demasiado
+from .riesgo import CAIDA as CAIDA_RIESGO
+from .riesgo import Riesgo
 from .rolex import PRECIO as PRECIO_ROLEX
 from .rolex import Rolex
 from .rsi import PERIODO, SOBRECOMPRA, SOBREVENTA, Rsi, hasta_zona
@@ -815,6 +817,56 @@ def formatear_bajon(r: Record, escalon: int, porcentaje: float, currency: str) -
         f"El siguiente aviso, al {_pct((escalon + 1) * porcentaje)}%</i>",
     ]
     return "\n".join(texto)
+
+
+def formatear_riesgo(r: Riesgo, currency: str) -> str:
+    """Respuesta de /riesgo."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(r.mayor.replace("-", " ").title())
+    texto = ["🎯 <b>El riesgo de tu cartera</b>", ""]
+
+    if r.cuantas == 1:
+        texto.append(
+            f"Todo lo que tienes es <b>{nombre}</b>: lo que haga, lo hace tu cartera"
+        )
+    else:
+        texto.append(
+            f"<b>{nombre}</b> es el {r.peso:.0f}% de lo que tienes: si cae un "
+            f"{CAIDA_RIESGO}%, tu cartera cae un {_decimal(r.si_cae)}%"
+        )
+        texto.append(
+            f"Con {r.cuantas} criptos, es como tener {_decimal(r.equivalentes)} "
+            "a partes iguales"
+        )
+
+    texto.append("")
+    if r.movimiento is None:
+        texto.append(
+            "Aún no tengo dos días de precios de tu cartera para saber cuánto se "
+            "mueve. Vuelve mañana."
+        )
+        return "\n".join(texto)
+
+    m = r.movimiento
+    media = f"{m.media:.1f}".replace(".", ",")
+    peor = f"{m.peor:+.1f}".replace(".", ",")
+    euros = f"{simbolo}{_num(r.al_dia)}"
+    texto.append(f"📊 Se mueve de media un {media}% al día: unos <b>{euros}</b>")
+    # Es el que más se movió, para arriba o para abajo: "peor" engañaría en una subida.
+    texto.append(f"Su día más movido, el {m.peor_dia:%d/%m}: {_flecha(m.peor)} {peor}%")
+    if r.contra_btc:
+        btc = f"{r.btc:.1f}".replace(".", ",")
+        texto.append(f"Se mueve {r.contra_btc} que bitcoin ({btc}%)")
+
+    icono = {"bajo": "🟢", "medio": "🟠", "alto": "🔴"}[r.nivel]
+    texto += ["", f"{icono} Riesgo {r.nivel}"]
+    texto.append(f"<i>Con los precios de los últimos {m.dias + 1} días</i>")
+    return "\n".join(texto)
+
+
+def _decimal(valor: float) -> str:
+    """1,5 o 3: un decimal, y sin él si es redondo."""
+    return f"{valor:.1f}".replace(".", ",").removesuffix(",0")
 
 
 def formatear_calendario(coin_id: str, m: Mes) -> str:
