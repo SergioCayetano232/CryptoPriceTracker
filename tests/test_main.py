@@ -7669,3 +7669,91 @@ def test_stop_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/stop btc -15%"))
 
     assert enviados[0] == main.SIN_CARTERA
+
+
+def test_comprar_con_comision(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"solana": 140.0})
+
+    main.atender(config, _mensaje("/compra solana 5 700 com 1,5"))
+
+    assert "por €701,50 (con €1,50 de comisión)" in enviados[0]
+    assert database.get_cambios_cartera(config.database_path) == {
+        "solana": Posicion("solana", 5, 701.5)
+    }
+
+
+def test_comprar_con_comision_en_porcentaje_al_precio_de_ahora(
+    config, enviados, monkeypatch
+):
+    _precio(monkeypatch, {"solana": 150.0})
+
+    main.atender(config, _mensaje("/compra solana 2 fee 0.1%"))
+
+    # 300 al precio de ahora, más un 0,1%
+    assert "por €300,30 (con €0,30 de comisión)" in enviados[0]
+
+
+def test_la_comision_no_hace_parecer_una_errata(config, enviados, monkeypatch):
+    # 10 € de comisión en una compra de 20 € la dejaría un 50% por encima
+    _precio(monkeypatch, {"solana": 100.0})
+
+    main.atender(config, _mensaje("/compra solana 0.2 20 com 10"))
+
+    assert "⚠️" not in enviados[0]
+
+
+def test_comprar_con_comision_mal_escrita(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"solana": 140.0})
+
+    main.atender(config, _mensaje("/compra solana 5 700 com abc"))
+
+    assert "no es una comisión" in enviados[0]
+    assert database.get_cambios_cartera(config.database_path) == {}
+
+
+def test_vender_con_comision(config, enviados, monkeypatch):
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+
+    main.atender(config, _mensaje("/venta bitcoin 0.005 350 com 2"))
+
+    assert "por €348,00 (con €2,00 de comisión)" in enviados[0]
+    # costaron 250: la ganancia ya va sin la comisión
+    assert "Le sacas +€98,00" in enviados[0]
+    [venta] = database.get_ventas(config.database_path)
+    assert venta.coste == 348
+
+
+def test_vender_con_comision_mayor_que_lo_cobrado(config, enviados, monkeypatch):
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+
+    main.atender(config, _mensaje("/venta bitcoin 0.005 1 com 2"))
+
+    assert "más que lo que te dieron" in enviados[0]
+    assert database.get_ventas(config.database_path) == []
+
+
+def test_vender_con_comision_sin_conexion_la_apunta_sin_ella(
+    config, enviados, monkeypatch
+):
+    def falla(ids, cur):
+        raise coingecko.CoinGeckoError("Sin conexion con CoinGecko")
+
+    monkeypatch.setattr(coingecko, "get_prices", falla)
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
+
+    main.atender(config, _mensaje("/venta bitcoin 0.005 com 1"))
+
+    assert "comisión" not in enviados[0]
+    [venta] = database.get_ventas(config.database_path)
+    assert venta.coste is None
+
+
+def test_compra_con_comision_y_deshacer(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"solana": 140.0})
+    main.atender(config, _mensaje("/compra solana 5 700 com 1,5"))
+
+    main.atender(config, _mensaje("/deshacer"))
+
+    assert database.get_cambios_cartera(config.database_path) == {"solana": None}

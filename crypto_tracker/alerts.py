@@ -651,13 +651,14 @@ def formatear_compra(
     currency: str,
     antes: Posicion | None = None,
     precio: float | None = None,
+    comision: float | None = None,
 ) -> str:
     """Lo que se contesta a un /compra: lo apuntado y como queda."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
     nombre = escape(ahora.coin_id.replace("-", " ").title())
     texto = (
         f"🛒 Apunto <b>{texto_cantidad(cantidad)}</b> de {nombre} "
-        f"por {simbolo}{_num(coste)}.\n"
+        f"por {simbolo}{_num(coste)}{_con_comision(comision, simbolo)}.\n"
         f"Ahora tienes {texto_cantidad(ahora.cantidad)}"
     )
     if ahora.invertido is not None:
@@ -671,7 +672,8 @@ def formatear_compra(
             f"cada una, antes a {simbolo}{_num(medio_antes)}."
         )
     texto += " Mira /cartera"
-    raro = descuadre(cantidad, coste, precio)
+    # Sin la comisión: con ella, una compra pequeña parecería una errata.
+    raro = descuadre(cantidad, coste - (comision or 0), precio)
     if raro is not None:
         texto += (
             f"\n\n⚠️ Esta la pagas a {simbolo}{_num(coste / cantidad)} cada una y ahora "
@@ -688,13 +690,14 @@ def formatear_venta(
     currency: str,
     cobrado: float | None = None,
     ganancia: float | None = None,
+    comision: float | None = None,
 ) -> str:
     """Lo que se contesta a un /venta. queda es None si ya no tienes nada."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
     nombre = escape(coin_id.replace("-", " ").title())
     texto = f"💸 Apunto la venta de <b>{texto_cantidad(vendido)}</b> de {nombre}"
     if cobrado is not None:
-        texto += f" por {simbolo}{_num(cobrado)}"
+        texto += f" por {simbolo}{_num(cobrado)}{_con_comision(comision, simbolo)}"
     texto += ".\n"
     if ganancia is not None:
         texto += f"{_flecha(ganancia)} Le sacas {_ganancia(ganancia, simbolo)}"
@@ -710,6 +713,17 @@ def formatear_venta(
     if queda.invertido is not None:
         texto += f", que te costaron {simbolo}{_num(queda.invertido)}"
     return texto + ". Mira /cartera"
+
+
+def _con_comision(comision: float | None, simbolo: str) -> str:
+    if not comision:
+        return ""
+    # _num le pone 4 decimales a lo menor de 1, y "€0,3000" en dinero queda raro.
+    if comision >= 0.01:
+        texto = f"{comision:,.2f}".replace(",", "@").replace(".", ",").replace("@", ".")
+    else:
+        texto = _num(comision)
+    return f" (con {simbolo}{texto} de comisión)"
 
 
 def formatear_movimientos(

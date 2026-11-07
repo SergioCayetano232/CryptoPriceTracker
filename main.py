@@ -50,6 +50,7 @@ from crypto_tracker import (
     coche,
     coingecko,
     comandos,
+    comision,
     comparar,
     compras,
     concierto,
@@ -1535,6 +1536,7 @@ def _en_negrita(nombres: list[str], ultimo: str) -> str:
 
 def _comprar(config: Config, argumento: str) -> str | comandos.ConBotones:
     try:
+        argumento, texto_comision = comision.separar(argumento)
         coin_id, cantidad, coste = movimientos.interpretar_compra(argumento)
     except movimientos.MovimientoError as e:
         return telegram.escape(str(e))
@@ -1556,6 +1558,14 @@ def _comprar(config: Config, argumento: str) -> str | comandos.ConBotones:
         )
     if coste is None:
         coste = cantidad * precio
+    pagada = None
+    if texto_comision:
+        try:
+            pagada = comision.calcular(texto_comision, coste)
+        except comision.ComisionError as e:
+            return telegram.escape(str(e))
+        # Va dentro de lo que te costó: si no, el precio medio te saldría más bajo.
+        coste += pagada
 
     ahora = movimientos.comprar(antes, coin_id, cantidad, coste)
     numero = database.apuntar_movimiento(
@@ -1564,7 +1574,7 @@ def _comprar(config: Config, argumento: str) -> str | comandos.ConBotones:
     logger.info("Cartera: compra %s de %s por %s", cantidad, coin_id, coste)
     return comandos.ConBotones(
         alerts.formatear_compra(
-            cantidad, coste, ahora, config.vs_currency, antes, precio
+            cantidad, coste, ahora, config.vs_currency, antes, precio, pagada
         ),
         botones.deshacer_movimiento(numero),
     )
@@ -1572,6 +1582,7 @@ def _comprar(config: Config, argumento: str) -> str | comandos.ConBotones:
 
 def _vender(config: Config, argumento: str) -> str | comandos.ConBotones:
     try:
+        argumento, texto_comision = comision.separar(argumento)
         coin_id, cantidad, precio = movimientos.interpretar_venta(argumento)
         antes = movimientos.buscar(_con_cambios(config).cartera, coin_id)
         queda = movimientos.vender(antes, coin_id, cantidad)
@@ -1582,6 +1593,14 @@ def _vender(config: Config, argumento: str) -> str | comandos.ConBotones:
 
     if cobrado is None:
         cobrado = _cobrado_ahora(config, coin_id, vendido)
+    pagada = None
+    # Sin saber lo que te dieron no hay de dónde restarla: se apunta sin ella.
+    if texto_comision and cobrado is not None:
+        try:
+            pagada = comision.calcular(texto_comision, cobrado)
+            cobrado = comision.de_venta(cobrado, pagada)
+        except comision.ComisionError as e:
+            return telegram.escape(str(e))
     numero = database.apuntar_movimiento(
         config.database_path, coin_id, "venta", vendido, cobrado, antes, queda
     )
@@ -1594,6 +1613,7 @@ def _vender(config: Config, argumento: str) -> str | comandos.ConBotones:
             config.vs_currency,
             cobrado,
             ganancias.de_venta(antes, vendido, cobrado),
+            pagada,
         ),
         botones.deshacer_movimiento(numero),
     )

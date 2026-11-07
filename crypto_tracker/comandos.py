@@ -467,12 +467,14 @@ EJEMPLOS = {
     "compra": [
         ("/compra bitcoin 0.01 600", "0,01 por 600 € en total"),
         ("/compra bitcoin 0.01 @60000", "con el precio de cada una"),
+        ("/compra bitcoin 0.01 600 com 1.5", "con 1,5 € de comisión, o com 0.1%"),
     ],
     "venta": [
         ("/venta bitcoin 0.005 350", "una parte, por 350 € en total"),
         ("/venta bitcoin 0.005 @70000", "con el precio de cada una"),
         ("/venta bitcoin 0.005", "sin precio, al de ahora"),
         ("/venta bitcoin todo", "la saca de la cartera"),
+        ("/venta bitcoin 0.005 350 com 1", "se resta de lo que te dieron"),
     ],
     "historico": [
         ("/historico bitcoin", "gráfica de las últimas 24 h"),
