@@ -41,6 +41,7 @@ from .coche import Coche
 from .comparar import Resultado
 from .comparar import media as media_comparar
 from .compras import Compra, Resumen
+from .concentracion import Concentracion
 from .concierto import PRECIO as PRECIO_CONCIERTO
 from .concierto import Concierto
 from .config import Posicion, Watch
@@ -841,6 +842,20 @@ def formatear_bajon(r: Record, escalon: int, porcentaje: float, currency: str) -
         f"El siguiente aviso, al {_pct((escalon + 1) * porcentaje)}%</i>",
     ]
     return "\n".join(texto)
+
+
+def formatear_concentracion(c: Concentracion) -> str:
+    """El aviso de CONCENTRACION."""
+    nombre = escape(c.coin_id.replace("-", " ").title())
+    si_cae = f"{c.si_cae:.1f}".replace(".", ",").removesuffix(",0")
+    return "\n".join(
+        [
+            f"⚖️ <b>{nombre} ya es el {c.peso:.0f}% de tu cartera</b>",
+            f"Si cae un {CAIDA_RIESGO}%, tu cartera cae un {si_cae}%.",
+            "Cuánto se mueve todo junto, en /riesgo. Qué mover para repartirlo, "
+            "en /rebalanceo",
+        ]
+    )
 
 
 def formatear_riesgo(r: Riesgo, currency: str) -> str:

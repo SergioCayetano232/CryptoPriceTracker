@@ -338,3 +338,20 @@ def test_parse_caida_cartera_mal(entrada):
 
     with pytest.raises(ConfigError, match="CAIDA_CARTERA"):
         parse_caida_cartera(entrada)
+
+
+def test_parse_concentracion():
+    from crypto_tracker.config import parse_concentracion
+
+    assert parse_concentracion("70%") == 70.0
+    assert parse_concentracion(" 50 ") == 50.0
+    assert parse_concentracion("72,5%") == 72.5
+    assert parse_concentracion("") is None
+
+
+@pytest.mark.parametrize("entrada", ["mucho", "40%", "100%", "-70%"])
+def test_parse_concentracion_mal(entrada):
+    from crypto_tracker.config import ConfigError, parse_concentracion
+
+    with pytest.raises(ConfigError, match="CONCENTRACION"):
+        parse_concentracion(entrada)

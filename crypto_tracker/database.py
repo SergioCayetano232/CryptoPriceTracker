@@ -102,6 +102,8 @@ ULTIMO_MENSUAL = "ultimo_mensual"
 # La hora del resumen puesta con /horario, encima de la del .env. Vacio es sin resumen.
 HORA_RESUMEN = "hora_resumen"
 BAJON = "bajon_cartera"
+# La cripto de la que ya se avisó que pesaba demasiado. Sin fila, de ninguna.
+CONCENTRADA = "concentracion_cartera"
 
 
 class DatabaseError(Exception):
@@ -558,6 +560,25 @@ def guardar_bajon(db_path: str, record: datetime, escalon: int) -> None:
         conn.execute(
             "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
             (BAJON, f"{record.isoformat()}|{escalon}"),
+        )
+
+
+def ultima_concentracion(db_path: str) -> str | None:
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT valor FROM ajustes WHERE clave = ?", (CONCENTRADA,)
+        ).fetchone()
+    return fila["valor"] if fila else None
+
+
+def guardar_concentracion(db_path: str, coin_id: str | None) -> None:
+    with _connect(db_path) as conn:
+        if coin_id is None:
+            conn.execute("DELETE FROM ajustes WHERE clave = ?", (CONCENTRADA,))
+            return
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (CONCENTRADA, coin_id),
         )
 
 

@@ -41,6 +41,12 @@ def lineas(config: Config) -> list[str]:
     else:
         texto.append("📉 Sin aviso de caída de la cartera")
 
+    if config.concentracion:
+        pct = f"{config.concentracion:g}".replace(".", ",")
+        texto.append(f"⚖️ Aviso si una cripto pasa del {pct}% de la cartera")
+    else:
+        texto.append("⚖️ Sin aviso de concentración")
+
     if config.horas_tranquilas:
         inicio, fin = config.horas_tranquilas
         texto.append(f"🌙 Sin sonar de {inicio:%H:%M} a {fin:%H:%M}")

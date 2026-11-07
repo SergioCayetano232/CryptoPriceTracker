@@ -53,6 +53,7 @@ from crypto_tracker import (
     comision,
     comparar,
     compras,
+    concentracion,
     concierto,
     consejo,
     convertir,
@@ -298,6 +299,7 @@ def ejecutar_ciclo(
     # Como con el /mute de todas: las de /alerta no se borran y saltan al volver.
     calladas = _calladas(config)
     revisar_bajon(config, valor, calladas)
+    revisar_concentracion(config, precios, calladas)
     if calladas:
         avisos = [a for a in avisos if a.coin_id not in calladas]
         hechas = [p for p in hechas if p.coin_id not in calladas]
@@ -613,6 +615,48 @@ def revisar_bajon(config: Config, valor: float | None, calladas: set[str]) -> No
         database.guardar_bajon(config.database_path, resultado.cuando, escalon)
     except database.DatabaseError as e:
         logger.error("No se pudo apuntar el aviso de caída de la cartera: %s", e)
+
+
+def revisar_concentracion(
+    config: Config, precios: dict[str, float], calladas: set[str]
+) -> None:
+    """Avisa una vez si una cripto pasa de CONCENTRACION de la cartera."""
+    if config.concentracion is None or not config.cartera:
+        return
+    if puntuales.CARTERA in calladas or _silenciado(config):
+        return
+    valores, faltan = cartera.valorar(list(config.cartera), precios)
+    # Sin el precio de una, las demás pesarían más de lo que pesan.
+    if faltan:
+        return
+
+    try:
+        avisado = database.ultima_concentracion(config.database_path)
+    except database.DatabaseError as e:
+        logger.error("No se pudo leer el aviso de concentración: %s", e)
+        return
+
+    c = concentracion.mayor(valores)
+    if not concentracion.toca(c, config.concentracion, avisado):
+        nuevo = concentracion.sigue(c, config.concentracion, avisado)
+    elif telegram.send_message(
+        config.telegram_token,
+        config.telegram_chat_id,
+        alerts.formatear_concentracion(c),
+        sin_sonido=_sin_sonido(config),
+    ):
+        logger.info("Aviso de concentración: %s es el %.1f%%", c.coin_id, c.peso)
+        nuevo = c.coin_id
+    else:
+        logger.error("No se pudo avisar de la concentración de la cartera")
+        return
+
+    if nuevo == avisado:
+        return
+    try:
+        database.guardar_concentracion(config.database_path, nuevo)
+    except database.DatabaseError as e:
+        logger.error("No se pudo apuntar el aviso de concentración: %s", e)
 
 
 def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:

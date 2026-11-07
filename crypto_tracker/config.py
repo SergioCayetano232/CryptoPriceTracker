@@ -62,6 +62,8 @@ class Config:
     extremos_dias: int | None = None
     # None = sin aviso de caida de la cartera desde su record
     caida_cartera: float | None = None
+    # None = sin aviso de cuando una cripto pasa de ese % de la cartera
+    concentracion: float | None = None
 
 
 def _require(name: str) -> str:
@@ -402,6 +404,26 @@ def parse_caida_cartera(raw: str) -> float | None:
     return porcentaje
 
 
+def parse_concentracion(raw: str) -> float | None:
+    """'70%' -> 70.0. Vacio es None."""
+    raw = raw.strip()
+    if not raw:
+        return None
+
+    try:
+        porcentaje = float(raw.strip("%").replace(",", "."))
+    except ValueError:
+        raise ConfigError(
+            f"CONCENTRACION tiene que ser un porcentaje, como 70%, no '{raw}'"
+        ) from None
+    # Por debajo de la mitad, con dos criptos ya saltaría siempre.
+    if not 50 <= porcentaje < 100:
+        raise ConfigError(
+            f"CONCENTRACION tiene que estar entre 50 y 100, no {porcentaje:g}."
+        )
+    return porcentaje
+
+
 def load_config() -> Config:
     """Monta la configuracion. Lanza ConfigError si algo falta o esta mal."""
     # Con 300 la clave gratuita de CoinGecko va muy justa a final de mes.
@@ -441,4 +463,5 @@ def load_config() -> Config:
         cartera=parse_cartera(os.getenv("PORTFOLIO", "")),
         extremos_dias=extremos,
         caida_cartera=parse_caida_cartera(os.getenv("CAIDA_CARTERA", "")),
+        concentracion=parse_concentracion(os.getenv("CONCENTRACION", "")),
     )

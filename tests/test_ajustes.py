@@ -27,6 +27,7 @@ def test_todo_puesto():
             brusco_minutos=60,
             extremos_dias=30,
             caida_cartera=20,
+            concentracion=70,
             horas_tranquilas=(time(23, 0), time(8, 0)),
         )
     )
@@ -39,6 +40,7 @@ def test_todo_puesto():
         "⚡ Aviso si se mueve un 8% en 1 h",
         "📈 Aviso de máximos y mínimos de 30 días",
         "📉 Aviso si la cartera cae un 20% desde su récord",
+        "⚖️ Aviso si una cripto pasa del 70% de la cartera",
         "🌙 Sin sonar de 23:00 a 08:00",
     ]
 

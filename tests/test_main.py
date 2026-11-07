@@ -7943,3 +7943,79 @@ def test_compra_sin_precio_y_con_nota(config, enviados, monkeypatch):
 
     assert "por €300,00" in enviados[0]
     assert "📝 a ver qué pasa" in enviados[0]
+
+
+@pytest.fixture
+def concentrada(con_semana):
+    from dataclasses import replace
+
+    # 0,1 BTC y 10 SOL: con BTC a 66.000 y SOL a 100, BTC es el 87%
+    return replace(con_semana, concentracion=70)
+
+
+def _avisos_concentracion(enviados):
+    return [t for t in enviados if t.startswith("⚖️")]
+
+
+def test_concentracion_avisa_una_vez(concentrada, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 66000.0, "solana": 100.0})
+
+    main.ejecutar_ciclo(concentrada, {})
+    main.ejecutar_ciclo(concentrada, {})
+
+    [aviso] = _avisos_concentracion(enviados)
+    assert "<b>Bitcoin ya es el 87% de tu cartera</b>" in aviso
+    assert "Si cae un 20%, tu cartera cae un 17,4%." in aviso
+
+
+def test_concentracion_vuelve_a_avisar_si_baja_y_sube(
+    concentrada, enviados, monkeypatch
+):
+    for btc in (66000.0, 15000.0, 66000.0):  # 87%, 60% y otra vez 87%
+        _precio(monkeypatch, {"bitcoin": btc, "solana": 100.0})
+        main.ejecutar_ciclo(concentrada, {})
+
+    assert len(_avisos_concentracion(enviados)) == 2
+
+
+def test_concentracion_rondando_el_limite_no_repite(concentrada, enviados, monkeypatch):
+    # 87%, 68% (por encima del 65%) y otra vez 87%
+    for btc in (66000.0, 21250.0, 66000.0):
+        _precio(monkeypatch, {"bitcoin": btc, "solana": 100.0})
+        main.ejecutar_ciclo(concentrada, {})
+
+    assert len(_avisos_concentracion(enviados)) == 1
+
+
+def test_concentracion_sin_el_precio_de_una_no_avisa(
+    concentrada, enviados, monkeypatch
+):
+    _precio(monkeypatch, {"bitcoin": 66000.0})
+
+    main.ejecutar_ciclo(concentrada, {})
+
+    assert _avisos_concentracion(enviados) == []
+
+
+def test_concentracion_callada_espera(concentrada, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 66000.0, "solana": 100.0})
+    database.callar_cripto(
+        concentrada.database_path,
+        "cartera",
+        datetime.now(timezone.utc) + timedelta(hours=1),
+    )
+    main.ejecutar_ciclo(concentrada, {})
+    assert _avisos_concentracion(enviados) == []
+
+    database.callar_cripto(concentrada.database_path, "cartera", None)
+    main.ejecutar_ciclo(concentrada, {})
+
+    assert len(_avisos_concentracion(enviados)) == 1
+
+
+def test_sin_concentracion_no_avisa(con_semana, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 66000.0, "solana": 100.0})
+
+    main.ejecutar_ciclo(con_semana, {})
+
+    assert _avisos_concentracion(enviados) == []
