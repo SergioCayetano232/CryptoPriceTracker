@@ -13,6 +13,7 @@ from .airpods import PRECIO as PRECIO_AIRPODS
 from .airpods import Airpods
 from .alquiler import PRECIO as PRECIO_ALQUILER
 from .alquiler import Alquiler
+from .anual import Año
 from .ave import PRECIO as PRECIO_AVE
 from .ave import Ave
 from .avisados import Ultimo
@@ -855,6 +856,84 @@ def formatear_concentracion(c: Concentracion) -> str:
             "Cuánto se mueve todo junto, en /riesgo. Qué mover para repartirlo, "
             "en /rebalanceo",
         ]
+    )
+
+
+def _veces(n: int, una: str, varias: str) -> str:
+    return f"{n} {una if n == 1 else varias}"
+
+
+def formatear_anual(a: Año, currency: str, hoy: date) -> str:
+    """El resumen del año: el 1 de enero, o con /anual 2025."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    hasta_hoy = " hasta hoy" if a.año == hoy.year else ""
+    if a.cartera is None and not a.compras and not a.ventas:
+        return (
+            f"De {a.año}{hasta_hoy} no tengo nada: ni precios guardados de tu "
+            "cartera ni compras o ventas apuntadas por aquí."
+        )
+
+    lineas = [f"🎆 <b>Tu {a.año} en cripto{hasta_hoy}</b>", ""]
+    c = a.cartera
+    if c is not None:
+        cambio = (
+            f" {_flecha(c.ganancia)} {_signo(c.porcentaje)}" if c.porcentaje else ""
+        )
+        lineas.append(
+            f"💼 Tu cartera: de {simbolo}{_num(c.inicio)} a "
+            f"<b>{simbolo}{_num(c.fin)}</b>{cambio} ({_ganancia(c.ganancia, simbolo)})"
+        )
+        if len(c.cambios) > 1:
+            (mejor, sube), (peor, baja) = c.cambios[0], c.cambios[-1]
+            lineas.append(
+                f"🥇 La que mejor, {_nombre(mejor)}: {_signo(sube)}. "
+                f"La que peor, {_nombre(peor)}: {_signo(baja)}"
+            )
+        if a.mejor_mes and a.peor_mes:
+            (bueno, sube), (malo, baja) = a.mejor_mes, a.peor_mes
+            lineas.append(
+                f"📅 Mejor mes, {MESES[bueno - 1]}: {_signo(sube)}. "
+                f"Peor, {MESES[malo - 1]}: {_signo(baja)}"
+            )
+
+    if a.compras or a.ventas:
+        lineas.append("")
+        lineas.append(
+            f"🛒 {_veces(a.compras, 'compra', 'compras')} por "
+            f"{simbolo}{_num(a.comprado)} · 💸 {_veces(a.ventas, 'venta', 'ventas')} "
+            f"por {simbolo}{_num(a.vendido)}"
+        )
+    if a.ventas:
+        lineas.append(
+            f"💰 Vendiendo, {_ganancia(a.ganado, simbolo)}. El detalle, en "
+            f"/impuestos {a.año}"
+        )
+    r = a.mis_compras
+    if r is not None:
+        fin = "hoy" if hasta_hoy else "a fin de año"
+        lineas.append(f"⭐ Tu mejor compra: {_compra_corta(r.mejor)}, {fin}")
+        if r.total > 1:
+            lineas.append(f"🥴 La peor: {_compra_corta(r.peor)}")
+
+    lineas.append("")
+    if c is not None:
+        lineas.append(
+            "<i>La cartera es lo que tienes hoy, a los precios de cada día.</i>"
+        )
+    # Si purgas el histórico o empezaste a medio año, que se sepa de dónde sale.
+    if a.desde and a.desde > date(a.año, 1, 2):
+        lineas.append(
+            f"<i>Solo tengo precios desde el {a.desde:%d/%m}. Para guardar el año "
+            "entero, HISTORY_DAYS=366 en el .env.</i>"
+        )
+    return "\n".join(lineas).rstrip()
+
+
+def _compra_corta(c: Compra) -> str:
+    m = c.movimiento
+    return (
+        f"{texto_cantidad(m.cantidad)} de {_nombre(m.coin_id)} el "
+        f"{m.cuando.astimezone():%d/%m}, {_flecha(c.cambio)} {_signo(c.cambio)}"
     )
 
 

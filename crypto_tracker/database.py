@@ -98,6 +98,7 @@ SILENCIO = "silenciado_hasta"
 ULTIMO_RESUMEN = "ultimo_resumen"
 ULTIMO_SEMANAL = "ultimo_semanal"
 ULTIMO_MENSUAL = "ultimo_mensual"
+ULTIMO_ANUAL = "ultimo_anual"
 
 # La hora del resumen puesta con /horario, encima de la del .env. Vacio es sin resumen.
 HORA_RESUMEN = "hora_resumen"

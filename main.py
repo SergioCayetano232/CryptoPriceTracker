@@ -27,6 +27,7 @@ from crypto_tracker import (
     aleatoria,
     alerts,
     alquiler,
+    anual,
     ave,
     avisados,
     bajon,
@@ -687,6 +688,7 @@ def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:
             resumen_diario(config)
             resumen_semanal(config)
             resumen_mensual(config)
+            resumen_anual(config)
             recordatorios(config)
         except KeyboardInterrupt:
             raise
@@ -1084,7 +1086,7 @@ def responder(
         return _mes(config)
 
     if nombre == "anual":
-        return _anual(config)
+        return _anual(config, argumento)
 
     if nombre == "hodl":
         return _hodl(config)
@@ -3740,6 +3742,66 @@ def resumen_semanal(config: Config, ahora: datetime | None = None) -> None:
         logger.error("No se pudo apuntar el resumen semanal: %s", e)
 
 
+def _leer_año(config: Config, año: int) -> anual.Año:
+    desde, hasta = anual.tramo(año)
+    posiciones = list(config.cartera)
+    filas = []
+    if posiciones:
+        horas = (datetime.now(timezone.utc) - desde).total_seconds() / 3600
+        filas = database.get_series(
+            config.database_path,
+            [p.coin_id for p in posiciones],
+            horas,
+            config.vs_currency,
+        )
+    filas = [f for f in filas if desde <= f[0] < hasta]
+    todos = database.get_movimientos(config.database_path, None)
+    return anual.calcular(año, posiciones, filas, todos)
+
+
+def resumen_anual(config: Config, ahora: datetime | None = None) -> None:
+    """El 1 de enero, a la hora del diario, cómo te fue el año que acaba de cerrar."""
+    config = _con_cambios(config)
+    if config.resumen_diario is None:
+        return
+
+    ahora = ahora or datetime.now().astimezone()
+    try:
+        ultimo = database.ultimo_resumen(config.database_path, database.ULTIMO_ANUAL)
+    except database.DatabaseError as e:
+        logger.error("No se pudo leer el ultimo resumen anual: %s", e)
+        return
+
+    if not anual.toca(ahora, config.resumen_diario, ultimo) or _silenciado(config):
+        return
+
+    año = ahora.astimezone().year - 1
+    try:
+        resultado = _leer_año(config, año)
+    except database.DatabaseError as e:
+        logger.error("No se pudo leer el año %d: %s", año, e)
+        return
+
+    if resultado.cartera is None and not resultado.compras and not resultado.ventas:
+        logger.info("Toca el resumen de %d, pero no hay nada de ese año", año)
+    elif not telegram.send_message(
+        config.telegram_token,
+        config.telegram_chat_id,
+        alerts.formatear_anual(resultado, config.vs_currency, ahora.date()),
+    ):
+        logger.error("No se pudo enviar el resumen anual, lo reintento luego")
+        return
+    else:
+        logger.info("Resumen de %d enviado", año)
+
+    try:
+        database.guardar_resumen(
+            config.database_path, ahora.date(), database.ULTIMO_ANUAL
+        )
+    except database.DatabaseError as e:
+        logger.error("No se pudo apuntar el resumen anual: %s", e)
+
+
 def resumen_mensual(config: Config, ahora: datetime | None = None) -> None:
     """El día 1, a la hora del diario, cómo le fue a la cartera el mes pasado."""
     config = _con_cambios(config)
@@ -3898,8 +3960,17 @@ def _mes(config: Config) -> str | comandos.Foto:
     )
 
 
-def _anual(config: Config) -> str | comandos.Foto:
+def _anual(config: Config, argumento: str = "") -> str | comandos.Foto:
     ahora = datetime.now(timezone.utc)
+    if argumento:
+        try:
+            año = anual.interpretar(argumento, date.today().year)
+        except anual.AnualError as e:
+            return telegram.escape(str(e))
+        config = _con_cambios(config)
+        return alerts.formatear_anual(
+            _leer_año(config, año), config.vs_currency, date.today()
+        )
     return _desde_el_principio(
         config,
         mes.horas_del_ano(ahora),

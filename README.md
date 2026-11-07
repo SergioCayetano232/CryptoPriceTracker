@@ -181,6 +181,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/semana bitcoin` | La semana de una sola: lo mismo que `/historico bitcoin 7d` |
 | `/mes` | Cómo va tu cartera desde el día 1 del mes, con gráfica, no en los últimos 30 días como `/cartera 30d`. No gasta consultas. También `/mensual` |
 | `/anual` | Lo mismo desde el 1 de enero, para compararlo con la bolsa. Con `HISTORY_DAYS=90`, que es lo que viene, a partir de abril no tiene el año entero y te lo dice: pon `366`. También `/año` y `/ytd` |
+| `/anual 2025` | Tu resumen de ese año: la cartera, la mejor y la peor cripto, el mejor y el peor mes, compras, ventas, lo ganado vendiendo y tu mejor y peor compra. Te llega solo el 1 de enero si tienes resumen diario |
 | `/compra bitcoin 0.01 600` | Apunta en la cartera que has comprado 0,01 por 600 € |
 | `/compra bitcoin 0.01 @60000` | Lo mismo, con el precio de cada una en vez del total |
 | `/compra bitcoin 0.01 600 com 1.5` | Con la comisión al final, en dinero o en % (`com 0.1%`). En la compra se suma a lo que te costó; en `/venta ... com 1`, se resta de lo que te dieron. Así `/ganancias` e `/impuestos` salen con lo que pagaste de verdad |
@@ -568,6 +569,12 @@ unos días en `--loop`. Con `/semana` lo pides cuando quieras.
 Y el día 1 de cada mes, también a esa hora, te llega **tu mes**: lo mismo, pero
 del mes que acaba de terminar, del día 1 al último. Con `/mes` ves el que va en
 curso. Si `HISTORY_DAYS` es menor de 31, saldrá solo el trozo que tenga.
+
+Y el 1 de enero, **tu año**: cuánto ha ido la cartera, la cripto que mejor y la
+que peor, el mejor y el peor mes, cuántas compras y ventas hiciste, lo ganado
+vendiendo y tu mejor y tu peor compra, mirada a 31 de diciembre. Con
+`/anual 2025` lo ves de cualquier año, también el que va en curso. Para que la
+cartera salga del año entero, `HISTORY_DAYS=366`.
 
 **Que no te despierte:**
 ```

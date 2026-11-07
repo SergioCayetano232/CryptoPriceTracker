@@ -8019,3 +8019,69 @@ def test_sin_concentracion_no_avisa(con_semana, enviados, monkeypatch):
     main.ejecutar_ciclo(con_semana, {})
 
     assert _avisos_concentracion(enviados) == []
+
+
+def _guardar_en(config, coin_id, precio, cuando):
+    import sqlite3
+
+    conn = sqlite3.connect(config.database_path)
+    conn.execute(
+        "INSERT INTO prices (coin_id, price, currency, created_at) VALUES (?,?,?,?)",
+        (coin_id, precio, "eur", cuando.astimezone(timezone.utc).isoformat()),
+    )
+    conn.commit()
+    conn.close()
+
+
+def _año_guardado(config):
+    # 0,1 BTC y 10 SOL: de 6.000 en enero a 8.100 en diciembre
+    for mes, dia, btc, sol in ((1, 2, 50000, 100), (12, 31, 66000, 150)):
+        cuando = datetime(2025, mes, dia, 12).astimezone()
+        _guardar_en(config, "bitcoin", btc, cuando)
+        _guardar_en(config, "solana", sol, cuando)
+
+
+UNO_DE_ENERO = datetime(2026, 1, 1, 9, 5).astimezone()
+
+
+def test_anual_de_un_año(con_semana, enviados):
+    _año_guardado(con_semana)
+
+    main.atender(con_semana, _mensaje("/anual 2025"))
+
+    assert "🎆 <b>Tu 2025 en cripto</b>" in enviados[0]
+    assert "de €6.000,00 a <b>€8.100,00</b>" in enviados[0]
+
+
+def test_anual_de_un_año_mal_escrito(con_semana, enviados):
+    main.atender(con_semana, _mensaje("/anual 3000"))
+
+    assert "Dime un año entre 2009 y" in enviados[0]
+
+
+def test_el_resumen_del_año_llega_el_1_de_enero_una_vez(con_semana, enviados):
+    _año_guardado(con_semana)
+
+    main.resumen_anual(con_semana, UNO_DE_ENERO - timedelta(days=1))
+    main.resumen_anual(con_semana, UNO_DE_ENERO)
+    main.resumen_anual(con_semana, UNO_DE_ENERO + timedelta(minutes=5))
+
+    [texto] = enviados
+    assert "Tu 2025 en cripto" in texto
+    assert "hasta hoy" not in texto
+
+
+def test_el_resumen_del_año_sin_nada_no_se_manda(con_semana, enviados):
+    main.resumen_anual(con_semana, UNO_DE_ENERO)
+
+    assert enviados == []
+    assert (
+        database.ultimo_resumen(con_semana.database_path, database.ULTIMO_ANUAL)
+        == UNO_DE_ENERO.date()
+    )
+
+
+def test_el_resumen_del_año_sin_resumen_diario(config, enviados):
+    main.resumen_anual(config, UNO_DE_ENERO)
+
+    assert enviados == []

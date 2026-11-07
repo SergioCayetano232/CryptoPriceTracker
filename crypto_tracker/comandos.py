@@ -20,7 +20,7 @@ COMANDOS = {
     "rebalanceo": "Qué mover para un reparto (ej: /rebalanceo btc 60 eth 40)",
     "semana": "Cómo le ha ido a tu cartera esta semana, o a una (ej: /semana btc)",
     "mes": "Cómo va tu cartera desde el día 1 del mes",
-    "anual": "Cómo va tu cartera desde el 1 de enero",
+    "anual": "Cómo va tu cartera este año, o tu resumen de uno (ej: /anual 2025)",
     "compra": "Apuntar una compra en la cartera (ej: /compra bitcoin 0.01 600)",
     "venta": "Apuntar una venta (ej: /venta bitcoin 0.005 350 o todo)",
     "movimientos": "Tus últimas compras y ventas (ej: /movimientos btc)",
