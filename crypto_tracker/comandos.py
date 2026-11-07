@@ -34,6 +34,7 @@ COMANDOS = {
     "vsbtc": "Tu cartera contra haber metido lo mismo en bitcoin",
     "deshacer": "Quitar la última compra o venta que apuntaste",
     "alerta": "Avísame una vez a un precio o un % (ej: /alerta btc 70000 o +10% 7d)",
+    "stop": "Avísame al perder o ganar un % sobre lo que pagué (ej: /stop eth -15%)",
     "alertas": "Las alertas que tienes puestas",
     "ultimo": "Cuándo te avisó por última vez cada una y cuánto se ha movido",
     "quitar": "Quitar alertas (ej: /quitar 3, /quitar btc o /quitar todas)",
@@ -435,6 +436,11 @@ EJEMPLOS = {
         ("/alerta bitcoin 70000 vender la mitad", "con una nota para el aviso"),
         ("/alerta cartera 5000", "con lo que vale tu cartera entera"),
         ("/alerta bitcoin", "sin precio, te digo a cuánto está"),
+    ],
+    "stop": [
+        ("/stop eth -15%", "si pierdes un 15% sobre tu precio medio"),
+        ("/stop btc +50%", "si ganas un 50%"),
+        ("/stop cartera -20%", "con todo lo que metiste en la cartera"),
     ],
     "quitar": [
         ("/quitar 3", "la número 3 de /alertas"),

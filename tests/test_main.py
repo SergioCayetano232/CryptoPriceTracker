@@ -7569,3 +7569,103 @@ def test_riesgo_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/riesgo"))
 
     assert enviados[0] == main.SIN_CARTERA
+
+
+# con_semana: 0,1 BTC por 5.000 (50.000 de media) y 10 SOL por 1.000
+def test_stop(con_semana, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 66000.0})
+
+    main.atender(con_semana, _mensaje("/stop btc -15%"))
+
+    assert "🛑 Te aviso si <b>Bitcoin</b> baja a <b>€42.500,00</b>" in enviados[0]
+    assert "un 15% por debajo de lo que te costó (€50.000,00 de media)" in enviados[0]
+    assert "Ahora está a €66.000,00: vas +32,0%" in enviados[0]
+    [alerta] = database.get_puntuales(con_semana.database_path, "eur")
+    assert (alerta.coin_id, alerta.objetivo, alerta.sube) == ("bitcoin", 42500, False)
+    assert alerta.nota == "Stop: -15% sobre lo que te costó"
+
+
+def test_el_stop_salta_y_se_borra(con_semana, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 66000.0})
+    main.atender(con_semana, _mensaje("/stop btc -15%"))
+    enviados.clear()
+
+    _precio(monkeypatch, {"bitcoin": 42000.0, "solana": 100.0})
+    main.ejecutar_ciclo(con_semana, {"bitcoin": "%66000.0"})
+
+    aviso = next(t for t in enviados if "Era tu /alerta" in t)
+    assert "📝 Stop: -15% sobre lo que te costó" in aviso
+    assert database.get_puntuales(con_semana.database_path, "eur") == []
+
+
+def test_stop_de_ganancia(con_semana, enviados, monkeypatch):
+    _precio(monkeypatch, {"solana": 100.0})
+
+    main.atender(con_semana, _mensaje("/stop sol +50%"))
+
+    assert "🎯 Te aviso si <b>Solana</b> sube a <b>€150,00</b>" in enviados[0]
+    assert "un 50% por encima" in enviados[0]
+
+
+def test_stop_de_la_cartera(con_semana, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 66000.0, "solana": 100.0})
+
+    main.atender(con_semana, _mensaje("/stop cartera -20%"))
+
+    # metiste 6.000 y vale 7.600
+    assert "<b>tu cartera</b> baja a <b>€4.800,00</b>" in enviados[0]
+    assert "de lo que metiste (€6.000,00)" in enviados[0]
+    assert "Ahora vale €7.600,00" in enviados[0]
+    assert "precio medio cambia" not in enviados[0]
+
+
+def test_stop_por_el_que_ya_has_pasado(con_semana, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 40000.0})
+
+    main.atender(con_semana, _mensaje("/stop btc -15%"))
+
+    assert "ya vas -20,0% sobre lo que te costó, más allá del -15%" in enviados[0]
+    assert database.get_puntuales(con_semana.database_path, "eur") == []
+
+
+def test_stop_dos_veces(con_semana, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 66000.0})
+    main.atender(con_semana, _mensaje("/stop btc -15%"))
+
+    main.atender(con_semana, _mensaje("/stop btc -15%"))
+
+    assert "Ya lo tienes puesto, es la número 1" in enviados[1]
+
+
+def test_stop_de_una_que_no_tienes(con_semana, enviados, monkeypatch):
+    pedidas = _precio(monkeypatch, {"ethereum": 2500.0})
+
+    main.atender(con_semana, _mensaje("/stop eth -15%"))
+
+    assert "No tienes <b>ethereum</b> en la cartera" in enviados[0]
+    assert pedidas == []
+
+
+def test_stop_sin_lo_que_te_costo(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    from crypto_tracker.config import parse_cartera
+
+    sin_coste = replace(config, cartera=parse_cartera("bitcoin:0.1"))
+    _precio(monkeypatch, {"bitcoin": 66000.0})
+
+    main.atender(sin_coste, _mensaje("/stop btc -15%"))
+
+    assert "necesito lo que te costó" in enviados[0]
+
+
+def test_stop_mal_escrito(con_semana, enviados):
+    main.atender(con_semana, _mensaje("/stop btc 15%"))
+
+    assert "¿Perder o ganar?" in enviados[0]
+
+
+def test_stop_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/stop btc -15%"))
+
+    assert enviados[0] == main.SIN_CARTERA

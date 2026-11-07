@@ -164,6 +164,7 @@ from .sofa import PRECIO as PRECIO_SOFA
 from .sofa import Sofa
 from .spotify import PRECIO as PRECIO_SPOTIFY
 from .spotify import Spotify
+from .stop import Stop
 from .sube import Subida
 from .sueldo import PAGA as PAGA_SMI
 from .sueldo import Sueldo
@@ -3789,6 +3790,54 @@ def formatear_puntual(alerta: Puntual, precio: float, currency: str) -> str:
     if alerta.nota:
         texto += f"\n📝 {escape(alerta.nota)}"
     return texto
+
+
+def _stop_quien(s: Stop) -> tuple[str, str, str]:
+    """El nombre, lo que costó y cómo se dice lo de ahora, para /stop."""
+    if s.coin_id == CARTERA:
+        return "tu cartera", "lo que metiste", "Ahora vale"
+    return (
+        escape(s.coin_id.replace("-", " ").title()),
+        "lo que te costó",
+        "Ahora está a",
+    )
+
+
+def formatear_stop(s: Stop, numero: int, currency: str) -> str:
+    """Respuesta al crear un /stop."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre, coste, ahora = _stop_quien(s)
+    emoji, verbo, lado = (
+        ("🎯", "sube", "por encima") if s.sube else ("🛑", "baja", "por debajo")
+    )
+    media = "" if s.coin_id == CARTERA else " de media"
+    texto = (
+        f"{emoji} Te aviso si <b>{nombre}</b> {verbo} a "
+        f"<b>{simbolo}{_num(s.objetivo)}</b>, un {_pct(abs(s.porcentaje))}% {lado} "
+        f"de {coste} ({simbolo}{_num(s.coste)}{media}).\n"
+        f"{ahora} {simbolo}{_num(s.ahora)}: vas {_signo(s.llevas)}. "
+        "Solo te aviso una vez.\n"
+        f"Es la número {numero} de /alertas."
+    )
+    if s.coin_id != CARTERA:
+        # El objetivo se queda fijo; si compras más, ya no es tu precio medio.
+        texto += (
+            "\n<i>Si compras o vendes, tu precio medio cambia: vuelve a ponerlo.</i>"
+        )
+    return texto
+
+
+def formatear_stop_pasado(s: Stop) -> str:
+    """/stop a un % por el que ya has pasado: saltaría en el siguiente ciclo."""
+    nombre, coste, _ = _stop_quien(s)
+    return (
+        f"Con <b>{nombre}</b> ya vas {_signo(s.llevas)} sobre {coste}, "
+        f"más allá del {_pct(s.porcentaje)}%. Ponlo más lejos o mira /cartera"
+    )
+
+
+def _signo(porcentaje: float) -> str:
+    return f"{porcentaje:+.1f}%".replace(".", ",")
 
 
 def formatear_sin_objetivo(coin_id: str, precio: float, currency: str) -> str:

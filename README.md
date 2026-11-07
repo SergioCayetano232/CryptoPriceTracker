@@ -200,6 +200,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/alerta bitcoin 70000 vender la mitad` | Con una nota detrás, que te sale en el aviso (también después del tramo) |
 | `/alerta bitcoin` | Sin precio, te dice a cuánto está y te pone un ejemplo |
 | `/alerta cartera 5000` | Lo mismo con lo que vale tu cartera entera (también `-10%`). Si espera a que suba, con una barra `▓▓▓▓░░` de lo que llevas |
+| `/stop eth -15%` | Te avisa una vez si pierdes un 15% sobre tu precio medio, no sobre el precio de ahora. Con `+50%`, al ganar. `/stop cartera -20%` lo mira con todo lo que metiste. Sale en `/alertas` y se quita con `/quitar` |
 | `/alertas` | Las alertas que tienes puestas y cuánto le falta a cada una, la más cerca primero, con un 🗑 para quitarlas |
 | `/ultimo` | Cuándo te avisó por última vez cada una de las que vigilas, a qué precio y cuánto se ha movido desde entonces. Solo cuenta los avisos que llegaron, no los del silencio |
 | `/quitar 3` | Quita la alerta número 3 (`/quitar 2 5` varias, `/quitar bitcoin` las de esa cripto, `/quitar todas` todas) |

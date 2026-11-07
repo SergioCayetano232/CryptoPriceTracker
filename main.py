@@ -147,6 +147,7 @@ from crypto_tracker import (
     simbolos,
     sofa,
     spotify,
+    stop,
     sube,
     sueldo,
     supermercado,
@@ -942,6 +943,12 @@ def responder(
 
     if nombre == "alerta":
         return _crear_alerta(config, argumento)
+
+    if nombre == "stop":
+        config = _con_cambios(config)
+        if not config.cartera:
+            return SIN_CARTERA
+        return _stop(config, argumento)
 
     if nombre == "vigilar":
         return _vigilar(config, argumento) if argumento else _lista_vigiladas(config)
@@ -1887,6 +1894,58 @@ def _crear_alerta(config: Config, argumento: str) -> str:
     return alerts.con_fuente(
         alerts.formatear_puntual(alerta, precio, config.vs_currency)
     )
+
+
+def _stop(config: Config, argumento: str) -> str:
+    try:
+        coin_id, porcentaje = stop.interpretar(argumento)
+    except stop.StopError as e:
+        return telegram.escape(str(e))
+
+    es_cartera = coin_id == puntuales.CARTERA
+    posiciones = [p for p in config.cartera if es_cartera or p.coin_id == coin_id]
+    if not posiciones:
+        return (
+            f"No tienes <b>{telegram.escape(coin_id)}</b> en la cartera. "
+            "Lo que tienes, en /cartera"
+        )
+
+    try:
+        precios = coingecko.get_prices(
+            [p.coin_id for p in posiciones], config.vs_currency
+        )
+    except coingecko.CoinGeckoError as e:
+        return f"No he podido mirar el precio ahora mismo: {telegram.escape(str(e))}"
+    valores, faltan = cartera.valorar(posiciones, precios)
+    if faltan:
+        return "Ahora mismo no tengo el precio de todo. Prueba en un rato."
+
+    try:
+        s = stop.calcular(
+            coin_id, porcentaje, cartera.total(valores) if es_cartera else valores[0]
+        )
+    except stop.StopError as e:
+        return telegram.escape(str(e))
+    if s.ya_llego:
+        return alerts.formatear_stop_pasado(s)
+
+    pendientes = database.get_puntuales(config.database_path, config.vs_currency)
+    igual = puntuales.repetida(pendientes, coin_id, s.objetivo, s.sube)
+    if igual:
+        return f"Ya lo tienes puesto, es la número {igual.id}. Mira /alertas"
+
+    # Va como una /alerta más: así salta, se lista y se quita igual que las otras.
+    alerta = database.crear_puntual(
+        config.database_path,
+        coin_id,
+        s.objetivo,
+        s.sube,
+        config.vs_currency,
+        None,
+        s.nota,
+    )
+    logger.info("Stop %d creado: %s a %s", alerta.id, coin_id, s.objetivo)
+    return alerts.con_fuente(alerts.formatear_stop(s, alerta.id, config.vs_currency))
 
 
 def _precio(config: Config, argumento: str) -> str | comandos.ConBotones:
