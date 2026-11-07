@@ -8085,3 +8085,29 @@ def test_el_resumen_del_año_sin_resumen_diario(config, enviados):
     main.resumen_anual(config, UNO_DE_ENERO)
 
     assert enviados == []
+
+
+def test_caida_de_la_cartera(con_semana, enviados):
+    # 0,1 BTC y 10 SOL: 7.000, se hunde a 5.000, vuelve a 7.000 y sube a 7.600
+    for horas, btc in ((48, 60000.0), (36, 40000.0), (24, 60000.0), (0, 66000.0)):
+        _guardar(con_semana, "bitcoin", btc, horas)
+        _guardar(con_semana, "solana", 100.0, horas)
+
+    main.atender(con_semana, _mensaje("/caida cartera"))
+
+    assert enviados[0].startswith("📉 <b>Tu cartera</b>")
+    assert "está en su máximo del tramo" in enviados[0]
+    assert "Peor caída <b>-28.57%</b>: de €7.000,00" in enviados[0]
+    assert "Volvió a ese precio en 1 día" in enviados[0]
+
+
+def test_caida_de_la_cartera_sin_precios(con_semana, enviados):
+    main.atender(con_semana, _mensaje("/caida cartera 7d"))
+
+    assert "Aún no tengo dos precios guardados de tu cartera" in enviados[0]
+
+
+def test_caida_de_la_cartera_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/caida cartera"))
+
+    assert enviados[0] == main.SIN_CARTERA

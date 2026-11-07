@@ -2414,8 +2414,28 @@ def _caida(config: Config, argumento: str) -> str:
             return f"¿De cuál? Por ejemplo: {caida.EJEMPLO}"
         coin_id = vigiladas[0].coin_id
 
-    serie = database.get_serie(config.database_path, coin_id, horas, config.vs_currency)
+    if coin_id == puntuales.CARTERA:
+        config = _con_cambios(config)
+        if not config.cartera:
+            return SIN_CARTERA
+        posiciones = list(config.cartera)
+        filas = database.get_series(
+            config.database_path,
+            [p.coin_id for p in posiciones],
+            horas,
+            config.vs_currency,
+        )
+        serie = cartera.serie_valor(posiciones, filas)
+    else:
+        serie = database.get_serie(
+            config.database_path, coin_id, horas, config.vs_currency
+        )
     resultado = caida.calcular(serie)
+    if resultado is None and coin_id == puntuales.CARTERA:
+        return (
+            f"Aún no tengo dos precios guardados de tu cartera "
+            f"({periodo.nombre(horas)}). Vuelve a preguntar en un rato."
+        )
     if resultado is None:
         return (
             f"No tengo precios guardados de <b>{telegram.escape(coin_id)}</b> "

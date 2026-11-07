@@ -21,6 +21,8 @@ class Caida:
     cuando_pico: datetime
     valle: float
     cuando_valle: datetime
+    # Cuando volvió al pico después del valle. None si aún no ha vuelto.
+    recuperado: datetime | None = None
 
     @property
     def desde_maximo(self) -> float:
@@ -61,4 +63,18 @@ def calcular(serie: list[tuple[datetime, float]]) -> Caida | None:
         elif fila[1] / alto[1] < valle[1] / pico[1]:
             pico, valle = alto, fila
 
-    return Caida(alto[1], alto[0], serie[-1][1], pico[1], pico[0], valle[1], valle[0])
+    recuperado = None
+    if valle[1] < pico[1]:
+        recuperado = next(
+            (c for c, valor in serie if c > valle[0] and valor >= pico[1]), None
+        )
+    return Caida(
+        alto[1],
+        alto[0],
+        serie[-1][1],
+        pico[1],
+        pico[0],
+        valle[1],
+        valle[0],
+        recuperado,
+    )

@@ -2977,7 +2977,7 @@ def formatear_caida(
 ) -> str:
     """Respuesta de /caida. desde va si no hay precios de todo el tramo."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
-    nombre = escape(coin_id.replace("-", " ").title())
+    nombre = "Tu cartera" if coin_id == CARTERA else _nombre(coin_id)
     momento = c.cuando_maximo.astimezone()
     cuanto = hace(c.cuando_maximo, ahora or datetime.now(momento.tzinfo))
 
@@ -3001,10 +3001,22 @@ def formatear_caida(
             f"{c.cuando_pico.astimezone():%d/%m} a {simbolo}{_num(c.valle)} el "
             f"{c.cuando_valle.astimezone():%d/%m}"
         )
+        texto += "\n" + _recuperacion(c, simbolo)
     if desde is not None:
         cuando = desde.astimezone()
         texto += f"\n<i>Solo tengo precios desde el {cuando:%d/%m a las %H:%M}.</i>"
     return texto
+
+
+def _recuperacion(c: Caida, simbolo: str) -> str:
+    if c.recuperado is None:
+        return f"Aún no ha vuelto a {simbolo}{_num(c.pico)}"
+    tardo = c.recuperado - c.cuando_pico
+    if tardo.days == 0:
+        cuanto = "en menos de un día"
+    else:
+        cuanto = f"en {tardo.days} {'día' if tardo.days == 1 else 'días'}"
+    return f"Volvió a ese precio {cuanto}, el {c.recuperado.astimezone():%d/%m}"
 
 
 def formatear_sube(

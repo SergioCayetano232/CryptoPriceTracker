@@ -119,3 +119,53 @@ def test_formatear_en_maximos_y_sin_caidas():
     assert "Para volver" not in texto
     assert "No ha tenido ninguna caída" in texto
     assert "Solo tengo precios desde el" in texto
+
+
+def test_cuando_se_recupero_de_la_peor_caida():
+    # pico de 100 el día 1, valle de 60 el 3, vuelve a 100 el 5
+    c = calcular(_serie(90, 100, 80, 60, 90, 100, 110))
+
+    assert (c.pico, c.valle) == (100, 60)
+    assert c.recuperado == _dia(5)
+
+
+def test_aun_sin_recuperar():
+    c = calcular(_serie(100, 80, 60, 90))
+
+    assert c.recuperado is None
+
+
+def test_sin_caida_no_hay_nada_que_recuperar():
+    c = calcular(_serie(1, 2, 3))
+
+    assert c.peor == 0
+    assert c.recuperado is None
+
+
+def test_formatear_cuando_se_recupero():
+    c = calcular(_serie(90, 100, 80, 60, 90, 100, 110))
+
+    texto = formatear_caida("bitcoin", c, 30 * 24, "eur")
+
+    assert "Peor caída <b>-40.00%</b>" in texto
+    assert f"Volvió a ese precio en 4 días, el {_dia(5).astimezone():%d/%m}" in texto
+
+
+def test_formatear_aun_sin_recuperar():
+    texto = formatear_caida("bitcoin", calcular(_serie(100, 60, 90)), 720, "eur")
+
+    assert "Aún no ha vuelto a €100,00" in texto
+
+
+def test_formatear_recuperada_el_mismo_dia():
+    serie = [(INICIO + timedelta(hours=h), p) for h, p in ((0, 100), (2, 80), (5, 100))]
+
+    texto = formatear_caida("bitcoin", calcular(serie), 24, "eur")
+
+    assert "Volvió a ese precio en menos de un día" in texto
+
+
+def test_formatear_la_cartera():
+    texto = formatear_caida("cartera", calcular(_serie(100, 60, 90)), 720, "eur")
+
+    assert texto.startswith("📉 <b>Tu cartera</b>")

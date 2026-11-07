@@ -579,6 +579,7 @@ EJEMPLOS = {
     "caida": [
         ("/caida bitcoin", "cuánto ha bajado desde el máximo de 30 días"),
         ("/caida bitcoin 7d", "del tramo que digas"),
+        ("/caida cartera 90d", "lo mismo con lo que vale tu cartera entera"),
         ("/caida", "a secas, la primera que vigilo"),
     ],
     "sube": [
