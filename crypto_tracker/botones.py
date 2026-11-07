@@ -154,3 +154,13 @@ def deshacer_movimiento(
 ) -> list[list[tuple[str, str]]]:
     # Con el numero: si luego apuntas otra, este boton ya no deshace la nueva.
     return [[(texto, f"/deshacer {movimiento_id}")]]
+
+
+def para_recordatorio(comando: str, coin_id: str) -> list[list[tuple[str, str]]]:
+    """Apuntar la compra con lo que sale al precio del aviso, o dejar de recordarla."""
+    # Si el precio al final es otro, se deshace y se escribe a mano.
+    filas = [
+        [("✅ Ya la he hecho", comando)],
+        [("🔕 No recordar más", f"/recordar {coin_id} no")],
+    ]
+    return [f for f in filas if all(_cabe(b) for b in f)]

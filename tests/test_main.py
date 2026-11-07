@@ -7757,3 +7757,145 @@ def test_compra_con_comision_y_deshacer(config, enviados, monkeypatch):
     main.atender(config, _mensaje("/deshacer"))
 
     assert database.get_cambios_cartera(config.database_path) == {"solana": None}
+
+
+@pytest.fixture
+def con_botones(monkeypatch):
+    """Lo que se manda, con sus botones."""
+    lista = []
+    monkeypatch.setattr(
+        telegram,
+        "send_message",
+        lambda token, chat, texto, **kw: (
+            lista.append((texto, kw.get("botones"))) or True
+        ),
+    )
+    return lista
+
+
+# El 9 de noviembre de 2026 es lunes
+LUNES_DCA = datetime(2026, 11, 9, 9, 5).astimezone()
+
+
+def test_recordar(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 62500.0})
+
+    main.atender(config, _mensaje("/recordar lunes 50 btc"))
+
+    assert (
+        "Cada <b>lunes</b> a las 9:00 te recuerdo comprar <b>€50,00</b>"
+        in (enviados[0])
+    )
+    assert "serían 0,0008" in enviados[0]
+    [r] = database.get_recordatorios(config.database_path)
+    assert (r.coin_id, r.dia, r.importe) == ("bitcoin", 0, 50)
+
+
+def test_recordar_a_la_hora_del_resumen(con_semana, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 62500.0})
+
+    main.atender(con_semana, _mensaje("/recordar viernes 20 btc"))
+
+    assert "a las 9:00" in enviados[0]
+
+
+def test_recordar_lista_y_quitar(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 62500.0, "solana": 150.0})
+    main.atender(config, _mensaje("/recordar lunes 50 btc"))
+    main.atender(config, _mensaje("/recordar jueves 20 sol"))
+    enviados.clear()
+
+    main.atender(config, _mensaje("/recordar"))
+    main.atender(config, _mensaje("/recordar sol no"))
+    main.atender(config, _mensaje("/recordar sol no"))
+
+    assert "<b>Lunes</b>: €50,00 de Bitcoin" in enviados[0]
+    assert "<b>Jueves</b>: €20,00 de Solana" in enviados[0]
+    assert "ya no te recuerdo la compra de solana" in enviados[1]
+    assert "No tenías ningún recordatorio" in enviados[2]
+    assert [r.coin_id for r in database.get_recordatorios(config.database_path)] == [
+        "bitcoin"
+    ]
+
+
+def test_recordar_sin_ninguno(config, enviados):
+    main.atender(config, _mensaje("/recordar"))
+
+    assert "No tienes ningún recordatorio" in enviados[0]
+
+
+def test_recordar_algo_que_no_existe(config, enviados, monkeypatch):
+    _precio(monkeypatch, {})
+
+    main.atender(config, _mensaje("/recordar lunes 50 nada"))
+
+    assert "No encuentro <b>nada</b>" in enviados[0]
+    assert database.get_recordatorios(config.database_path) == []
+
+
+def test_recordar_mal_escrito(config, enviados):
+    main.atender(config, _mensaje("/recordar finde 50 btc"))
+
+    assert "no es un día de la semana" in enviados[0]
+
+
+def test_el_recordatorio_llega_el_dia_una_vez(config, con_botones, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 62500.0})
+    main.atender(config, _mensaje("/recordar lunes 50 btc"))
+    con_botones.clear()
+
+    main.recordatorios(config, LUNES_DCA - timedelta(days=1))  # domingo
+    main.recordatorios(config, LUNES_DCA)
+    main.recordatorios(config, LUNES_DCA + timedelta(minutes=5))
+
+    [(texto, botones)] = con_botones
+    assert "Toca tu compra de Bitcoin" in texto
+    assert "a €62.500,00 son <b>0,0008</b>" in texto
+    assert botones == [
+        [("✅ Ya la he hecho", "/compra bitcoin 0,0008 50")],
+        [("🔕 No recordar más", "/recordar bitcoin no")],
+    ]
+
+
+def test_el_boton_apunta_la_compra(config, con_botones, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 62500.0})
+    main.atender(config, _mensaje("/recordar lunes 50 btc"))
+    main.recordatorios(config, LUNES_DCA)
+    boton = con_botones[-1][1][0][0][1]
+
+    main.atender(config, _mensaje(boton))
+
+    assert database.get_cambios_cartera(config.database_path) == {
+        "bitcoin": Posicion("bitcoin", 0.0008, 50)
+    }
+
+
+def test_el_recordatorio_callado_espera(config, con_botones, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 62500.0})
+    main.atender(config, _mensaje("/recordar lunes 50 btc"))
+    con_botones.clear()
+    database.silenciar_hasta(
+        config.database_path, datetime.now(timezone.utc) + timedelta(hours=1)
+    )
+
+    main.recordatorios(config, LUNES_DCA)
+
+    assert con_botones == []
+    [r] = database.get_recordatorios(config.database_path)
+    assert r.ultimo is None
+
+
+def test_el_recordatorio_sin_conexion_se_reintenta(config, con_botones, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 62500.0})
+    main.atender(config, _mensaje("/recordar lunes 50 btc"))
+    con_botones.clear()
+
+    def falla(ids, cur):
+        raise coingecko.CoinGeckoError("Sin conexion con CoinGecko")
+
+    monkeypatch.setattr(coingecko, "get_prices", falla)
+    main.recordatorios(config, LUNES_DCA)
+    _precio(monkeypatch, {"bitcoin": 62500.0})
+    main.recordatorios(config, LUNES_DCA + timedelta(minutes=5))
+
+    assert len(con_botones) == 1

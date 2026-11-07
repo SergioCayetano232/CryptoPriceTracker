@@ -135,6 +135,7 @@ from crypto_tracker import (
     ratio,
     rebalanceo,
     record,
+    recordar,
     redondo,
     refran,
     rentabilidad,
@@ -641,6 +642,7 @@ def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:
             resumen_diario(config)
             resumen_semanal(config)
             resumen_mensual(config)
+            recordatorios(config)
         except KeyboardInterrupt:
             raise
         except Exception as e:
@@ -944,6 +946,9 @@ def responder(
 
     if nombre == "alerta":
         return _crear_alerta(config, argumento)
+
+    if nombre == "recordar":
+        return _recordar(config, argumento)
 
     if nombre == "stop":
         config = _con_cambios(config)
@@ -1914,6 +1919,84 @@ def _crear_alerta(config: Config, argumento: str) -> str:
     return alerts.con_fuente(
         alerts.formatear_puntual(alerta, precio, config.vs_currency)
     )
+
+
+def _recordar(config: Config, argumento: str) -> str:
+    hora = _con_cambios(config).resumen_diario or recordar.HORA
+    if not argumento:
+        lista = database.get_recordatorios(config.database_path)
+        return alerts.formatear_recordatorios(lista, config.vs_currency, hora)
+
+    quitar = recordar.para_quitar(argumento)
+    if quitar:
+        if database.quitar_recordatorio(config.database_path, quitar):
+            return f"Hecho, ya no te recuerdo la compra de {telegram.escape(quitar)}."
+        return "No tenías ningún recordatorio de esa. Mira /recordar"
+
+    try:
+        r = recordar.interpretar(argumento)
+    except recordar.RecordarError as e:
+        return telegram.escape(str(e))
+
+    # El precio, para decirte cuánto sale, y de paso ver que la cripto existe.
+    try:
+        precio = coingecko.get_prices([r.coin_id], config.vs_currency).get(r.coin_id)
+    except coingecko.CoinGeckoError as e:
+        return f"No he podido mirar el precio ahora mismo: {telegram.escape(str(e))}"
+    if precio is None:
+        return (
+            f"No encuentro <b>{telegram.escape(r.coin_id)}</b> en CoinGecko. "
+            f"Prueba con /buscar {telegram.escape(r.coin_id)}"
+        )
+
+    database.guardar_recordatorio(config.database_path, r)
+    logger.info("Recordatorio: %s cada %s de %s", r.importe, r.nombre_dia, r.coin_id)
+    return alerts.con_fuente(
+        alerts.formatear_recordatorio(r, precio, config.vs_currency, hora)
+    )
+
+
+def recordatorios(config: Config, ahora: datetime | None = None) -> None:
+    """El día de cada /recordar, a la hora del resumen, el aviso con su botón."""
+    ahora = ahora or datetime.now().astimezone()
+    hora = _con_cambios(config).resumen_diario
+    try:
+        lista = database.get_recordatorios(config.database_path)
+    except database.DatabaseError as e:
+        logger.error("No se pudieron leer los recordatorios: %s", e)
+        return
+    tocan = [r for r in lista if recordar.toca(r, ahora, hora)]
+    if not tocan or _silenciado(config):
+        return
+
+    try:
+        precios = coingecko.get_prices([r.coin_id for r in tocan], config.vs_currency)
+    except coingecko.CoinGeckoError as e:
+        # Sin precio no hay cantidad que apuntar: se reintenta el ciclo siguiente.
+        logger.warning("Sin precio para los recordatorios: %s", e)
+        return
+
+    for r in tocan:
+        precio = precios.get(r.coin_id)
+        if precio is None:
+            logger.warning("Sin precio de %s para su recordatorio", r.coin_id)
+            continue
+        if not telegram.send_message(
+            config.telegram_token,
+            config.telegram_chat_id,
+            alerts.con_fuente(
+                alerts.formatear_toca_comprar(r, precio, config.vs_currency)
+            ),
+            botones=botones.para_recordatorio(
+                recordar.comando_compra(r, precio), r.coin_id
+            ),
+        ):
+            logger.error("No se pudo mandar el recordatorio de %s", r.coin_id)
+            continue
+        database.guardar_recordatorio(
+            config.database_path, replace(r, ultimo=ahora.date())
+        )
+        logger.info("Recordatorio de %s enviado", r.coin_id)
 
 
 def _stop(config: Config, argumento: str) -> str:

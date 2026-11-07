@@ -195,6 +195,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/rentabilidad` | Lo que has metido, sacado y te queda, lo que ganas en total y cuánto sale **al año**, contando cuándo entró y salió cada euro (la TIR, como en los fondos). Con menos de un mes no lo pasa a anual. Solo lo apuntado por Telegram con precio. También `/tir` |
 | `/movimientos` | Tus últimas compras y ventas, con un botón para deshacer la última (`/movimientos btc`, solo las de esa) |
 | `/deshacer` | Quita la última compra o venta y deja la cripto como estaba |
+| `/recordar lunes 50 btc` | Cada lunes, a la hora del resumen (o a las 9:00 si no tienes), te recuerda tu compra con el precio y lo que te dan los 50 €, y un botón ✅ que la apunta en la cartera. `/recordar` a secas, los que tienes; `/recordar btc no`, lo quita |
 | `/alerta bitcoin 70000` | Te avisa una vez cuando llegue a ese precio |
 | `/alerta bitcoin +10%` | Te avisa una vez cuando suba un 10% desde ahora |
 | `/alerta bitcoin 70000 7d` | Lo mismo, pero si en 7 días no ha llegado se borra sola y te lo dice |

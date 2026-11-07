@@ -10,6 +10,7 @@ from .avisados import Aviso
 from .config import Posicion
 from .movimientos import Movimiento
 from .puntuales import Puntual
+from .recordar import Recordatorio, a_texto, de_texto
 
 logger = logging.getLogger(__name__)
 
@@ -589,6 +590,40 @@ def ultimos_avisos(db_path: str) -> dict[str, Aviso]:
             continue
         avisos[fila["clave"].removeprefix("aviso:")] = aviso
     return avisos
+
+
+def guardar_recordatorio(db_path: str, r: Recordatorio) -> None:
+    """Uno por cripto: poner otro de la misma cambia el que había."""
+    with _connect(db_path) as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (f"recordar:{r.coin_id}", a_texto(r)),
+        )
+
+
+def get_recordatorios(db_path: str) -> list[Recordatorio]:
+    with _connect(db_path) as conn:
+        filas = conn.execute(
+            "SELECT clave, valor FROM ajustes WHERE clave LIKE 'recordar:%' "
+            "ORDER BY clave"
+        ).fetchall()
+
+    lista = []
+    for fila in filas:
+        r = de_texto(fila["clave"].removeprefix("recordar:"), fila["valor"])
+        if r is None:
+            logger.warning("Recordatorio que no se entiende: %r", fila["valor"])
+            continue
+        lista.append(r)
+    return lista
+
+
+def quitar_recordatorio(db_path: str, coin_id: str) -> bool:
+    with _connect(db_path) as conn:
+        cursor = conn.execute(
+            "DELETE FROM ajustes WHERE clave = ?", (f"recordar:{coin_id}",)
+        )
+    return cursor.rowcount > 0
 
 
 def crear_puntual(

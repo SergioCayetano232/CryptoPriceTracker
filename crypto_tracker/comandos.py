@@ -32,6 +32,7 @@ COMANDOS = {
     "hodl": "Cuántos días llevas sin vender cada cripto de tu cartera",
     "record": "Lo máximo que ha valido tu cartera y cuánto le falta para volver",
     "vsbtc": "Tu cartera contra haber metido lo mismo en bitcoin",
+    "recordar": "Avísame cada semana de mi compra (ej: /recordar lunes 50 btc)",
     "deshacer": "Quitar la última compra o venta que apuntaste",
     "alerta": "Avísame una vez a un precio o un % (ej: /alerta btc 70000 o +10% 7d)",
     "stop": "Avísame al perder o ganar un % sobre lo que pagué (ej: /stop eth -15%)",
@@ -441,6 +442,11 @@ EJEMPLOS = {
         ("/stop eth -15%", "si pierdes un 15% sobre tu precio medio"),
         ("/stop btc +50%", "si ganas un 50%"),
         ("/stop cartera -20%", "con todo lo que metiste en la cartera"),
+    ],
+    "recordar": [
+        ("/recordar lunes 50 btc", "cada lunes, con un botón para apuntarla"),
+        ("/recordar", "los que tienes puestos"),
+        ("/recordar btc no", "dejar de recordarlo"),
     ],
     "quitar": [
         ("/quitar 3", "la número 3 de /alertas"),

@@ -3,7 +3,7 @@
 import logging
 import math
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, time
 
 from .aceite import PRECIO as PRECIO_ACEITE
 from .aceite import Aceite
@@ -148,6 +148,7 @@ from .ratio import Ratio
 from .rebalanceo import EJEMPLO as EJEMPLO_REBALANCEO
 from .rebalanceo import Paso
 from .record import Record
+from .recordar import Recordatorio
 from .redondo import Redondo
 from .rentabilidad import MIN_DIAS as MIN_DIAS_RENTABILIDAD
 from .rentabilidad import Rentabilidad
@@ -3773,6 +3774,59 @@ def formatear_busqueda(texto: str, resultados: list[dict]) -> str:
         f"\nPara vigilarla: <code>/vigilar {escape(resultados[0]['id'])} %5</code>"
     )
     return "\n".join(lineas)
+
+
+def _hora(hora: time) -> str:
+    return f"{hora.hour}:{hora.minute:02d}"
+
+
+def _nombre(coin_id: str) -> str:
+    return escape(coin_id.replace("-", " ").title())
+
+
+def formatear_recordatorio(
+    r: Recordatorio, precio: float, currency: str, hora: time
+) -> str:
+    """Respuesta al poner un /recordar."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    return (
+        f"📅 Cada <b>{r.nombre_dia}</b> a las {_hora(hora)} te recuerdo comprar "
+        f"<b>{simbolo}{_num(r.importe)}</b> de <b>{_nombre(r.coin_id)}</b>.\n"
+        f"A precio de hoy ({simbolo}{_num(precio)}) serían "
+        f"{texto_cantidad(r.importe / precio)}.\n"
+        f"Para quitarlo: /recordar {escape(r.coin_id)} no"
+    )
+
+
+def formatear_recordatorios(
+    lista: list[Recordatorio], currency: str, hora: time
+) -> str:
+    """/recordar a secas."""
+    if not lista:
+        return (
+            "No tienes ningún recordatorio. Para que te avise cada semana de tu "
+            "compra: /recordar lunes 50 btc"
+        )
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    lineas = [f"📅 <b>Tus compras de cada semana</b> <i>(a las {_hora(hora)})</i>", ""]
+    for r in lista:
+        lineas.append(
+            f"<b>{r.nombre_dia.capitalize()}</b>: {simbolo}{_num(r.importe)} "
+            f"de {_nombre(r.coin_id)}"
+        )
+    lineas += ["", "Para quitar uno: /recordar btc no"]
+    return "\n".join(lineas)
+
+
+def formatear_toca_comprar(r: Recordatorio, precio: float, currency: str) -> str:
+    """El aviso del día que toca."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    return (
+        f"📅 <b>Toca tu compra de {_nombre(r.coin_id)}</b>\n"
+        f"Tus {simbolo}{_num(r.importe)} de cada {r.nombre_dia}: a "
+        f"{simbolo}{_num(precio)} son <b>{texto_cantidad(r.importe / precio)}</b>.\n"
+        "Cuando la hagas, dale al botón y la apunto en la cartera."
+    )
 
 
 def formatear_puntual(alerta: Puntual, precio: float, currency: str) -> str:

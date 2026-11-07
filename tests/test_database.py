@@ -1,6 +1,6 @@
 """Tests de la base de datos, sobre un fichero temporal."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 import pytest
 
@@ -736,3 +736,24 @@ def test_deshacer_varias_seguidas_vuelve_al_principio(db):
     # Sin nada antes: queda como vendida, que para la cartera es no tenerla.
     assert database.get_cambios_cartera(db) == {"solana": None}
     assert database.deshacer_ultimo(db) is None
+
+
+def test_recordatorios(tmp_path):
+    from crypto_tracker.recordar import Recordatorio
+
+    ruta = str(tmp_path / "r.db")
+    database.init_db(ruta)
+    database.guardar_recordatorio(ruta, Recordatorio("solana", 4, 20))
+    database.guardar_recordatorio(ruta, Recordatorio("bitcoin", 0, 50))
+    # Otro de la misma cambia el que había
+    database.guardar_recordatorio(
+        ruta, Recordatorio("bitcoin", 2, 75, date(2026, 11, 4))
+    )
+
+    assert database.get_recordatorios(ruta) == [
+        Recordatorio("bitcoin", 2, 75, date(2026, 11, 4)),
+        Recordatorio("solana", 4, 20),
+    ]
+    assert database.quitar_recordatorio(ruta, "solana")
+    assert not database.quitar_recordatorio(ruta, "solana")
+    assert [r.coin_id for r in database.get_recordatorios(ruta)] == ["bitcoin"]
