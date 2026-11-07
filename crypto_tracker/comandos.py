@@ -474,6 +474,7 @@ EJEMPLOS = {
         ("/compra bitcoin 0.01 600", "0,01 por 600 € en total"),
         ("/compra bitcoin 0.01 @60000", "con el precio de cada una"),
         ("/compra bitcoin 0.01 600 com 1.5", "con 1,5 € de comisión, o com 0.1%"),
+        ("/compra bitcoin 0.01 600 por el halving", "con una nota de por qué"),
     ],
     "venta": [
         ("/venta bitcoin 0.005 350", "una parte, por 350 € en total"),

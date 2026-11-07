@@ -7899,3 +7899,47 @@ def test_el_recordatorio_sin_conexion_se_reintenta(config, con_botones, monkeypa
     main.recordatorios(config, LUNES_DCA + timedelta(minutes=5))
 
     assert len(con_botones) == 1
+
+
+def test_comprar_con_nota(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"solana": 140.0})
+
+    main.atender(config, _mensaje("/compra solana 5 700 com 1 por el <b>dip</b>"))
+
+    assert "por €701,00" in enviados[0]
+    assert "📝 por el &lt;b&gt;dip&lt;/b&gt;" in enviados[0]
+    [m] = database.get_movimientos(config.database_path)
+    assert m.nota == "por el <b>dip</b>"
+
+
+def test_vender_con_nota(config, enviados, monkeypatch):
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+
+    main.atender(config, _mensaje("/venta bitcoin todo @70000 para el coche"))
+
+    assert "por €1.400,00" in enviados[0]
+    assert "📝 para el coche" in enviados[0]
+
+
+def test_la_nota_sale_en_movimientos_y_en_compras(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"solana": 140.0})
+    main.atender(config, _mensaje("/compra solana 5 700 por el halving"))
+    main.atender(config, _mensaje("/compra solana 1 100"))
+    enviados.clear()
+
+    main.atender(config, _mensaje("/movimientos"))
+    main.atender(config, _mensaje("/compras"))
+
+    assert "📝 por el halving" in enviados[0]
+    assert enviados[0].count("📝") == 1
+    assert "📝 por el halving" in enviados[1]
+
+
+def test_compra_sin_precio_y_con_nota(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"solana": 150.0})
+
+    main.atender(config, _mensaje("/compra solana 2 a ver qué pasa"))
+
+    assert "por €300,00" in enviados[0]
+    assert "📝 a ver qué pasa" in enviados[0]

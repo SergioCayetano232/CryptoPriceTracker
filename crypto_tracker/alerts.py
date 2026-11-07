@@ -653,6 +653,7 @@ def formatear_compra(
     antes: Posicion | None = None,
     precio: float | None = None,
     comision: float | None = None,
+    nota: str | None = None,
 ) -> str:
     """Lo que se contesta a un /compra: lo apuntado y como queda."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
@@ -673,6 +674,8 @@ def formatear_compra(
             f"cada una, antes a {simbolo}{_num(medio_antes)}."
         )
     texto += " Mira /cartera"
+    if nota:
+        texto += f"\n📝 {escape(nota)}"
     # Sin la comisión: con ella, una compra pequeña parecería una errata.
     raro = descuadre(cantidad, coste - (comision or 0), precio)
     if raro is not None:
@@ -692,6 +695,7 @@ def formatear_venta(
     cobrado: float | None = None,
     ganancia: float | None = None,
     comision: float | None = None,
+    nota: str | None = None,
 ) -> str:
     """Lo que se contesta a un /venta. queda es None si ya no tienes nada."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
@@ -700,6 +704,8 @@ def formatear_venta(
     if cobrado is not None:
         texto += f" por {simbolo}{_num(cobrado)}{_con_comision(comision, simbolo)}"
     texto += ".\n"
+    if nota:
+        texto += f"📝 {escape(nota)}\n"
     if ganancia is not None:
         texto += f"{_flecha(ganancia)} Le sacas {_ganancia(ganancia, simbolo)}"
         # Si hay ganancia es que hay cobrado: lo que costó es la resta.
@@ -754,6 +760,8 @@ def formatear_movimientos(
             if m.cantidad > 0:
                 linea += f" <i>(a {simbolo}{_num(m.coste / m.cantidad)})</i>"
         lineas.append(f"{linea}  <i>{cuando:%d/%m %H:%M}</i>")
+        if m.nota:
+            lineas.append(f"      📝 {escape(m.nota)}")
 
     todos = todos or lista
     comprado, vendido = totales(todos)
@@ -1001,11 +1009,15 @@ def _una_compra(titulo: str, c: Compra, simbolo: str) -> list[str]:
     m = c.movimiento
     nombre = escape(m.coin_id.replace("-", " ").title())
     cambio = f"{c.cambio:+.1f}".replace(".", ",")
-    return [
+    lineas = [
         f"{titulo}: {texto_cantidad(m.cantidad)} de {nombre} el "
         f"{m.cuando.astimezone():%d/%m/%Y} a {simbolo}{_num(c.pagado)}",
         f"{_flecha(c.cambio)} {cambio}%, <b>{_ganancia(c.ganancia, simbolo)}</b>",
     ]
+    # Lo que pensabas al comprar al lado de cómo ha salido: para eso se apunta.
+    if m.nota:
+        lineas.append(f"📝 {escape(m.nota)}")
+    return lineas
 
 
 def formatear_vsbtc(c: Contra, currency: str) -> str:

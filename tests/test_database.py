@@ -757,3 +757,39 @@ def test_recordatorios(tmp_path):
     assert database.quitar_recordatorio(ruta, "solana")
     assert not database.quitar_recordatorio(ruta, "solana")
     assert [r.coin_id for r in database.get_recordatorios(ruta)] == ["bitcoin"]
+
+
+def test_movimientos_viejos_ganan_la_nota_sin_perderse(tmp_path):
+    import sqlite3
+
+    ruta = str(tmp_path / "vieja.db")
+    conn = sqlite3.connect(ruta)
+    conn.execute(
+        "CREATE TABLE movimientos (id INTEGER PRIMARY KEY AUTOINCREMENT, "
+        "coin_id TEXT NOT NULL, tipo TEXT NOT NULL, cantidad REAL NOT NULL, "
+        "coste REAL, antes_cantidad REAL, antes_invertido REAL, "
+        "created_at TEXT NOT NULL)"
+    )
+    conn.execute(
+        "INSERT INTO movimientos (coin_id, tipo, cantidad, coste, created_at) "
+        "VALUES ('bitcoin', 'compra', 0.01, 600, '2026-10-01T10:00:00+00:00')"
+    )
+    conn.commit()
+    conn.close()
+
+    database.init_db(ruta)
+    database.init_db(ruta)
+
+    [vieja] = database.get_movimientos(ruta)
+    assert (vieja.coin_id, vieja.coste, vieja.nota) == ("bitcoin", 600, None)
+    database.apuntar_movimiento(
+        ruta,
+        "bitcoin",
+        "compra",
+        0.01,
+        650,
+        None,
+        Posicion("bitcoin", 0.01, 650),
+        "por el halving",
+    )
+    assert database.get_movimientos(ruta)[0].nota == "por el halving"

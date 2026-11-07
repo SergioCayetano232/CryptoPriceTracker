@@ -86,7 +86,8 @@ CREATE TABLE IF NOT EXISTS movimientos (
     coste           REAL,
     antes_cantidad  REAL,
     antes_invertido REAL,
-    created_at      TEXT NOT NULL
+    created_at      TEXT NOT NULL,
+    nota            TEXT
 );
 """
 
@@ -149,6 +150,7 @@ def init_db(db_path: str) -> None:
 COLUMNAS_NUEVAS = [
     ("alertas_puntuales", "caduca_at", "TEXT"),
     ("alertas_puntuales", "nota", "TEXT"),
+    ("movimientos", "nota", "TEXT"),
 ]
 
 
@@ -751,6 +753,7 @@ def apuntar_movimiento(
     coste: float | None,
     antes: Posicion | None,
     ahora: Posicion | None,
+    nota: str | None = None,
 ) -> int:
     """Guarda como queda la cripto y el movimiento. Devuelve su numero."""
     # En la misma transaccion: si uno se guardara sin el otro, deshacer
@@ -760,8 +763,8 @@ def apuntar_movimiento(
         _escribir_posicion(conn, coin_id, ahora)
         cursor = conn.execute(
             "INSERT INTO movimientos (coin_id, tipo, cantidad, coste, "
-            "antes_cantidad, antes_invertido, created_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "antes_cantidad, antes_invertido, created_at, nota) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 coin_id,
                 tipo,
@@ -770,6 +773,7 @@ def apuntar_movimiento(
                 antes.cantidad if antes else None,
                 antes.invertido if antes else None,
                 cuando,
+                nota,
             ),
         )
     return cursor.lastrowid
@@ -829,6 +833,7 @@ def _movimiento(f: sqlite3.Row) -> Movimiento:
         f["coste"],
         antes,
         datetime.fromisoformat(f["created_at"]),
+        f["nota"],
     )
 
 

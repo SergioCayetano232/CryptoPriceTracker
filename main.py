@@ -116,6 +116,7 @@ from crypto_tracker import (
     navidad,
     netflix,
     nochevieja,
+    nota,
     objetivo,
     oro,
     paella,
@@ -1541,6 +1542,7 @@ def _en_negrita(nombres: list[str], ultimo: str) -> str:
 
 def _comprar(config: Config, argumento: str) -> str | comandos.ConBotones:
     try:
+        argumento, apunte = nota.separar(argumento)
         argumento, texto_comision = comision.separar(argumento)
         coin_id, cantidad, coste = movimientos.interpretar_compra(argumento)
     except movimientos.MovimientoError as e:
@@ -1574,12 +1576,19 @@ def _comprar(config: Config, argumento: str) -> str | comandos.ConBotones:
 
     ahora = movimientos.comprar(antes, coin_id, cantidad, coste)
     numero = database.apuntar_movimiento(
-        config.database_path, coin_id, "compra", cantidad, coste, antes, ahora
+        config.database_path, coin_id, "compra", cantidad, coste, antes, ahora, apunte
     )
     logger.info("Cartera: compra %s de %s por %s", cantidad, coin_id, coste)
     return comandos.ConBotones(
         alerts.formatear_compra(
-            cantidad, coste, ahora, config.vs_currency, antes, precio, pagada
+            cantidad,
+            coste,
+            ahora,
+            config.vs_currency,
+            antes,
+            precio,
+            pagada,
+            apunte,
         ),
         botones.deshacer_movimiento(numero),
     )
@@ -1587,6 +1596,7 @@ def _comprar(config: Config, argumento: str) -> str | comandos.ConBotones:
 
 def _vender(config: Config, argumento: str) -> str | comandos.ConBotones:
     try:
+        argumento, apunte = nota.separar(argumento)
         argumento, texto_comision = comision.separar(argumento)
         coin_id, cantidad, precio = movimientos.interpretar_venta(argumento)
         antes = movimientos.buscar(_con_cambios(config).cartera, coin_id)
@@ -1607,7 +1617,7 @@ def _vender(config: Config, argumento: str) -> str | comandos.ConBotones:
         except comision.ComisionError as e:
             return telegram.escape(str(e))
     numero = database.apuntar_movimiento(
-        config.database_path, coin_id, "venta", vendido, cobrado, antes, queda
+        config.database_path, coin_id, "venta", vendido, cobrado, antes, queda, apunte
     )
     logger.info("Cartera: vende %s de %s por %s", vendido, coin_id, cobrado)
     return comandos.ConBotones(
@@ -1619,6 +1629,7 @@ def _vender(config: Config, argumento: str) -> str | comandos.ConBotones:
             cobrado,
             ganancias.de_venta(antes, vendido, cobrado),
             pagada,
+            apunte,
         ),
         botones.deshacer_movimiento(numero),
     )
