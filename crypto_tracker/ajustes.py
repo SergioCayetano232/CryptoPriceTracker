@@ -47,6 +47,11 @@ def lineas(config: Config) -> list[str]:
     else:
         texto.append("⚖️ Sin aviso de concentración")
 
+    if config.aviso_rsi:
+        texto.append("🔥 Aviso al entrar en sobrecompra o sobreventa")
+    else:
+        texto.append("🔥 Sin aviso de RSI")
+
     if config.horas_tranquilas:
         inicio, fin = config.horas_tranquilas
         texto.append(f"🌙 Sin sonar de {inicio:%H:%M} a {fin:%H:%M}")

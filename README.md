@@ -547,6 +547,17 @@ una vez, con lo que caería la cartera si esa cae un 20%. No repite mientras
 siga por ahí; si baja del 65% y vuelve a pasar, sí. También se calla con
 `/mute cartera`.
 
+**Enterarte si una cripto se pasa de subidas o de bajadas:**
+
+```
+AVISO_RSI=si
+```
+Te avisa una vez cuando una que vigilas entra en sobrecompra (RSI de 70 o más)
+o en sobreventa (30 o menos), sin tener que preguntar con `/rsi`. No repite
+mientras siga por ahí; para volver a avisar tiene que bajar de 65 o subir de 35.
+Necesita 15 días seguidos guardados de esa cripto y se calla con
+`/mute bitcoin`.
+
 **Recibir un resumen cada mañana:**
 
 Pon la hora en el `.env`:
@@ -643,6 +654,7 @@ Todo lo que va haciendo queda apuntado en `data/tracker.log`.
 | `PORTFOLIO` | Lo que tienes, para ver cuánto vale (`bitcoin:0.016:1000`) | vacío |
 | `CAIDA_CARTERA` | Aviso si la cartera cae ese % desde su récord (`20%`). Vacío, sin aviso | vacío |
 | `CONCENTRACION` | Aviso si una sola cripto pasa de ese % de la cartera (`70%`, entre 50 y 100). Vacío, sin aviso | vacío |
+| `AVISO_RSI` | Con `si`, aviso al entrar en sobrecompra o sobreventa. Vacío, sin aviso | vacío |
 
 No bajes mucho `CHECK_INTERVAL`. La clave gratuita de CoinGecko da 10.000
 consultas al mes y cada ciclo gasta una: con `330` (cinco minutos y medio) te
@@ -812,6 +824,7 @@ crypto_tracker/
   dia.py         a cuánto estaba un día concreto, para /dia
   cuando.py      la última vez que estuvo a un precio, para /cuando
   avisados.py    el último aviso de cada una, para /ultimo
+  avisorsi.py    cuándo avisar de sobrecompra o sobreventa
   redondo.py     la siguiente cifra redonda, para /redondo
   rsi.py         el RSI de 14 días, para /rsi
   caida.py       lo que ha bajado desde el máximo, para /caida

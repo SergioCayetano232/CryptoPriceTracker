@@ -30,6 +30,7 @@ from crypto_tracker import (
     anual,
     ave,
     avisados,
+    avisorsi,
     bajon,
     bici,
     bigmac,
@@ -301,6 +302,7 @@ def ejecutar_ciclo(
     calladas = _calladas(config)
     revisar_bajon(config, valor, calladas)
     revisar_concentracion(config, precios, calladas)
+    revisar_rsi(config, vigiladas, calladas)
     if calladas:
         avisos = [a for a in avisos if a.coin_id not in calladas]
         hechas = [p for p in hechas if p.coin_id not in calladas]
@@ -658,6 +660,54 @@ def revisar_concentracion(
         database.guardar_concentracion(config.database_path, nuevo)
     except database.DatabaseError as e:
         logger.error("No se pudo apuntar el aviso de concentración: %s", e)
+
+
+def revisar_rsi(
+    config: Config, vigiladas: dict[str, float], calladas: set[str]
+) -> None:
+    """Avisa una vez cuando una que vigilas entra en sobrecompra o sobreventa."""
+    if not config.aviso_rsi or _silenciado(config):
+        return
+
+    ahora = datetime.now(timezone.utc)
+    for coin_id, precio in vigiladas.items():
+        if coin_id in calladas:
+            continue
+        try:
+            serie = database.get_serie(
+                config.database_path, coin_id, rsi.HORAS, config.vs_currency
+            )
+            avisado = database.zona_rsi(config.database_path, coin_id)
+        except database.DatabaseError as e:
+            logger.error("No se pudo mirar el RSI de %s: %s", coin_id, e)
+            continue
+
+        # El de ahora al final por si no se pudo guardar.
+        resultado = rsi.calcular(volatilidad.por_dias([*serie, (ahora, precio)]))
+        if resultado is None:
+            continue
+
+        zona = avisorsi.toca(resultado.valor, avisado)
+        if zona is None:
+            nueva = avisorsi.sigue(resultado.valor, avisado)
+        elif telegram.send_message(
+            config.telegram_token,
+            config.telegram_chat_id,
+            alerts.formatear_aviso_rsi(coin_id, resultado, config.vs_currency),
+            sin_sonido=_sin_sonido(config),
+        ):
+            logger.info("Aviso de RSI: %s en %.0f", coin_id, resultado.valor)
+            nueva = zona
+        else:
+            logger.error("No se pudo avisar del RSI de %s", coin_id)
+            continue
+
+        if nueva == avisado:
+            continue
+        try:
+            database.guardar_zona_rsi(config.database_path, coin_id, nueva)
+        except database.DatabaseError as e:
+            logger.error("No se pudo apuntar el aviso de RSI de %s: %s", coin_id, e)
 
 
 def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:

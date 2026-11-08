@@ -355,3 +355,20 @@ def test_parse_concentracion_mal(entrada):
 
     with pytest.raises(ConfigError, match="CONCENTRACION"):
         parse_concentracion(entrada)
+
+
+@pytest.mark.parametrize(
+    "entrada, sale",
+    [("si", True), ("Sí", True), (" SI ", True), ("no", False), ("", False)],
+)
+def test_parse_aviso_rsi(entrada, sale):
+    from crypto_tracker.config import parse_aviso_rsi
+
+    assert parse_aviso_rsi(entrada) is sale
+
+
+def test_parse_aviso_rsi_mal():
+    from crypto_tracker.config import ConfigError, parse_aviso_rsi
+
+    with pytest.raises(ConfigError, match="AVISO_RSI"):
+        parse_aviso_rsi("70")

@@ -7,6 +7,8 @@ from datetime import datetime, time, timedelta
 
 from dotenv import load_dotenv
 
+from .rsi import PERIODO
+
 # Carga el .env en las variables de entorno. Si no existe no pasa nada,
 # se usaran las variables del sistema (util para Docker o servidores).
 load_dotenv()
@@ -64,6 +66,7 @@ class Config:
     caida_cartera: float | None = None
     # None = sin aviso de cuando una cripto pasa de ese % de la cartera
     concentracion: float | None = None
+    aviso_rsi: bool = False
 
 
 def _require(name: str) -> str:
@@ -424,6 +427,16 @@ def parse_concentracion(raw: str) -> float | None:
     return porcentaje
 
 
+def parse_aviso_rsi(raw: str) -> bool:
+    """'si' -> True. Vacio o 'no' es False."""
+    texto = raw.strip().lower()
+    if texto in ("si", "sí"):
+        return True
+    if texto in ("", "no"):
+        return False
+    raise ConfigError(f"AVISO_RSI tiene que ser si o no, no '{raw.strip()}'")
+
+
 def load_config() -> Config:
     """Monta la configuracion. Lanza ConfigError si algo falta o esta mal."""
     # Con 300 la clave gratuita de CoinGecko va muy justa a final de mes.
@@ -447,6 +460,13 @@ def load_config() -> Config:
             f"HISTORY_DAYS ({history_days}). Sube HISTORY_DAYS o baja los dias."
         )
 
+    aviso_rsi = parse_aviso_rsi(os.getenv("AVISO_RSI", ""))
+    if aviso_rsi and history_days and history_days <= PERIODO:
+        raise ConfigError(
+            f"AVISO_RSI necesita al menos {PERIODO + 1} dias guardados y "
+            f"HISTORY_DAYS es {history_days}. Sube HISTORY_DAYS."
+        )
+
     return Config(
         telegram_token=_require("TELEGRAM_BOT_TOKEN"),
         telegram_chat_id=_require("TELEGRAM_CHAT_ID"),
@@ -464,4 +484,5 @@ def load_config() -> Config:
         extremos_dias=extremos,
         caida_cartera=parse_caida_cartera(os.getenv("CAIDA_CARTERA", "")),
         concentracion=parse_concentracion(os.getenv("CONCENTRACION", "")),
+        aviso_rsi=aviso_rsi,
     )

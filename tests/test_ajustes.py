@@ -28,6 +28,7 @@ def test_todo_puesto():
             extremos_dias=30,
             caida_cartera=20,
             concentracion=70,
+            aviso_rsi=True,
             horas_tranquilas=(time(23, 0), time(8, 0)),
         )
     )
@@ -41,6 +42,7 @@ def test_todo_puesto():
         "📈 Aviso de máximos y mínimos de 30 días",
         "📉 Aviso si la cartera cae un 20% desde su récord",
         "⚖️ Aviso si una cripto pasa del 70% de la cartera",
+        "🔥 Aviso al entrar en sobrecompra o sobreventa",
         "🌙 Sin sonar de 23:00 a 08:00",
     ]
 
@@ -52,6 +54,7 @@ def test_nada_puesto():
     assert "📰 Sin resumen diario" in texto
     assert "⚡ Sin aviso de movimientos bruscos" in texto
     assert "📈 Sin aviso de máximos y mínimos" in texto
+    assert "🔥 Sin aviso de RSI" in texto
     assert "🌙 Los avisos suenan siempre" in texto
 
 

@@ -859,6 +859,26 @@ def formatear_concentracion(c: Concentracion) -> str:
     )
 
 
+def formatear_aviso_rsi(coin_id: str, r: Rsi, currency: str) -> str:
+    """El aviso de AVISO_RSI."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(coin_id.replace("-", " ").title())
+    if r.valor >= SOBRECOMPRA:
+        cabecera = "🔥 <b>{} está sobrecomprada</b>"
+        detalle = "Ha subido mucho y rápido, suele frenar."
+    else:
+        cabecera = "🧊 <b>{} está sobrevendida</b>"
+        detalle = "Ha bajado mucho y rápido, suele rebotar."
+    return "\n".join(
+        [
+            cabecera.format(nombre),
+            f"RSI de {PERIODO} días: <b>{r.valor:.0f}</b>. {detalle}",
+            f"Ahora {simbolo}{_num(r.ahora)}",
+            f"El detalle, en /rsi {escape(coin_id)}",
+        ]
+    )
+
+
 def _veces(n: int, una: str, varias: str) -> str:
     return f"{n} {una if n == 1 else varias}"
 

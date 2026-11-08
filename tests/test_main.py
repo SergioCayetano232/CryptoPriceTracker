@@ -8021,6 +8021,104 @@ def test_sin_concentracion_no_avisa(con_semana, enviados, monkeypatch):
     assert _avisos_concentracion(enviados) == []
 
 
+@pytest.fixture
+def con_rsi(config):
+    from dataclasses import replace
+
+    # 20 días seguidos subiendo, de 100 a 119: RSI 100 si hoy sigue arriba
+    for dias in range(1, 21):
+        _precio_de(config, "bitcoin", 120.0 - dias, dias * 24 * 60)
+    return replace(config, aviso_rsi=True)
+
+
+def _avisos_rsi(enviados):
+    return [t for t in enviados if "RSI de 14 días" in t]
+
+
+def test_rsi_avisa_una_vez(con_rsi, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 120.0})
+
+    main.ejecutar_ciclo(con_rsi, {})
+    main.ejecutar_ciclo(con_rsi, {})
+
+    [aviso] = _avisos_rsi(enviados)
+    assert "🔥 <b>Bitcoin está sobrecomprada</b>" in aviso
+    assert "RSI de 14 días: <b>100</b>" in aviso
+    assert "/rsi bitcoin" in aviso
+
+
+def test_rsi_de_golpe_a_la_otra_punta_avisa(con_rsi, enviados, monkeypatch):
+    for precio in (120.0, 60.0):
+        _precio(monkeypatch, {"bitcoin": precio})
+        main.ejecutar_ciclo(con_rsi, {})
+
+    arriba, abajo = _avisos_rsi(enviados)
+    assert "sobrecomprada" in arriba
+    assert "🧊 <b>Bitcoin está sobrevendida</b>" in abajo
+
+
+def test_rsi_al_alejarse_se_olvida(con_rsi, enviados, monkeypatch):
+    database.guardar_zona_rsi(con_rsi.database_path, "bitcoin", "alta")
+    _precio(monkeypatch, {"bitcoin": 105.0})  # RSI en medio
+
+    main.ejecutar_ciclo(con_rsi, {})
+
+    assert _avisos_rsi(enviados) == []
+    assert database.zona_rsi(con_rsi.database_path, "bitcoin") is None
+
+
+def test_rsi_sin_dias_suficientes_no_avisa(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    _precio(monkeypatch, {"bitcoin": 120.0})
+
+    main.ejecutar_ciclo(replace(config, aviso_rsi=True), {})
+
+    assert _avisos_rsi(enviados) == []
+
+
+def test_rsi_si_falla_telegram_lo_reintenta(con_rsi, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 120.0})
+    monkeypatch.setattr(telegram, "send_message", lambda *a, **k: False)
+    main.ejecutar_ciclo(con_rsi, {})
+    assert database.zona_rsi(con_rsi.database_path, "bitcoin") is None
+
+    monkeypatch.setattr(
+        telegram,
+        "send_message",
+        lambda t, c, texto, **k: enviados.append(texto) or True,
+    )
+    main.ejecutar_ciclo(con_rsi, {})
+
+    assert len(_avisos_rsi(enviados)) == 1
+
+
+def test_rsi_callada_espera(con_rsi, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 120.0})
+    database.callar_cripto(
+        con_rsi.database_path,
+        "bitcoin",
+        datetime.now(timezone.utc) + timedelta(hours=1),
+    )
+    main.ejecutar_ciclo(con_rsi, {})
+    assert _avisos_rsi(enviados) == []
+
+    database.callar_cripto(con_rsi.database_path, "bitcoin", None)
+    main.ejecutar_ciclo(con_rsi, {})
+
+    assert len(_avisos_rsi(enviados)) == 1
+
+
+def test_sin_aviso_rsi_no_avisa(config, enviados, monkeypatch):
+    for dias in range(1, 21):
+        _precio_de(config, "bitcoin", 120.0 - dias, dias * 24 * 60)
+    _precio(monkeypatch, {"bitcoin": 120.0})
+
+    main.ejecutar_ciclo(config, {})
+
+    assert _avisos_rsi(enviados) == []
+
+
 def _guardar_en(config, coin_id, precio, cuando):
     import sqlite3
 

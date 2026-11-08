@@ -583,6 +583,26 @@ def guardar_concentracion(db_path: str, coin_id: str | None) -> None:
         )
 
 
+def zona_rsi(db_path: str, coin_id: str) -> str | None:
+    """La zona de la que ya se avisó. Sin fila, de ninguna."""
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT valor FROM ajustes WHERE clave = ?", (f"rsi:{coin_id}",)
+        ).fetchone()
+    return fila["valor"] if fila else None
+
+
+def guardar_zona_rsi(db_path: str, coin_id: str, zona: str | None) -> None:
+    with _connect(db_path) as conn:
+        if zona is None:
+            conn.execute("DELETE FROM ajustes WHERE clave = ?", (f"rsi:{coin_id}",))
+            return
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (f"rsi:{coin_id}", zona),
+        )
+
+
 def guardar_avisos(
     db_path: str, avisos: list[tuple[str, float, bool]], cuando: datetime
 ) -> None:
