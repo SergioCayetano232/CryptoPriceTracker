@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 
 from . import ganancias
-from .movimientos import Movimiento
+from .movimientos import Movimiento, recibido
 
 # Base del ahorro del IRPF desde 2025: hasta dónde llega cada tramo y su tipo.
 TRAMOS = [
@@ -56,6 +56,10 @@ def por_tramos(ganancia: float) -> list[tuple[int, float, float]]:
         tramos.append((tipo, base, base * tipo / 100))
         desde = hasta
     return tramos
+
+
+def recompensas_de(movimientos: list[Movimiento], año: int) -> float:
+    return recibido([m for m in movimientos if m.cuando.year == año])
 
 
 def calcular(ventas: list[Movimiento], año: int) -> Impuestos:

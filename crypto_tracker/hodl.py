@@ -35,7 +35,7 @@ def _desde(movs: list[Movimiento]) -> Hodl | None:
 
     if venta is not None:
         return Hodl(venta.coin_id, venta.cuando, True)
-    compra = next((m for m in movs[inicio:] if m.tipo == "compra"), None)
+    compra = next((m for m in movs[inicio:] if m.tipo != "venta"), None)
     if compra is None:
         return None
     return Hodl(

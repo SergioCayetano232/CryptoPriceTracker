@@ -1024,6 +1024,9 @@ def responder(
     if nombre == "venta":
         return _vender(config, argumento)
 
+    if nombre == "recompensa":
+        return _recompensa(config, argumento)
+
     if nombre == "movimientos":
         return _movimientos(config, argumento)
 
@@ -1735,6 +1738,42 @@ def _vender(config: Config, argumento: str) -> str | comandos.ConBotones:
     )
 
 
+def _recompensa(config: Config, argumento: str) -> str | comandos.ConBotones:
+    try:
+        argumento, apunte = nota.separar(argumento)
+        coin_id, cantidad, valor = movimientos.interpretar_recompensa(argumento)
+    except movimientos.MovimientoError as e:
+        return telegram.escape(str(e))
+
+    if valor is None:
+        # Consulta y no el último guardado: este valor se queda para Hacienda.
+        try:
+            precio = coingecko.get_prices([coin_id], config.vs_currency).get(coin_id)
+        except coingecko.CoinGeckoError as e:
+            return f"No he podido consultar el precio: {telegram.escape(str(e))}"
+        if precio is None:
+            return alerts.formatear_no_encuentro([coin_id])
+        valor = cantidad * precio
+
+    antes = movimientos.buscar(_con_cambios(config).cartera, coin_id)
+    ahora = movimientos.comprar(antes, coin_id, cantidad, valor)
+    numero = database.apuntar_movimiento(
+        config.database_path,
+        coin_id,
+        "recompensa",
+        cantidad,
+        valor,
+        antes,
+        ahora,
+        apunte,
+    )
+    logger.info("Cartera: recompensa de %s de %s", cantidad, coin_id)
+    return comandos.ConBotones(
+        alerts.formatear_recompensa(cantidad, valor, ahora, config.vs_currency, apunte),
+        botones.deshacer_movimiento(numero),
+    )
+
+
 def _cobrado_ahora(config: Config, coin_id: str, vendido: float) -> float | None:
     """Sin decir a cuánto, al precio de ahora, como /compra."""
     try:
@@ -1758,8 +1797,11 @@ def _impuestos(config: Config, argumento: str) -> str:
     except impuestos.ImpuestosError as e:
         return telegram.escape(str(e))
     ventas = database.get_ventas(config.database_path)
+    todos = database.get_movimientos(config.database_path, None)
     return alerts.formatear_impuestos(
-        impuestos.calcular(ventas, año), config.vs_currency
+        impuestos.calcular(ventas, año),
+        config.vs_currency,
+        impuestos.recompensas_de(todos, año),
     )
 
 

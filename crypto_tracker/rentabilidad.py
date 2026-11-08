@@ -60,6 +60,10 @@ def contables(lista: list[Movimiento]) -> tuple[list[Movimiento], dict[str, floa
     tienes: dict[str, float] = {}
     dentro = []
     for m in sorted(lista, key=lambda m: m.id):
+        # No es dinero que hayas metido, pero lo que vale hoy sí es tuyo.
+        if m.tipo == "recompensa":
+            tienes[m.coin_id] = tienes.get(m.coin_id, 0.0) + m.cantidad
+            continue
         if not m.coste:
             continue
         if m.tipo == "compra":
@@ -95,4 +99,5 @@ def calcular(
         r = tir([*flujos, (ahora, vale)])
         anual = None if r is None else r * 100
 
-    return Rentabilidad(metido, sacado, vale, dias, anual, len(lista) - len(dentro))
+    fuera = sum(m.tipo != "recompensa" for m in lista) - len(dentro)
+    return Rentabilidad(metido, sacado, vale, dias, anual, fuera)

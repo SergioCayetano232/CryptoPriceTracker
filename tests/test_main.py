@@ -2273,6 +2273,98 @@ def test_impuestos_de_lo_vendido(config, enviados, monkeypatch):
     assert "A Hacienda, unos <b>€1.245,00</b>" in texto
 
 
+def test_recompensa_al_precio_de_ahora(config, enviados, monkeypatch):
+    config = _con_cartera(config, Posicion("ethereum", 1, 2000))
+    _precio(monkeypatch, {"ethereum": 2500.0})
+
+    main.atender(config, _mensaje("/recompensa eth 0.02 staking de octubre"))
+
+    assert "<b>0,02</b> de Ethereum de recompensa, valorada en €50,00" in enviados[0]
+    assert "Ahora tienes 1,02" in enviados[0]
+    assert "📝 staking de octubre" in enviados[0]
+    posicion = main._con_cambios(config).cartera[0]
+    assert posicion.cantidad == pytest.approx(1.02)
+    assert posicion.invertido == pytest.approx(2050)
+
+
+def test_recompensa_con_valor_no_consulta(config, enviados, monkeypatch):
+    config = _con_cartera(config, Posicion("ethereum", 1, 2000))
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+
+    main.atender(config, _mensaje("/staking eth 0.02 50"))
+
+    assert "valorada en €50,00" in enviados[0]
+
+
+def test_recompensa_de_algo_que_no_tenias(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"solana": 100.0})
+
+    main.atender(config, _mensaje("/airdrop solana 3"))
+
+    posicion = main._con_cambios(config).cartera[0]
+    assert (posicion.coin_id, posicion.cantidad, posicion.invertido) == (
+        "solana",
+        3,
+        300,
+    )
+
+
+def test_recompensa_al_vender_solo_cuenta_lo_que_subio(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"solana": 100.0})
+    main.atender(config, _mensaje("/recompensa solana 3"))
+
+    main.atender(config, _mensaje("/venta solana todo 360"))
+
+    assert "Le sacas +€60,00" in enviados[1]
+
+
+def test_recompensa_se_deshace(config, enviados, monkeypatch):
+    config = _con_cartera(config, Posicion("ethereum", 1, 2000))
+    _precio(monkeypatch, {"ethereum": 2500.0})
+    main.atender(config, _mensaje("/recompensa eth 0.02"))
+
+    main.atender(config, _mensaje("/deshacer"))
+
+    assert "Quito la recompensa de <b>0,02</b> de Ethereum" in enviados[1]
+    assert main._con_cambios(config).cartera[0].cantidad == 1
+    assert main._con_cambios(config).cartera[0].invertido == 2000
+
+
+def test_recompensa_sin_precio_no_apunta(config, enviados, monkeypatch):
+    def falla(*a, **k):
+        raise coingecko.CoinGeckoError("sin red")
+
+    monkeypatch.setattr(coingecko, "get_prices", falla)
+
+    main.atender(config, _mensaje("/recompensa eth 0.02"))
+
+    assert "No he podido consultar el precio" in enviados[0]
+    assert database.get_movimientos(config.database_path) == []
+
+
+def test_recompensa_que_no_existe(config, enviados, monkeypatch):
+    _precio(monkeypatch, {})
+
+    main.atender(config, _mensaje("/recompensa noexiste 1"))
+
+    assert database.get_movimientos(config.database_path) == []
+
+
+def test_recompensa_mal_escrita(config, enviados):
+    main.atender(config, _mensaje("/recompensa eth"))
+
+    assert "/recompensa eth 0.02" in enviados[0]
+
+
+def test_impuestos_con_recompensas(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"solana": 100.0})
+    main.atender(config, _mensaje("/recompensa solana 3"))
+
+    main.atender(config, _mensaje("/impuestos"))
+
+    assert "Recibiste €300,00 en recompensas" in enviados[1]
+
+
 def test_sivendo_no_apunta_nada(config, enviados, monkeypatch):
     config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
     _precio(monkeypatch, {"bitcoin": 70000.0})

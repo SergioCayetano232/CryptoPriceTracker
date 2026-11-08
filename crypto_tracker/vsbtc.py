@@ -52,14 +52,15 @@ def a_contar(
         precio = precio_en(serie_btc, m.cuando)
         if m.coste is not None and precio:
             contables.append((m, precio))
-    return contables
+    # Solo con recompensas no has metido nada que comparar.
+    return contables if any(m.tipo != "recompensa" for m, _ in contables) else []
 
 
 def cantidades(contables: list[tuple[Movimiento, float]]) -> dict[str, float]:
     """Lo que te queda de cada una, contando solo esos movimientos."""
     tienes: dict[str, float] = {}
     for m, _ in contables:
-        signo = 1 if m.tipo == "compra" else -1
+        signo = -1 if m.tipo == "venta" else 1
         tienes[m.coin_id] = tienes.get(m.coin_id, 0.0) + signo * m.cantidad
     # Una venta de algo que venía del .env dejaría la cuenta en negativo.
     return {c: q for c, q in tienes.items() if q > RESTO}
@@ -77,6 +78,9 @@ def calcular(
 
     sats = 0.0
     for m, precio in contables:
+        # Con bitcoin no la habrías cobrado: suma en lo real y aquí no.
+        if m.tipo == "recompensa":
+            continue
         # Al vender sacas el mismo dinero de los dos lados: la comparación es justa.
         signo = 1 if m.tipo == "compra" else -1
         sats += signo * m.coste / precio

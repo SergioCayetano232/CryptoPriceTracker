@@ -114,6 +114,7 @@ from .movimientos import (
     Movimiento,
     descuadre,
     precio_medio,
+    recibido,
     texto_cantidad,
     totales,
 )
@@ -754,12 +755,16 @@ def formatear_movimientos(
     for m in lista:
         nombre = escape(m.coin_id.replace("-", " ").title())
         cuando = m.cuando.astimezone()
+        por = "por"
         if m.tipo == "compra":
             linea = f"🛒 Compra de {texto_cantidad(m.cantidad)} de {nombre}"
+        elif m.tipo == "recompensa":
+            linea = f"🎁 Recompensa de {texto_cantidad(m.cantidad)} de {nombre}"
+            por = "que valía"
         else:
             linea = f"💸 Venta de {texto_cantidad(m.cantidad)} de {nombre}"
         if m.coste is not None:
-            linea += f" por {simbolo}{_num(m.coste)}"
+            linea += f" {por} {simbolo}{_num(m.coste)}"
             if m.cantidad > 0:
                 linea += f" <i>(a {simbolo}{_num(m.coste / m.cantidad)})</i>"
         lineas.append(f"{linea}  <i>{cuando:%d/%m %H:%M}</i>")
@@ -774,7 +779,33 @@ def formatear_movimientos(
             f"\nEn total{de_cuantos}: {simbolo}{_num(comprado)} comprado · "
             f"{simbolo}{_num(vendido)} vendido"
         )
+    regalado = recibido(todos)
+    if regalado:
+        lineas.append(f"🎁 {simbolo}{_num(regalado)} en recompensas")
     return "\n".join(lineas)
+
+
+def formatear_recompensa(
+    cantidad: float,
+    valor: float,
+    ahora: Posicion,
+    currency: str,
+    nota: str | None = None,
+) -> str:
+    """Lo que se contesta a un /recompensa: lo apuntado y como queda."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(ahora.coin_id.replace("-", " ").title())
+    texto = (
+        f"🎁 Apunto <b>{texto_cantidad(cantidad)}</b> de {nombre} de recompensa, "
+        f"valorada en {simbolo}{_num(valor)}.\n"
+        f"Ahora tienes {texto_cantidad(ahora.cantidad)}. Mira /cartera"
+    )
+    if nota:
+        texto += f"\n📝 {escape(nota)}"
+    return (
+        texto + "\n<i>Lo sumo a lo que te costó: al venderla, solo cuenta como "
+        "ganancia lo que suba desde que te llegó.</i>"
+    )
 
 
 def formatear_hodl(lista: list[Hodl], sin_fecha: list[str], hoy: date) -> str:
@@ -1248,17 +1279,26 @@ def formatear_ganancias(g: Ganancias, currency: str) -> str:
     return "\n".join(lineas)
 
 
-def formatear_impuestos(i: Impuestos, currency: str) -> str:
-    """Respuesta de /impuestos."""
+def formatear_impuestos(i: Impuestos, currency: str, recibido: float = 0.0) -> str:
+    """Respuesta de /impuestos. recibido es lo que valían las recompensas del año."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    recompensas = (
+        f"🎁 Recibiste {simbolo}{_num(recibido)} en recompensas: también tributan, "
+        "y esto no las suma."
+        if recibido
+        else ""
+    )
     if not i.ventas:
+        if recompensas:
+            return f"En {i.año} no has vendido nada.\n{recompensas}"
         return f"En {i.año} no has vendido nada, así que no hay nada que declarar."
     if i.ventas == i.sin_datos:
-        return (
+        texto = (
             f"Tus ventas de {i.año} no dicen a cuánto vendiste o lo que te costó, "
             "así que no puedo sacar cuentas."
         )
+        return f"{texto}\n{recompensas}" if recompensas else texto
 
-    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
     lineas = [f"🏛️ <b>Impuestos de {i.año}</b>", ""]
     if i.ganancia <= 0:
         lineas.append(f"Vendiendo has perdido <b>{_ganancia(i.ganancia, simbolo)}</b>")
@@ -1276,6 +1316,8 @@ def formatear_impuestos(i: Impuestos, currency: str) -> str:
             f"<i>({i.tipo_medio:.2f}% de media)</i>"
         )
 
+    if recompensas:
+        lineas.append(f"\n{recompensas}")
     if i.sin_datos:
         cuantas = "1 venta" if i.sin_datos == 1 else f"{i.sin_datos} ventas"
         lineas.append(f"<i>No cuento {cuantas}: les falta el precio.</i>")

@@ -23,6 +23,7 @@ COMANDOS = {
     "anual": "Cómo va tu cartera este año, o tu resumen de uno (ej: /anual 2025)",
     "compra": "Apuntar una compra en la cartera (ej: /compra bitcoin 0.01 600)",
     "venta": "Apuntar una venta (ej: /venta bitcoin 0.005 350 o todo)",
+    "recompensa": "Apuntar staking o un airdrop (ej: /recompensa eth 0.02)",
     "movimientos": "Tus últimas compras y ventas (ej: /movimientos btc)",
     "compras": "Tu mejor y tu peor compra (ej: /compras o /compras btc)",
     "ganancias": "Lo que has ganado o perdido con lo que ya vendiste",
@@ -175,6 +176,8 @@ ALIAS = {
     "comprar": "compra",
     "buy": "compra",
     "vender": "venta",
+    "staking": "recompensa",
+    "airdrop": "recompensa",
     "sell": "venta",
     "historial": "movimientos",
     "semanal": "semana",
@@ -471,6 +474,11 @@ EJEMPLOS = {
         ("/rebalanceo btc 60 eth 40", "qué mover para quedarte con ese reparto"),
         ("/rebalanceo btc 100", "lo que no nombres, a venderlo entero"),
         ("/rebalanceo", "a secas, a partes iguales entre lo que tienes"),
+    ],
+    "recompensa": [
+        ("/recompensa eth 0.02", "lo que te ha llegado, al precio de ahora"),
+        ("/recompensa eth 0.02 50", "si te llegó antes, con lo que valía entonces"),
+        ("/recompensa eth 0.02 staking de octubre", "con una nota"),
     ],
     "compra": [
         ("/compra bitcoin 0.01 600", "0,01 por 600 € en total"),

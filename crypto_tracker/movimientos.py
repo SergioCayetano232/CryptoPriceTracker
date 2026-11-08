@@ -9,6 +9,7 @@ from .simbolos import a_id
 
 EJEMPLO_COMPRA = "/compra bitcoin 0.01 600"
 EJEMPLO_VENTA = "/venta bitcoin 0.005 350 o /venta bitcoin todo"
+EJEMPLO_RECOMPENSA = "/recompensa eth 0.02 o /recompensa eth 0.02 50"
 
 # Lo que queda por debajo de esto son restos de los decimales, no algo que tengas.
 RESTO = 1e-9
@@ -161,6 +162,22 @@ def totales(lista: list[Movimiento]) -> tuple[float, float]:
     comprado = sum(m.coste for m in lista if m.tipo == "compra" and m.coste)
     vendido = sum(m.coste for m in lista if m.tipo == "venta" and m.coste)
     return comprado, vendido
+
+
+def recibido(lista: list[Movimiento]) -> float:
+    """Lo que valían las recompensas cuando te llegaron."""
+    return sum(m.coste for m in lista if m.tipo == "recompensa" and m.coste)
+
+
+def interpretar_recompensa(argumento: str) -> tuple[str, float, float | None]:
+    """'eth 0.02 50' -> ('ethereum', 0.02, 50). Sin valor, None."""
+    try:
+        return interpretar_compra(argumento)
+    except MovimientoError:
+        raise MovimientoError(
+            f"Escríbelo así: {EJEMPLO_RECOMPENSA} (cripto, cantidad y, si quieres, "
+            "lo que valía al llegarte)."
+        ) from None
 
 
 def buscar(posiciones: tuple[Posicion, ...], coin_id: str) -> Posicion | None:
