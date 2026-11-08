@@ -2273,6 +2273,113 @@ def test_impuestos_de_lo_vendido(config, enviados, monkeypatch):
     assert "A Hacienda, unos <b>€1.245,00</b>" in texto
 
 
+def _tres_movimientos(config, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 2000.0})
+    main.atender(config, _mensaje("/compra bitcoin 1 1000"))
+    main.atender(config, _mensaje("/compra bitcoin 1 3000"))
+    main.atender(config, _mensaje("/venta bitcoin 1 3000"))
+
+
+def test_corregir_una_antigua_rehace_todo(config, enviados, monkeypatch):
+    _tres_movimientos(config, monkeypatch)
+
+    main.atender(config, _mensaje("/corregir 1 importe 2000"))
+
+    texto = enviados[-1]
+    assert "Corrijo la compra <b>#1</b> de Bitcoin" in texto
+    assert "Importe: €1.000,00 → <b>€2.000,00</b>" in texto
+    assert "los 2 movimientos que van detrás" in texto
+    assert "Ahora tienes 1, que te costaron €2.500,00" in texto
+    posicion = main._con_cambios(config).cartera[0]
+    assert (posicion.cantidad, posicion.invertido) == (1, 2500)
+
+    main.atender(config, _mensaje("/ganancias"))
+    assert "+€500,00" in enviados[-1]
+
+
+def test_corregir_y_luego_deshacer(config, enviados, monkeypatch):
+    _tres_movimientos(config, monkeypatch)
+    main.atender(config, _mensaje("/corregir 1 importe 2000"))
+
+    main.atender(config, _mensaje("/deshacer"))
+
+    # La venta deshecha devuelve lo de después de corregir, no lo de antes
+    posicion = main._con_cambios(config).cartera[0]
+    assert (posicion.cantidad, posicion.invertido) == (2, 5000)
+
+
+def test_corregir_otra_cripto_no_la_toca(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 2000.0, "solana": 100.0})
+    main.atender(config, _mensaje("/compra bitcoin 1 1000"))
+    main.atender(config, _mensaje("/compra solana 1 100"))
+
+    main.atender(config, _mensaje("/corregir 1 importe 2000"))
+
+    cartera = {p.coin_id: p.invertido for p in main._con_cambios(config).cartera}
+    assert cartera == {"bitcoin": 2000, "solana": 100}
+    assert "movimiento que va detrás" not in enviados[-1]
+
+
+def test_corregir_que_deja_una_venta_sin_saldo_no_cambia_nada(
+    config, enviados, monkeypatch
+):
+    _precio(monkeypatch, {"bitcoin": 2000.0})
+    main.atender(config, _mensaje("/compra bitcoin 1 1000"))
+    main.atender(config, _mensaje("/venta bitcoin 0.8 1500"))
+    antes = database.get_movimientos(config.database_path, None)
+
+    main.atender(config, _mensaje("/corregir 1 cantidad 0.5"))
+
+    assert "Así no cuadra" in enviados[-1]
+    assert database.get_movimientos(config.database_path, None) == antes
+    assert main._con_cambios(config).cartera[0].cantidad == pytest.approx(0.2)
+
+
+def test_corregir_que_lo_deja_a_cero(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 2000.0})
+    main.atender(config, _mensaje("/compra bitcoin 1 1000"))
+    main.atender(config, _mensaje("/venta bitcoin todo 1500"))
+
+    main.atender(config, _mensaje("/corregir 2 importe 1800"))
+
+    assert "Ya no te queda nada de Bitcoin" in enviados[-1]
+
+
+def test_corregir_si_no_cuadra_no_cambia_nada(config, enviados, monkeypatch):
+    _tres_movimientos(config, monkeypatch)
+    database.guardar_posicion(
+        config.database_path, "bitcoin", Posicion("bitcoin", 7, 100)
+    )
+    antes = database.get_movimientos(config.database_path, None)
+
+    main.atender(config, _mensaje("/corregir 1 importe 2000"))
+
+    assert "no cuadra con lo que tienes" in enviados[-1]
+    assert database.get_movimientos(config.database_path, None) == antes
+    assert main._con_cambios(config).cartera[0].cantidad == 7
+
+
+def test_corregir_uno_que_no_existe(config, enviados):
+    main.atender(config, _mensaje("/editar 99 importe 2000"))
+
+    assert "No tengo el movimiento #99" in enviados[0]
+
+
+def test_corregir_mal_escrito(config, enviados):
+    main.atender(config, _mensaje("/corregir"))
+
+    assert "/corregir 12 cantidad 0.02" in enviados[0]
+
+
+def test_movimientos_enseña_el_numero(config, enviados, monkeypatch):
+    _tres_movimientos(config, monkeypatch)
+
+    main.atender(config, _mensaje("/movimientos"))
+
+    assert "· #1</i>" in enviados[-1]
+    assert "· #3</i>" in enviados[-1]
+
+
 def test_recompensa_al_precio_de_ahora(config, enviados, monkeypatch):
     config = _con_cartera(config, Posicion("ethereum", 1, 2000))
     _precio(monkeypatch, {"ethereum": 2500.0})
@@ -3517,7 +3624,7 @@ def test_exportar_movimientos(config, enviados, archivos, monkeypatch):
     lineas = contenido.decode("utf-8-sig").splitlines()
     assert len(lineas) == 3
     assert lineas[1].split(";")[1:5] == ["compra", "bitcoin", "0,01", "800"]
-    assert lineas[1].endswith(";por si acaso")
+    assert lineas[1].endswith(";por si acaso;1")
     assert lineas[2].split(";")[1:5] == ["venta", "bitcoin", "0,01", "900"]
     assert nombre.startswith("movimientos-") and nombre.endswith(".csv")
     assert "2 movimientos" in pie

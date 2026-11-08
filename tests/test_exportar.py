@@ -116,10 +116,31 @@ def test_csv_movimientos():
         "precio_unidad_eur",
         "ganancia_eur",
         "nota",
+        "numero",
     ]
     fecha = _CUANDO.astimezone().strftime("%Y-%m-%d %H:%M")
-    assert filas[1] == [fecha, "compra", "bitcoin", "0,02", "1000", "50000", "", ""]
-    assert filas[2] == [fecha, "venta", "bitcoin", "0,01", "700", "70000", "200", ""]
+    assert filas[1] == [
+        fecha,
+        "compra",
+        "bitcoin",
+        "0,02",
+        "1000",
+        "50000",
+        "",
+        "",
+        "1",
+    ]
+    assert filas[2] == [
+        fecha,
+        "venta",
+        "bitcoin",
+        "0,01",
+        "700",
+        "70000",
+        "200",
+        "",
+        "2",
+    ]
 
 
 def test_csv_movimientos_en_otra_moneda():

@@ -199,6 +199,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/movimientos` | Tus últimas compras y ventas, con un botón para deshacer la última (`/movimientos btc`, solo las de esa) |
 | `/recompensa eth 0.02` | Apunta staking o un airdrop, al precio de ahora. Si te llegó antes, `/recompensa eth 0.02 50`, con lo que valía entonces. Se suma a lo que te costó, pero no cuenta como dinero metido en `/rentabilidad` ni en `/vsbtc` |
 | `/deshacer` | Quita la última compra o venta y deja la cripto como estaba |
+| `/corregir 12 importe 700` | Cambia la cantidad o el importe de una compra, venta o recompensa antigua y rehace las cuentas de las que van detrás. El número sale en `/movimientos` y en `/exportar movimientos`. No deja hacerlo si una venta posterior se queda sin saldo |
 | `/recordar lunes 50 btc` | Cada lunes, a la hora del resumen (o a las 9:00 si no tienes), te recuerda tu compra con el precio y lo que te dan los 50 €, y un botón ✅ que la apunta en la cartera. `/recordar` a secas, los que tienes; `/recordar btc no`, lo quita |
 | `/alerta bitcoin 70000` | Te avisa una vez cuando llegue a ese precio |
 | `/alerta bitcoin +10%` | Te avisa una vez cuando suba un 10% desde ahora |
@@ -813,6 +814,7 @@ crypto_tracker/
   volatilidad.py lo que se mueve cada día, para /volatilidad
   movimientos.py las compras y ventas de /compra y /venta
   ganancias.py   lo ganado con lo vendido, para /ganancias
+  corregir.py    rehacer los movimientos al cambiar uno, para /corregir
   impuestos.py   los tramos del IRPF, para /impuestos
   sivendo.py     lo que ganarías y pagarías antes de vender, para /sivendo
   primera.py     tu primera compra, para /primera

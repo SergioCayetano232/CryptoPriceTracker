@@ -46,6 +46,7 @@ from .concentracion import Concentracion
 from .concierto import PRECIO as PRECIO_CONCIERTO
 from .concierto import Concierto
 from .config import Posicion, Watch
+from .corregir import CANTIDAD, Correccion
 from .correlacion import Correlacion
 from .croquetas import PRECIO as PRECIO_CROQUETAS
 from .croquetas import Croquetas
@@ -767,7 +768,7 @@ def formatear_movimientos(
             linea += f" {por} {simbolo}{_num(m.coste)}"
             if m.cantidad > 0:
                 linea += f" <i>(a {simbolo}{_num(m.coste / m.cantidad)})</i>"
-        lineas.append(f"{linea}  <i>{cuando:%d/%m %H:%M}</i>")
+        lineas.append(f"{linea}  <i>{cuando:%d/%m %H:%M} · #{m.id}</i>")
         if m.nota:
             lineas.append(f"      📝 {escape(m.nota)}")
 
@@ -782,6 +783,42 @@ def formatear_movimientos(
     regalado = recibido(todos)
     if regalado:
         lineas.append(f"🎁 {simbolo}{_num(regalado)} en recompensas")
+    return "\n".join(lineas)
+
+
+def formatear_corregido(c: Correccion, currency: str) -> str:
+    """Lo que se contesta a un /corregir: qué cambia y como queda."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    m = c.despues
+    nombre = escape(m.coin_id.replace("-", " ").title())
+    if c.campo == CANTIDAD:
+        cambio = (
+            f"Cantidad: {texto_cantidad(c.antes.cantidad)} → "
+            f"<b>{texto_cantidad(m.cantidad)}</b>"
+        )
+    else:
+        antes = (
+            "sin apuntar"
+            if c.antes.coste is None
+            else f"{simbolo}{_num(c.antes.coste)}"
+        )
+        cambio = f"Importe: {antes} → <b>{simbolo}{_num(m.coste)}</b>"
+
+    lineas = [f"✏️ Corrijo la {m.tipo} <b>#{m.id}</b> de {nombre}.", cambio]
+    if c.rehechos:
+        cuantos = (
+            "el movimiento que va detrás"
+            if c.rehechos == 1
+            else f"los {c.rehechos} movimientos que van detrás"
+        )
+        lineas.append(f"He rehecho las cuentas de {cuantos}.")
+    if c.final is None:
+        lineas.append(f"Ya no te queda nada de {nombre}. Mira /cartera")
+    else:
+        queda = f"Ahora tienes {texto_cantidad(c.final.cantidad)}"
+        if c.final.invertido is not None:
+            queda += f", que te costaron {simbolo}{_num(c.final.invertido)}"
+        lineas.append(f"{queda}. Mira /cartera")
     return "\n".join(lineas)
 
 

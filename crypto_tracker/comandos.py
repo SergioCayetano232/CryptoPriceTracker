@@ -36,6 +36,7 @@ COMANDOS = {
     "vsbtc": "Tu cartera contra haber metido lo mismo en bitcoin",
     "recordar": "Avísame cada semana de mi compra (ej: /recordar lunes 50 btc)",
     "deshacer": "Quitar la última compra o venta que apuntaste",
+    "corregir": "Cambiar una compra o venta antigua (ej: /corregir 12 importe 700)",
     "alerta": "Avísame una vez a un precio o un % (ej: /alerta btc 70000 o +10% 7d)",
     "stop": "Avísame al perder o ganar un % sobre lo que pagué (ej: /stop eth -15%)",
     "alertas": "Las alertas que tienes puestas",
@@ -187,6 +188,8 @@ ALIAS = {
     "ano": "anual",
     "ytd": "anual",
     "undo": "deshacer",
+    "editar": "corregir",
+    "corrige": "corregir",
     "alert": "alerta",
     "alerts": "alertas",
     "watch": "vigilar",
@@ -474,6 +477,11 @@ EJEMPLOS = {
         ("/rebalanceo btc 60 eth 40", "qué mover para quedarte con ese reparto"),
         ("/rebalanceo btc 100", "lo que no nombres, a venderlo entero"),
         ("/rebalanceo", "a secas, a partes iguales entre lo que tienes"),
+    ],
+    "corregir": [
+        ("/corregir 12 cantidad 0.02", "el número sale en /movimientos"),
+        ("/corregir 12 importe 700", "lo que pagaste o te dieron en total"),
+        ("/corregir 12 importe @60000", "con el precio de cada una"),
     ],
     "recompensa": [
         ("/recompensa eth 0.02", "lo que te ha llegado, al precio de ahora"),

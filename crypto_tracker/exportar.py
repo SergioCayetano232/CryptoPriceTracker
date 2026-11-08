@@ -40,6 +40,7 @@ def movimientos_a_csv(lista: list[Movimiento], currency: str) -> bytes:
             f"precio_unidad_{moneda}",
             f"ganancia_{moneda}",
             "nota",
+            "numero",
         ]
     )
     for m in sorted(lista, key=lambda m: m.id):
@@ -54,6 +55,7 @@ def movimientos_a_csv(lista: list[Movimiento], currency: str) -> bytes:
                 _opcional(None if m.coste is None else m.coste / m.cantidad),
                 _opcional(ganancia),
                 _nota(m.nota),
+                m.id,
             ]
         )
     return salida.getvalue().encode("utf-8-sig")

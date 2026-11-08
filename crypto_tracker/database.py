@@ -863,6 +863,28 @@ def deshacer_ultimo(db_path: str) -> Movimiento | None:
     return movimiento
 
 
+def reescribir_movimientos(
+    db_path: str, coin_id: str, historia: list[Movimiento], final: Posicion | None
+) -> None:
+    """Todo o nada: a medias, deshacer dejaría la cripto como no estuvo nunca."""
+    with _connect(db_path) as conn:
+        conn.executemany(
+            "UPDATE movimientos SET cantidad = ?, coste = ?, antes_cantidad = ?, "
+            "antes_invertido = ? WHERE id = ?",
+            [
+                (
+                    m.cantidad,
+                    m.coste,
+                    m.antes.cantidad if m.antes else None,
+                    m.antes.invertido if m.antes else None,
+                    m.id,
+                )
+                for m in historia
+            ],
+        )
+        _escribir_posicion(conn, coin_id, final)
+
+
 def _movimiento(f: sqlite3.Row) -> Movimiento:
     antes = None
     if f["antes_cantidad"] is not None:

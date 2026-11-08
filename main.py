@@ -60,6 +60,7 @@ from crypto_tracker import (
     consejo,
     convertir,
     copia,
+    corregir,
     correlacion,
     croquetas,
     cuando,
@@ -1027,6 +1028,9 @@ def responder(
     if nombre == "recompensa":
         return _recompensa(config, argumento)
 
+    if nombre == "corregir":
+        return _corregir(config, argumento)
+
     if nombre == "movimientos":
         return _movimientos(config, argumento)
 
@@ -1851,6 +1855,31 @@ def _deshacer(config: Config, argumento: str) -> str:
     hecho = database.deshacer_ultimo(config.database_path)
     logger.info("Cartera: deshace la %s de %s", hecho.tipo, hecho.coin_id)
     return alerts.formatear_deshecho(hecho, config.vs_currency)
+
+
+def _corregir(config: Config, argumento: str) -> str:
+    try:
+        numero, campo, texto = corregir.interpretar(argumento)
+    except movimientos.MovimientoError as e:
+        return telegram.escape(str(e))
+
+    todos = database.get_movimientos(config.database_path, None)
+    elegido = next((m for m in todos if m.id == numero), None)
+    if elegido is None:
+        return f"No tengo el movimiento #{numero}. Mira /movimientos"
+
+    historia = [m for m in todos if m.coin_id == elegido.coin_id]
+    actual = movimientos.buscar(_con_cambios(config).cartera, elegido.coin_id)
+    try:
+        correccion = corregir.calcular(historia, numero, campo, texto, actual)
+    except movimientos.MovimientoError as e:
+        return telegram.escape(str(e))
+
+    database.reescribir_movimientos(
+        config.database_path, elegido.coin_id, correccion.historia, correccion.final
+    )
+    logger.info("Cartera: corrige el movimiento %s (%s)", numero, campo)
+    return alerts.formatear_corregido(correccion, config.vs_currency)
 
 
 def _movimientos(config: Config, argumento: str) -> str | comandos.ConBotones:
