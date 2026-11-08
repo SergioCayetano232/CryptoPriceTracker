@@ -3412,6 +3412,61 @@ def test_exportar_si_falla_el_archivo_lo_dice(config, enviados, monkeypatch):
     assert "No he podido mandarte el archivo" in enviados[0]
 
 
+def test_exportar_movimientos(config, enviados, archivos, monkeypatch):
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
+    _precio(monkeypatch, {})
+    main.atender(config, _mensaje("/compra bitcoin 0.01 800 por si acaso"))
+    main.atender(config, _mensaje("/venta bitcoin 0.01 900"))
+    enviados.clear()
+
+    main.atender(config, _mensaje("/exportar movimientos"))
+
+    contenido, nombre, pie = archivos[0]
+    lineas = contenido.decode("utf-8-sig").splitlines()
+    assert len(lineas) == 3
+    assert lineas[1].split(";")[1:5] == ["compra", "bitcoin", "0,01", "800"]
+    assert lineas[1].endswith(";por si acaso")
+    assert lineas[2].split(";")[1:5] == ["venta", "bitcoin", "0,01", "900"]
+    assert nombre.startswith("movimientos-") and nombre.endswith(".csv")
+    assert "2 movimientos" in pie
+    assert enviados == []
+
+
+def test_exportar_movimientos_mas_de_diez(config, archivos, monkeypatch):
+    config = _con_cartera(config, Posicion("bitcoin", 1, 1000))
+    _precio(monkeypatch, {})
+    for _ in range(12):
+        main.atender(config, _mensaje("/compra bitcoin 0.01 800"))
+
+    main.atender(config, _mensaje("/exportar movimientos"))
+
+    assert archivos[0][0].decode("utf-8-sig").count("\r\n") == 13
+
+
+def test_exportar_movimientos_uno_en_singular(config, archivos, monkeypatch):
+    config = _con_cartera(config, Posicion("bitcoin", 1, 1000))
+    _precio(monkeypatch, {})
+    main.atender(config, _mensaje("/compra bitcoin 0.01 800"))
+
+    main.atender(config, _mensaje("/exportar movimientos"))
+
+    assert "1 movimiento," in archivos[0][2]
+
+
+def test_exportar_movimientos_sin_ninguno(config, enviados, archivos):
+    main.atender(config, _mensaje("/exportar movimientos"))
+
+    assert "Todavía no has apuntado" in enviados[0]
+    assert archivos == []
+
+
+def test_exportar_movimientos_de_mas(config, enviados, archivos):
+    main.atender(config, _mensaje("/exportar movimientos 2025"))
+
+    assert "/exportar movimientos" in enviados[0]
+    assert archivos == []
+
+
 # --- /ath ---
 
 

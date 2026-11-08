@@ -1,13 +1,77 @@
-"""/exportar: los precios guardados de una cripto, en un CSV."""
+"""/exportar: los precios guardados de una cripto, o tus movimientos, en un CSV."""
 
+import csv
 from datetime import date, datetime
+from io import StringIO
 
+from .ganancias import de_venta
+from .movimientos import Movimiento
 from .periodo import PeriodoError, leer
 from .simbolos import a_id
 
 POR_DEFECTO = 30 * 24
 
 EJEMPLO = "/exportar bitcoin 30d"
+EJEMPLO_MOVIMIENTOS = "/exportar movimientos"
+
+
+def pide_movimientos(argumento: str) -> bool:
+    partes = argumento.lower().split()
+    if not partes or partes[0] != "movimientos":
+        return False
+    if len(partes) > 1:
+        raise PeriodoError(f"Escríbelo así: {EJEMPLO_MOVIMIENTOS}")
+    return True
+
+
+def movimientos_a_csv(lista: list[Movimiento], currency: str) -> bytes:
+    """Del más antiguo al más nuevo, con el mismo formato que el de precios."""
+    moneda = currency.lower()
+    salida = StringIO()
+    # A mano no: una nota con ; o con un salto de línea descolocaría las columnas.
+    fichero = csv.writer(salida, delimiter=";", lineterminator="\r\n")
+    fichero.writerow(
+        [
+            "fecha",
+            "tipo",
+            "cripto",
+            "cantidad",
+            f"importe_{moneda}",
+            f"precio_unidad_{moneda}",
+            f"ganancia_{moneda}",
+            "nota",
+        ]
+    )
+    for m in sorted(lista, key=lambda m: m.id):
+        ganancia = de_venta(m.antes, m.cantidad, m.coste) if m.tipo == "venta" else None
+        fichero.writerow(
+            [
+                m.cuando.astimezone().strftime("%Y-%m-%d %H:%M"),
+                m.tipo,
+                m.coin_id,
+                _numero(m.cantidad),
+                _opcional(m.coste),
+                _opcional(None if m.coste is None else m.coste / m.cantidad),
+                _opcional(ganancia),
+                _nota(m.nota),
+            ]
+        )
+    return salida.getvalue().encode("utf-8-sig")
+
+
+def nombre_movimientos(hoy: date) -> str:
+    return f"movimientos-{hoy.isoformat()}.csv"
+
+
+def _opcional(valor: float | None) -> str:
+    return "" if valor is None else _numero(valor)
+
+
+def _nota(nota: str | None) -> str:
+    if not nota:
+        return ""
+    # Una nota como "-10% y vendo" Excel la tomaría por una fórmula.
+    return f"'{nota}" if nota[0] in "=+-@" else nota
 
 
 def interpretar(argumento: str) -> tuple[str, float]:

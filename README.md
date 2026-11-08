@@ -247,6 +247,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/doble` | A qué precio tiene que llegar cada cripto de tu cartera para que dobles lo que metiste, cuánto le falta y cuánto tendría que subir todo junto. Solo con las que dicen lo que te costaron |
 | `/mitad` | Al revés que `/doble`: a qué precio perderías la mitad de lo que metiste en cada cripto y cuánto puede bajar hasta ahí, la que menos aguanta primero. Solo con las que dicen lo que te costaron |
 | `/exportar bitcoin 30d` | Te manda un CSV con los precios guardados (sin tramo, 30 días) |
+| `/exportar movimientos` | Te manda un CSV con todas tus compras y ventas, lo que ganaste en cada venta y tus notas |
 | `/mercado` | Lo que vale todo el mercado cripto, cómo va en 24 h y qué parte es de Bitcoin, Ethereum y las estables |
 | `/halving` | Cuántos días faltan para el próximo halving de Bitcoin, cuánto va de ciclo y cuánto bajará lo que se paga por bloque. La fecha es aproximada y no gasta consultas |
 | `/cumple` | Los años de Bitcoin, los días que lleva funcionando y cuánto falta para su cumpleaños (el 3 de enero) |
@@ -449,6 +450,10 @@ precios guardados de ese tramo, con la fecha en tu hora. Va con punto y coma y
 coma decimal, que es como lo abre bien Excel en español con doble clic. Solo
 tiene lo que el bot ha ido guardando, así que no llega más atrás de
 `HISTORY_DAYS` ni de cuando lo instalaste.
+
+`/exportar movimientos` hace lo mismo con todo lo apuntado con `/compra` y
+`/venta`: fecha, cantidad, importe, precio por unidad, ganancia de cada venta y
+nota. Lo del `PORTFOLIO` del `.env` no sale, porque no tiene fecha.
 
 **Saber cuánto tendrías si hubieras comprado:**
 
@@ -714,7 +719,7 @@ crypto_tracker/
   correlacion.py si dos criptos se mueven juntas, para /correlacion
   ratio.py       lo que vale una cripto en otra, para /ratio
   convertir.py   entiende lo que le pides a /convertir
-  exportar.py    el CSV de /exportar
+  exportar.py    los CSV de /exportar, de precios y de movimientos
   hubiera.py     entiende lo que le pides a /si
   objetivo.py    lo que valdría tu cartera, para /objetivo
   meta.py        cuánto le falta a tu cartera para una cifra, para /meta

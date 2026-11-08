@@ -3448,8 +3448,28 @@ def _convertir(config: Config, argumento: str) -> str:
     )
 
 
+def _exportar_movimientos(config: Config) -> str | comandos.Archivo:
+    lista = database.get_movimientos(config.database_path, None)
+    if not lista:
+        return (
+            "Todavía no has apuntado ninguna compra ni venta. "
+            "Se hace con /compra y /venta"
+        )
+
+    cuantos = "1 movimiento" if len(lista) == 1 else f"{len(lista)} movimientos"
+    return comandos.Archivo(
+        exportar.movimientos_a_csv(lista, config.vs_currency),
+        exportar.nombre_movimientos(date.today()),
+        f"📄 {cuantos}, del más antiguo al más nuevo\n"
+        "<i>Solo lo apuntado con /compra y /venta, no el PORTFOLIO del .env</i>",
+        "No he podido mandarte el archivo. Prueba en un rato.",
+    )
+
+
 def _exportar(config: Config, argumento: str) -> str | comandos.Archivo:
     try:
+        if exportar.pide_movimientos(argumento):
+            return _exportar_movimientos(config)
         coin_id, horas = exportar.interpretar(argumento)
     except periodo.PeriodoError as e:
         return telegram.escape(str(e))

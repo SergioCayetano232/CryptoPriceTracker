@@ -70,7 +70,7 @@ COMANDOS = {
     "equilibrio": "A qué precio dejas de perder con cada una de tu cartera",
     "doble": "A qué precio doblas lo que metiste en cada una de tu cartera",
     "mitad": "A qué precio pierdes la mitad de lo que metiste en cada una",
-    "exportar": "Los precios guardados en un CSV (ej: /exportar bitcoin 30d)",
+    "exportar": "Precios o tus compras en CSV (ej: /exportar btc 30d o movimientos)",
     "mercado": "Lo que vale todo el mercado y cuánto es de Bitcoin",
     "halving": "Cuánto falta para el próximo halving de Bitcoin",
     "cumple": "Los años de Bitcoin y cuánto falta para su cumpleaños",
@@ -559,6 +559,10 @@ EJEMPLOS = {
         ("/sivendo btc 0.005", "al precio de ahora"),
         ("/sivendo btc todo", "todo lo que tienes"),
         ("/sivendo btc 0.005 @80000", "si la vendes a ese precio"),
+    ],
+    "exportar": [
+        ("/exportar bitcoin 30d", "los precios guardados de ese tramo"),
+        ("/exportar movimientos", "todas tus compras y ventas, para tu gestor"),
     ],
     "hoy": [
         ("/hoy", "cómo van las que vigilo desde las 00:00"),
