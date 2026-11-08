@@ -163,6 +163,7 @@ from .rsi import PERIODO, SOBRECOMPRA, SOBREVENTA, Rsi, hasta_zona
 from .sat import CANTIDADES as CANTIDADES_SAT
 from .sat import Sat
 from .semanal import Semana
+from .sivendo import Simulacion
 from .sofa import PRECIO as PRECIO_SOFA
 from .sofa import Sofa
 from .spotify import PRECIO as PRECIO_SPOTIFY
@@ -1285,6 +1286,65 @@ def formatear_impuestos(i: Impuestos, currency: str) -> str:
     lineas.append(
         "\n<i>Es orientativo: Hacienda cuenta con FIFO (lo primero que compras "
         "es lo primero que vendes) y aquí va con precio medio.</i>"
+    )
+    return "\n".join(lineas)
+
+
+def _sivendo_hacienda(s: Simulacion, simbolo: str) -> str:
+    if s.hacienda > 0:
+        return f"💸 A Hacienda, unos <b>{simbolo}{_num(s.hacienda)}</b>"
+    if s.hacienda < 0:
+        return (
+            f"💸 Te ahorrarías unos <b>{simbolo}{_num(-s.hacienda)}</b> de Hacienda: "
+            "esa pérdida se resta de lo que ya has ganado este año."
+        )
+    if s.ganancia > 0:
+        return "💸 A Hacienda, nada: lo tapan las pérdidas que ya llevas este año."
+    return (
+        "💸 A Hacienda, nada. Si pierdes, lo puedes restar de lo que ganes los "
+        "próximos 4 años."
+    )
+
+
+def formatear_sivendo(s: Simulacion, currency: str) -> str:
+    """Respuesta de /sivendo."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(s.coin_id.replace("-", " ").title())
+    lineas = [
+        f"🤔 <b>Si vendes {texto_cantidad(s.vendido)} de {nombre}</b>",
+        "",
+        f"Te darían {simbolo}{_num(s.cobrado)}  "
+        f"<i>(a {simbolo}{_num(s.cobrado / s.vendido)} cada una)</i>",
+    ]
+    if s.ganancia is None:
+        lineas.append("No sé lo que te costó, así que no puedo sacar lo que ganarías.")
+    else:
+        ganado = (
+            f"{_flecha(s.ganancia)} Le sacarías <b>{_ganancia(s.ganancia, simbolo)}</b>"
+        )
+        if s.porcentaje is not None:
+            ganado += f" ({s.porcentaje:+.2f}%)"
+        lineas += [f"Te costó {simbolo}{_num(s.coste)}", ganado]
+        if s.ya_ganado:
+            lineas.append(
+                f"Este año ya llevas {_ganancia(s.ya_ganado, simbolo)} vendiendo"
+            )
+        lineas += ["", _sivendo_hacienda(s, simbolo)]
+
+    if s.queda:
+        lineas.append(f"Te quedarían {texto_cantidad(s.queda)}")
+    else:
+        lineas.append(f"No te quedaría nada de {nombre}")
+
+    if s.sin_datos:
+        cuantas = "1 venta" if s.sin_datos == 1 else f"{s.sin_datos} ventas"
+        lineas.append(f"<i>No cuento {cuantas} de este año: les falta el precio.</i>")
+    if currency.lower() != "eur":
+        lineas.append(
+            f"<i>Ojo: va en {currency.upper()}, y Hacienda lo quiere en euros.</i>"
+        )
+    lineas.append(
+        "\n<i>No apunto nada. Es orientativo, con tu precio medio y sin comisiones.</i>"
     )
     return "\n".join(lineas)
 

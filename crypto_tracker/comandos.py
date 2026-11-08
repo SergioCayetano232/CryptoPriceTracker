@@ -28,6 +28,7 @@ COMANDOS = {
     "ganancias": "Lo que has ganado o perdido con lo que ya vendiste",
     "rentabilidad": "Lo que ganas al año, contando cuándo metiste cada euro",
     "impuestos": "Lo que le tocaría a Hacienda de lo que ganaste vendiendo",
+    "sivendo": "Lo que ganarías y pagarías antes de vender (ej: /sivendo btc 0.5)",
     "primera": "Tu primera compra y cuánto ha cambiado desde entonces",
     "hodl": "Cuántos días llevas sin vender cada cripto de tu cartera",
     "record": "Lo máximo que ha valido tu cartera y cuánto le falta para volver",
@@ -391,6 +392,7 @@ ALIAS = {
     "hacienda": "impuestos",
     "irpf": "impuestos",
     "taxes": "impuestos",
+    "sivender": "sivendo",
     "remove": "quitar",
     "delete": "quitar",
     "unwatch": "dejar",
@@ -552,6 +554,11 @@ EJEMPLOS = {
     "impuestos": [
         ("/impuestos", "lo de este año, por tramos"),
         ("/impuestos 2025", "el año que digas"),
+    ],
+    "sivendo": [
+        ("/sivendo btc 0.005", "al precio de ahora"),
+        ("/sivendo btc todo", "todo lo que tienes"),
+        ("/sivendo btc 0.005 @80000", "si la vendes a ese precio"),
     ],
     "hoy": [
         ("/hoy", "cómo van las que vigilo desde las 00:00"),

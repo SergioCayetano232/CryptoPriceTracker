@@ -151,6 +151,7 @@ from crypto_tracker import (
     sat,
     semanal,
     simbolos,
+    sivendo,
     sofa,
     spotify,
     stop,
@@ -1035,6 +1036,9 @@ def responder(
     if nombre == "impuestos":
         return _impuestos(config, argumento)
 
+    if nombre == "sivendo":
+        return _sivendo(config, argumento)
+
     if nombre == "deshacer":
         return _deshacer(config, argumento)
 
@@ -1756,6 +1760,30 @@ def _impuestos(config: Config, argumento: str) -> str:
     ventas = database.get_ventas(config.database_path)
     return alerts.formatear_impuestos(
         impuestos.calcular(ventas, año), config.vs_currency
+    )
+
+
+def _sivendo(config: Config, argumento: str) -> str:
+    try:
+        coin_id, cantidad, precio = sivendo.interpretar(argumento)
+        antes = movimientos.buscar(_con_cambios(config).cartera, coin_id)
+        queda = movimientos.vender(antes, coin_id, cantidad)
+    except movimientos.MovimientoError as e:
+        return telegram.escape(str(e))
+
+    vendido = antes.cantidad if cantidad is None else cantidad
+    if precio:
+        dinero = movimientos.cobrado(precio, vendido)
+    else:
+        ahora = _precio_o_pedirlo(config, coin_id)
+        if isinstance(ahora, str):
+            return ahora
+        dinero = ahora * vendido
+
+    ventas = database.get_ventas(config.database_path)
+    este_año = impuestos.calcular(ventas, date.today().year)
+    return alerts.formatear_sivendo(
+        sivendo.calcular(antes, vendido, dinero, queda, este_año), config.vs_currency
     )
 
 

@@ -2273,6 +2273,90 @@ def test_impuestos_de_lo_vendido(config, enviados, monkeypatch):
     assert "A Hacienda, unos <b>€1.245,00</b>" in texto
 
 
+def test_sivendo_no_apunta_nada(config, enviados, monkeypatch):
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
+    _precio(monkeypatch, {"bitcoin": 70000.0})
+
+    main.atender(config, _mensaje("/sivendo btc 0.01"))
+
+    texto = enviados[0]
+    assert "<b>Si vendes 0,01 de Bitcoin</b>" in texto
+    assert "Te darían €700,00" in texto
+    assert "Te costó €500,00" in texto
+    assert "<b>+€200,00</b> (+40.00%)" in texto
+    assert "A Hacienda, unos <b>€38,00</b>" in texto
+    assert "Te quedarían 0,01" in texto
+    assert database.get_movimientos(config.database_path) == []
+
+
+def test_sivendo_suma_lo_que_ya_llevas(config, enviados, monkeypatch):
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
+    _precio(monkeypatch, {})
+
+    main.atender(config, _mensaje("/venta bitcoin 0.01 6400"))  # +5.900
+    main.atender(config, _mensaje("/sivendo btc todo 700"))  # +200
+
+    texto = enviados[1]
+    assert "Este año ya llevas +€5.900,00 vendiendo" in texto
+    assert "A Hacienda, unos <b>€40,00</b>" in texto
+    assert "No te quedaría nada de Bitcoin" in texto
+
+
+def test_sivendo_a_un_precio_no_consulta(config, enviados, monkeypatch):
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+
+    main.atender(config, _mensaje("/sivendo btc 0.01 @80000"))
+
+    assert "Te darían €800,00" in enviados[0]
+
+
+def test_sivendo_con_perdida_que_ahorra(config, enviados, monkeypatch):
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
+    _precio(monkeypatch, {})
+
+    main.atender(config, _mensaje("/venta bitcoin 0.01 1500"))  # +1.000
+    main.atender(config, _mensaje("/sivendo btc todo 300"))  # -200
+
+    assert "Te ahorrarías unos <b>€38,00</b> de Hacienda" in enviados[1]
+
+
+def test_sivendo_sin_saber_lo_que_costo(config, enviados, monkeypatch):
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, None))
+
+    main.atender(config, _mensaje("/sivendo btc 0.01 700"))
+
+    assert "No sé lo que te costó" in enviados[0]
+    assert "Hacienda" not in enviados[0]
+
+
+def test_sivendo_mas_de_lo_que_tienes(config, enviados):
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
+
+    main.atender(config, _mensaje("/sivendo btc 1 700"))
+
+    assert "Solo tienes 0,02 de bitcoin" in enviados[0]
+
+
+def test_sivendo_lo_que_no_tienes(config, enviados):
+    main.atender(config, _mensaje("/sivendo solana 1 700"))
+
+    assert "No tienes solana en la cartera" in enviados[0]
+
+
+def test_sivendo_sin_precio_posible(config, enviados, monkeypatch):
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
+
+    def falla(*a, **k):
+        raise coingecko.CoinGeckoError("sin red")
+
+    monkeypatch.setattr(coingecko, "get_prices", falla)
+
+    main.atender(config, _mensaje("/sivendo btc 0.01"))
+
+    assert "No he podido mirar el precio" in enviados[0]
+
+
 def test_impuestos_de_otro_año_sin_ventas(config, enviados):
     main.atender(config, _mensaje("/hacienda 2020"))
 
