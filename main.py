@@ -54,6 +54,7 @@ from crypto_tracker import (
     comandos,
     comision,
     comparar,
+    compensar,
     compras,
     concentracion,
     concierto,
@@ -79,6 +80,7 @@ from crypto_tracker import (
     excusa,
     exportar,
     extremos,
+    fifo,
     frase,
     futbol,
     galleta,
@@ -1047,6 +1049,9 @@ def responder(
     if nombre == "sivendo":
         return _sivendo(config, argumento)
 
+    if nombre == "compensar":
+        return _compensar(config)
+
     if nombre == "deshacer":
         return _deshacer(config, argumento)
 
@@ -1836,6 +1841,26 @@ def _sivendo(config: Config, argumento: str) -> str:
         sivendo.calcular(antes, vendido, dinero, queda, este_año, historia),
         config.vs_currency,
     )
+
+
+def _compensar(config: Config) -> str:
+    hoy = date.today()
+    todos = database.get_movimientos(config.database_path, None)
+    este_año = impuestos.calcular(todos, hoy.year)
+    cartera = _con_cambios(config).cartera
+
+    precios = {}
+    # Sin ganancia no hay nada que compensar y no merece gastar una consulta.
+    if este_año.ganancia > 0 and cartera:
+        try:
+            precios = coingecko.get_prices(
+                [p.coin_id for p in cartera], config.vs_currency
+            )
+        except coingecko.CoinGeckoError as e:
+            return f"No he podido mirar los precios: {telegram.escape(str(e))}"
+
+    plan = compensar.calcular(este_año, fifo.lotes(todos, cartera), precios)
+    return alerts.formatear_compensar(plan, config.vs_currency, hoy)
 
 
 def _deshacer(config: Config, argumento: str) -> str:

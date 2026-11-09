@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from . import fifo
 from .config import Posicion
-from .impuestos import Impuestos, por_tramos
+from .impuestos import Impuestos, cuota
 from .movimientos import Movimiento, MovimientoError, cobrado, interpretar_venta
 
 EJEMPLO = (
@@ -36,11 +36,7 @@ class Simulacion:
         if self.ganancia is None:
             return None
         # Sobre lo que ya llevas: vender poco puede caer ya en un tramo más caro.
-        return _cuota(self.ya_ganado + self.ganancia) - _cuota(self.ya_ganado)
-
-
-def _cuota(ganancia: float) -> float:
-    return sum(c for _, _, c in por_tramos(ganancia))
+        return cuota(self.ya_ganado + self.ganancia) - cuota(self.ya_ganado)
 
 
 def interpretar(argumento: str) -> tuple[str, float | None, str | None]:

@@ -28,6 +28,19 @@ def coste_de_vender(
     return _sacar(cola, vendido)
 
 
+def lotes(
+    movimientos: list[Movimiento], cartera: tuple[Posicion, ...]
+) -> dict[str, list[Lote]]:
+    """Los lotes que te quedan de cada cripto, el más viejo primero."""
+    colas = _repasar(movimientos)[1]
+    resultado = {}
+    for posicion in cartera:
+        cola = colas.get(posicion.coin_id, deque())
+        _cuadrar(cola, posicion)
+        resultado[posicion.coin_id] = list(cola)
+    return resultado
+
+
 def _repasar(
     movimientos: list[Movimiento],
 ) -> tuple[list[tuple[Movimiento, float | None]], dict[str, deque[Lote]]]:

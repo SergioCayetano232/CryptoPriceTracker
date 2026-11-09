@@ -58,6 +58,10 @@ def por_tramos(ganancia: float) -> list[tuple[int, float, float]]:
     return tramos
 
 
+def cuota(ganancia: float) -> float:
+    return sum(c for _, _, c in por_tramos(ganancia))
+
+
 def recompensas_de(movimientos: list[Movimiento], año: int) -> float:
     return recibido([m for m in movimientos if m.cuando.year == año])
 

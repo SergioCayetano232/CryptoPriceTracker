@@ -41,6 +41,7 @@ from .coche import PRECIO as PRECIO_COCHE
 from .coche import Coche
 from .comparar import Resultado
 from .comparar import media as media_comparar
+from .compensar import Compensacion
 from .compras import Compra, Resumen
 from .concentracion import Concentracion
 from .concierto import PRECIO as PRECIO_CONCIERTO
@@ -1385,6 +1386,65 @@ def _sivendo_hacienda(s: Simulacion, simbolo: str) -> str:
         "💸 A Hacienda, nada. Si pierdes, lo puedes restar de lo que ganes los "
         "próximos 4 años."
     )
+
+
+def formatear_compensar(c: Compensacion, currency: str, hoy: date) -> str:
+    """Respuesta de /compensar."""
+    if c.ganancia <= 0:
+        return (
+            f"En {c.año} no llevas ganancia vendiendo, así que no hay nada que "
+            "compensar. Míralo en /impuestos"
+        )
+
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    lineas = [
+        f"🧾 <b>Compensar pérdidas de {c.año}</b>",
+        "",
+        f"Llevas ganado vendiendo <b>{_ganancia(c.ganancia, simbolo)}</b>: "
+        f"a Hacienda, unos {simbolo}{_num(c.antes)}",
+        "",
+    ]
+    if not c.ventas:
+        lineas.append(
+            "Nada de tu cartera va en pérdidas, así que no tienes de dónde compensar."
+        )
+    for v in c.ventas:
+        nombre = escape(v.coin_id.replace("-", " ").title())
+        cuanto = texto_cantidad(v.cantidad)
+        cuanto = f"todo ({cuanto})" if v.todo else cuanto
+        lineas.append(
+            f"🔻 <b>{nombre}</b>: vende {cuanto} a {simbolo}{_num(v.precio)} "
+            f"y pierdes {simbolo}{_num(v.perdida)}"
+        )
+
+    if c.ventas:
+        lineas.append(f"\n💸 Te ahorrarías unos <b>{simbolo}{_num(c.ahorro)}</b>")
+        if c.queda >= 0.01:
+            lineas.append(f"Seguirías tributando por {_ganancia(c.queda, simbolo)}")
+        dias = (date(c.año + 1, 1, 1) - hoy).days
+        lineas.append(
+            f"Tiene que ser antes del 1 de enero: "
+            f"{'queda 1 día' if dias == 1 else f'quedan {dias} días'}"
+        )
+
+    if c.sin_mirar:
+        nombres = ", ".join(
+            escape(coin_id.replace("-", " ").title()) for coin_id in c.sin_mirar
+        )
+        lineas.append(f"\n<i>De {nombres} me falta el precio o lo que te costó.</i>")
+    if c.sin_datos:
+        cuantas = "1 venta" if c.sin_datos == 1 else f"{c.sin_datos} ventas"
+        lineas.append(f"<i>No cuento {cuantas} de este año: les falta el precio.</i>")
+    if currency.lower() != "eur":
+        lineas.append(
+            f"<i>Ojo: va en {currency.upper()}, y Hacienda lo quiere en euros.</i>"
+        )
+    lineas.append(
+        "\n<i>No apunto nada. Es orientativo, con FIFO, al precio de ahora y sin "
+        "comisiones. Si vas a recomprar enseguida, pregúntale antes a tu gestor: "
+        "Hacienda puede no admitir esa pérdida.</i>"
+    )
+    return "\n".join(lineas)
 
 
 def formatear_rellenar(

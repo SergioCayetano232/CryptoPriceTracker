@@ -190,6 +190,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/ganancias` | Lo que has ganado o perdido de verdad con lo que ya vendiste |
 | `/impuestos` | Lo que le tocaría a Hacienda de lo que ganaste vendiendo este año, tramo a tramo (19, 21, 23, 27 y 30 %). `/impuestos 2025`, el año que digas. Va con FIFO, como Hacienda: lo primero que compraste es lo primero que vendes (lo del `PORTFOLIO` del `.env` cuenta como lo más viejo). Por eso puede no coincidir con `/ganancias`, que va con precio medio. Es orientativo |
 | `/sivendo btc 0.5` | Lo que te darían, lo que le sacarías y lo que le tocaría a Hacienda, contando lo que ya llevas ganado este año. No apunta nada. También `/sivendo btc todo` y `/sivendo btc 0.5 @80000`, a ese precio |
+| `/compensar` | Si llevas ganancia este año, qué vender de lo que va en pérdidas y cuánto, para bajar lo que le toca a Hacienda y cuánto te ahorrarías. Va con FIFO: si para llegar a lo que pierde hay que vender antes lo que gana, lo cuenta. No apunta nada y tiene que hacerse antes del 1 de enero. Es orientativo y sin comisiones. También `/perdidas` |
 | `/primera` | Tu primera compra, cuánto hace, cuánto ha cambiado el precio desde entonces y lo que vale hoy lo que compraste (`/primera btc`, la primera de esa). Solo las apuntadas con `/compra` |
 | `/hodl` | Cuántos días llevas sin vender cada cripto de tu cartera, de la que más a la que menos: desde la última venta o, si nunca vendiste, desde la primera compra. Si lo vendiste todo y volviste a comprar, cuenta desde la nueva compra. También `/diamante` |
 | `/record` | Lo máximo que ha valido tu cartera con los precios guardados, qué día fue y cuánto le falta para volver. Ojo: es lo que tienes hoy a los precios de entonces, no lo que tenías ese día. No gasta consultas. También `/pico` |
@@ -820,6 +821,7 @@ crypto_tracker/
   impuestos.py   los tramos del IRPF, para /impuestos
   fifo.py        qué costó lo vendido, contando primero lo más viejo
   sivendo.py     lo que ganarías y pagarías antes de vender, para /sivendo
+  compensar.py   qué vender en pérdidas, para /compensar
   primera.py     tu primera compra, para /primera
   hodl.py        los días que llevas sin vender, para /hodl
   record.py      lo máximo que ha valido tu cartera, para /record
