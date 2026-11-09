@@ -250,6 +250,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/mitad` | Al revés que `/doble`: a qué precio perderías la mitad de lo que metiste en cada cripto y cuánto puede bajar hasta ahí, la que menos aguanta primero. Solo con las que dicen lo que te costaron |
 | `/exportar bitcoin 30d` | Te manda un CSV con los precios guardados (sin tramo, 30 días) |
 | `/exportar movimientos` | Te manda un CSV con todas tus compras y ventas, lo que ganaste en cada venta y tus notas |
+| `/rellenar btc 90d` | Baja de CoinGecko los precios pasados que no tiene, para que `/rsi`, `/media`, `/racha` y compañía funcionen sin esperar semanas. Solo mete lo que falta, así que se puede repetir. Sin tramo, todo lo que quepa en `HISTORY_DAYS` (hasta un año); a secas, las que vigilas. Hasta 90 días viene un precio por hora y con más, uno al día. Gasta una consulta por cripto |
 | `/mercado` | Lo que vale todo el mercado cripto, cómo va en 24 h y qué parte es de Bitcoin, Ethereum y las estables |
 | `/halving` | Cuántos días faltan para el próximo halving de Bitcoin, cuánto va de ciclo y cuánto bajará lo que se paga por bloque. La fecha es aproximada y no gasta consultas |
 | `/cumple` | Los años de Bitcoin, los días que lleva funcionando y cuánto falta para su cumpleaños (el 3 de enero) |
@@ -722,6 +723,7 @@ crypto_tracker/
   ratio.py       lo que vale una cripto en otra, para /ratio
   convertir.py   entiende lo que le pides a /convertir
   exportar.py    los CSV de /exportar, de precios y de movimientos
+  rellenar.py    qué precios pasados faltan, para /rellenar
   hubiera.py     entiende lo que le pides a /si
   objetivo.py    lo que valdría tu cartera, para /objetivo
   meta.py        cuánto le falta a tu cartera para una cifra, para /meta

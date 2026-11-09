@@ -154,6 +154,7 @@ from .rebalanceo import Paso
 from .record import Record
 from .recordar import Recordatorio
 from .redondo import Redondo
+from .rellenar import Relleno
 from .rentabilidad import MIN_DIAS as MIN_DIAS_RENTABILIDAD
 from .rentabilidad import Rentabilidad
 from .reparto import Trozo, demasiado
@@ -1383,6 +1384,27 @@ def _sivendo_hacienda(s: Simulacion, simbolo: str) -> str:
         "💸 A Hacienda, nada. Si pierdes, lo puedes restar de lo que ganes los "
         "próximos 4 años."
     )
+
+
+def formatear_rellenar(
+    hechos: list[Relleno], fallos: list[tuple[str, str]], dias: int
+) -> str:
+    """Respuesta de /rellenar."""
+    lineas = [f"🧩 <b>Precios de los últimos {dias} días</b>", ""]
+    for r in hechos:
+        nombre = escape(r.coin_id.replace("-", " ").title())
+        if r.desde is None:
+            lineas.append(f"{nombre}: ya lo tenía todo")
+            continue
+        cuantos = f"{r.nuevos:,}".replace(",", ".")
+        nuevos = "precio nuevo" if r.nuevos == 1 else "precios nuevos"
+        lineas.append(
+            f"{nombre}: <b>{cuantos}</b> {nuevos}, "
+            f"desde el {r.desde.astimezone():%d/%m/%Y}"
+        )
+    for coin_id, error in fallos:
+        lineas.append(f"{escape(coin_id)}: no he podido. {escape(error)}")
+    return "\n".join(lineas)
 
 
 def formatear_sivendo(s: Simulacion, currency: str) -> str:

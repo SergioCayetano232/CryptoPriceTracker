@@ -4,10 +4,11 @@ import logging
 import math
 import os
 import time
+from urllib.parse import quote
 
 import requests
 
-from . import mercado, precio, tendencias, top
+from . import mercado, precio, rellenar, tendencias, top
 from .maximo import Maximo, leer
 
 logger = logging.getLogger(__name__)
@@ -17,6 +18,7 @@ SEARCH_URL = "https://api.coingecko.com/api/v3/search"
 MARKETS_URL = "https://api.coingecko.com/api/v3/coins/markets"
 TRENDING_URL = "https://api.coingecko.com/api/v3/search/trending"
 GLOBAL_URL = "https://api.coingecko.com/api/v3/global"
+CHART_URL = "https://api.coingecko.com/api/v3/coins/{id}/market_chart"
 
 # Si la API tarda mas que esto, cortamos. Sin timeout una peticion puede
 # quedarse colgada para siempre y congelar el bucle entero.
@@ -115,6 +117,16 @@ def mercado_global(vs_currency: str = "eur") -> mercado.Mercado:
     return mercado.leer(_con_reintentos(lambda: _pedir(GLOBAL_URL, {})), vs_currency)
 
 
+def historico(
+    coin_id: str, dias: int, vs_currency: str = "eur"
+) -> list[rellenar.Punto]:
+    """Sus precios pasados: cada hora hasta 90 dias y uno al dia si son mas."""
+    # El id lo escribe el usuario y aqui va dentro de la ruta.
+    url = CHART_URL.format(id=quote(coin_id, safe=""))
+    params = {"vs_currency": vs_currency, "days": dias}
+    return rellenar.leer(_con_reintentos(lambda: _pedir(url, params)))
+
+
 def mejores(monedas: list, texto: str, maximo: int = 5) -> list[dict]:
     """Primero lo que coincide tal cual, luego por tamaño de mercado."""
     buscado = texto.strip().lower()
@@ -207,6 +219,9 @@ def _pedir(url: str, params: dict):
                 "CoinGecko ha bloqueado la peticion (403). Consigue una clave Demo "
                 "gratis en coingecko.com y ponla en COINGECKO_API_KEY del .env"
             ) from e
+        # Solo pasa con market_chart, que lleva el id en la ruta.
+        if status == 404:
+            raise CoinGeckoError("CoinGecko no la conoce, búscala con /buscar") from e
         # Los 5xx son cosa suya y suelen pasarse solos; los 4xx los tenemos
         # mal nosotros y reintentar no arregla nada.
         raise CoinGeckoError(

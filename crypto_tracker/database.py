@@ -185,6 +185,23 @@ def save_prices(db_path: str, prices: dict[str, float], currency: str) -> int:
     return len(filas)
 
 
+def guardar_serie(
+    db_path: str, coin_id: str, puntos: list[tuple[datetime, float]], currency: str
+) -> int:
+    """Guarda precios con su fecha, los de /rellenar. Devuelve cuantos metio."""
+    filas = [
+        (coin_id, precio, currency, cuando.isoformat(timespec="seconds"))
+        for cuando, precio in puntos
+    ]
+    with _connect(db_path) as conn:
+        conn.executemany(
+            "INSERT INTO prices (coin_id, price, currency, created_at) "
+            "VALUES (?, ?, ?, ?)",
+            filas,
+        )
+    return len(filas)
+
+
 def purge_old_prices(db_path: str, dias: int) -> int:
     """Borra los precios mas viejos que `dias`. Devuelve cuantos borro."""
     if dias <= 0:

@@ -143,6 +143,7 @@ from crypto_tracker import (
     recordar,
     redondo,
     refran,
+    rellenar,
     rentabilidad,
     reparto,
     riesgo,
@@ -1299,6 +1300,9 @@ def responder(
 
     if nombre == "rsi":
         return _rsi(config, argumento)
+
+    if nombre == "rellenar":
+        return _rellenar(config, argumento)
 
     if nombre == "cuando":
         return _cuando(config, argumento)
@@ -2799,6 +2803,44 @@ def _racha_cartera(config: Config) -> str:
     return alerts.formatear_racha(
         puntuales.CARTERA, resultado, config.vs_currency, record, dias[0][0]
     )
+
+
+def _rellenar(config: Config, argumento: str) -> str:
+    try:
+        coin_ids, dias = rellenar.interpretar(argumento, config.history_days)
+    except rellenar.RellenarError as e:
+        return telegram.escape(str(e))
+
+    if not coin_ids:
+        vigiladas = _con_cambios(config).watchlist
+        coin_ids = [w.coin_id for w in vigiladas][: simbolos.MAX_VARIAS]
+    if not coin_ids:
+        return f"¿De cuál? Por ejemplo: {rellenar.EJEMPLO}"
+    if len(coin_ids) > simbolos.MAX_VARIAS:
+        return f"Como mucho {simbolos.MAX_VARIAS} a la vez."
+
+    hechos, fallos = [], []
+    for coin_id in coin_ids:
+        try:
+            bajados = coingecko.historico(coin_id, dias, config.vs_currency)
+        except coingecko.CoinGeckoError as e:
+            fallos.append((coin_id, str(e)))
+            continue
+        if not bajados:
+            fallos.append((coin_id, "CoinGecko no tiene precios suyos"))
+            continue
+
+        serie = database.get_serie(
+            config.database_path, coin_id, dias * 24 + 1, config.vs_currency
+        )
+        nuevos = rellenar.faltan(bajados, [cuando for cuando, _ in serie])
+        database.guardar_serie(
+            config.database_path, coin_id, nuevos, config.vs_currency
+        )
+        desde = nuevos[0][0] if nuevos else None
+        hechos.append(rellenar.Relleno(coin_id, len(nuevos), desde))
+
+    return alerts.con_fuente(alerts.formatear_rellenar(hechos, fallos, dias))
 
 
 def _rsi(config: Config, argumento: str) -> str:

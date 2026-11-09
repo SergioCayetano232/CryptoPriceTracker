@@ -73,6 +73,7 @@ COMANDOS = {
     "doble": "A qué precio doblas lo que metiste en cada una de tu cartera",
     "mitad": "A qué precio pierdes la mitad de lo que metiste en cada una",
     "exportar": "Precios o tus compras en CSV (ej: /exportar btc 30d o movimientos)",
+    "rellenar": "Bajar los precios pasados que no tengo (ej: /rellenar btc 90d)",
     "mercado": "Lo que vale todo el mercado y cuánto es de Bitcoin",
     "halving": "Cuánto falta para el próximo halving de Bitcoin",
     "cumple": "Los años de Bitcoin y cuánto falta para su cumpleaños",
@@ -219,6 +220,8 @@ ALIAS = {
     "día": "dia",
     "fecha": "dia",
     "backup": "copia",
+    "backfill": "rellenar",
+    "rellena": "rellenar",
     "tarta": "reparto",
     "rebalancear": "rebalanceo",
     "tir": "rentabilidad",
@@ -579,6 +582,11 @@ EJEMPLOS = {
     "exportar": [
         ("/exportar bitcoin 30d", "los precios guardados de ese tramo"),
         ("/exportar movimientos", "todas tus compras y ventas, para tu gestor"),
+    ],
+    "rellenar": [
+        ("/rellenar", "las que vigilo, hasta donde guardo"),
+        ("/rellenar btc eth", "solo esas"),
+        ("/rellenar btc 30d", "solo ese tramo"),
     ],
     "hoy": [
         ("/hoy", "cómo van las que vigilo desde las 00:00"),
