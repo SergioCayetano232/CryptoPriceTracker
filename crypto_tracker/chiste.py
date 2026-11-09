@@ -18,6 +18,7 @@ CHISTES = (
     "a la fuerza.",
     "Hace un año compré la caída. Sigo comprándola, la condenada no acaba nunca.",
     "Me hice minero de Bitcoin. Ahora la factura de la luz también es volátil.",
+    "Diversifiqué la cartera: ahora pierdo en doce monedas distintas.",
 )
 
 
