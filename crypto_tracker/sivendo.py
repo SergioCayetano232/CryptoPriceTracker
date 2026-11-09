@@ -2,10 +2,10 @@
 
 from dataclasses import dataclass
 
-from . import ganancias
+from . import fifo
 from .config import Posicion
 from .impuestos import Impuestos, por_tramos
-from .movimientos import MovimientoError, cobrado, interpretar_venta
+from .movimientos import Movimiento, MovimientoError, cobrado, interpretar_venta
 
 EJEMPLO = (
     "/sivendo bitcoin 0.005, /sivendo bitcoin todo o /sivendo bitcoin 0.005 @80000"
@@ -60,12 +60,14 @@ def calcular(
     dinero: float,
     queda: Posicion | None,
     este_año: Impuestos,
+    historia: list[Movimiento] | tuple = (),
 ) -> Simulacion:
+    """historia son los movimientos de esa cripto. Sin ellos, todo es un lote."""
     return Simulacion(
         antes.coin_id,
         vendido,
         dinero,
-        ganancias.coste_de(antes, vendido),
+        fifo.coste_de_vender(list(historia), antes, vendido),
         queda.cantidad if queda else 0,
         este_año.ganancia,
         este_año.sin_datos,

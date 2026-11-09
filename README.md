@@ -188,7 +188,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/compra bitcoin 0.01 600 por el halving` | Con una nota al final de por qué compras (o vendes). Sale en `/movimientos` y en `/compras`, junto a cómo ha salido |
 | `/venta bitcoin 0.005 350` | Apunta una venta y lo que te dieron (`/venta bitcoin todo` la saca de la cartera) |
 | `/ganancias` | Lo que has ganado o perdido de verdad con lo que ya vendiste |
-| `/impuestos` | Lo que le tocaría a Hacienda de lo que ganaste vendiendo este año, tramo a tramo (19, 21, 23, 27 y 30 %). `/impuestos 2025`, el año que digas. Es orientativo: Hacienda cuenta con FIFO y aquí va con precio medio |
+| `/impuestos` | Lo que le tocaría a Hacienda de lo que ganaste vendiendo este año, tramo a tramo (19, 21, 23, 27 y 30 %). `/impuestos 2025`, el año que digas. Va con FIFO, como Hacienda: lo primero que compraste es lo primero que vendes (lo del `PORTFOLIO` del `.env` cuenta como lo más viejo). Por eso puede no coincidir con `/ganancias`, que va con precio medio. Es orientativo |
 | `/sivendo btc 0.5` | Lo que te darían, lo que le sacarías y lo que le tocaría a Hacienda, contando lo que ya llevas ganado este año. No apunta nada. También `/sivendo btc todo` y `/sivendo btc 0.5 @80000`, a ese precio |
 | `/primera` | Tu primera compra, cuánto hace, cuánto ha cambiado el precio desde entonces y lo que vale hoy lo que compraste (`/primera btc`, la primera de esa). Solo las apuntadas con `/compra` |
 | `/hodl` | Cuántos días llevas sin vender cada cripto de tu cartera, de la que más a la que menos: desde la última venta o, si nunca vendiste, desde la primera compra. Si lo vendiste todo y volviste a comprar, cuenta desde la nueva compra. También `/diamante` |
@@ -818,6 +818,7 @@ crypto_tracker/
   ganancias.py   lo ganado con lo vendido, para /ganancias
   corregir.py    rehacer los movimientos al cambiar uno, para /corregir
   impuestos.py   los tramos del IRPF, para /impuestos
+  fifo.py        qué costó lo vendido, contando primero lo más viejo
   sivendo.py     lo que ganarías y pagarías antes de vender, para /sivendo
   primera.py     tu primera compra, para /primera
   hodl.py        los días que llevas sin vender, para /hodl

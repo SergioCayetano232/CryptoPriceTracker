@@ -1804,10 +1804,9 @@ def _impuestos(config: Config, argumento: str) -> str:
         año = impuestos.interpretar(argumento, date.today().year)
     except impuestos.ImpuestosError as e:
         return telegram.escape(str(e))
-    ventas = database.get_ventas(config.database_path)
     todos = database.get_movimientos(config.database_path, None)
     return alerts.formatear_impuestos(
-        impuestos.calcular(ventas, año),
+        impuestos.calcular(todos, año),
         config.vs_currency,
         impuestos.recompensas_de(todos, año),
     )
@@ -1830,10 +1829,12 @@ def _sivendo(config: Config, argumento: str) -> str:
             return ahora
         dinero = ahora * vendido
 
-    ventas = database.get_ventas(config.database_path)
-    este_año = impuestos.calcular(ventas, date.today().year)
+    todos = database.get_movimientos(config.database_path, None)
+    este_año = impuestos.calcular(todos, date.today().year)
+    historia = [m for m in todos if m.coin_id == coin_id]
     return alerts.formatear_sivendo(
-        sivendo.calcular(antes, vendido, dinero, queda, este_año), config.vs_currency
+        sivendo.calcular(antes, vendido, dinero, queda, este_año, historia),
+        config.vs_currency,
     )
 
 

@@ -1364,8 +1364,9 @@ def formatear_impuestos(i: Impuestos, currency: str, recibido: float = 0.0) -> s
             f"<i>Ojo: va en {currency.upper()}, y Hacienda lo quiere en euros.</i>"
         )
     lineas.append(
-        "\n<i>Es orientativo: Hacienda cuenta con FIFO (lo primero que compras "
-        "es lo primero que vendes) y aquí va con precio medio.</i>"
+        "\n<i>Es orientativo. Va con FIFO, como Hacienda (lo primero que compras "
+        "es lo primero que vendes), y /ganancias con precio medio: pueden no "
+        "coincidir.</i>"
     )
     return "\n".join(lineas)
 
@@ -1444,9 +1445,7 @@ def formatear_sivendo(s: Simulacion, currency: str) -> str:
         lineas.append(
             f"<i>Ojo: va en {currency.upper()}, y Hacienda lo quiere en euros.</i>"
         )
-    lineas.append(
-        "\n<i>No apunto nada. Es orientativo, con tu precio medio y sin comisiones.</i>"
-    )
+    lineas.append("\n<i>No apunto nada. Es orientativo, con FIFO y sin comisiones.</i>")
     return "\n".join(lineas)
 
 

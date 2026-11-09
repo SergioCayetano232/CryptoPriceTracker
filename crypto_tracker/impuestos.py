@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from . import ganancias
+from . import fifo
 from .movimientos import Movimiento, recibido
 
 # Base del ahorro del IRPF desde 2025: hasta dónde llega cada tramo y su tipo.
@@ -62,7 +62,14 @@ def recompensas_de(movimientos: list[Movimiento], año: int) -> float:
     return recibido([m for m in movimientos if m.cuando.year == año])
 
 
-def calcular(ventas: list[Movimiento], año: int) -> Impuestos:
-    del_año = [v for v in ventas if v.cuando.year == año]
-    g = ganancias.calcular(del_año)
-    return Impuestos(año, g.total, por_tramos(g.total), g.sin_datos, len(del_año))
+def calcular(movimientos: list[Movimiento], año: int) -> Impuestos:
+    """movimientos son todos, de cualquier año: el coste sale de compras viejas."""
+    del_año = [(v, c) for v, c in fifo.ventas(movimientos) if v.cuando.year == año]
+    contadas = [
+        v.coste - coste
+        for v, coste in del_año
+        if v.coste is not None and coste is not None
+    ]
+    total = sum(contadas)
+    sin_datos = len(del_año) - len(contadas)
+    return Impuestos(año, total, por_tramos(total), sin_datos, len(del_año))
