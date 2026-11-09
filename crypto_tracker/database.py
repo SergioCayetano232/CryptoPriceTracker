@@ -99,6 +99,7 @@ ULTIMO_RESUMEN = "ultimo_resumen"
 ULTIMO_SEMANAL = "ultimo_semanal"
 ULTIMO_MENSUAL = "ultimo_mensual"
 ULTIMO_ANUAL = "ultimo_anual"
+ULTIMA_COPIA = "ultima_copia"
 
 # La hora del resumen puesta con /horario, encima de la del .env. Vacio es sin resumen.
 HORA_RESUMEN = "hora_resumen"
@@ -183,6 +184,16 @@ def save_prices(db_path: str, prices: dict[str, float], currency: str) -> int:
 
     logger.debug("Guardados %d precios", len(filas))
     return len(filas)
+
+
+def volcar(db_path: str, destino: str) -> None:
+    """Copia la base entera. El archivo a pelo se puede pillar a media escritura."""
+    with _connect(db_path) as conn:
+        copia = sqlite3.connect(destino)
+        try:
+            conn.backup(copia)
+        finally:
+            copia.close()
 
 
 def guardar_serie(

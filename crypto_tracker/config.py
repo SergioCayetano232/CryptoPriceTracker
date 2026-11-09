@@ -67,6 +67,7 @@ class Config:
     # None = sin aviso de cuando una cripto pasa de ese % de la cartera
     concentracion: float | None = None
     aviso_rsi: bool = False
+    copia_semanal: bool = False
 
 
 def _require(name: str) -> str:
@@ -428,13 +429,21 @@ def parse_concentracion(raw: str) -> float | None:
 
 
 def parse_aviso_rsi(raw: str) -> bool:
+    return _si_o_no(raw, "AVISO_RSI")
+
+
+def parse_copia_semanal(raw: str) -> bool:
+    return _si_o_no(raw, "COPIA_SEMANAL")
+
+
+def _si_o_no(raw: str, opcion: str) -> bool:
     """'si' -> True. Vacio o 'no' es False."""
     texto = raw.strip().lower()
     if texto in ("si", "sí"):
         return True
     if texto in ("", "no"):
         return False
-    raise ConfigError(f"AVISO_RSI tiene que ser si o no, no '{raw.strip()}'")
+    raise ConfigError(f"{opcion} tiene que ser si o no, no '{raw.strip()}'")
 
 
 def load_config() -> Config:
@@ -485,4 +494,5 @@ def load_config() -> Config:
         caida_cartera=parse_caida_cartera(os.getenv("CAIDA_CARTERA", "")),
         concentracion=parse_concentracion(os.getenv("CONCENTRACION", "")),
         aviso_rsi=aviso_rsi,
+        copia_semanal=parse_copia_semanal(os.getenv("COPIA_SEMANAL", "")),
     )

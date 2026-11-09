@@ -29,6 +29,7 @@ def test_todo_puesto():
             caida_cartera=20,
             concentracion=70,
             aviso_rsi=True,
+            copia_semanal=True,
             horas_tranquilas=(time(23, 0), time(8, 0)),
         )
     )
@@ -43,6 +44,7 @@ def test_todo_puesto():
         "📉 Aviso si la cartera cae un 20% desde su récord",
         "⚖️ Aviso si una cripto pasa del 70% de la cartera",
         "🔥 Aviso al entrar en sobrecompra o sobreventa",
+        "📦 Copia de seguridad cada semana",
         "🌙 Sin sonar de 23:00 a 08:00",
     ]
 

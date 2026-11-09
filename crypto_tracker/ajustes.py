@@ -52,6 +52,11 @@ def lineas(config: Config) -> list[str]:
     else:
         texto.append("🔥 Sin aviso de RSI")
 
+    if config.copia_semanal:
+        texto.append("📦 Copia de seguridad cada semana")
+    else:
+        texto.append("📦 Sin copia semanal")
+
     if config.horas_tranquilas:
         inicio, fin = config.horas_tranquilas
         texto.append(f"🌙 Sin sonar de {inicio:%H:%M} a {fin:%H:%M}")

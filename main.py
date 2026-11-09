@@ -31,6 +31,7 @@ from crypto_tracker import (
     ave,
     avisados,
     avisorsi,
+    backup,
     bajon,
     bici,
     bigmac,
@@ -745,6 +746,7 @@ def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:
             resumen_mensual(config)
             resumen_anual(config)
             recordatorios(config)
+            copia_semanal(config)
         except KeyboardInterrupt:
             raise
         except Exception as e:
@@ -1308,6 +1310,9 @@ def responder(
 
     if nombre == "rellenar":
         return _rellenar(config, argumento)
+
+    if nombre == "backup":
+        return _backup(config)
 
     if nombre == "cuando":
         return _cuando(config, argumento)
@@ -2831,6 +2836,21 @@ def _racha_cartera(config: Config) -> str:
     )
 
 
+def _backup(config: Config) -> str | comandos.Archivo:
+    try:
+        contenido = backup.crear(config.database_path)
+    except (database.DatabaseError, OSError) as e:
+        logger.error("No se pudo hacer la copia: %s", e)
+        return backup.FALLO
+    if len(contenido) > backup.MAX_BYTES:
+        return backup.GRANDE
+
+    hoy = date.today()
+    return comandos.Archivo(
+        contenido, backup.nombre(hoy), backup.pie(hoy), backup.FALLO
+    )
+
+
 def _rellenar(config: Config, argumento: str) -> str:
     try:
         coin_ids, dias = rellenar.interpretar(argumento, config.history_days)
@@ -3949,6 +3969,39 @@ def resumen_diario(config: Config, ahora: datetime | None = None) -> None:
         database.guardar_resumen(config.database_path, ahora.date())
     except database.DatabaseError as e:
         logger.error("No se pudo apuntar el resumen, puede que llegue repetido: %s", e)
+
+
+def copia_semanal(config: Config, hoy: date | None = None) -> None:
+    """Manda la base de datos si toca. No es un aviso, así que /mute no la para."""
+    if not config.copia_semanal:
+        return
+
+    hoy = hoy or date.today()
+    ruta = config.database_path
+    # Una copia que falla no puede contar como fallo del ciclo: acabaría parando el bot.
+    try:
+        if not backup.toca(database.ultimo_resumen(ruta, database.ULTIMA_COPIA), hoy):
+            return
+
+        contenido = backup.crear(ruta)
+        if len(contenido) > backup.MAX_BYTES:
+            telegram.send_message(
+                config.telegram_token, config.telegram_chat_id, backup.GRANDE
+            )
+        elif not telegram.send_document(
+            config.telegram_token,
+            config.telegram_chat_id,
+            contenido,
+            backup.nombre(hoy),
+            backup.pie(hoy),
+            sin_sonido=True,
+        ):
+            logger.error("No se pudo enviar la copia, la reintento luego")
+            return
+
+        database.guardar_resumen(ruta, hoy, database.ULTIMA_COPIA)
+    except (database.DatabaseError, OSError) as e:
+        logger.error("No se pudo hacer la copia: %s", e)
 
 
 def _linea_miedo() -> str | None:

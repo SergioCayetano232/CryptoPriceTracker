@@ -19,6 +19,8 @@ ANSWER_URL = "https://api.telegram.org/bot{token}/answerCallbackQuery"
 MAX_CAPTION = 1024
 
 TIMEOUT = 15
+# Subir una copia de varios MB con una conexión normalita tarda más que un texto.
+TIMEOUT_ARCHIVO = 120
 
 # Telegram corta los mensajes mas largos que esto.
 MAX_LENGTH = 4096
@@ -154,16 +156,23 @@ def send_photo(
 
 
 def send_document(
-    token: str, chat_id: str, contenido: bytes, nombre: str, caption: str = ""
+    token: str,
+    chat_id: str,
+    contenido: bytes,
+    nombre: str,
+    caption: str = "",
+    sin_sonido: bool = False,
 ) -> bool:
-    """Manda un archivo adjunto, como el CSV de /exportar."""
+    """Manda un archivo adjunto, como el CSV de /exportar o la copia de /backup."""
+    tipo = "application/zip" if nombre.endswith(".zip") else "text/csv"
     return _mandar_archivo(
         DOCUMENT_URL.format(token=token),
         chat_id,
-        {"document": (nombre, contenido, "text/csv")},
+        {"document": (nombre, contenido, tipo)},
         caption,
-        False,
+        sin_sonido,
         "el archivo",
+        timeout=TIMEOUT_ARCHIVO,
     )
 
 
@@ -175,6 +184,7 @@ def _mandar_archivo(
     sin_sonido: bool,
     que: str,
     botones: list[list[tuple[str, str]]] | None = None,
+    timeout: int = TIMEOUT,
 ) -> bool:
     caption = _recortar(caption, MAX_CAPTION)
     datos = {"chat_id": chat_id, "caption": caption, "parse_mode": "HTML"}
@@ -185,7 +195,7 @@ def _mandar_archivo(
         datos["reply_markup"] = json.dumps(_teclado(botones))
 
     try:
-        response = requests.post(url, data=datos, files=files, timeout=TIMEOUT)
+        response = requests.post(url, data=datos, files=files, timeout=timeout)
         data = response.json()
     except requests.RequestException as e:
         logger.error("Fallo el envio de %s a Telegram: %s", que, e)
