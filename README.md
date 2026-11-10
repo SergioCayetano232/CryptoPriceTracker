@@ -188,6 +188,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/compra bitcoin 0.01 600 por el halving` | Con una nota al final de por qué compras (o vendes). Sale en `/movimientos` y en `/compras`, junto a cómo ha salido |
 | `/venta bitcoin 0.005 350` | Apunta una venta y lo que te dieron (`/venta bitcoin todo` la saca de la cartera) |
 | `/ganancias` | Lo que has ganado o perdido de verdad con lo que ya vendiste |
+| `/arrepentido` | Lo que valdría hoy lo que vendiste contra lo que te dieron, cripto a cripto, para saber si hiciste bien en vender. Gasta una consulta |
 | `/impuestos` | Lo que le tocaría a Hacienda de lo que ganaste vendiendo este año, tramo a tramo (19, 21, 23, 27 y 30 %). `/impuestos 2025`, el año que digas. Va con FIFO, como Hacienda: lo primero que compraste es lo primero que vendes (lo del `PORTFOLIO` del `.env` cuenta como lo más viejo). Por eso puede no coincidir con `/ganancias`, que va con precio medio. Es orientativo |
 | `/sivendo btc 0.5` | Lo que te darían, lo que le sacarías y lo que le tocaría a Hacienda, contando lo que ya llevas ganado este año. No apunta nada. También `/sivendo btc todo` y `/sivendo btc 0.5 @80000`, a ese precio |
 | `/compensar` | Si llevas ganancia este año, qué vender de lo que va en pérdidas y cuánto, para bajar lo que le toca a Hacienda y cuánto te ahorrarías. Va con FIFO: si para llegar a lo que pierde hay que vender antes lo que gana, lo cuenta. No apunta nada y tiene que hacerse antes del 1 de enero. Es orientativo y sin comisiones. También `/perdidas` |
@@ -835,6 +836,7 @@ crypto_tracker/
   volatilidad.py lo que se mueve cada día, para /volatilidad
   movimientos.py las compras y ventas de /compra y /venta
   ganancias.py   lo ganado con lo vendido, para /ganancias
+  arrepentido.py lo que valdría hoy lo vendido, para /arrepentido
   corregir.py    rehacer los movimientos al cambiar uno, para /corregir
   impuestos.py   los tramos del IRPF, para /impuestos
   fifo.py        qué costó lo vendido, contando primero lo más viejo

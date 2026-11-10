@@ -14,6 +14,7 @@ from .airpods import Airpods
 from .alquiler import PRECIO as PRECIO_ALQUILER
 from .alquiler import Alquiler
 from .anual import Año
+from .arrepentido import Arrepentido
 from .ave import PRECIO as PRECIO_AVE
 from .ave import Ave
 from .avisados import Ultimo
@@ -1317,6 +1318,37 @@ def formatear_ganancias(g: Ganancias, currency: str) -> str:
             f"<i>No cuento {cuantas}: sin a cuánto vendiste o sin lo que te costó.</i>"
         )
     lineas.append("\nLo que aún tienes no entra, eso está en /cartera")
+    return "\n".join(lineas)
+
+
+def formatear_arrepentido(a: Arrepentido, currency: str) -> str:
+    """Respuesta de /arrepentido."""
+    if not a.vendidas:
+        return (
+            "No tengo ventas con las que comparar: o no has vendido nada o son de "
+            "antes de guardar a cuánto vendías. Las nuevas ya sí: "
+            "/venta bitcoin 0.005 350"
+        )
+
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    lineas = ["🤔 <b>¿Hiciste bien en vender?</b>", ""]
+    for v in a.vendidas:
+        nombre = escape(v.coin_id.replace("-", " ").title())
+        cara = "😩" if v.diferencia > 0 else "😌"
+        lineas.append(f"{cara} <b>{nombre}</b>  {_ganancia(v.diferencia, simbolo)}")
+        lineas.append(
+            f"<i>Vendiste {texto_cantidad(v.cantidad)} por {simbolo}{_num(v.cobrado)}, "
+            f"hoy serían {simbolo}{_num(v.hoy)}</i>"
+        )
+
+    total = f"{simbolo}{_num(abs(a.total))}"
+    if a.total > 0:
+        lineas.append(f"\n😩 Si no hubieras vendido, hoy tendrías <b>{total} más</b>")
+    else:
+        lineas.append(f"\n😌 Bien vendido: hoy te darían <b>{total} menos</b>")
+    if a.sin_datos:
+        cuantas = "1 venta" if a.sin_datos == 1 else f"{a.sin_datos} ventas"
+        lineas.append(f"<i>No cuento {cuantas}: sin lo que te dieron o sin precio.</i>")
     return "\n".join(lineas)
 
 

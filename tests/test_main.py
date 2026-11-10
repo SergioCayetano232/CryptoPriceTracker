@@ -2255,6 +2255,41 @@ def test_ganancias_sin_ventas(config, enviados):
     assert "Todavía no has vendido nada" in enviados[0]
 
 
+def test_arrepentido(config, enviados, monkeypatch):
+    config = _con_cartera(
+        config, Posicion("bitcoin", 0.02, 1000), Posicion("solana", 10, 2000)
+    )
+    pedidas = _precio(monkeypatch, {"bitcoin": 100000.0, "solana": 100.0})
+
+    main.atender(config, _mensaje("/venta bitcoin 0.01 700"))
+    main.atender(config, _mensaje("/venta solana todo 1500"))
+    main.atender(config, _mensaje("/arrepentido"))
+
+    texto = enviados[2]
+    assert pedidas[-1] == ["bitcoin", "solana"]
+    assert "😩 <b>Bitcoin</b>  +€300,00" in texto
+    assert "😌 <b>Solana</b>  -€500,00" in texto
+    assert "Bien vendido: hoy te darían <b>€200,00 menos</b>" in texto
+
+
+def test_arrepentido_sin_ventas(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+
+    main.atender(config, _mensaje("/arrepentido"))
+
+    assert "No tengo ventas con las que comparar" in enviados[0]
+
+
+def test_arrepentido_sin_precios(config, enviados, monkeypatch):
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
+    _precio(monkeypatch, {})
+
+    main.atender(config, _mensaje("/venta bitcoin 0.01 700"))
+    main.atender(config, _mensaje("/arrepentido"))
+
+    assert "No he podido consultar los precios" in enviados[1]
+
+
 def test_impuestos_de_lo_vendido(config, enviados, monkeypatch):
     config = _con_cartera(
         config, Posicion("bitcoin", 0.02, 1000), Posicion("solana", 10, 2000)

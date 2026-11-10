@@ -28,6 +28,7 @@ from crypto_tracker import (
     alerts,
     alquiler,
     anual,
+    arrepentido,
     ave,
     avisados,
     avisorsi,
@@ -1046,6 +1047,9 @@ def responder(
     if nombre == "ganancias":
         return _ganancias(config)
 
+    if nombre == "arrepentido":
+        return _arrepentido(config)
+
     if nombre == "impuestos":
         return _impuestos(config, argumento)
 
@@ -1814,6 +1818,18 @@ def _cobrado_ahora(config: Config, coin_id: str, vendido: float) -> float | None
 def _ganancias(config: Config) -> str:
     ventas = database.get_ventas(config.database_path)
     return alerts.formatear_ganancias(ganancias.calcular(ventas), config.vs_currency)
+
+
+def _arrepentido(config: Config) -> str:
+    ventas = database.get_ventas(config.database_path)
+    coin_ids = list(dict.fromkeys(v.coin_id for v in ventas if v.coste is not None))
+    precios = {}
+    if coin_ids:
+        precios = _consultar(config, coin_ids)
+        if precios is None:
+            return "No he podido consultar los precios. Prueba en un rato."
+    resultado = arrepentido.calcular(ventas, precios)
+    return alerts.formatear_arrepentido(resultado, config.vs_currency)
 
 
 def _impuestos(config: Config, argumento: str) -> str:

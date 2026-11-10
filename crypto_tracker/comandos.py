@@ -27,6 +27,7 @@ COMANDOS = {
     "movimientos": "Tus últimas compras y ventas (ej: /movimientos btc)",
     "compras": "Tu mejor y tu peor compra (ej: /compras o /compras btc)",
     "ganancias": "Lo que has ganado o perdido con lo que ya vendiste",
+    "arrepentido": "Lo que valdría hoy lo que vendiste, ¿hiciste bien?",
     "rentabilidad": "Lo que ganas al año, contando cuándo metiste cada euro",
     "impuestos": "Lo que le tocaría a Hacienda de lo que ganaste vendiendo",
     "sivendo": "Lo que ganarías y pagarías antes de vender (ej: /sivendo btc 0.5)",
@@ -356,6 +357,8 @@ ALIAS = {
     "birra": "cana",
     "beer": "cana",
     "ganancia": "ganancias",
+    "arrepentida": "arrepentido",
+    "regret": "arrepentido",
     "beneficios": "ganancias",
     # /maximo ya es /ath; el mínimo del tramo sale en lo primero de /sube.
     "minimo": "sube",
