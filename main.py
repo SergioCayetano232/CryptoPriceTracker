@@ -33,6 +33,7 @@ from crypto_tracker import (
     avisorsi,
     backup,
     bajon,
+    ballena,
     bici,
     bigmac,
     boda,
@@ -1337,6 +1338,9 @@ def responder(
 
     if nombre == "lambo":
         return _lambo(config)
+
+    if nombre == "ballena":
+        return _ballena(config)
 
     if nombre == "cafe":
         return _cafe(config)
@@ -2977,6 +2981,12 @@ def _lambo(config: Config) -> str:
     if isinstance(valor, str):
         return valor
     return alerts.formatear_lambo(lambo.Lambo(valor), config.vs_currency)
+
+
+def _ballena(config: Config) -> str:
+    cartera = _con_cambios(config).cartera
+    tienes = sum(p.cantidad for p in cartera if p.coin_id == "bitcoin")
+    return alerts.formatear_ballena(ballena.Ballena(tienes))
 
 
 def _cafe(config: Config) -> str:

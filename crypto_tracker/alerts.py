@@ -17,6 +17,7 @@ from .anual import Año
 from .ave import PRECIO as PRECIO_AVE
 from .ave import Ave
 from .avisados import Ultimo
+from .ballena import Ballena
 from .bici import PRECIO as PRECIO_BICI
 from .bici import Bici
 from .bigmac import PRECIO as PRECIO_BIGMAC
@@ -165,7 +166,7 @@ from .rolex import PRECIO as PRECIO_ROLEX
 from .rolex import Rolex
 from .rsi import PERIODO, SOBRECOMPRA, SOBREVENTA, Rsi, hasta_zona
 from .sat import CANTIDADES as CANTIDADES_SAT
-from .sat import Sat
+from .sat import SATS_POR_BTC, Sat
 from .semanal import Semana
 from .sivendo import Simulacion
 from .sofa import PRECIO as PRECIO_SOFA
@@ -2943,6 +2944,30 @@ def formatear_adios(a: Adios) -> str:
         return texto + f"\n🕯️ Hoy hace {años} de su último mensaje"
     falta = "1 día" if a.faltan == 1 else f"{a.faltan} días"
     return texto + f"\n<i>Faltan {falta} para que se cumplan {a.años + 1}</i>"
+
+
+def formatear_ballena(b: Ballena) -> str:
+    """Respuesta de /ballena."""
+    if b.btc <= 0:
+        return (
+            "🦠 <b>Ni gamba</b>: no tienes bitcoin en la cartera\n"
+            "Si tienes, apúntalo con /compra bitcoin"
+        )
+    emoji, nombre = b.animal
+    # Por debajo de 0,001 los decimales se comen todo, mejor en sats.
+    if b.btc < 0.001:
+        tienes = f"{round(b.btc * SATS_POR_BTC):,} sats".replace(",", ".")
+    else:
+        tienes = f"{cantidad(b.btc)} BTC"
+    texto = f"{emoji} <b>Eres {_un(nombre)} {nombre}</b>\nTienes {tienes}"
+    if b.siguiente is None:
+        return texto + "\nNo hay nada más grande en el mar 🌊"
+    emoji, nombre = b.siguiente
+    return texto + f"\nPara ser {emoji} {nombre} te faltan {cantidad(b.falta)} BTC"
+
+
+def _un(nombre: str) -> str:
+    return "una" if nombre in ("gamba", "ballena", "ballena jorobada") else "un"
 
 
 def formatear_millonario(

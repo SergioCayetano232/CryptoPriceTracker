@@ -6253,6 +6253,35 @@ def test_lambo_pide_lo_que_no_tiene_guardado(config, enviados, monkeypatch):
     assert "Vale €2.000,00" in enviados[0]
 
 
+def test_ballena(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    config = replace(
+        config, cartera=(Posicion("bitcoin", 12.5), Posicion("solana", 1000.0))
+    )
+
+    main.atender(config, _mensaje("/ballena"))
+
+    assert "🐙 <b>Eres un pulpo</b>" in enviados[0]
+    assert "te faltan 37,5 BTC" in enviados[0]
+
+
+def test_ballena_cuenta_lo_comprado(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: {"bitcoin": 80000.0})
+
+    main.atender(config, _mensaje("/compra bitcoin 2 100000"))
+    main.atender(config, _mensaje("/whale"))
+
+    assert "🦀 <b>Eres un cangrejo</b>" in enviados[-1]
+
+
+def test_ballena_sin_bitcoin(config, enviados):
+    main.atender(config, _mensaje("/ballena"))
+
+    assert "no tienes bitcoin" in enviados[0]
+
+
 def test_cafe(config, enviados, monkeypatch):
     from dataclasses import replace
 
