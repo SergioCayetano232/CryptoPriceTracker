@@ -61,6 +61,7 @@ from .dia import Dia
 from .diasemana import NOMBRES, DiasSemana
 from .doble import Cartera as CarteraDoble
 from .emoji import cara as cara_emoji
+from .enletras import dinero as dinero_en_letras
 from .equilibrio import Cartera
 from .ethereum import Ethereum
 from .frase import Frase
@@ -2797,6 +2798,16 @@ def formatear_apodo(apodo: tuple[str, str, str]) -> str:
     """Respuesta de /apodo."""
     emoji, mote, porque = apodo
     return f"{emoji} Te llamaremos <b>{mote}</b>\n<i>{porque}</i>"
+
+
+def formatear_enletras(valor: float, currency: str) -> str:
+    """Respuesta de /enletras."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    return (
+        "✍️ <b>Tu cartera, en letras</b>\n"
+        f"{dinero_en_letras(valor, currency)}\n"
+        f"<i>{simbolo}{_num(valor)}</i>"
+    )
 
 
 def formatear_dato(dato: str) -> str:

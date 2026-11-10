@@ -1356,6 +1356,12 @@ def responder(
     if nombre == "lambo":
         return _lambo(config)
 
+    if nombre == "enletras":
+        valor = _valor_guardado(config)
+        if isinstance(valor, str):
+            return valor
+        return alerts.formatear_enletras(valor, config.vs_currency)
+
     if nombre == "ballena":
         return _ballena(config)
 

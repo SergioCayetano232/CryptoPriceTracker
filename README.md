@@ -268,6 +268,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/millonario` | Cuánto bitcoin (u otra, `/millonario eth`) necesitas para tener un millón al precio de hoy y, si la tienes en la cartera, cuánto llevas del camino |
 | `/sat` | Lo que vale un satoshi (la cien millonésima parte de un bitcoin) y cuántos te dan 1, 10 y 100. Para cantidades exactas, `/convertir 50 eur sats` |
 | `/lambo` | Cuántos Lamborghinis te da tu cartera, a unos 250.000 cada uno, y cuánto te falta para el siguiente |
+| `/enletras` | Lo que vale tu cartera escrito en letras, como en un cheque: «Mil doscientos treinta y cuatro euros con cincuenta céntimos». También `/cheque` |
 | `/ballena` | Qué bicho eres según los bitcoin que tienes: gamba (menos de 1), cangrejo, pulpo, pez, delfín, tiburón, ballena (desde 1.000) o ballena jorobada, y cuánto te falta para el siguiente. No gasta consultas |
 | `/cafe` | Cuántos cafés te da tu cartera, a 1,50 cada uno, y para cuánto tiempo tienes tomando uno al día |
 | `/iphone` | Cuántos iPhone Pro te da tu cartera, a unos 1.500 cada uno, y cuánto te falta para el siguiente |
@@ -782,6 +783,7 @@ crypto_tracker/
   mundo.py       los bitcoin repartidos entre todos, para /mundo
   millonario.py  lo que hace falta para un millón, para /millonario
   lambo.py       tu cartera en Lamborghinis, para /lambo
+  enletras.py    tu cartera escrita en letras, para /enletras
   ballena.py     qué bicho eres según tus bitcoin, para /ballena
   cafe.py        tu cartera en cafés, para /cafe
   sueldo.py      tu cartera en salarios mínimos, para /sueldo

@@ -7083,6 +7083,25 @@ def test_cafe_sin_cartera(config, enviados):
     assert "PORTFOLIO" in enviados[0]
 
 
+def test_enletras(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    config = replace(config, cartera=(Posicion("bitcoin", 0.0123),))
+    _precio_de(config, "bitcoin", 100000.0, 5)
+
+    main.atender(config, _mensaje("/cheque"))
+
+    assert "Mil doscientos treinta euros" in enviados[0]
+    assert "<i>€1.230,00</i>" in enviados[0]
+
+
+def test_enletras_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/enletras"))
+
+    assert "No tienes cartera puesta" in enviados[0]
+
+
 def test_lambo_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/lambo"))
 
