@@ -143,6 +143,7 @@ from crypto_tracker import (
     ps5,
     puntuales,
     quieta,
+    quiz,
     racha,
     rango,
     ratio,
@@ -1260,6 +1261,12 @@ def responder(
 
     if nombre == "adivina":
         return _adivina(config, argumento)
+
+    if nombre == "quiz":
+        elegida = quiz.interpretar(argumento)
+        if elegida is None:
+            return comandos.ConBotones(*alerts.formatear_quiz(quiz.sacar()))
+        return comandos.ConBotones(*alerts.formatear_respuesta_quiz(*elegida))
 
     if nombre == "ppt":
         try:

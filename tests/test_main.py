@@ -7302,6 +7302,35 @@ def test_dato(config, enviados, monkeypatch):
     assert enviados[0].startswith("🤓 <b>¿Sabías que…?</b>")
 
 
+# --- /quiz ---
+
+
+def test_quiz_pregunta_y_responde_con_botones(
+    config, con_teclado, contestados, monkeypatch
+):
+    from crypto_tracker import quiz
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    monkeypatch.setattr(quiz, "sacar", lambda: 1)
+
+    main.atender(config, _mensaje("/quiz"))
+    texto, kw = con_teclado[0]
+    assert texto == "❓ <b>¿Cuántos bitcoin habrá como mucho?</b>"
+    [[(_, buena)], *_] = kw["botones"]
+
+    main.atender_boton(config, _boton(buena))
+    assert contestados == ["q1"]
+    texto, kw = con_teclado[1]
+    assert texto.startswith("✅ <b>¡Bien!</b>")
+    assert kw["botones"] == [[("🎲 Otra pregunta", "/quiz")]]
+
+
+def test_quiz_con_lo_que_sea_saca_otra(config, con_teclado):
+    main.atender(config, _mensaje("/quiz hola"))
+
+    assert con_teclado[0][0].startswith("❓")
+
+
 # --- /excusa ---
 
 

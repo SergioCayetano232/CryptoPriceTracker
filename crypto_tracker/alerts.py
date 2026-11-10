@@ -151,6 +151,7 @@ from .ps5 import PRECIO as PRECIO_PS5
 from .ps5 import Ps5
 from .puntuales import CARTERA, Puntual, cumplidas, ejemplo, progreso
 from .quieta import Quieta
+from .quiz import PREGUNTAS as PREGUNTAS_QUIZ
 from .racha import Racha
 from .rango import Rango, barra
 from .ratio import Ratio
@@ -2808,6 +2809,27 @@ def formatear_enletras(valor: float, currency: str) -> str:
         f"{dinero_en_letras(valor, currency)}\n"
         f"<i>{simbolo}{_num(valor)}</i>"
     )
+
+
+def formatear_quiz(numero: int) -> tuple[str, list[list[tuple[str, str]]]]:
+    """La pregunta de /quiz y un botón por respuesta, cada uno en su fila."""
+    p = PREGUNTAS_QUIZ[numero]
+    botones = [[(o, f"/quiz {numero} {i}")] for i, o in enumerate(p.opciones)]
+    return f"❓ <b>{escape(p.texto)}</b>", botones
+
+
+def formatear_respuesta_quiz(
+    numero: int, respuesta: int
+) -> tuple[str, list[list[tuple[str, str]]]]:
+    """Lo que sale al pulsar una respuesta, con el botón para otra."""
+    p = PREGUNTAS_QUIZ[numero]
+    buena = escape(p.opciones[p.buena])
+    if respuesta == p.buena:
+        texto = f"✅ <b>¡Bien!</b> Era {buena}"
+    else:
+        dicha = escape(p.opciones[respuesta])
+        texto = f"❌ <b>Casi</b>\nDijiste «{dicha}», era <b>{buena}</b>"
+    return f"{texto}\n<i>{escape(p.texto)}</i>", [[("🎲 Otra pregunta", "/quiz")]]
 
 
 def formatear_dato(dato: str) -> str:
