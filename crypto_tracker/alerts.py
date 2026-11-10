@@ -188,6 +188,7 @@ from .telegram import escape
 from .tendencias import Tendencia
 from .tesla import PRECIO as PRECIO_TESLA
 from .tesla import Tesla
+from .tiempo import parte as parte_tiempo
 from .top import ENTRE, Movida
 from .tortilla import PRECIO as PRECIO_TORTILLA
 from .tortilla import Tortilla
@@ -2076,6 +2077,16 @@ def formatear_emoji(cambio: float) -> str:
     """Respuesta de /emoji: la cara grande y debajo el porqué."""
     emoji, frase = cara_emoji(cambio)
     return f"{emoji}\n\n<b>{frase}</b>\nTu cartera va <b>{cambio:+.2f}%</b> en 24 h"
+
+
+def formatear_tiempo(cambio: float) -> str:
+    """Respuesta de /tiempo."""
+    emoji, cielo, consejo = parte_tiempo(cambio)
+    return (
+        f"{emoji} <b>{cielo}</b>\n"
+        f"Tu cartera va <b>{cambio:+.2f}%</b> en 24 h\n"
+        f"<i>{consejo}</i>"
+    )
 
 
 def formatear_rolex(r: Rolex, currency: str) -> str:

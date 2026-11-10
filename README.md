@@ -310,6 +310,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/croquetas` | Cuántas raciones de croquetas te da tu cartera, a unos 10 la de ocho caseras, y cuánto te falta para la siguiente. También `/croqueta` |
 | `/pan` | Cuántas barras de pan te da tu cartera, a unos 1,20 en la panadería, y cuánto te falta para la siguiente. También `/barras` |
 | `/emoji` | Cómo va tu cartera en las últimas 24 h, en una cara: de 💀 si baja más de un 10% a 🚀 si sube más de un 10%, pasando por 😐 si casi no se mueve. También `/cara` y `/animo` |
+| `/tiempo` | Lo mismo que `/emoji`, pero como el parte del tiempo: de 🌪️ huracán si baja más de un 10% a 🌋 erupción si sube más de un 10%, pasando por ☁️ nublado si casi no se mueve. También `/clima` y `/parte` |
 | `/carnet` | Cuántos carnets de conducir te da tu cartera, a unos 800 en autoescuela aprobando a la primera, y cuánto te falta para el siguiente. También `/carne` y `/autoescuela` |
 | `/navidad` | Los días que faltan para Navidad y cuántas cestas navideñas te da tu cartera, a unos 100 cada una. También `/cesta` y `/xmas` |
 | `/nochevieja` | Los días que faltan para Nochevieja, cuánto llevas de año y cuántas botellas de cava te da tu cartera, a unos 10 cada una. También `/findeaño` y `/uvas` |
@@ -824,6 +825,7 @@ crypto_tracker/
   croquetas.py   tu cartera en croquetas, para /croquetas
   pan.py         tu cartera en barras de pan, para /pan
   emoji.py       la cara de tu cartera hoy, para /emoji
+  tiempo.py      tu cartera como el parte del tiempo, para /tiempo
   carnet.py      tu cartera en carnets de conducir, para /carnet
   navidad.py     los días que faltan para Navidad, para /navidad
   nochevieja.py  lo que queda de año, para /nochevieja

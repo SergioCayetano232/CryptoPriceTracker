@@ -1483,6 +1483,9 @@ def responder(
     if nombre == "emoji":
         return _emoji(config)
 
+    if nombre == "tiempo":
+        return _tiempo(config)
+
     if nombre == "carnet":
         return _carnet(config)
 
@@ -3297,6 +3300,25 @@ def _rolex(config: Config) -> str:
 
 
 def _emoji(config: Config) -> str | comandos.ConBotones:
+    cambio = _cambio_cartera(config)
+    if isinstance(cambio, str):
+        return cambio
+    return comandos.ConBotones(
+        alerts.formatear_emoji(cambio), botones.actualizar("/emoji")
+    )
+
+
+def _tiempo(config: Config) -> str | comandos.ConBotones:
+    cambio = _cambio_cartera(config)
+    if isinstance(cambio, str):
+        return cambio
+    return comandos.ConBotones(
+        alerts.formatear_tiempo(cambio), botones.actualizar("/tiempo")
+    )
+
+
+def _cambio_cartera(config: Config) -> float | str:
+    """Lo que ha cambiado la cartera en 24 h, en %. Un str es el error."""
     config = _con_cambios(config)
     if not config.cartera:
         return SIN_CARTERA
@@ -3321,10 +3343,8 @@ def _emoji(config: Config) -> str | comandos.ConBotones:
 
     cambio = emoji.cambio(pares)
     if cambio is None:
-        return "Tu cartera ahora mismo no vale nada, así que no hay cara que poner."
-    return comandos.ConBotones(
-        alerts.formatear_emoji(cambio), botones.actualizar("/emoji")
-    )
+        return "Tu cartera ahora mismo no vale nada, así que no hay nada que mirar."
+    return cambio
 
 
 def _coche(config: Config) -> str:
