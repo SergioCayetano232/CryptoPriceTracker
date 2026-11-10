@@ -2255,6 +2255,27 @@ def test_ganancias_sin_ventas(config, enviados):
     assert "Todavía no has vendido nada" in enviados[0]
 
 
+def test_pelotazo(config, enviados, monkeypatch):
+    pedidas = _precio(monkeypatch, {"bitcoin": 100000.0, "solana": 100.0})
+
+    main.atender(config, _mensaje("/compra bitcoin 0.01 500"))
+    main.atender(config, _mensaje("/compra solana 10 2000"))
+    main.atender(config, _mensaje("/pelotazo"))
+
+    texto = enviados[2]
+    assert sorted(pedidas[-1]) == ["bitcoin", "solana"]
+    assert "🎯 <b>Tu pelotazo: Bitcoin +100.00%</b>" in texto
+    assert "🤦 <b>Tu peor compra: Solana -50.00%</b>" in texto
+
+
+def test_pelotazo_sin_compras(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+
+    main.atender(config, _mensaje("/pelotazo"))
+
+    assert "No tengo compras" in enviados[0]
+
+
 def test_arrepentido(config, enviados, monkeypatch):
     config = _con_cartera(
         config, Posicion("bitcoin", 0.02, 1000), Posicion("solana", 10, 2000)

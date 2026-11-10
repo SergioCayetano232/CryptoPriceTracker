@@ -130,6 +130,7 @@ from crypto_tracker import (
     oro,
     paella,
     pan,
+    pelotazo,
     peluqueria,
     periodo,
     piso,
@@ -1043,6 +1044,9 @@ def responder(
 
     if nombre == "primera":
         return _primera(config, argumento)
+
+    if nombre == "pelotazo":
+        return _pelotazo(config)
 
     if nombre == "ganancias":
         return _ganancias(config)
@@ -1971,6 +1975,19 @@ def _primera(config: Config, argumento: str) -> str:
     resultado = primera.Primera(compra, precios.get(compra.coin_id), date.today())
     texto = alerts.formatear_primera(resultado, config.vs_currency)
     return alerts.con_fuente(texto) if resultado.precio is not None else texto
+
+
+def _pelotazo(config: Config) -> str:
+    todos = database.get_movimientos(config.database_path, None)
+    coin_ids = list(dict.fromkeys(m.coin_id for m in todos if m.tipo == "compra"))
+    precios = {}
+    if coin_ids:
+        precios = _consultar(config, coin_ids)
+        if precios is None:
+            return "No he podido consultar los precios. Prueba en un rato."
+    return alerts.formatear_pelotazo(
+        pelotazo.calcular(todos, precios), config.vs_currency
+    )
 
 
 def _hodl(config: Config) -> str:

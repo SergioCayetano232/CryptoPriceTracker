@@ -135,6 +135,7 @@ from .paella import PRECIO as PRECIO_PAELLA
 from .paella import Paella
 from .pan import PRECIO as PRECIO_PAN
 from .pan import Pan
+from .pelotazo import Jugada, Pelotazo
 from .peluqueria import PRECIO as PRECIO_PELUQUERIA
 from .peluqueria import Peluqueria
 from .periodo import nombre as nombre_periodo
@@ -1243,6 +1244,30 @@ def formatear_vsbtc(c: Contra, currency: str) -> str:
 
 def _pct(valor: float) -> str:
     return f"{valor:g}".replace(".", ",")
+
+
+def formatear_pelotazo(p: Pelotazo | None, currency: str) -> str:
+    """Respuesta de /pelotazo."""
+    if p is None:
+        return (
+            "No tengo compras con las que comparar. Apúntalas así: "
+            "/compra bitcoin 0.01 600"
+        )
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = _jugada_pelotazo("🎯 <b>Tu pelotazo", p.mejor, simbolo)
+    if p.peor is not None:
+        texto += "\n\n" + _jugada_pelotazo("🤦 <b>Tu peor compra", p.peor, simbolo)
+    return texto
+
+
+def _jugada_pelotazo(titulo: str, r: Jugada, simbolo: str) -> str:
+    m = r.compra
+    nombre = escape(m.coin_id.replace("-", " ").title())
+    return (
+        f"{titulo}: {nombre} {r.cambio:+.2f}%</b>\n"
+        f"{texto_cantidad(m.cantidad)} por {simbolo}{_num(m.coste)} "
+        f"el {m.cuando.astimezone():%d/%m/%Y}, hoy valen {simbolo}{_num(r.hoy)}"
+    )
 
 
 def formatear_primera(p: Primera, currency: str) -> str:

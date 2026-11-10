@@ -33,6 +33,7 @@ COMANDOS = {
     "sivendo": "Lo que ganarías y pagarías antes de vender (ej: /sivendo btc 0.5)",
     "compensar": "Qué vender en pérdidas para pagar menos a Hacienda este año",
     "primera": "Tu primera compra y cuánto ha cambiado desde entonces",
+    "pelotazo": "Tu mejor compra y la peor, por lo que han subido o bajado",
     "hodl": "Cuántos días llevas sin vender cada cripto de tu cartera",
     "record": "Lo máximo que ha valido tu cartera y cuánto le falta para volver",
     "vsbtc": "Tu cartera contra haber metido lo mismo en bitcoin",

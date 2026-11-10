@@ -193,6 +193,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/sivendo btc 0.5` | Lo que te darían, lo que le sacarías y lo que le tocaría a Hacienda, contando lo que ya llevas ganado este año. No apunta nada. También `/sivendo btc todo` y `/sivendo btc 0.5 @80000`, a ese precio |
 | `/compensar` | Si llevas ganancia este año, qué vender de lo que va en pérdidas y cuánto, para bajar lo que le toca a Hacienda y cuánto te ahorrarías. Va con FIFO: si para llegar a lo que pierde hay que vender antes lo que gana, lo cuenta. No apunta nada y tiene que hacerse antes del 1 de enero. Es orientativo y sin comisiones. También `/perdidas` |
 | `/primera` | Tu primera compra, cuánto hace, cuánto ha cambiado el precio desde entonces y lo que vale hoy lo que compraste (`/primera btc`, la primera de esa). Solo las apuntadas con `/compra` |
+| `/pelotazo` | Tu mejor compra y la peor: lo que pagaste, cuándo, lo que valen hoy y cuánto han subido o bajado. Gasta una consulta |
 | `/hodl` | Cuántos días llevas sin vender cada cripto de tu cartera, de la que más a la que menos: desde la última venta o, si nunca vendiste, desde la primera compra. Si lo vendiste todo y volviste a comprar, cuenta desde la nueva compra. También `/diamante` |
 | `/record` | Lo máximo que ha valido tu cartera con los precios guardados, qué día fue y cuánto le falta para volver. Ojo: es lo que tienes hoy a los precios de entonces, no lo que tenías ese día. No gasta consultas. También `/pico` |
 | `/vsbtc` | Lo que vale hoy lo que has comprado por Telegram, contra haber metido ese mismo dinero en bitcoin los mismos días (y sacado lo mismo al vender). Usa el precio de bitcoin que tiene guardado, así que necesita llevar vigilándolo desde tus compras. Lo del `PORTFOLIO` del `.env` no cuenta, porque no lleva fecha. También `/vsbitcoin` |
@@ -843,6 +844,7 @@ crypto_tracker/
   sivendo.py     lo que ganarías y pagarías antes de vender, para /sivendo
   compensar.py   qué vender en pérdidas, para /compensar
   primera.py     tu primera compra, para /primera
+  pelotazo.py    tu mejor y tu peor compra, para /pelotazo
   hodl.py        los días que llevas sin vender, para /hodl
   record.py      lo máximo que ha valido tu cartera, para /record
   proximo.py     a qué precio salta el siguiente aviso
