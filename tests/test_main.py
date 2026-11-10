@@ -7240,6 +7240,17 @@ def test_tiempo_sin_cartera(config, enviados):
     assert "PORTFOLIO" in enviados[0]
 
 
+# --- /dato ---
+
+
+def test_dato(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+
+    main.atender(config, _mensaje("/dato"))
+
+    assert enviados[0].startswith("🤓 <b>¿Sabías que…?</b>")
+
+
 # --- /excusa ---
 
 

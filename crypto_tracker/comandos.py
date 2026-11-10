@@ -158,6 +158,7 @@ COMANDOS = {
     "tarot": "Saca una carta del tarot cripto, de broma",
     "bola": "La bola mágica contesta lo que le preguntes (ej: /bola ¿vendo?)",
     "chiste": "Un chiste de cripto, al azar",
+    "dato": "Un dato curioso de cripto, al azar",
     "glosario": "Qué significa hodl, fomo, dca... (ej: /glosario fomo)",
     "miedo": "El índice de miedo y codicia del mercado",
     "buscar": "Encuentra el id de una cripto (ej: /buscar btc)",
@@ -396,6 +397,8 @@ ALIAS = {
     "carta": "tarot",
     "bola8": "bola",
     "broma": "chiste",
+    "curiosidad": "dato",
+    "sabias": "dato",
     "chistes": "chiste",
     # Sin "hodl": se parece tanto a "hola" que a un saludo le sugería /glosario.
     "glossary": "glosario",

@@ -2793,6 +2793,11 @@ def formatear_version(v: Version) -> str:
     return "\n".join(texto)
 
 
+def formatear_dato(dato: str) -> str:
+    """Respuesta de /dato."""
+    return f"🤓 <b>¿Sabías que…?</b>\n{escape(dato)}"
+
+
 def formatear_chiste(chiste: str) -> str:
     """Respuesta de /chiste."""
     return f"😂 {escape(chiste)}"

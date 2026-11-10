@@ -335,6 +335,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/tarot` | Sacas una carta del tarot cripto, de broma, como La Ballena o El Rug Pull, con lo que significa. También `/carta`. No gasta consultas |
 | `/bola ¿vendo?` | La bola mágica contesta a lo que le preguntes, de broma: sí, no o que esperes al halving. También `/bola8`. No gasta consultas |
 | `/chiste` | Un chiste de cripto al azar. No gasta consultas |
+| `/dato` | Un dato curioso de cripto al azar, de las pizzas de 2010 al disco duro del vertedero. También `/curiosidad`. No gasta consultas |
 | `/glosario fomo` | Lo que significa una palabra cripto: hodl, fomo, fud, dca, ath, ballena... A secas, la lista de las que sabe |
 | `/miedo` | El índice de miedo y codicia del mercado (0 pánico, 100 euforia), con el de ayer y el de hace una semana. Viene de alternative.me y no gasta consultas de CoinGecko |
 | `/buscar btc` | Encuentra el id de CoinGecko de una cripto |
@@ -767,6 +768,7 @@ crypto_tracker/
   galleta.py     las frases de /galleta
   tarot.py       las cartas de /tarot
   chiste.py      los chistes de /chiste
+  dato.py        los datos curiosos de /dato
   glosario.py    las palabras que explica /glosario
   mercado.py     el mercado entero, para /mercado
   halving.py     cuánto falta para el próximo halving, para /halving

@@ -72,6 +72,7 @@ from crypto_tracker import (
     cuota,
     dado,
     database,
+    dato,
     dca,
     dia,
     diario,
@@ -1239,6 +1240,9 @@ def responder(
 
     if nombre == "chiste":
         return alerts.formatear_chiste(chiste.elegir())
+
+    if nombre == "dato":
+        return alerts.formatear_dato(dato.elegir())
 
     if nombre == "dado":
         # Lee la cripto igual que /caraocruz, así que uso su misma función.
