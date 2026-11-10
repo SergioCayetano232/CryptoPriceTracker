@@ -28,6 +28,7 @@ from crypto_tracker import (
     alerts,
     alquiler,
     anual,
+    apodo,
     arrepentido,
     ave,
     avisados,
@@ -187,6 +188,7 @@ from crypto_tracker import (
 from crypto_tracker.config import (
     Config,
     ConfigError,
+    Posicion,
     load_config,
     minutos_mute,
 )
@@ -1048,6 +1050,9 @@ def responder(
 
     if nombre == "pelotazo":
         return _pelotazo(config)
+
+    if nombre == "apodo":
+        return _apodo(config)
 
     if nombre == "ganancias":
         return _ganancias(config)
@@ -1992,6 +1997,34 @@ def _pelotazo(config: Config) -> str:
     return alerts.formatear_pelotazo(
         pelotazo.calcular(todos, precios), config.vs_currency
     )
+
+
+def _apodo(config: Config) -> str:
+    posiciones = list(_con_cambios(config).cartera)
+    todos = database.get_movimientos(config.database_path, None)
+    compras = [m for m in todos if m.tipo == "compra"]
+    dias = None
+    if compras:
+        primera = min(m.cuando for m in compras)
+        dias = (date.today() - primera.astimezone().date()).days
+
+    cambio = None
+    if posiciones:
+        valores, faltan = cartera.valorar(
+            posiciones, _precios_guardados(config, posiciones)
+        )
+        # Sin el precio de alguna, el % sería de otra cartera.
+        if not faltan:
+            cambio = cartera.total(valores).porcentaje
+
+    perfil = apodo.Perfil(
+        criptos=sorted(p.coin_id for p in posiciones),
+        compras=len(compras),
+        ventas=sum(1 for m in todos if m.tipo == "venta"),
+        dias=dias,
+        cambio=cambio,
+    )
+    return alerts.formatear_apodo(apodo.elegir(perfil))
 
 
 def _hodl(config: Config) -> str:
@@ -3439,6 +3472,15 @@ def _valor_guardado(config: Config) -> float | str:
     posiciones = list(_con_cambios(config).cartera)
     if not posiciones:
         return SIN_CARTERA
+    precios = _precios_guardados(config, posiciones)
+    valor = cartera.valor_total(posiciones, precios)
+    if valor is None:
+        return "No he podido consultar los precios. Prueba en un rato."
+    return valor
+
+
+def _precios_guardados(config: Config, posiciones: list[Posicion]) -> dict[str, float]:
+    """Los últimos guardados y, de lo que falte, una consulta."""
     precios = {}
     for p in posiciones:
         precio = database.get_last_price(config.database_path, p.coin_id)
@@ -3447,11 +3489,7 @@ def _valor_guardado(config: Config) -> float | str:
     faltan = [p.coin_id for p in posiciones if p.coin_id not in precios]
     if faltan:
         precios.update(_consultar(config, faltan) or {})
-
-    valor = cartera.valor_total(posiciones, precios)
-    if valor is None:
-        return "No he podido consultar los precios. Prueba en un rato."
-    return valor
+    return precios
 
 
 def _millonario(config: Config, argumento: str) -> str:

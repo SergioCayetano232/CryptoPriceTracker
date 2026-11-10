@@ -2268,6 +2268,38 @@ def test_pelotazo(config, enviados, monkeypatch):
     assert "🤦 <b>Tu peor compra: Solana -50.00%</b>" in texto
 
 
+def test_apodo_manos_de_papel(config, enviados, monkeypatch):
+    config = _con_cartera(
+        config, Posicion("bitcoin", 0.05, 1000), Posicion("solana", 10, 1000)
+    )
+    _precio(monkeypatch, {"bitcoin": 20000.0, "solana": 100.0})
+
+    main.atender(config, _mensaje("/venta bitcoin 0.01 200"))
+    main.atender(config, _mensaje("/venta solana 1 100"))
+    main.atender(config, _mensaje("/mote"))
+
+    assert "🧻 Te llamaremos <b>Manos de papel</b>" in enviados[2]
+    assert "Has vendido 2 veces y comprado 0" in enviados[2]
+
+
+def test_apodo_comprador_de_picos(config, enviados, monkeypatch):
+    config = _con_cartera(config, Posicion("bitcoin", 0.01, 1000))
+    _precio(monkeypatch, {"bitcoin": 30000.0})
+
+    main.atender(config, _mensaje("/apodo"))
+
+    assert "<b>Comprador de picos</b>" in enviados[0]
+    assert "Tu cartera va -70%" in enviados[0]
+
+
+def test_apodo_sin_cartera(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+
+    main.atender(config, _mensaje("/apodo"))
+
+    assert "<b>El Mirón</b>" in enviados[0]
+
+
 def test_pelotazo_sin_compras(config, enviados, monkeypatch):
     monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
 

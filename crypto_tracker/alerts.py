@@ -2793,6 +2793,12 @@ def formatear_version(v: Version) -> str:
     return "\n".join(texto)
 
 
+def formatear_apodo(apodo: tuple[str, str, str]) -> str:
+    """Respuesta de /apodo."""
+    emoji, mote, porque = apodo
+    return f"{emoji} Te llamaremos <b>{mote}</b>\n<i>{porque}</i>"
+
+
 def formatear_dato(dato: str) -> str:
     """Respuesta de /dato."""
     return f"🤓 <b>¿Sabías que…?</b>\n{escape(dato)}"
