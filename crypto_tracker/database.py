@@ -104,6 +104,8 @@ ULTIMA_COPIA = "ultima_copia"
 # La hora del resumen puesta con /horario, encima de la del .env. Vacio es sin resumen.
 HORA_RESUMEN = "hora_resumen"
 BAJON = "bajon_cartera"
+# Lo que te permites comprar al mes, puesto con /limite. Sin fila, sin límite.
+LIMITE_COMPRAS = "limite_compras"
 # La cripto de la que ya se avisó que pesaba demasiado. Sin fila, de ninguna.
 CONCENTRADA = "concentracion_cartera"
 
@@ -628,6 +630,25 @@ def guardar_estable(db_path: str, coin_id: str, fuera: bool) -> None:
         conn.execute(
             "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, '1')",
             (f"estable:{coin_id}",),
+        )
+
+
+def limite_compras(db_path: str) -> float | None:
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT valor FROM ajustes WHERE clave = ?", (LIMITE_COMPRAS,)
+        ).fetchone()
+    return float(fila["valor"]) if fila else None
+
+
+def guardar_limite_compras(db_path: str, limite: float | None) -> None:
+    with _connect(db_path) as conn:
+        if limite is None:
+            conn.execute("DELETE FROM ajustes WHERE clave = ?", (LIMITE_COMPRAS,))
+            return
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (LIMITE_COMPRAS, repr(limite)),
         )
 
 

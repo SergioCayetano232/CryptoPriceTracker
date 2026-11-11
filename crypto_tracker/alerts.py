@@ -98,6 +98,7 @@ from .lambo import PRECIO as PRECIO_LAMBO
 from .lambo import Lambo
 from .libro import PRECIO as PRECIO_LIBRO
 from .libro import Libro
+from .limite import Limite
 from .loteria import PRECIO as PRECIO_LOTERIA
 from .loteria import Loteria
 from .luz import PRECIO as PRECIO_LUZ
@@ -3908,6 +3909,44 @@ def formatear_apy(
 def _cifras(cantidad: float) -> str:
     # Con 8 decimales, 2,96048857 ETH; para hacerse una idea sobra con 6 cifras.
     return texto_cantidad(float(f"{cantidad:.6g}"))
+
+
+def formatear_limite(
+    lim: Limite, currency: str, hoy: date, puesto: bool = False
+) -> str:
+    """Respuesta de /limite. Con puesto, es que se acaba de poner."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    mes = MESES[hoy.month - 1]
+    texto = ["✅ Hecho, te aviso al comprar si te pasas", ""] if puesto else []
+    texto += [
+        f"🧮 <b>Tu límite: {simbolo}{_num(lim.limite)} al mes</b>",
+        f"En {mes} llevas {simbolo}{_num(lim.gastado)} en compras",
+        _barra_progreso(min(lim.hecho, 100)),
+    ]
+    if lim.pasado:
+        texto.append(f"⚠️ Te has pasado {simbolo}{_num(-lim.falta)}")
+    else:
+        texto.append(f"Te quedan {simbolo}{_num(lim.falta)} hasta fin de mes")
+    texto.append("<i>/limite no lo quita</i>")
+    return "\n".join(texto)
+
+
+def linea_limite(lim: Limite, currency: str) -> str | None:
+    """Lo que se añade a /compra si te pasas o te acercas. None si vas bien."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    if lim.pasado:
+        return (
+            f"⚠️ Con esta, este mes llevas <b>{simbolo}{_num(lim.gastado)}</b> en "
+            f"compras: {simbolo}{_num(-lim.falta)} por encima de tu límite de "
+            f"{simbolo}{_num(lim.limite)}"
+        )
+    if lim.cerca:
+        return (
+            f"🧮 Llevas {simbolo}{_num(lim.gastado)} de tus "
+            f"{simbolo}{_num(lim.limite)} de este mes: te quedan "
+            f"{simbolo}{_num(lim.falta)}"
+        )
+    return None
 
 
 def formatear_meta(m: Meta, currency: str) -> str:

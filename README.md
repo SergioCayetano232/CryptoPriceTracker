@@ -186,6 +186,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/compra bitcoin 0.01 @60000` | Lo mismo, con el precio de cada una en vez del total |
 | `/compra bitcoin 0.01 600 com 1.5` | Con la comisión al final, en dinero o en % (`com 0.1%`). En la compra se suma a lo que te costó; en `/venta ... com 1`, se resta de lo que te dieron. Así `/ganancias` e `/impuestos` salen con lo que pagaste de verdad |
 | `/compra bitcoin 0.01 600 por el halving` | Con una nota al final de por qué compras (o vendes). Sale en `/movimientos` y en `/compras`, junto a cómo ha salido |
+| `/limite 300` | Lo que te permites comprar al mes. Al apuntar una `/compra`, si pasas del 80 % te dice lo que te queda, y si te pasas, por cuánto. A secas, lo que llevas este mes con una barra; `/limite no` lo quita. Las recompensas no cuentan. Se guarda en la base de datos, no en el `.env`. También `/presupuesto` |
 | `/venta bitcoin 0.005 350` | Apunta una venta y lo que te dieron (`/venta bitcoin todo` la saca de la cartera) |
 | `/ganancias` | Lo que has ganado o perdido de verdad con lo que ya vendiste |
 | `/arrepentido` | Lo que valdría hoy lo que vendiste contra lo que te dieron, cripto a cripto, para saber si hiciste bien en vender. Gasta una consulta |
@@ -780,6 +781,7 @@ crypto_tracker/
   rellenar.py    qué precios pasados faltan, para /rellenar
   hubiera.py     entiende lo que le pides a /si
   objetivo.py    lo que valdría tu cartera, para /objetivo
+  limite.py      lo que llevas comprado este mes, para /limite
   apy.py         cuánta cripto tendrías en staking, para /apy
   plan.py        cuánto tardas en llegar a una cifra, para /plan
   posicion.py    cuánto meter según lo que aceptas perder, para /posicion

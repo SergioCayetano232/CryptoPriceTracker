@@ -5539,6 +5539,43 @@ def test_staking_sigue_siendo_recompensa():
     assert comandos.interpretar("/staking eth 0.02") == ("recompensa", "eth 0.02")
 
 
+def test_limite_ponerlo_verlo_y_quitarlo(config, enviados):
+    main.atender(config, _mensaje("/limite"))
+    assert "No tienes límite de compras" in enviados[-1]
+
+    main.atender(config, _mensaje("/limite 300"))
+    assert enviados[-1].startswith("✅ Hecho")
+    assert "Tu límite: €300,00 al mes" in enviados[-1]
+
+    main.atender(config, _mensaje("/presupuesto no"))
+    assert database.limite_compras(config.database_path) is None
+
+
+def test_compra_avisa_al_pasarte_del_limite(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 60000.0})
+    database.guardar_limite_compras(config.database_path, 300)
+
+    main.atender(config, _mensaje("/compra btc 0.001 100"))
+    assert "límite" not in enviados[-1]
+
+    main.atender(config, _mensaje("/compra btc 0.002 150"))
+    assert "🧮 Llevas €250,00 de tus €300,00" in enviados[-1]
+
+    main.atender(config, _mensaje("/compra btc 0.002 120"))
+    assert "⚠️ Con esta, este mes llevas <b>€370,00</b>" in enviados[-1]
+    # Debajo de lo de siempre, no en su lugar.
+    assert enviados[-1].index("⚠️") > enviados[-1].index("Bitcoin")
+
+
+def test_compra_sin_limite_no_dice_nada(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 60000.0})
+
+    main.atender(config, _mensaje("/compra btc 0.01 600"))
+
+    assert "límite" not in enviados[-1]
+    assert "🧮" not in enviados[-1]
+
+
 def test_doble(con_cartera, enviados, monkeypatch):
     monkeypatch.setattr(
         coingecko, "get_prices", lambda ids, cur: {"bitcoin": 70000.0, "solana": 120.0}

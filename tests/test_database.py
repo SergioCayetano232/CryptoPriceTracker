@@ -803,3 +803,13 @@ def test_estables_avisadas(db):
     database.guardar_estable(db, "dai", False)
 
     assert database.estables_avisadas(db) == {"tether"}
+
+
+def test_limite_de_compras(db):
+    assert database.limite_compras(db) is None
+
+    database.guardar_limite_compras(db, 300.5)
+    assert database.limite_compras(db) == 300.5
+
+    database.guardar_limite_compras(db, None)
+    assert database.limite_compras(db) is None

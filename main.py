@@ -110,6 +110,7 @@ from crypto_tracker import (
     kebab,
     lambo,
     libro,
+    limite,
     loteria,
     luz,
     macbook,
@@ -1273,6 +1274,9 @@ def responder(
     if nombre == "apy":
         return _apy(config, argumento)
 
+    if nombre == "limite":
+        return _limite(config, argumento)
+
     if nombre == "meta":
         return _meta(config, argumento)
 
@@ -1846,19 +1850,25 @@ def _comprar(config: Config, argumento: str) -> str | comandos.ConBotones:
         config.database_path, coin_id, "compra", cantidad, coste, antes, ahora, apunte
     )
     logger.info("Cartera: compra %s de %s por %s", cantidad, coin_id, coste)
-    return comandos.ConBotones(
-        alerts.formatear_compra(
-            cantidad,
-            coste,
-            ahora,
-            config.vs_currency,
-            antes,
-            precio,
-            pagada,
-            apunte,
-        ),
-        botones.deshacer_movimiento(numero),
+    texto = alerts.formatear_compra(
+        cantidad,
+        coste,
+        ahora,
+        config.vs_currency,
+        antes,
+        precio,
+        pagada,
+        apunte,
     )
+    # La compra ya está apuntada: si esto falla, mejor sin aviso que sin respuesta.
+    try:
+        actual = _limite_del_mes(config)
+    except database.DatabaseError as e:
+        logger.warning("No se pudo mirar el límite de compras: %s", e)
+        actual = None
+    if actual and (linea := alerts.linea_limite(actual, config.vs_currency)):
+        texto += "\n\n" + linea
+    return comandos.ConBotones(texto, botones.deshacer_movimiento(numero))
 
 
 def _vender(config: Config, argumento: str) -> str | comandos.ConBotones:
@@ -4093,6 +4103,35 @@ def _promediar(config: Config, argumento: str) -> str:
             "Apúntalo al comprar: /compra bitcoin 0.01 600"
         )
     return alerts.con_fuente(alerts.formatear_promediar(promedio, config.vs_currency))
+
+
+def _limite(config: Config, argumento: str) -> str:
+    try:
+        que, cifra = limite.interpretar(argumento)
+    except limite.LimiteError as e:
+        return telegram.escape(str(e))
+
+    if que == limite.QUITAR:
+        database.guardar_limite_compras(config.database_path, None)
+        return "Hecho, ya no tienes límite de compras."
+    if que == limite.PONER:
+        database.guardar_limite_compras(config.database_path, cifra)
+
+    actual = _limite_del_mes(config)
+    if actual is None:
+        return f"No tienes límite de compras. Ponlo con {limite.EJEMPLO}"
+    return alerts.formatear_limite(
+        actual, config.vs_currency, date.today(), puesto=que == limite.PONER
+    )
+
+
+def _limite_del_mes(config: Config) -> limite.Limite | None:
+    """El límite y lo comprado este mes. None si no hay límite."""
+    tope = database.limite_compras(config.database_path)
+    if tope is None:
+        return None
+    todos = database.get_movimientos(config.database_path, limite=None)
+    return limite.Limite(tope, limite.gastado(todos, date.today()))
 
 
 def _apy(config: Config, argumento: str) -> str:
