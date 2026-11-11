@@ -492,6 +492,71 @@ def test_resumen_diario_sale_aunque_falle_el_miedo(con_resumen, enviados, monkey
     assert "Miedo y codicia" not in enviados[0]
 
 
+def _compra_de(config, cuando, coin_id="bitcoin"):
+    import sqlite3
+
+    from crypto_tracker.config import Posicion
+
+    database.init_db(config.database_path)
+    numero = database.apuntar_movimiento(
+        config.database_path,
+        coin_id,
+        "compra",
+        0.01,
+        600.0,
+        None,
+        Posicion(coin_id, 0.01, 600.0),
+    )
+    with sqlite3.connect(config.database_path) as conn:
+        conn.execute(
+            "UPDATE movimientos SET created_at = ? WHERE id = ?",
+            (cuando.isoformat(), numero),
+        )
+
+
+def test_resumen_diario_con_aniversario(con_resumen, enviados, monkeypatch):
+    pedidas = []
+
+    def precios(ids, cur):
+        pedidas.extend(ids)
+        return {"bitcoin": 63000.0, "solana": 150.0}
+
+    monkeypatch.setattr(coingecko, "get_prices", precios)
+    _compra_de(con_resumen, _dia(12).replace(year=2025))
+    _compra_de(con_resumen, _dia(12).replace(year=2024), "solana")
+    _compra_de(con_resumen, _dia(12, dia=28).replace(year=2025))  # ayer no
+
+    main.resumen_diario(con_resumen, _dia(9, 0))
+
+    texto = enviados[0]
+    assert "🎂 <b>Hoy cumplen años 2 de tus compras</b>" in texto
+    assert "Hace 1 año compraste 0,01 de Bitcoin por €600,00" in texto
+    assert "Hace 2 años compraste 0,01 de Solana" in texto
+    assert texto.index("🎂") < texto.index("CoinGecko")
+    # Solana no se vigila, pero su precio viene en la misma consulta.
+    assert "solana" in pedidas
+
+
+def test_resumen_diario_sin_aniversario(con_resumen, enviados):
+    _compra_de(con_resumen, _dia(12, dia=28).replace(year=2025))
+
+    main.resumen_diario(con_resumen, _dia(9, 0))
+
+    assert "🎂" not in enviados[0]
+
+
+def test_status_no_lleva_aniversario(con_resumen, enviados):
+    from datetime import datetime
+
+    ahora = datetime.now().astimezone()
+    # Cuatro años atrás, que hasta un 29 de febrero tiene su igual.
+    _compra_de(con_resumen, ahora.replace(year=ahora.year - 4))
+
+    main.atender(con_resumen, _mensaje("/status"))
+
+    assert "🎂" not in enviados[0]
+
+
 def test_resumen_cuando_lo_pides(con_resumen, enviados, monkeypatch):
     from datetime import date
 

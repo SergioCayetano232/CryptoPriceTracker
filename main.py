@@ -27,6 +27,7 @@ from crypto_tracker import (
     aleatoria,
     alerts,
     alquiler,
+    aniversario,
     anual,
     apodo,
     arrepentido,
@@ -948,7 +949,11 @@ def responder(
     if nombre == "resumen":
         # No lo apunto como enviado: el de las 9 tiene que llegar igual.
         texto = montar_resumen(
-            config, titulo=TITULO_DIARIO, pie=_linea_miedo(), con_cerca=True
+            config,
+            titulo=TITULO_DIARIO,
+            pie=_linea_miedo(),
+            con_cerca=True,
+            aniversarios=date.today(),
         )
         if texto is None:
             return "No he podido consultar los precios. Prueba en un rato."
@@ -4099,7 +4104,11 @@ def resumen_diario(config: Config, ahora: datetime | None = None) -> None:
         return
 
     texto = montar_resumen(
-        config, titulo=TITULO_DIARIO, pie=_linea_miedo(), con_cerca=True
+        config,
+        titulo=TITULO_DIARIO,
+        pie=_linea_miedo(),
+        con_cerca=True,
+        aniversarios=ahora.date(),
     )
     if texto is None:
         return
@@ -4569,17 +4578,20 @@ def montar_resumen(
     titulo: str | None = None,
     pie: str | None = None,
     con_cerca: bool = False,
+    aniversarios: date | None = None,
 ) -> str | None:
     """El texto del resumen con los precios de ahora. None si no hay precios.
 
-    con_cerca añade las /alerta que estan a punto de saltar.
+    con_cerca añade las /alerta que estan a punto de saltar. Con aniversarios,
+    las compras que cumplen años ese día.
     """
     config = _con_cambios(config)
     coin_ids = [w.coin_id for w in config.watchlist]
     pendientes = _puntuales(config) if con_cerca else []
+    cumplen = _cumplen(config, aniversarios) if aniversarios else []
     # Lo de la cartera y lo de las alertas puede no estar en la lista de
     # vigiladas, pero tambien necesita precio. Una sola consulta para todo.
-    extra = [p.coin_id for p in (*config.cartera, *pendientes)]
+    extra = [p.coin_id for p in (*config.cartera, *pendientes, *cumplen)]
     extra = [c for c in extra if c not in coin_ids and c != puntuales.CARTERA]
 
     precios = _consultar(config, coin_ids + list(dict.fromkeys(extra)))
@@ -4617,10 +4629,23 @@ def montar_resumen(
             texto += "\n\n" + alerts.formatear_lejos(
                 len(pendientes), a, falta, config.vs_currency
             )
+    if cumplen:
+        lista = aniversario.calcular(cumplen, precios, aniversarios)
+        texto += "\n\n" + alerts.formatear_aniversarios(lista, config.vs_currency)
     if pie:
         texto += "\n\n" + pie
 
     return alerts.con_fuente(texto)
+
+
+def _cumplen(config: Config, hoy: date) -> list[movimientos.Movimiento]:
+    try:
+        todos = database.get_movimientos(config.database_path, limite=None)
+    except database.DatabaseError as e:
+        # Es un extra: sin esto el resumen sale igual.
+        logger.warning("Sin aniversarios en el resumen: %s", e)
+        return []
+    return aniversario.de_hoy(todos, hoy)
 
 
 def _proximos(

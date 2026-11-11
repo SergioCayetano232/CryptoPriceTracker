@@ -163,7 +163,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 |---|---|
 | `/status` | Cómo van tus criptos ahora |
 | `/hoy` | Cómo van desde las 00:00 en vez de en las últimas 24 h, con el máximo y el mínimo de hoy (`/hoy btc eth`, solo esas). Sale de lo guardado y no gasta consultas |
-| `/resumen` | El resumen del día cuando lo pidas, con el índice de miedo y codicia. No quita el de la hora de siempre |
+| `/resumen` | El resumen del día cuando lo pidas, con el índice de miedo y codicia y las compras que cumplen años hoy. No quita el de la hora de siempre |
 | `/horario 8:30` | Cambia la hora del resumen del día (y del de los domingos). `/horario no` lo quita; a secas, te dice cuál tienes |
 | `/precio solana` | Lo que vale una cripto ahora y cómo va en la última hora, en 24 h, en 7 y en 30 días, aunque no la vigiles, entre qué precios se ha movido en 24 h, lo que vale en sats, cuánto se ha emitido ya de su máximo (si tiene), su máximo histórico con lo que le falta para volver, su puesto por capitalización y cuánto se ha negociado en 24 h (y qué parte es de lo que vale). Debajo, unas barritas `▁▃▅▇` con la forma de las últimas 24 h, si tiene precios guardados. Si la tienes en la cartera, también lo que vale lo tuyo |
 | `/precio btc eth sol` | Lo mismo de varias a la vez, una por línea (hasta 10) |
@@ -600,6 +600,11 @@ Mientras esté en modo `--loop`, te manda cada día a esa hora lo mismo que
 `--status`. Si a esa hora estaba apagado, te lo manda al volver, pero solo hasta
 dos horas tarde. Con `--mute` tampoco llega.
 
+Si alguna compra apuntada por Telegram cumple años ese día, te la recuerda con
+lo que vale hoy: `🎂 Hace 1 año compraste 0,01 de Bitcoin por €600,00: hoy vale
+€1.100,00 🔺 +83.33%`. Las del 29 de febrero, el 28 los años que no son
+bisiestos.
+
 Desde Telegram puedes cambiar la hora con `/horario 8:30` o quitarlo con
 `/horario no`, sin tocar el `.env`. Lo que pongas ahí manda sobre el `.env`.
 
@@ -888,6 +893,7 @@ crypto_tracker/
   copia.py       lo de ahora escrito como va en el .env, para /copia
   backup.py      el zip con la base de datos, para /backup
   ajustes.py     lo que tienes puesto en el .env, para /ajustes
+  aniversario.py las compras que cumplen años, para el resumen del día
   cuota.py       cuenta las consultas a CoinGecko
   comandos.py    entiende lo que le escribes
 main.py          junta todo

@@ -13,6 +13,8 @@ from .airpods import PRECIO as PRECIO_AIRPODS
 from .airpods import Airpods
 from .alquiler import PRECIO as PRECIO_ALQUILER
 from .alquiler import Alquiler
+from .aniversario import MAX as MAX_ANIVERSARIOS
+from .aniversario import Aniversario
 from .anual import Año
 from .arrepentido import Arrepentido
 from .ave import PRECIO as PRECIO_AVE
@@ -1309,6 +1311,32 @@ def formatear_primera(p: Primera, currency: str) -> str:
     if m.coste is not None:
         linea += f" ({_ganancia(valor - m.coste, simbolo)})"
     texto.append(linea)
+    return "\n".join(texto)
+
+
+def formatear_aniversarios(lista: list[Aniversario], currency: str) -> str:
+    """El trozo del resumen con las compras que cumplen años hoy."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    if len(lista) == 1:
+        texto = ["🎂 <b>Hoy cumple años una de tus compras</b>"]
+    else:
+        texto = [f"🎂 <b>Hoy cumplen años {len(lista)} de tus compras</b>"]
+
+    for a in lista[:MAX_ANIVERSARIOS]:
+        m = a.compra
+        nombre = escape(m.coin_id.replace("-", " ").title())
+        años = "1 año" if a.años == 1 else f"{a.años} años"
+        linea = f"Hace {años} compraste {texto_cantidad(m.cantidad)} de {nombre}"
+        if m.coste:
+            linea += f" por {simbolo}{_num(m.coste)}"
+        if a.valor is not None:
+            linea += f": hoy vale <b>{simbolo}{_num(a.valor)}</b>"
+            if a.cambio is not None:
+                linea += f" {_flecha(a.cambio)} {a.cambio:+.2f}%"
+        texto.append(linea)
+
+    if len(lista) > MAX_ANIVERSARIOS:
+        texto.append(f"<i>y {len(lista) - MAX_ANIVERSARIOS} más</i>")
     return "\n".join(texto)
 
 
