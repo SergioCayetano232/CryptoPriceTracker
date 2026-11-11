@@ -82,6 +82,7 @@ from crypto_tracker import (
     doble,
     emoji,
     equilibrio,
+    estables,
     ethereum,
     excusa,
     exportar,
@@ -318,6 +319,7 @@ def ejecutar_ciclo(
     revisar_bajon(config, valor, calladas)
     revisar_concentracion(config, precios, calladas)
     revisar_rsi(config, vigiladas, calladas)
+    revisar_estables(config, list(precios), calladas)
     if calladas:
         avisos = [a for a in avisos if a.coin_id not in calladas]
         hechas = [p for p in hechas if p.coin_id not in calladas]
@@ -675,6 +677,43 @@ def revisar_concentracion(
         database.guardar_concentracion(config.database_path, nuevo)
     except database.DatabaseError as e:
         logger.error("No se pudo apuntar el aviso de concentración: %s", e)
+
+
+def revisar_estables(config: Config, coin_ids: list[str], calladas: set[str]) -> None:
+    """Avisa una vez si una estable que tienes o vigilas se sale de su dólar."""
+    if _silenciado(config):
+        return
+    precios_usd = {}
+    for coin_id in estables.de_las_tuyas(coin_ids):
+        precio = coingecko.precio_usd(coin_id)
+        if precio is not None and coin_id not in calladas:
+            precios_usd[coin_id] = precio
+    if not precios_usd:
+        return
+
+    try:
+        avisadas = database.estables_avisadas(config.database_path)
+    except database.DatabaseError as e:
+        logger.error("No se pudo leer el aviso de las estables: %s", e)
+        return
+
+    salen, vuelven = estables.revisar(precios_usd, avisadas)
+    for d in salen + vuelven:
+        fuera = d in salen
+        # Si no llega, no se apunta y lo intenta el siguiente ciclo.
+        if not telegram.send_message(
+            config.telegram_token,
+            config.telegram_chat_id,
+            alerts.formatear_estable(d, vuelve=not fuera),
+            sin_sonido=_sin_sonido(config),
+        ):
+            logger.error("No se pudo avisar de %s", d.simbolo)
+            continue
+        logger.info("%s a $%.4f", d.simbolo, d.precio)
+        try:
+            database.guardar_estable(config.database_path, d.coin_id, fuera)
+        except database.DatabaseError as e:
+            logger.error("No se pudo apuntar el aviso de %s: %s", d.simbolo, e)
 
 
 def revisar_rsi(

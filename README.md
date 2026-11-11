@@ -578,6 +578,14 @@ mientras siga por ahí; para volver a avisar tiene que bajar de 65 o subir de 35
 Necesita 15 días seguidos guardados de esa cripto y se calla con
 `/mute bitcoin`.
 
+**Enterarte si una estable se sale de su dólar:**
+
+No hay que poner nada. Si tienes o vigilas USDT, USDC o DAI (`tether`,
+`usd-coin` o `dai`) y se aleja más de un 1 % de su dólar, te avisa una vez, y
+otra cuando vuelva a menos del 0,5 %. El precio en dólares viene en la misma
+consulta de siempre, así que no gasta consultas aunque tu moneda sea el euro.
+Se calla con `/mute tether`.
+
 **Que no se pierda nada si se muere el servidor:**
 
 ```
@@ -877,6 +885,7 @@ crypto_tracker/
   cuando.py      la última vez que estuvo a un precio, para /cuando
   avisados.py    el último aviso de cada una, para /ultimo
   avisorsi.py    cuándo avisar de sobrecompra o sobreventa
+  estables.py    cuándo una estable se sale de su dólar
   redondo.py     la siguiente cifra redonda, para /redondo
   rsi.py         el RSI de 14 días, para /rsi
   caida.py       lo que ha bajado desde el máximo, para /caida

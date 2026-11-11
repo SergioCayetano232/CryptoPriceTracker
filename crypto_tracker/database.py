@@ -611,6 +611,26 @@ def guardar_concentracion(db_path: str, coin_id: str | None) -> None:
         )
 
 
+def estables_avisadas(db_path: str) -> set[str]:
+    """Las estables de las que ya se avisó que estaban fuera de su dólar."""
+    with _connect(db_path) as conn:
+        filas = conn.execute(
+            "SELECT clave FROM ajustes WHERE clave LIKE 'estable:%'"
+        ).fetchall()
+    return {f["clave"].removeprefix("estable:") for f in filas}
+
+
+def guardar_estable(db_path: str, coin_id: str, fuera: bool) -> None:
+    with _connect(db_path) as conn:
+        if not fuera:
+            conn.execute("DELETE FROM ajustes WHERE clave = ?", (f"estable:{coin_id}",))
+            return
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, '1')",
+            (f"estable:{coin_id}",),
+        )
+
+
 def zona_rsi(db_path: str, coin_id: str) -> str | None:
     """La zona de la que ya se avisó. Sin fila, de ninguna."""
     with _connect(db_path) as conn:

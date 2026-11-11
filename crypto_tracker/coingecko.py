@@ -8,7 +8,7 @@ from urllib.parse import quote
 
 import requests
 
-from . import mercado, precio, rellenar, tendencias, top
+from . import estables, mercado, precio, rellenar, tendencias, top
 from .maximo import Maximo, leer
 
 logger = logging.getLogger(__name__)
@@ -36,6 +36,9 @@ _hechas = 0
 # Variacion en 24 h de cada cripto segun CoinGecko, de la ultima consulta en
 # que salio. Va en la misma peticion que el precio, asi que no gasta cuota.
 _cambios: dict[str, float] = {}
+
+# Lo que valen las estables en dólares, para ver si se salen de su dólar.
+_usd: dict[str, float] = {}
 
 
 class CoinGeckoError(Exception):
@@ -150,6 +153,11 @@ def cambio_24h(coin_id: str) -> float | None:
     return _cambios.get(coin_id)
 
 
+def precio_usd(coin_id: str) -> float | None:
+    """Lo que vale en dólares segun la ultima consulta. Solo de las estables."""
+    return _usd.get(coin_id)
+
+
 def tomar_consultas() -> int:
     """Las peticiones hechas desde la ultima llamada, y pone la cuenta a cero."""
     global _hechas
@@ -179,12 +187,30 @@ def _con_reintentos(pedir):
 
 def _pedir_precios(coin_ids: list[str], vs_currency: str) -> dict[str, float]:
     """Una peticion suelta a la API, sin reintentos."""
+    monedas = vs_currency
+    # Si va alguna estable, su dólar viene en la misma petición y no gasta cuota.
+    if estables.de_las_tuyas(coin_ids) and vs_currency != "usd":
+        monedas += ",usd"
     params = {
         "ids": ",".join(coin_ids),
-        "vs_currencies": vs_currency,
+        "vs_currencies": monedas,
         "include_24hr_change": "true",
     }
-    return _extract_prices(_pedir(API_URL, params), coin_ids, vs_currency)
+    data = _pedir(API_URL, params)
+    _leer_usd(data, coin_ids)
+    return _extract_prices(data, coin_ids, vs_currency)
+
+
+def _leer_usd(data, coin_ids: list[str]) -> None:
+    if not isinstance(data, dict):
+        return
+    for coin_id in estables.de_las_tuyas(coin_ids):
+        entry = data.get(coin_id)
+        valor = entry.get("usd") if isinstance(entry, dict) else None
+        if isinstance(valor, (int, float)) and math.isfinite(valor) and valor > 0:
+            _usd[coin_id] = float(valor)
+        else:
+            _usd.pop(coin_id, None)
 
 
 def _pedir(url: str, params: dict):

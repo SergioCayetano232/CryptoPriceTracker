@@ -12,6 +12,7 @@ def sin_esperas(monkeypatch):
     monkeypatch.setattr(coingecko.time, "sleep", lambda s: None)
     # que la variacion de un test no se cuele en el siguiente
     monkeypatch.setattr(coingecko, "_cambios", {})
+    monkeypatch.setattr(coingecko, "_usd", {})
 
 
 class RespuestaFalsa:
@@ -36,6 +37,67 @@ def test_precios_correctos(monkeypatch):
     precios = coingecko.get_prices(["bitcoin", "ethereum"], "eur")
 
     assert precios == {"bitcoin": 63000.0, "ethereum": 3200.0}
+
+
+def test_con_una_estable_pide_tambien_el_dolar(monkeypatch):
+    pedido = {}
+
+    def get(url, params, **kw):
+        pedido.update(params)
+        return RespuestaFalsa(
+            {
+                "bitcoin": {"eur": 63000.0, "usd": 68000.0},
+                "tether": {"eur": 0.92, "usd": 0.97},
+            }
+        )
+
+    monkeypatch.setattr(requests, "get", get)
+
+    precios = coingecko.get_prices(["bitcoin", "tether"], "eur")
+
+    assert pedido["vs_currencies"] == "eur,usd"
+    assert precios == {"bitcoin": 63000.0, "tether": 0.92}
+    assert coingecko.precio_usd("tether") == 0.97
+    assert coingecko.precio_usd("bitcoin") is None  # solo de las estables
+
+
+def test_sin_estables_no_pide_el_dolar(monkeypatch):
+    pedido = {}
+
+    def get(url, params, **kw):
+        pedido.update(params)
+        return RespuestaFalsa({"bitcoin": {"eur": 63000.0}})
+
+    monkeypatch.setattr(requests, "get", get)
+
+    coingecko.get_prices(["bitcoin"], "eur")
+
+    assert pedido["vs_currencies"] == "eur"
+
+
+def test_en_dolares_no_lo_pide_dos_veces(monkeypatch):
+    pedido = {}
+
+    def get(url, params, **kw):
+        pedido.update(params)
+        return RespuestaFalsa({"tether": {"usd": 0.999}})
+
+    monkeypatch.setattr(requests, "get", get)
+
+    coingecko.get_prices(["tether"], "usd")
+
+    assert pedido["vs_currencies"] == "usd"
+    assert coingecko.precio_usd("tether") == 0.999
+
+
+def test_dolar_que_no_viene_se_olvida(monkeypatch):
+    coingecko._usd["tether"] = 0.97
+    datos = {"tether": {"eur": 0.92, "usd": None}}
+    monkeypatch.setattr(requests, "get", lambda *a, **k: RespuestaFalsa(datos))
+
+    coingecko.get_prices(["tether"], "eur")
+
+    assert coingecko.precio_usd("tether") is None
 
 
 def test_lista_vacia_no_llama(monkeypatch):

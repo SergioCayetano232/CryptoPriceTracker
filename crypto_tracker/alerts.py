@@ -65,6 +65,7 @@ from .doble import Cartera as CarteraDoble
 from .emoji import cara as cara_emoji
 from .enletras import dinero as dinero_en_letras
 from .equilibrio import Cartera
+from .estables import Desvio
 from .ethereum import Ethereum
 from .frase import Frase
 from .futbol import PRECIO as PRECIO_FUTBOL
@@ -1338,6 +1339,22 @@ def formatear_aniversarios(lista: list[Aniversario], currency: str) -> str:
     if len(lista) > MAX_ANIVERSARIOS:
         texto.append(f"<i>y {len(lista) - MAX_ANIVERSARIOS} más</i>")
     return "\n".join(texto)
+
+
+def formatear_estable(d: Desvio, vuelve: bool = False) -> str:
+    """Aviso de que una estable se ha salido de su dólar, o de que ha vuelto."""
+    precio = f"${d.precio:.4f}".replace(".", ",")
+    if vuelve:
+        return (
+            f"✅ <b>{d.simbolo}</b> vuelve a su dólar: está a {precio} "
+            f"({d.porcentaje:+.2f}%)"
+        )
+    return (
+        f"⚠️ <b>{d.simbolo} se sale de su dólar</b>\n"
+        f"Está a <b>{precio}</b>, un <b>{d.porcentaje:+.2f}%</b>. Una estable "
+        "no debería moverse así: mira qué pasa antes de dejar dinero ahí\n"
+        "<i>Te aviso otra vez cuando vuelva</i>"
+    )
 
 
 def formatear_ganancias(g: Ganancias, currency: str) -> str:

@@ -793,3 +793,13 @@ def test_movimientos_viejos_ganan_la_nota_sin_perderse(tmp_path):
         "por el halving",
     )
     assert database.get_movimientos(ruta)[0].nota == "por el halving"
+
+
+def test_estables_avisadas(db):
+    assert database.estables_avisadas(db) == set()
+
+    database.guardar_estable(db, "tether", True)
+    database.guardar_estable(db, "dai", True)
+    database.guardar_estable(db, "dai", False)
+
+    assert database.estables_avisadas(db) == {"tether"}

@@ -75,6 +75,7 @@ def sin_miedo_de_verdad(monkeypatch):
 def sin_cambios_de_coingecko(monkeypatch):
     """Sin esto, la variacion de 24 h de un test aparece en el siguiente."""
     monkeypatch.setattr(coingecko, "_cambios", {})
+    monkeypatch.setattr(coingecko, "_usd", {})
 
 
 @pytest.fixture(autouse=True)
@@ -935,6 +936,71 @@ def test_bajon_llega_en_el_ciclo(con_bajon, enviados, monkeypatch):
     main.ejecutar_ciclo(con_bajon, {"bitcoin": "%75000.0"})
 
     assert any("desde su récord" in t for t in enviados)
+
+
+# --- estables ---
+
+
+def test_estable_avisa_una_vez_y_al_volver(config, enviados, monkeypatch):
+    monkeypatch.setattr(
+        coingecko, "get_prices", lambda ids, cur: {"bitcoin": 60000.0, "tether": 0.9}
+    )
+    monkeypatch.setitem(coingecko._usd, "tether", 0.97)
+
+    main.revisar_estables(config, ["bitcoin", "tether"], set())
+    main.revisar_estables(config, ["bitcoin", "tether"], set())
+
+    assert len(enviados) == 1
+    assert "USDT se sale de su dólar" in enviados[0]
+
+    monkeypatch.setitem(coingecko._usd, "tether", 0.999)
+    main.revisar_estables(config, ["bitcoin", "tether"], set())
+    main.revisar_estables(config, ["bitcoin", "tether"], set())
+
+    assert len(enviados) == 2
+    assert "USDT</b> vuelve a su dólar" in enviados[1]
+
+
+def test_estable_llega_en_el_ciclo(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    from crypto_tracker.config import parse_cartera
+
+    def precios(ids, cur):
+        coingecko._usd["usd-coin"] = 0.95
+        return {"bitcoin": 60000.0, "usd-coin": 0.87}
+
+    monkeypatch.setattr(coingecko, "get_prices", precios)
+    con_usdc = replace(config, cartera=parse_cartera("usd-coin:500"))
+
+    main.ejecutar_ciclo(con_usdc, {"bitcoin": "%60000.0"})
+
+    assert any("USDC se sale de su dólar" in t for t in enviados)
+
+
+def test_estable_callada_espera(config, enviados, monkeypatch):
+    monkeypatch.setitem(coingecko._usd, "tether", 0.97)
+
+    main.revisar_estables(config, ["tether"], {"tether"})
+    assert enviados == []
+
+    # Al volver a hablar, si sigue fuera, avisa.
+    main.revisar_estables(config, ["tether"], set())
+    assert len(enviados) == 1
+
+
+def test_estable_si_no_llega_lo_reintenta(config, monkeypatch):
+    mandados = []
+    monkeypatch.setattr(
+        telegram, "send_message", lambda *a, **k: mandados.append(a[2]) and False
+    )
+    monkeypatch.setitem(coingecko._usd, "tether", 0.97)
+
+    main.revisar_estables(config, ["tether"], set())
+    main.revisar_estables(config, ["tether"], set())
+
+    assert len(mandados) == 2
+    assert database.estables_avisadas(config.database_path) == set()
 
 
 # --- horas tranquilas ---
