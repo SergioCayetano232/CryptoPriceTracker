@@ -73,6 +73,7 @@ COMANDOS = {
     "dca": "Lo mismo, metiendo un poco cada semana (ej: /dca 50 bitcoin 90d)",
     "objetivo": "Cuánto valdría tu cartera a ese precio (ej: /objetivo btc 100000)",
     "promediar": "Cuánto comprar para bajar tu precio medio (ej: /promediar btc 50000)",
+    "posicion": "Cuánto meter según lo que aceptas perder (ej: /posicion 1000 2% -10%)",
     "meta": "Cuánto le falta a tu cartera para una cifra (ej: /meta 10000)",
     "equilibrio": "A qué precio dejas de perder con cada una de tu cartera",
     "doble": "A qué precio doblas lo que metiste en cada una de tu cartera",
@@ -210,6 +211,9 @@ ALIAS = {
     "target": "objetivo",
     "goal": "meta",
     "promedio": "promediar",
+    "tamano": "posicion",
+    "tamaño": "posicion",
+    "posición": "posicion",
     "maximo": "ath",
     "trending": "tendencias",
     "moda": "tendencias",
@@ -656,6 +660,11 @@ EJEMPLOS = {
     "promediar": [
         ("/promediar bitcoin 50000", "cuánto comprar hoy para que te salga a 50.000"),
         ("/promediar eth 2k", "también vale con k o con el €"),
+    ],
+    "posicion": [
+        ("/posicion 1000 2% -10%", "con 1.000, perder como mucho un 2% si cae un 10%"),
+        ("/posicion btc 1000 2% -10%", "lo mismo, en bitcoin y con el precio del stop"),
+        ("/posicion btc 1000 2% 58000", "con la cripto, el stop puede ser un precio"),
     ],
     "meta": [
         ("/meta 10000", "cuánto le falta a tu cartera para llegar a 10.000"),

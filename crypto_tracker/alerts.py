@@ -148,6 +148,7 @@ from .piso import METROS as METROS_PISO
 from .piso import PRECIO as PRECIO_PISO
 from .piso import Piso
 from .pizza import BTC, Pizza
+from .posicion import Entrada
 from .ppt import EMOJIS as EMOJIS_PPT
 from .ppt import QUE_HACER as QUE_HACER_PPT
 from .primera import Primera
@@ -3786,6 +3787,41 @@ def formatear_promediar(p: Promedio, currency: str) -> str:
         f"<i>Tienes {texto_cantidad(p.cantidad)} a {medio} de media; después "
         f"tendrías {texto_cantidad(despues)} a {objetivo}. Sin comisiones.</i>"
     )
+
+
+def formatear_posicion(e: Entrada, currency: str) -> str:
+    """Respuesta de /posicion."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    capital = f"{simbolo}{_num(e.capital)}"
+    riesgo = f"{e.riesgo:g}".replace(".", ",")
+    stop = f"-{e.stop:.2f}".rstrip("0").rstrip(".").replace(".", ",")
+
+    texto = ["📐 <b>Cuánto meter</b>", ""]
+    if e.todo:
+        real = f"{e.perdida / e.capital * 100:.2f}".rstrip("0").rstrip(".")
+        texto.append(
+            f"Con el stop tan cerca ({stop}%) puedes meter los <b>{capital}</b> "
+            f"enteros: si salta, pierdes {simbolo}{_num(e.perdida)}, un "
+            f"{real.replace('.', ',')}%, dentro del {riesgo}% que aceptas"
+        )
+    else:
+        texto.append(
+            f"Con {capital} y aceptando perder un {riesgo}%, mete "
+            f"<b>{simbolo}{_num(e.dinero)}</b>"
+        )
+        texto.append(
+            f"Si salta el stop ({stop}%), pierdes {simbolo}{_num(e.perdida)} y no más"
+        )
+
+    if e.coin_id and e.cantidad is not None:
+        nombre = escape(e.coin_id.replace("-", " ").title())
+        texto.append(
+            f"\nSon <b>{texto_cantidad(e.cantidad)} {nombre}</b> a "
+            f"{simbolo}{_num(e.precio)}; el stop, a "
+            f"<b>{simbolo}{_num(e.precio_stop)}</b>"
+        )
+    texto.append("<i>Sin contar comisiones ni que el stop salte algo más abajo</i>")
+    return "\n".join(texto)
 
 
 def formatear_meta(m: Meta, currency: str) -> str:

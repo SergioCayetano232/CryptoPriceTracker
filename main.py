@@ -140,6 +140,7 @@ from crypto_tracker import (
     periodo,
     piso,
     pizza,
+    posicion,
     ppt,
     primera,
     promediar,
@@ -1260,6 +1261,9 @@ def responder(
 
     if nombre == "promediar":
         return _promediar(config, argumento)
+
+    if nombre == "posicion":
+        return _posicion(config, argumento)
 
     if nombre == "meta":
         return _meta(config, argumento)
@@ -4081,6 +4085,28 @@ def _promediar(config: Config, argumento: str) -> str:
             "Apúntalo al comprar: /compra bitcoin 0.01 600"
         )
     return alerts.con_fuente(alerts.formatear_promediar(promedio, config.vs_currency))
+
+
+def _posicion(config: Config, argumento: str) -> str:
+    try:
+        peticion = posicion.interpretar(argumento)
+    except posicion.PosicionError as e:
+        return telegram.escape(str(e))
+
+    # Sin cripto son solo cuentas: no hace falta gastar una consulta.
+    precio = None
+    if peticion.coin_id:
+        precios = _consultar(config, [peticion.coin_id])
+        precio = (precios or {}).get(peticion.coin_id)
+        if precio is None:
+            return "No he podido consultar los precios. Prueba en un rato."
+
+    try:
+        entrada = posicion.calcular(peticion, precio)
+    except posicion.PosicionError as e:
+        return telegram.escape(str(e))
+    texto = alerts.formatear_posicion(entrada, config.vs_currency)
+    return alerts.con_fuente(texto) if precio else texto
 
 
 def _precios_alertas(

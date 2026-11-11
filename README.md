@@ -249,6 +249,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/dca 50 bitcoin semanal 90d` | Lo mismo metiendo 50 € cada semana, con lo invertido y el precio medio. También `diario` o `mensual`; sin decirlo, semanal y 90 días |
 | `/objetivo bitcoin 100000` | Cuánto valdría tu cartera si bitcoin llegara a ese precio, y cuánto ganarías sobre lo invertido. Vale `100k`, y también para ver una bajada |
 | `/promediar btc 50000` | Cuánto comprar al precio de ahora, en cantidad y en dinero, para que tu precio medio baje a 50.000. Vale `50k`. Si ya te sale más barato, o si pides uno por debajo del precio de ahora (que comprando no se llega), te lo dice. Sin comisiones. También `/promedio` |
+| `/posicion 1000 2% -10%` | Cuánto meter para no perder más de un 2 % de tus 1.000 si cae un 10 % y salta el stop: 200. Con la cripto delante, `/posicion btc 1000 2% -10%`, también cuánto bitcoin es y a qué precio poner el stop, y el stop puede ser un precio: `/posicion btc 1000 2% 58000`. Si el stop está tan cerca que puedes meterlo todo, te lo dice. Sin cripto no gasta consultas. También `/tamaño` |
 | `/meta 10000` | Cuánto le falta a tu cartera para llegar a esa cifra, en dinero y en %, con una barra de lo que llevas. Vale `10k`. También `/goal` |
 | `/equilibrio` | A qué precio dejas de perder con cada cripto de tu cartera y cuánto le falta, de la que más lejos está a la que menos, y cuánto tendría que subir todo junto. Solo con las que dicen lo que te costaron |
 | `/doble` | A qué precio tiene que llegar cada cripto de tu cartera para que dobles lo que metiste, cuánto le falta y cuánto tendría que subir todo junto. Solo con las que dicen lo que te costaron |
@@ -777,6 +778,7 @@ crypto_tracker/
   rellenar.py    qué precios pasados faltan, para /rellenar
   hubiera.py     entiende lo que le pides a /si
   objetivo.py    lo que valdría tu cartera, para /objetivo
+  posicion.py    cuánto meter según lo que aceptas perder, para /posicion
   promediar.py   cuánto comprar para bajar tu precio medio, para /promediar
   meta.py        cuánto le falta a tu cartera para una cifra, para /meta
   equilibrio.py  a qué precio dejas de perder, para /equilibrio

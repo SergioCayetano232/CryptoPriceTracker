@@ -5439,6 +5439,47 @@ def test_promediar_sin_cartera(config, enviados):
     assert enviados[0] == main.SIN_CARTERA
 
 
+def test_posicion_sin_cripto_no_consulta(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: pytest.fail())
+
+    main.atender(config, _mensaje("/posicion 1000 2% -10%"))
+
+    assert "mete <b>€200,00</b>" in enviados[0]
+    assert "coingecko.com" not in enviados[0]
+
+
+def test_posicion_con_cripto(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 50000.0})
+
+    main.atender(config, _mensaje("/tamaño btc 1000 2% 40000"))
+
+    assert "mete <b>€100,00</b>" in enviados[0]
+    assert "Son <b>0,002 Bitcoin</b> a €50.000,00" in enviados[0]
+    assert "coingecko.com" in enviados[0]
+
+
+def test_posicion_stop_por_encima(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 50000.0})
+
+    main.atender(config, _mensaje("/posicion btc 1000 2% 60000"))
+
+    assert "por debajo del precio de ahora" in enviados[0]
+
+
+def test_posicion_sin_precio(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {})
+
+    main.atender(config, _mensaje("/posicion bitcion 1000 2% -10%"))
+
+    assert "No he podido consultar los precios" in enviados[0]
+
+
+def test_posicion_mal_escrito(config, enviados):
+    main.atender(config, _mensaje("/posicion 1000"))
+
+    assert "/posicion 1000 2% -10%" in enviados[0]
+
+
 def test_doble(con_cartera, enviados, monkeypatch):
     monkeypatch.setattr(
         coingecko, "get_prices", lambda ids, cur: {"bitcoin": 70000.0, "solana": 120.0}
