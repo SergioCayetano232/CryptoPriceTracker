@@ -30,6 +30,7 @@ from crypto_tracker import (
     aniversario,
     anual,
     apodo,
+    apy,
     arrepentido,
     ave,
     avisados,
@@ -1268,6 +1269,9 @@ def responder(
 
     if nombre == "plan":
         return _plan(config, argumento)
+
+    if nombre == "apy":
+        return _apy(config, argumento)
 
     if nombre == "meta":
         return _meta(config, argumento)
@@ -4089,6 +4093,38 @@ def _promediar(config: Config, argumento: str) -> str:
             "Apúntalo al comprar: /compra bitcoin 0.01 600"
         )
     return alerts.con_fuente(alerts.formatear_promediar(promedio, config.vs_currency))
+
+
+def _apy(config: Config, argumento: str) -> str:
+    try:
+        peticion = apy.interpretar(argumento)
+    except apy.ApyError as e:
+        return telegram.escape(str(e))
+
+    coin_id, cantidad = peticion.coin_id, peticion.cantidad
+    if cantidad is None:
+        tienes = [p for p in _con_cambios(config).cartera if p.coin_id == coin_id]
+        if not tienes or not tienes[0].cantidad:
+            return (
+                f"No tienes <b>{telegram.escape(coin_id)}</b> en la cartera. "
+                "Dime cuánta: /apy 2 eth 4%"
+            )
+        cantidad = tienes[0].cantidad
+
+    precio = _precio_o_pedirlo(config, coin_id)
+    if isinstance(precio, str):
+        return precio
+    unidad = simbolos.de_id(coin_id) or coin_id.replace("-", " ").title()
+    tramos = apy.calcular(cantidad, peticion.apy, peticion.años)
+    return alerts.formatear_apy(
+        unidad,
+        cantidad,
+        peticion.apy,
+        tramos,
+        precio,
+        config.vs_currency,
+        de_cartera=peticion.cantidad is None,
+    )
 
 
 def _plan(config: Config, argumento: str) -> str:

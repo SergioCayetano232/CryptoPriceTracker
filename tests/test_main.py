@@ -5507,6 +5507,38 @@ def test_plan_mal_escrito(config, enviados):
     assert "/plan 10000 50 semanal" in enviados[0]
 
 
+def test_apy_de_la_cartera(con_cartera, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"solana": 100.0})
+
+    main.atender(con_cartera, _mensaje("/apy sol 10% 1a"))
+
+    assert "🌱 <b>7 SOL al 10% al año</b> (lo de tu cartera)" in enviados[0]
+    assert "En 1 año: <b>7,7 SOL</b> (+0,7) · €770,00" in enviados[0]
+
+
+def test_apy_con_cantidad(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"ethereum": 2000.0})
+
+    main.atender(config, _mensaje("/interés 2 eth 4%"))
+
+    assert "🌱 <b>2 ETH al 4% al año</b>\n" in enviados[0]
+    assert "En 10 años" in enviados[0]
+
+
+def test_apy_sin_tenerla(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: pytest.fail())
+
+    main.atender(config, _mensaje("/apy eth 4%"))
+
+    assert "No tienes <b>ethereum</b> en la cartera" in enviados[0]
+
+
+def test_staking_sigue_siendo_recompensa():
+    from crypto_tracker import comandos
+
+    assert comandos.interpretar("/staking eth 0.02") == ("recompensa", "eth 0.02")
+
+
 def test_doble(con_cartera, enviados, monkeypatch):
     monkeypatch.setattr(
         coingecko, "get_prices", lambda ids, cur: {"bitcoin": 70000.0, "solana": 120.0}

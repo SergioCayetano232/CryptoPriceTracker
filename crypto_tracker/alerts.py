@@ -16,6 +16,7 @@ from .alquiler import Alquiler
 from .aniversario import MAX as MAX_ANIVERSARIOS
 from .aniversario import Aniversario
 from .anual import Año
+from .apy import Tramo
 from .arrepentido import Arrepentido
 from .ave import PRECIO as PRECIO_AVE
 from .ave import Ave
@@ -3866,6 +3867,47 @@ def formatear_plan(c: Camino, currency: str, hoy: date) -> str:
             "<i>Lo del % al año es suponer mucho: la cripto no va en línea recta</i>"
         )
     return "\n".join(texto)
+
+
+def formatear_apy(
+    unidad: str,
+    cantidad: float,
+    apy: float,
+    tramos: list[Tramo],
+    precio: float | None,
+    currency: str,
+    de_cartera: bool = False,
+) -> str:
+    """Respuesta de /apy. unidad es ETH, o el nombre si no tiene símbolo conocido."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    unidad = escape(unidad)
+    pct = f"{apy:g}".replace(".", ",")
+    tuyos = " (lo de tu cartera)" if de_cartera else ""
+    texto = [
+        f"🌱 <b>{texto_cantidad(cantidad)} {unidad} al {pct}% al año</b>{tuyos}",
+        "",
+    ]
+    for t in tramos:
+        años = "1 año" if t.años == 1 else f"{t.años} años"
+        linea = (
+            f"En {años}: <b>{_cifras(t.cantidad)} {unidad}</b> (+{_cifras(t.ganado)})"
+        )
+        if precio:
+            linea += f" · {simbolo}{_num(t.cantidad * precio)}"
+        texto.append(linea)
+
+    if precio:
+        texto.append(
+            f"\n<i>A {simbolo}{_num(precio)}, el precio de hoy. Lo que gana el "
+            "staking es en cripto: si el precio baja, puedes tener más y que "
+            "valga menos</i>"
+        )
+    return "\n".join(texto)
+
+
+def _cifras(cantidad: float) -> str:
+    # Con 8 decimales, 2,96048857 ETH; para hacerse una idea sobra con 6 cifras.
+    return texto_cantidad(float(f"{cantidad:.6g}"))
 
 
 def formatear_meta(m: Meta, currency: str) -> str:

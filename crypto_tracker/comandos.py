@@ -74,6 +74,7 @@ COMANDOS = {
     "objetivo": "Cuánto valdría tu cartera a ese precio (ej: /objetivo btc 100000)",
     "promediar": "Cuánto comprar para bajar tu precio medio (ej: /promediar btc 50000)",
     "posicion": "Cuánto meter según lo que aceptas perder (ej: /posicion 1000 2% -10%)",
+    "apy": "Cuánta cripto tendrías en staking a un % al año (ej: /apy eth 4%)",
     "plan": "Cuánto tardas en llegar a una cifra (ej: /plan 10000 50 semanal)",
     "meta": "Cuánto le falta a tu cartera para una cifra (ej: /meta 10000)",
     "equilibrio": "A qué precio dejas de perder con cada una de tu cartera",
@@ -214,6 +215,8 @@ ALIAS = {
     "promedio": "promediar",
     "tamano": "posicion",
     "ahorro": "plan",
+    "interes": "apy",
+    "interés": "apy",
     "tamaño": "posicion",
     "posición": "posicion",
     "maximo": "ath",
@@ -667,6 +670,11 @@ EJEMPLOS = {
         ("/posicion 1000 2% -10%", "con 1.000, perder como mucho un 2% si cae un 10%"),
         ("/posicion btc 1000 2% -10%", "lo mismo, en bitcoin y con el precio del stop"),
         ("/posicion btc 1000 2% 58000", "con la cripto, el stop puede ser un precio"),
+    ],
+    "apy": [
+        ("/apy eth 4%", "lo que tendrías de tu ethereum en 1, 3, 5 y 10 años"),
+        ("/apy 2 eth 4%", "con la cantidad que digas, aunque no la tengas"),
+        ("/apy eth 4% 5a", "solo a esos años"),
     ],
     "plan": [
         ("/plan 10000 50", "cuánto tardas en llegar a 10.000 metiendo 50 cada semana"),
