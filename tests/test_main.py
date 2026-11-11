@@ -5272,6 +5272,42 @@ def test_equilibrio_lleva_boton_de_actualizar(con_cartera, con_teclado, monkeypa
     assert con_teclado[0][1]["botones"] == [[("🔄 Actualizar", "/equilibrio")]]
 
 
+def test_promediar(con_cartera, enviados, monkeypatch):
+    pedidas = []
+
+    def precios(ids, cur):
+        pedidas.extend(ids)
+        return {"bitcoin": 40000.0}
+
+    monkeypatch.setattr(coingecko, "get_prices", precios)
+
+    main.atender(con_cartera, _mensaje("/promediar btc 50k"))
+
+    assert pedidas == ["bitcoin"]  # solo esa, no toda la cartera
+    assert "Compra <b>0,02 Bitcoin</b> por <b>€800,00</b>" in enviados[0]
+    assert "coingecko.com" in enviados[0]
+
+
+def test_promediar_sin_tenerla_no_consulta(con_cartera, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: pytest.fail())
+
+    main.atender(con_cartera, _mensaje("/promedio eth 2000"))
+
+    assert "No tienes <b>ethereum</b> en la cartera" in enviados[0]
+
+
+def test_promediar_mal_escrito(con_cartera, enviados):
+    main.atender(con_cartera, _mensaje("/promediar bitcoin"))
+
+    assert "/promediar bitcoin 50000" in enviados[0]
+
+
+def test_promediar_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/promediar btc 50000"))
+
+    assert enviados[0] == main.SIN_CARTERA
+
+
 def test_doble(con_cartera, enviados, monkeypatch):
     monkeypatch.setattr(
         coingecko, "get_prices", lambda ids, cur: {"bitcoin": 70000.0, "solana": 120.0}

@@ -147,6 +147,7 @@ from .pizza import BTC, Pizza
 from .ppt import EMOJIS as EMOJIS_PPT
 from .ppt import QUE_HACER as QUE_HACER_PPT
 from .primera import Primera
+from .promediar import Promedio
 from .ps5 import PRECIO as PRECIO_PS5
 from .ps5 import Ps5
 from .puntuales import CARTERA, Puntual, cumplidas, ejemplo, progreso
@@ -3687,6 +3688,35 @@ def formatear_objetivo(e: Escenario, currency: str) -> str:
         f"\n<i>Tus {texto_cantidad(e.cantidad)} {nombre} pasarían de "
         f"{simbolo}{_num(e.cantidad * e.precio)} a "
         f"{simbolo}{_num(e.cantidad * e.objetivo)}</i>"
+    )
+
+
+def formatear_promediar(p: Promedio, currency: str) -> str:
+    """Respuesta de /promediar."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(p.coin_id.replace("-", " ").title())
+    medio = f"{simbolo}{_num(p.medio)}"
+    objetivo = f"{simbolo}{_num(p.objetivo)}"
+    ahora = f"{simbolo}{_num(p.precio)}"
+
+    if p.ya_esta:
+        return (
+            f"🟢 <b>{nombre}</b> ya te sale a {medio}, que no pasa de {objetivo}. "
+            "No te hace falta comprar más."
+        )
+    if p.imposible:
+        return (
+            f"🔴 <b>{nombre}</b> está a {ahora}: comprando a ese precio, tu medio "
+            f"baja hacia ahí pero nunca de ahí. Pide uno entre {ahora} y {medio}."
+        )
+
+    despues = p.cantidad + p.comprar
+    return (
+        f"⚖️ <b>Para que {nombre} te salga a {objetivo}</b>\n\n"
+        f"Compra <b>{texto_cantidad(p.comprar)} {nombre}</b> por "
+        f"<b>{simbolo}{_num(p.dinero)}</b> al precio de ahora ({ahora})\n"
+        f"<i>Tienes {texto_cantidad(p.cantidad)} a {medio} de media; después "
+        f"tendrías {texto_cantidad(despues)} a {objetivo}. Sin comisiones.</i>"
     )
 
 

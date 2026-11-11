@@ -139,6 +139,7 @@ from crypto_tracker import (
     pizza,
     ppt,
     primera,
+    promediar,
     proximo,
     ps5,
     puntuales,
@@ -1163,6 +1164,9 @@ def responder(
 
     if nombre == "objetivo":
         return _objetivo(config, argumento)
+
+    if nombre == "promediar":
+        return _promediar(config, argumento)
 
     if nombre == "meta":
         return _meta(config, argumento)
@@ -3957,6 +3961,33 @@ def _objetivo(config: Config, argumento: str) -> str:
             "Ahora mismo no tengo el precio de todo lo que tienes. Prueba en un rato."
         )
     return alerts.con_fuente(alerts.formatear_objetivo(escenario, config.vs_currency))
+
+
+def _promediar(config: Config, argumento: str) -> str:
+    config = _con_cambios(config)
+    if not config.cartera:
+        return SIN_CARTERA
+    try:
+        coin_id, precio = promediar.interpretar(argumento)
+    except promediar.PromediarError as e:
+        return telegram.escape(str(e))
+    if coin_id not in {p.coin_id for p in config.cartera}:
+        return (
+            f"No tienes <b>{telegram.escape(coin_id)}</b> en la cartera. "
+            "Mira lo que tienes con /cartera"
+        )
+
+    precios = _consultar(config, [coin_id])
+    if not precios or coin_id not in precios:
+        return "No he podido consultar los precios. Prueba en un rato."
+    valor = cartera.de(list(config.cartera), coin_id, precios[coin_id])
+    promedio = promediar.calcular(valor, precio)
+    if promedio is None:
+        return (
+            f"No sé lo que te costó <b>{telegram.escape(coin_id)}</b>. "
+            "Apúntalo al comprar: /compra bitcoin 0.01 600"
+        )
+    return alerts.con_fuente(alerts.formatear_promediar(promedio, config.vs_currency))
 
 
 def _precios_alertas(
