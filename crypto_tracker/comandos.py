@@ -74,6 +74,7 @@ COMANDOS = {
     "objetivo": "Cuánto valdría tu cartera a ese precio (ej: /objetivo btc 100000)",
     "promediar": "Cuánto comprar para bajar tu precio medio (ej: /promediar btc 50000)",
     "posicion": "Cuánto meter según lo que aceptas perder (ej: /posicion 1000 2% -10%)",
+    "plan": "Cuánto tardas en llegar a una cifra (ej: /plan 10000 50 semanal)",
     "meta": "Cuánto le falta a tu cartera para una cifra (ej: /meta 10000)",
     "equilibrio": "A qué precio dejas de perder con cada una de tu cartera",
     "doble": "A qué precio doblas lo que metiste en cada una de tu cartera",
@@ -212,6 +213,7 @@ ALIAS = {
     "goal": "meta",
     "promedio": "promediar",
     "tamano": "posicion",
+    "ahorro": "plan",
     "tamaño": "posicion",
     "posición": "posicion",
     "maximo": "ath",
@@ -665,6 +667,11 @@ EJEMPLOS = {
         ("/posicion 1000 2% -10%", "con 1.000, perder como mucho un 2% si cae un 10%"),
         ("/posicion btc 1000 2% -10%", "lo mismo, en bitcoin y con el precio del stop"),
         ("/posicion btc 1000 2% 58000", "con la cripto, el stop puede ser un precio"),
+    ],
+    "plan": [
+        ("/plan 10000 50", "cuánto tardas en llegar a 10.000 metiendo 50 cada semana"),
+        ("/plan 10000 200 mensual", "también diario o mensual"),
+        ("/plan 10000 50 semanal 8%", "suponiendo que dé un 8% al año"),
     ],
     "meta": [
         ("/meta 10000", "cuánto le falta a tu cartera para llegar a 10.000"),

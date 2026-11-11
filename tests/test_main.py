@@ -5480,6 +5480,33 @@ def test_posicion_mal_escrito(config, enviados):
     assert "/posicion 1000 2% -10%" in enviados[0]
 
 
+def test_plan_sin_cartera_empieza_de_cero(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: pytest.fail())
+
+    main.atender(config, _mensaje("/plan 10000 50"))
+
+    assert "llegas en <b>3 años y 10 meses</b>" in enviados[0]
+    assert "cartera" not in enviados[0]
+
+
+def test_plan_cuenta_la_cartera(con_cartera, enviados, monkeypatch):
+    monkeypatch.setattr(
+        coingecko, "get_prices", lambda ids, cur: {"bitcoin": 50000.0, "solana": 0.0}
+    )
+
+    main.atender(con_cartera, _mensaje("/ahorro 10000 50"))
+
+    # 0,016 bitcoin a 50.000 son 800: faltan 9.200, 184 semanas.
+    assert "Habrás metido €9.200,00" in enviados[0]
+    assert "Contando los €800,00 que ya tienes en cartera" in enviados[0]
+
+
+def test_plan_mal_escrito(config, enviados):
+    main.atender(config, _mensaje("/plan 10000"))
+
+    assert "/plan 10000 50 semanal" in enviados[0]
+
+
 def test_doble(con_cartera, enviados, monkeypatch):
     monkeypatch.setattr(
         coingecko, "get_prices", lambda ids, cur: {"bitcoin": 70000.0, "solana": 120.0}

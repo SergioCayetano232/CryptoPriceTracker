@@ -140,6 +140,7 @@ from crypto_tracker import (
     periodo,
     piso,
     pizza,
+    plan,
     posicion,
     ppt,
     primera,
@@ -1264,6 +1265,9 @@ def responder(
 
     if nombre == "posicion":
         return _posicion(config, argumento)
+
+    if nombre == "plan":
+        return _plan(config, argumento)
 
     if nombre == "meta":
         return _meta(config, argumento)
@@ -4085,6 +4089,23 @@ def _promediar(config: Config, argumento: str) -> str:
             "Apúntalo al comprar: /compra bitcoin 0.01 600"
         )
     return alerts.con_fuente(alerts.formatear_promediar(promedio, config.vs_currency))
+
+
+def _plan(config: Config, argumento: str) -> str:
+    try:
+        peticion = plan.interpretar(argumento)
+    except plan.PlanError as e:
+        return telegram.escape(str(e))
+
+    # Sin cartera se empieza de cero, que también es un plan.
+    inicio = 0.0
+    if _con_cambios(config).cartera:
+        valor = _valor_guardado(config)
+        if isinstance(valor, str):
+            return valor
+        inicio = valor
+    camino = plan.calcular(peticion, inicio)
+    return alerts.formatear_plan(camino, config.vs_currency, date.today())
 
 
 def _posicion(config: Config, argumento: str) -> str:

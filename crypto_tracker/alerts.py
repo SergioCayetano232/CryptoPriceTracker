@@ -148,6 +148,10 @@ from .piso import METROS as METROS_PISO
 from .piso import PRECIO as PRECIO_PISO
 from .piso import Piso
 from .pizza import BTC, Pizza
+from .plan import MAX_AÑOS as MAX_AÑOS_PLAN
+from .plan import TEXTO as TEXTO_PLAN
+from .plan import Camino
+from .plan import cuanto as cuanto_plan
 from .posicion import Entrada
 from .ppt import EMOJIS as EMOJIS_PPT
 from .ppt import QUE_HACER as QUE_HACER_PPT
@@ -3821,6 +3825,46 @@ def formatear_posicion(e: Entrada, currency: str) -> str:
             f"<b>{simbolo}{_num(e.precio_stop)}</b>"
         )
     texto.append("<i>Sin contar comisiones ni que el stop salte algo más abajo</i>")
+    return "\n".join(texto)
+
+
+def formatear_plan(c: Camino, currency: str, hoy: date) -> str:
+    """Respuesta de /plan."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    p = c.peticion
+    meta = f"{simbolo}{_num(p.meta)}"
+    if c.veces == 0:
+        return f"🎉 Ya está: tu cartera vale {simbolo}{_num(c.inicio)}, más que {meta}"
+
+    aporte = f"{simbolo}{_num(p.aporte)} {TEXTO_PLAN[p.frecuencia]}"
+    anual = f"{p.anual:g}".replace(".", ",")
+    if c.veces is None:
+        texto = [f"🐌 Con {aporte} no llegas a {meta} ni en {MAX_AÑOS_PLAN} años"]
+        if p.anual < 0:
+            perdida = f"{-p.anual:g}".replace(".", ",")
+            texto.append(f"Perdiendo un {perdida}% al año, se come lo que metes")
+        else:
+            texto.append("Mete algo más o apunta a una cifra más baja")
+        return "\n".join(texto)
+
+    fecha = c.fecha(hoy)
+    texto = [
+        f"🗓️ <b>Hacia {meta}</b>",
+        "",
+        f"Metiendo {aporte}, llegas en <b>{cuanto_plan(c.dias)}</b>, "
+        f"hacia {MESES[fecha.month - 1]} de {fecha.year}",
+    ]
+    linea = f"Habrás metido {simbolo}{_num(c.metido)}"
+    if p.anual and abs(c.intereses) >= 0.01:
+        signo = "pone" if c.intereses > 0 else "quita"
+        linea += f" y el {anual}% al año {signo} {simbolo}{_num(abs(c.intereses))}"
+    texto.append(linea)
+    if c.inicio:
+        texto.append(f"Contando los {simbolo}{_num(c.inicio)} que ya tienes en cartera")
+    if p.anual:
+        texto.append(
+            "<i>Lo del % al año es suponer mucho: la cripto no va en línea recta</i>"
+        )
     return "\n".join(texto)
 
 
