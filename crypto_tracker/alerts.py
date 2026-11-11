@@ -55,6 +55,7 @@ from .corregir import CANTIDAD, Correccion
 from .correlacion import Correlacion
 from .croquetas import PRECIO as PRECIO_CROQUETAS
 from .croquetas import Croquetas
+from .cruce import ARRIBA, CORTA, LARGA, Cruce
 from .cuando import Cuando
 from .cumple import Cumple
 from .dado import CARAS
@@ -956,6 +957,28 @@ def formatear_aviso_rsi(coin_id: str, r: Rsi, currency: str) -> str:
             f"RSI de {PERIODO} días: <b>{r.valor:.0f}</b>. {detalle}",
             f"Ahora {simbolo}{_num(r.ahora)}",
             f"El detalle, en /rsi {escape(coin_id)}",
+        ]
+    )
+
+
+def formatear_cruce(c: Cruce, currency: str) -> str:
+    """El aviso de AVISO_CRUCE."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(c.coin_id.replace("-", " ").title())
+    if c.lado == ARRIBA:
+        cabecera = f"🌟 <b>Cruz dorada en {nombre}</b>"
+        detalle = f"La media de {CORTA} días pasa por encima de la de {LARGA}"
+        lectura = "Suele leerse como que empieza una racha buena"
+    else:
+        cabecera = f"☠️ <b>Cruz de la muerte en {nombre}</b>"
+        detalle = f"La media de {CORTA} días pasa por debajo de la de {LARGA}"
+        lectura = "Suele leerse como que empieza una racha mala"
+    return "\n".join(
+        [
+            cabecera,
+            f"{detalle}: {simbolo}{_num(c.corta)} contra {simbolo}{_num(c.larga)}",
+            f"Ahora {simbolo}{_num(c.ahora)}",
+            f"<i>{lectura}, pero llega tarde y falla a menudo</i>",
         ]
     )
 

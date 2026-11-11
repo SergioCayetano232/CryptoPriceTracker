@@ -8848,6 +8848,79 @@ def test_sin_aviso_rsi_no_avisa(config, enviados, monkeypatch):
     assert _avisos_rsi(enviados) == []
 
 
+@pytest.fixture
+def con_cruce(config):
+    from dataclasses import replace
+
+    # 160 días a 100 y los 50 últimos a 110: la de 50 queda por encima de la de 200.
+    for dias in range(1, 211):
+        _precio_de(config, "bitcoin", 110.0 if dias <= 50 else 100.0, dias * 24 * 60)
+    return replace(config, aviso_cruce=True)
+
+
+def _avisos_cruce(enviados):
+    return [t for t in enviados if "Cruz" in t]
+
+
+def test_cruce_avisa_una_vez(con_cruce, enviados, monkeypatch):
+    database.guardar_lado_cruce(con_cruce.database_path, "bitcoin", "abajo")
+    _precio(monkeypatch, {"bitcoin": 110.0})
+
+    main.ejecutar_ciclo(con_cruce, {})
+    main.ejecutar_ciclo(con_cruce, {})
+
+    [aviso] = _avisos_cruce(enviados)
+    assert "🌟 <b>Cruz dorada en Bitcoin</b>" in aviso
+    assert database.lado_cruce(con_cruce.database_path, "bitcoin") == "arriba"
+
+
+def test_cruce_la_primera_vez_no_avisa(con_cruce, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 110.0})
+
+    main.ejecutar_ciclo(con_cruce, {})
+
+    assert _avisos_cruce(enviados) == []
+    assert database.lado_cruce(con_cruce.database_path, "bitcoin") == "arriba"
+
+
+def test_cruce_si_falla_telegram_lo_reintenta(con_cruce, enviados, monkeypatch):
+    database.guardar_lado_cruce(con_cruce.database_path, "bitcoin", "abajo")
+    _precio(monkeypatch, {"bitcoin": 110.0})
+    monkeypatch.setattr(telegram, "send_message", lambda *a, **k: False)
+
+    main.ejecutar_ciclo(con_cruce, {})
+
+    assert database.lado_cruce(con_cruce.database_path, "bitcoin") == "abajo"
+
+
+def test_cruce_callada_espera(con_cruce, enviados, monkeypatch):
+    database.guardar_lado_cruce(con_cruce.database_path, "bitcoin", "abajo")
+    _precio(monkeypatch, {"bitcoin": 110.0})
+    database.callar_cripto(
+        con_cruce.database_path,
+        "bitcoin",
+        datetime.now(timezone.utc) + timedelta(hours=1),
+    )
+
+    main.ejecutar_ciclo(con_cruce, {})
+    assert _avisos_cruce(enviados) == []
+
+    database.callar_cripto(con_cruce.database_path, "bitcoin", None)
+    main.ejecutar_ciclo(con_cruce, {})
+    assert len(_avisos_cruce(enviados)) == 1
+
+
+def test_sin_aviso_cruce_no_avisa(con_cruce, enviados, monkeypatch):
+    from dataclasses import replace
+
+    database.guardar_lado_cruce(con_cruce.database_path, "bitcoin", "abajo")
+    _precio(monkeypatch, {"bitcoin": 110.0})
+
+    main.ejecutar_ciclo(replace(con_cruce, aviso_cruce=False), {})
+
+    assert _avisos_cruce(enviados) == []
+
+
 def _guardar_en(config, coin_id, precio, cuando):
     import sqlite3
 

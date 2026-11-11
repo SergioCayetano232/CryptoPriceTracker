@@ -291,6 +291,31 @@ def test_extremos_mas_largos_que_el_historico(monkeypatch):
         load_config()
 
 
+def test_cruce_sin_historico_bastante(monkeypatch):
+    from crypto_tracker.config import load_config
+
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "x")
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "1")
+    monkeypatch.setenv("WATCHLIST", "bitcoin:%5")
+    monkeypatch.setenv("HISTORY_DAYS", "90")
+    monkeypatch.setenv("AVISO_CRUCE", "si")
+
+    with pytest.raises(ConfigError, match="AVISO_CRUCE"):
+        load_config()
+
+
+def test_cruce_con_historico_bastante(monkeypatch):
+    from crypto_tracker.config import load_config
+
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "x")
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "1")
+    monkeypatch.setenv("WATCHLIST", "bitcoin:%5")
+    monkeypatch.setenv("HISTORY_DAYS", "366")
+    monkeypatch.setenv("AVISO_CRUCE", "si")
+
+    assert load_config().aviso_cruce is True
+
+
 # --- horas tranquilas ---
 
 

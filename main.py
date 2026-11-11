@@ -69,6 +69,7 @@ from crypto_tracker import (
     corregir,
     correlacion,
     croquetas,
+    cruce,
     cuando,
     cumple,
     cuota,
@@ -319,6 +320,7 @@ def ejecutar_ciclo(
     revisar_bajon(config, valor, calladas)
     revisar_concentracion(config, precios, calladas)
     revisar_rsi(config, vigiladas, calladas)
+    revisar_cruces(config, vigiladas, calladas)
     revisar_estables(config, list(precios), calladas)
     if calladas:
         avisos = [a for a in avisos if a.coin_id not in calladas]
@@ -714,6 +716,53 @@ def revisar_estables(config: Config, coin_ids: list[str], calladas: set[str]) ->
             database.guardar_estable(config.database_path, d.coin_id, fuera)
         except database.DatabaseError as e:
             logger.error("No se pudo apuntar el aviso de %s: %s", d.simbolo, e)
+
+
+def revisar_cruces(
+    config: Config, vigiladas: dict[str, float], calladas: set[str]
+) -> None:
+    """Avisa cuando la media de 50 días de una que vigilas cruza la de 200."""
+    if not config.aviso_cruce or _silenciado(config):
+        return
+
+    ahora = datetime.now(timezone.utc)
+    for coin_id, precio in vigiladas.items():
+        if coin_id in calladas:
+            continue
+        try:
+            serie = database.get_serie(
+                config.database_path, coin_id, cruce.HORAS, config.vs_currency
+            )
+            avisado = database.lado_cruce(config.database_path, coin_id)
+        except database.DatabaseError as e:
+            logger.error("No se pudo mirar el cruce de %s: %s", coin_id, e)
+            continue
+
+        # El de ahora al final por si no se pudo guardar.
+        dias = volatilidad.por_dias([*serie, (ahora, precio)])
+        c = cruce.calcular(coin_id, dias, precio)
+        if c is None:
+            continue
+
+        if cruce.toca(c, avisado):
+            if not telegram.send_message(
+                config.telegram_token,
+                config.telegram_chat_id,
+                alerts.formatear_cruce(c, config.vs_currency),
+                sin_sonido=_sin_sonido(config),
+            ):
+                # Sin apuntarlo, lo vuelve a intentar el siguiente ciclo.
+                logger.error("No se pudo avisar del cruce de %s", coin_id)
+                continue
+            logger.info("Cruce de medias: %s %s", coin_id, c.lado)
+
+        nuevo = cruce.apuntar(c, avisado)
+        if nuevo is None or nuevo == avisado:
+            continue
+        try:
+            database.guardar_lado_cruce(config.database_path, coin_id, nuevo)
+        except database.DatabaseError as e:
+            logger.error("No se pudo apuntar el cruce de %s: %s", coin_id, e)
 
 
 def revisar_rsi(

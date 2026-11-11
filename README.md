@@ -578,6 +578,19 @@ mientras siga por ahí; para volver a avisar tiene que bajar de 65 o subir de 35
 Necesita 15 días seguidos guardados de esa cripto y se calla con
 `/mute bitcoin`.
 
+**Enterarte de una cruz dorada o de la muerte:**
+
+```
+AVISO_CRUCE=si
+HISTORY_DAYS=366
+```
+Te avisa cuando la media de 50 días de una que vigilas pasa por encima de la de
+200 (🌟 cruz dorada) o por debajo (☠️ cruz de la muerte). Para que no salte y
+vuelva a saltar el mismo día cuando van casi iguales, tienen que separarse un
+0,5 %. La primera vez que mira solo apunta dónde está, que eso no es un cruce.
+Necesita 200 días guardados: con `HISTORY_DAYS` más corto no arranca, y con
+`/rellenar btc` no tienes que esperar. Se calla con `/mute bitcoin`.
+
 **Enterarte si una estable se sale de su dólar:**
 
 No hay que poner nada. Si tienes o vigilas USDT, USDC o DAI (`tether`,
@@ -700,6 +713,7 @@ Todo lo que va haciendo queda apuntado en `data/tracker.log`.
 | `CAIDA_CARTERA` | Aviso si la cartera cae ese % desde su récord (`20%`). Vacío, sin aviso | vacío |
 | `CONCENTRACION` | Aviso si una sola cripto pasa de ese % de la cartera (`70%`, entre 50 y 100). Vacío, sin aviso | vacío |
 | `AVISO_RSI` | Con `si`, aviso al entrar en sobrecompra o sobreventa. Vacío, sin aviso | vacío |
+| `AVISO_CRUCE` | Con `si`, aviso cuando la media de 50 días cruza la de 200. Necesita `HISTORY_DAYS` de 200 o más. Vacío, sin aviso | vacío |
 | `COPIA_SEMANAL` | Con `si`, te manda la base de datos cada 7 días. Vacío, sin copia | vacío |
 
 No bajes mucho `CHECK_INTERVAL`. La clave gratuita de CoinGecko da 10.000
@@ -886,6 +900,7 @@ crypto_tracker/
   avisados.py    el último aviso de cada una, para /ultimo
   avisorsi.py    cuándo avisar de sobrecompra o sobreventa
   estables.py    cuándo una estable se sale de su dólar
+  cruce.py       la cruz dorada y la de la muerte
   redondo.py     la siguiente cifra redonda, para /redondo
   rsi.py         el RSI de 14 días, para /rsi
   caida.py       lo que ha bajado desde el máximo, para /caida

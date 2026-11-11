@@ -631,6 +631,23 @@ def guardar_estable(db_path: str, coin_id: str, fuera: bool) -> None:
         )
 
 
+def lado_cruce(db_path: str, coin_id: str) -> str | None:
+    """Dónde estaba la media de 50 la última vez. Sin fila, aún no se ha mirado."""
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT valor FROM ajustes WHERE clave = ?", (f"cruce:{coin_id}",)
+        ).fetchone()
+    return fila["valor"] if fila else None
+
+
+def guardar_lado_cruce(db_path: str, coin_id: str, lado: str) -> None:
+    with _connect(db_path) as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (f"cruce:{coin_id}", lado),
+        )
+
+
 def zona_rsi(db_path: str, coin_id: str) -> str | None:
     """La zona de la que ya se avisó. Sin fila, de ninguna."""
     with _connect(db_path) as conn:

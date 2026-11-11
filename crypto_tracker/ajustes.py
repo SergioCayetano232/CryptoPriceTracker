@@ -52,6 +52,11 @@ def lineas(config: Config) -> list[str]:
     else:
         texto.append("🔥 Sin aviso de RSI")
 
+    if config.aviso_cruce:
+        texto.append("🌟 Aviso de cruz dorada y de la muerte")
+    else:
+        texto.append("🌟 Sin aviso de cruce de medias")
+
     if config.copia_semanal:
         texto.append("📦 Copia de seguridad cada semana")
     else:

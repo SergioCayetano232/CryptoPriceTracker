@@ -7,6 +7,7 @@ from datetime import datetime, time, timedelta
 
 from dotenv import load_dotenv
 
+from .cruce import LARGA
 from .rsi import PERIODO
 
 # Carga el .env en las variables de entorno. Si no existe no pasa nada,
@@ -67,6 +68,7 @@ class Config:
     # None = sin aviso de cuando una cripto pasa de ese % de la cartera
     concentracion: float | None = None
     aviso_rsi: bool = False
+    aviso_cruce: bool = False
     copia_semanal: bool = False
 
 
@@ -432,6 +434,10 @@ def parse_aviso_rsi(raw: str) -> bool:
     return _si_o_no(raw, "AVISO_RSI")
 
 
+def parse_aviso_cruce(raw: str) -> bool:
+    return _si_o_no(raw, "AVISO_CRUCE")
+
+
 def parse_copia_semanal(raw: str) -> bool:
     return _si_o_no(raw, "COPIA_SEMANAL")
 
@@ -476,6 +482,14 @@ def load_config() -> Config:
             f"HISTORY_DAYS es {history_days}. Sube HISTORY_DAYS."
         )
 
+    aviso_cruce = parse_aviso_cruce(os.getenv("AVISO_CRUCE", ""))
+    # Con los 90 que vienen por defecto la de 200 no saldría nunca.
+    if aviso_cruce and history_days and history_days < LARGA:
+        raise ConfigError(
+            f"AVISO_CRUCE necesita al menos {LARGA} dias guardados y "
+            f"HISTORY_DAYS es {history_days}. Sube HISTORY_DAYS."
+        )
+
     return Config(
         telegram_token=_require("TELEGRAM_BOT_TOKEN"),
         telegram_chat_id=_require("TELEGRAM_CHAT_ID"),
@@ -494,5 +508,6 @@ def load_config() -> Config:
         caida_cartera=parse_caida_cartera(os.getenv("CAIDA_CARTERA", "")),
         concentracion=parse_concentracion(os.getenv("CONCENTRACION", "")),
         aviso_rsi=aviso_rsi,
+        aviso_cruce=aviso_cruce,
         copia_semanal=parse_copia_semanal(os.getenv("COPIA_SEMANAL", "")),
     )
