@@ -4241,6 +4241,25 @@ def _precio_de(config, coin_id, precio, minutos):
     conn.close()
 
 
+def test_bollinger(config, enviados):
+    for dias in range(1, 25):
+        _precio_de(config, "bitcoin", 95.0 if dias % 2 else 105.0, dias * 24 * 60)
+    _precio_de(config, "bitcoin", 130.0, 5)
+
+    main.atender(config, _mensaje("/bandas"))
+
+    assert "📏 <b>Bitcoin</b>: bandas de Bollinger de 20 días" in enviados[0]
+    assert "por encima de la banda alta" in enviados[0]
+
+
+def test_bollinger_pocos_dias(config, enviados):
+    _precio_de(config, "bitcoin", 100.0, 60)
+
+    main.atender(config, _mensaje("/bollinger btc"))
+
+    assert "Necesito 20 días seguidos de precios de <b>bitcoin</b>" in enviados[0]
+
+
 def test_soporte(config, enviados):
     precios = [100, 95, 90, 95, 100, 105, 110, 105, 100, 95, 91, 95, 100, 105, 109, 104]
     for i, precio in enumerate(precios):

@@ -63,6 +63,7 @@ COMANDOS = {
     "cuando": "La última vez que estuvo a un precio (ej: /cuando btc 60000)",
     "redondo": "Cuánto le falta para la siguiente cifra redonda (ej: /redondo btc)",
     "rsi": "Si ha subido o bajado demasiado rápido (ej: /rsi btc)",
+    "bollinger": "Si se ha salido de su banda normal (ej: /bollinger btc)",
     "caida": "Cuánto ha bajado desde el máximo (ej: /caida btc 30d)",
     "sube": "Cuánto ha subido desde el mínimo (ej: /sube btc 30d)",
     "volatilidad": "Cuánto se mueve, para elegir el % (ej: /volatilidad btc 30d)",
@@ -243,6 +244,7 @@ ALIAS = {
     "peor": "extremo",
     "drawdown": "caida",
     "sobrecompra": "rsi",
+    "bandas": "bollinger",
     "cuándo": "cuando",
     "when": "cuando",
     "día": "dia",
@@ -668,6 +670,10 @@ EJEMPLOS = {
         ("/dia bitcoin 01/09", "cómo cerró ese día, con su máximo y su mínimo"),
         ("/dia bitcoin ayer", "también hoy, ayer y anteayer"),
         ("/dia 01/09/2025", "con año; sin cripto, la primera que vigilo"),
+    ],
+    "bollinger": [
+        ("/bollinger bitcoin", "si está dentro de su banda de 20 días o se ha salido"),
+        ("/bollinger", "a secas, la primera que vigilo"),
     ],
     "rsi": [
         ("/rsi bitcoin", "el RSI de 14 días: por encima de 70 sobrecomprada"),

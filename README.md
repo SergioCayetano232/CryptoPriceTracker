@@ -240,6 +240,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/cuando bitcoin 60000` | La última vez que estuvo a ese precio (o más abajo, si ahora está por encima), hace cuánto y lo que ha cambiado desde entonces. Vale `60k`. Sale de lo guardado y no gasta consultas |
 | `/redondo bitcoin` | Cuánto le falta para la siguiente cifra redonda por arriba y por abajo (de 64.000 a 70.000 y a 60.000). A secas, las que vigilas. Sale de lo guardado y no gasta consultas |
 | `/rsi bitcoin` | Su RSI de 14 días: por encima de 70 ha subido demasiado rápido (sobrecomprada) y por debajo de 30 ha bajado demasiado (sobrevendida). Necesita 15 días seguidos guardados y no gasta consultas |
+| `/bollinger bitcoin` | Sus bandas de Bollinger: la media de 20 días y dos veces lo que se suele separar de ella, por arriba y por abajo. Te dice si el precio está dentro, por encima (muy estirada) o por debajo (muy aplastada), con una barrita de dónde está, y si la banda está de las más estrechas de lo guardado, que suele ir antes de un movimiento fuerte. Necesita 20 días seguidos guardados y no gasta consultas. También `/bandas` |
 | `/caida bitcoin 30d` | Cuánto ha bajado desde el máximo del tramo y cuál fue su peor caída, de qué precio a cuál y cuánto tardó en volver (sin tramo, 30 días). Con `/caida cartera`, lo mismo con lo que vale tu cartera entera. Sale de lo guardado y no gasta consultas |
 | `/sube bitcoin 30d` | Lo contrario: cuánto ha subido desde el mínimo del tramo y cuál fue su mejor subida, de qué precio a cuál (sin tramo, 30 días). También con `/minimo`. Sale de lo guardado y no gasta consultas |
 | `/comparar btc eth sol 7d` | Qué tal le ha ido a cada una en ese tramo, de la mejor a la peor (sin tramo, 7 días; sin criptos, las que vigilas) |
@@ -932,6 +933,7 @@ crypto_tracker/
   volumen.py     cuándo se negocia mucho más de lo normal, para AVISO_VOLUMEN
   redondo.py     la siguiente cifra redonda, para /redondo
   rsi.py         el RSI de 14 días, para /rsi
+  bollinger.py   las bandas de 20 días, para /bollinger
   caida.py       lo que ha bajado desde el máximo, para /caida
   sube.py        lo que ha subido desde el mínimo, para /sube
   periodo.py     lee tramos como 7d

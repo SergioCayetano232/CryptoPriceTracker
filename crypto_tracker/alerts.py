@@ -28,6 +28,8 @@ from .bigmac import PRECIO as PRECIO_BIGMAC
 from .bigmac import BigMac
 from .boda import PRECIO as PRECIO_BODA
 from .boda import Boda
+from .bollinger import PERIODO as PERIODO_BOLLINGER
+from .bollinger import Bandas
 from .cafe import PRECIO as PRECIO_CAFE
 from .cafe import Cafe
 from .caida import Caida
@@ -3813,6 +3815,49 @@ def _redondo_alerta(precio: float) -> str:
     # Tres cifras: 62.345,70 se escribe 62300, que es como lo pondría uno.
     redondo = round(precio, 2 - math.floor(math.log10(precio)))
     return f"{redondo:f}".rstrip("0").rstrip(".")
+
+
+def formatear_bollinger(coin_id: str, b: Bandas, currency: str) -> str:
+    """Respuesta de /bollinger."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(coin_id.replace("-", " ").title())
+    ancho = f"{b.ancho:.1f}".replace(".", ",")
+    texto = [
+        f"📏 <b>{nombre}</b>: bandas de Bollinger de {PERIODO_BOLLINGER} días",
+        "",
+        f"Banda alta: {simbolo}{_num(b.alta)}",
+        f"Media: {simbolo}{_num(b.media)}",
+        f"Banda baja: {simbolo}{_num(b.baja)}",
+        "",
+    ]
+    ahora = f"Está a <b>{simbolo}{_num(b.ahora)}</b>"
+    if b.zona == "encima":
+        texto.append(
+            f"🔥 {ahora}, por encima de la banda alta: muy estirada. Suele "
+            "volver hacia la media, aunque en una subida fuerte puede seguir ahí"
+        )
+    elif b.zona == "debajo":
+        texto.append(
+            f"🧊 {ahora}, por debajo de la banda baja: muy aplastada. Suele "
+            "rebotar hacia la media, aunque en una caída fuerte puede seguir ahí"
+        )
+    else:
+        punto = min(max(b.posicion, 0), 100)
+        texto.append(f"{ahora}, dentro de la banda")
+        texto.append(f"baja {barra(punto)} alta")
+
+    texto.append(f"\nDe una banda a otra hay un {ancho}%")
+    if b.estrecha:
+        texto.append(
+            "🤏 La banda está de las más estrechas de lo que tengo guardado: "
+            "cuando se aprieta así, suele venir un movimiento fuerte, sin saber "
+            "hacia dónde"
+        )
+    texto.append(
+        f"<i>La media de {PERIODO_BOLLINGER} días y dos veces lo que se suele "
+        "separar de ella, por arriba y por abajo. Sale de lo guardado</i>"
+    )
+    return "\n".join(texto)
 
 
 def _pct2(valor: float) -> str:
