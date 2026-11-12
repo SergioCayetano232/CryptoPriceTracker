@@ -81,6 +81,7 @@ from crypto_tracker import (
     dca,
     deposito,
     dia,
+    diames,
     diario,
     diasemana,
     doble,
@@ -1484,6 +1485,9 @@ def responder(
 
     if nombre == "extremo":
         return _extremo(config, argumento)
+
+    if nombre == "diames":
+        return _diames(config, argumento)
 
     if nombre == "diasemana":
         return _diasemana(config, argumento)
@@ -3059,6 +3063,30 @@ def _diasemana(config: Config, argumento: str) -> str:
 
     falta = periodo.falta_principio(serie[0][0], datetime.now(timezone.utc), horas)
     return alerts.formatear_diasemana(coin_id, resultado, horas, falta)
+
+
+def _diames(config: Config, argumento: str) -> str:
+    try:
+        coin_id, horas = diames.interpretar(argumento)
+    except periodo.PeriodoError as e:
+        return telegram.escape(str(e))
+    if not coin_id:
+        vigiladas = _con_cambios(config).watchlist
+        if not vigiladas:
+            return f"¿De cuál? Por ejemplo: {diames.EJEMPLO}"
+        coin_id = vigiladas[0].coin_id
+
+    serie = database.get_serie(config.database_path, coin_id, horas, config.vs_currency)
+    resultado = diames.calcular(volatilidad.por_dias(serie))
+    if resultado is None:
+        return (
+            f"No tengo un mes seguido de precios de <b>{telegram.escape(coin_id)}</b> "
+            f"({periodo.nombre(horas)}). Con /rellenar {telegram.escape(coin_id)} "
+            "bajo los que faltan"
+        )
+
+    falta = periodo.falta_principio(serie[0][0], datetime.now(timezone.utc), horas)
+    return alerts.formatear_diames(coin_id, resultado, falta)
 
 
 def _horas(config: Config, argumento: str) -> str:

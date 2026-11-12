@@ -55,6 +55,7 @@ COMANDOS = {
     "calendario": "El mes día a día, en verde o en rojo (ej: /calendario btc)",
     "verdes": "Cuántos días ha subido y cuántos ha bajado (ej: /verdes btc 30d)",
     "diasemana": "Qué día de la semana suele subir más (ej: /diasemana btc 90d)",
+    "diames": "Qué día del mes suele salir más barato (ej: /diames btc)",
     "horas": "A qué hora suele estar más barata (ej: /horas btc 30d)",
     "rango": "Entre qué precios se ha movido y dónde está hoy (ej: /rango btc 30d)",
     "dia": "A cuánto estaba un día concreto (ej: /dia btc 01/09 o ayer)",
@@ -262,6 +263,7 @@ ALIAS = {
     "today": "hoy",
     "hours": "horas",
     "weekday": "diasemana",
+    "diadelmes": "diames",
     "breakeven": "equilibrio",
     "x2": "doble",
     "first": "primera",
@@ -602,6 +604,11 @@ EJEMPLOS = {
         ("/verdes bitcoin", "cuántos días subió y cuántos bajó en 30 días"),
         ("/verdes bitcoin 7d", "del tramo que digas"),
         ("/verdes", "a secas, la primera que vigilo"),
+    ],
+    "diames": [
+        ("/diames bitcoin", "qué día del mes ha salido más barata en el último año"),
+        ("/diames bitcoin 180d", "del tramo que digas"),
+        ("/diames", "a secas, la primera que vigilo"),
     ],
     "diasemana": [
         ("/diasemana bitcoin", "lo que cambia de media cada día en 90 días"),

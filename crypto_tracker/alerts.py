@@ -64,6 +64,8 @@ from .dado import CARAS
 from .dado import QUE_HACER as QUE_HACER_DADO
 from .deposito import Contra as ContraDeposito
 from .dia import Dia
+from .diames import POCOS_MESES as POCOS_MESES_DIAMES
+from .diames import DiasMes
 from .diasemana import NOMBRES, DiasSemana
 from .doble import Cartera as CarteraDoble
 from .emoji import cara as cara_emoji
@@ -3718,6 +3720,57 @@ def formatear_diasemana(
     if incompleto:
         texto += f"\n<i>Solo tengo precios desde el {s.desde:%d/%m}.</i>"
     return texto
+
+
+def formatear_diames(
+    coin_id: str,
+    d: DiasMes,
+    incompleto: bool = False,
+    hoy: date | None = None,
+) -> str:
+    """Respuesta de /diames. incompleto si no hay precios de todo el tramo."""
+    nombre = escape(coin_id.replace("-", " ").title())
+    meses = "1 mes" if d.meses == 1 else f"{d.meses} meses"
+    barato, caro = d.barato, d.caro
+    texto = [
+        f"📆 <b>{nombre}</b> por días del mes, con {meses}",
+        "",
+        f"🟢 Más barata, el día <b>{barato.dia}</b> ({_pct2(barato.media)})",
+        f"🔴 Más cara, el día <b>{caro.dia}</b> ({_pct2(caro.media)})",
+        "",
+    ]
+    tercios = d.tercios()
+    mejor = min(tercios, key=lambda t: t[1])[0]
+    for tramo, media in tercios:
+        marca = " ← el mejor para comprar" if tramo == mejor else ""
+        texto.append(f"{tramo}: <b>{_pct2(media)}</b>{marca}")
+
+    dia = (hoy or date.today()).day
+    de_hoy = d.de(dia)
+    if de_hoy:
+        if de_hoy == barato:
+            texto.append(f"\nHoy es día {dia}: suele ser su día más barato")
+        elif de_hoy == caro:
+            texto.append(f"\nHoy es día {dia}: suele ser su día más caro")
+        else:
+            texto.append(f"\nHoy es día {dia}: suele estar {_pct2(de_hoy.media)}")
+
+    texto.append(
+        "<i>Cada día contra la media de las dos semanas de antes y de después. "
+        "Sirve para elegir el día de una compra mensual, no para adivinar</i>"
+    )
+    if d.meses < POCOS_MESES_DIAMES:
+        texto.append(
+            f"<i>Con menos de {POCOS_MESES_DIAMES} meses es casi azar. Con "
+            "HISTORY_DAYS=366 y /rellenar tienes el año entero</i>"
+        )
+    if incompleto:
+        texto.append(f"<i>Solo tengo precios desde el {d.desde:%d/%m/%Y}.</i>")
+    return "\n".join(texto)
+
+
+def _pct2(valor: float) -> str:
+    return f"{valor:+.2f}%".replace(".", ",")
 
 
 def formatear_horas(

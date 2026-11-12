@@ -4241,6 +4241,35 @@ def _precio_de(config, coin_id, precio, minutos):
     conn.close()
 
 
+def test_diames(config, enviados):
+    from datetime import timedelta
+
+    for dias in range(1, 80):
+        cuando = datetime.now(timezone.utc) - timedelta(days=dias)
+        precio = 90.0 if cuando.astimezone().day == 15 else 100.0
+        _precio_de(config, "bitcoin", precio, dias * 24 * 60)
+
+    main.atender(config, _mensaje("/diames"))
+
+    assert "📆 <b>Bitcoin</b> por días del mes" in enviados[0]
+    assert "🟢 Más barata, el día <b>15</b>" in enviados[0]
+    assert "← el mejor para comprar" in enviados[0]
+
+
+def test_diames_sin_meses_enteros(config, enviados):
+    _precio_de(config, "bitcoin", 100.0, 60)
+
+    main.atender(config, _mensaje("/diames btc"))
+
+    assert "No tengo un mes seguido de precios de <b>bitcoin</b>" in enviados[0]
+
+
+def test_diames_mal_escrito(config, enviados):
+    main.atender(config, _mensaje("/diames btc eth"))
+
+    assert "/diames bitcoin 365d" in enviados[0]
+
+
 def test_comparar(config, enviados, monkeypatch):
     monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
     for coin_id, antes, ahora in [

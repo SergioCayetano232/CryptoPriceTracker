@@ -232,6 +232,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/verdes bitcoin 30d` | Cuántos días subió y cuántos bajó en ese tramo, qué parte fue en verde y cómo fueron los últimos 7 en cuadraditos 🟩🟥 (sin tramo, 30 días). Sale de lo guardado y no gasta consultas |
 | `/calendario btc` | Una imagen del mes con cada día en verde o en rojo, más fuerte cuanto más se movió, y su %. Debajo, cuántos días subió y bajó, el mejor, el peor y el total del mes. Con `/calendario btc octubre`, un mes pasado. No gasta consultas |
 | `/diasemana bitcoin 90d` | Lo que sube o baja de media cada día de la semana, cuál suele ser el mejor y el peor, y cómo suele ir el de hoy (sin tramo, 90 días). Sale de lo guardado y no gasta consultas |
+| `/diames bitcoin` | Qué día del mes ha salido más barata y cuál más cara, comparando cada día con la media de las dos semanas de antes y de después (así una subida de fondo no hace que el día 1 salga siempre el más barato), y si sale mejor comprar a principio, a mitad o a final de mes. Para elegir el día de una compra mensual. Sin tramo, el último año; necesita al menos un mes seguido guardado. Con `HISTORY_DAYS=90`, que es lo que viene, solo hay tres meses: pon `366` o usa `/rellenar`. Sale de lo guardado y no gasta consultas |
 | `/horas bitcoin 30d` | A qué hora del día suele estar más barata y a cuál más cara, comparando cada hora con la media de su día, con una barrita de las 24 horas y cómo suele estar a la hora de ahora (sin tramo, 30 días). Solo cuenta los días que tiene casi enteros. Sale de lo guardado y no gasta consultas |
 | `/rango bitcoin 30d` | Su máximo y su mínimo en ese tramo con hace cuánto fueron, su media y en qué punto del rango está hoy (sin tramo, 7 días). Sale de lo guardado y no gasta consultas |
 | `/dia bitcoin 01/09` | Qué día de la semana fue, a cuánto cerró, su máximo y su mínimo, y cuánto ha cambiado desde entonces. Vale `ayer` y con año (`01/09/2025`). Sale de lo guardado y no gasta consultas |
@@ -916,6 +917,7 @@ crypto_tracker/
   verdes.py      los días que sube y los que baja, para /verdes
   mejor.py       el mejor y el peor día, para /extremo
   diasemana.py   lo que cambia cada día de la semana, para /diasemana
+  diames.py      qué día del mes sale más barato, para /diames
   horas.py       la hora más barata y la más cara, para /horas
   reparto.py     qué parte de la cartera es cada una, para /reparto
   rango.py       el máximo, el mínimo y la media de /rango
