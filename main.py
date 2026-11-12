@@ -96,6 +96,7 @@ from crypto_tracker import (
     fifo,
     frase,
     futbol,
+    futuro,
     galleta,
     ganancias,
     gasolina,
@@ -1514,6 +1515,9 @@ def responder(
 
     if nombre == "mitad":
         return _mitad(config)
+
+    if nombre == "futuro":
+        return _futuro(config, argumento)
 
     if nombre == "bollinger":
         return _bollinger(config, argumento)
@@ -3294,6 +3298,33 @@ def _rsi(config: Config, argumento: str) -> str:
             "vigilo, y desde que las vigilo: míralas con /vigilar"
         )
     return alerts.formatear_rsi(coin_id, resultado, config.vs_currency)
+
+
+def _futuro(config: Config, argumento: str) -> str:
+    try:
+        dias = futuro.interpretar(argumento)
+    except futuro.FuturoError as e:
+        return telegram.escape(str(e))
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+
+    posiciones = list(_con_cambios(config).cartera)
+    filas = database.get_series(
+        config.database_path,
+        [p.coin_id for p in posiciones],
+        futuro.HORAS,
+        config.vs_currency,
+    )
+    serie = cartera.serie_valor(posiciones, filas)
+    resultado = futuro.calcular(valor, volatilidad.por_dias(serie), dias)
+    if resultado is None:
+        return (
+            f"Necesito {futuro.MIN_CAMBIOS + 1} días seguidos con el precio de todo "
+            "lo que tienes para saber cuánto se mueve tu cartera. Con /rellenar "
+            "bajo los que faltan"
+        )
+    return alerts.formatear_futuro(resultado, config.vs_currency)
 
 
 def _bollinger(config: Config, argumento: str) -> str:

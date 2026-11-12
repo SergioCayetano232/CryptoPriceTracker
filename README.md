@@ -177,6 +177,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/reparto` | Qué parte de tu cartera es cada cripto, con una imagen de barras. Si tienes más de 6, las pequeñas van juntas en "Otras" |
 | `/rebalanceo btc 60 eth 40` | Qué comprar y qué vender, en dinero y en cantidad, para dejar tu cartera con ese reparto. Lo que tienes y no nombras, a venderlo entero. A secas, a partes iguales entre lo que tienes. Al precio de ahora y sin comisiones. También `/rebalancear` |
 | `/riesgo` | Cuánto pesa tu cripto más grande y lo que caería la cartera si esa cae un 20%, a cuántas criptos a partes iguales equivale tu reparto, cuánto se mueve la cartera al día en los últimos 30 días (en % y en dinero), su peor día, si se mueve más o menos que bitcoin, y un nivel: bajo, medio o alto |
+| `/futuro 30d` | Entre qué cifras puede estar tu cartera dentro de esos días: dónde cae 2 de cada 3 veces y dónde 9 de cada 10, según cuánto se ha movido en los últimos 90 días con lo que tienes hoy. No es una predicción: no dice si sube o baja, solo cuánto suele moverse. Sin tramo, 30 días; hasta 365. Necesita 15 días seguidos guardados. También `/proyeccion` |
 | `/semana` | El resumen de tu semana sin esperar al domingo. No gasta consultas |
 | `/semana bitcoin` | La semana de una sola: lo mismo que `/historico bitcoin 7d` |
 | `/mes` | Cómo va tu cartera desde el día 1 del mes, con gráfica, no en los últimos 30 días como `/cartera 30d`. No gasta consultas. También `/mensual` |
@@ -934,6 +935,7 @@ crypto_tracker/
   redondo.py     la siguiente cifra redonda, para /redondo
   rsi.py         el RSI de 14 días, para /rsi
   bollinger.py   las bandas de 20 días, para /bollinger
+  futuro.py      entre qué cifras puede estar tu cartera, para /futuro
   caida.py       lo que ha bajado desde el máximo, para /caida
   sube.py        lo que ha subido desde el mínimo, para /sube
   periodo.py     lee tramos como 7d

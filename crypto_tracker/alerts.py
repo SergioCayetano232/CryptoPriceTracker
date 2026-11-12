@@ -78,6 +78,7 @@ from .ethereum import Ethereum
 from .frase import Frase
 from .futbol import PRECIO as PRECIO_FUTBOL
 from .futbol import Futbol
+from .futuro import Futuro
 from .galleta import Galleta
 from .ganancias import Ganancias
 from .gasolina import DEPOSITO, Gasolina
@@ -3858,6 +3859,31 @@ def formatear_bollinger(coin_id: str, b: Bandas, currency: str) -> str:
         "separar de ella, por arriba y por abajo. Sale de lo guardado</i>"
     )
     return "\n".join(texto)
+
+
+def formatear_futuro(f: Futuro, currency: str) -> str:
+    """Respuesta de /futuro."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    cuando = "mañana" if f.dias == 1 else f"dentro de {f.dias} días"
+
+    def entre(rango: tuple[float, float]) -> str:
+        return f"entre {simbolo}{_num(rango[0])} y {simbolo}{_num(rango[1])}"
+
+    al_dia = f"{f.al_dia:.1f}".replace(".", ",")
+    return "\n".join(
+        [
+            f"🔮 <b>Tu cartera {cuando}</b>",
+            f"Hoy vale <b>{simbolo}{_num(f.valor)}</b>",
+            "",
+            f"🎯 2 de cada 3 veces: {entre(f.probable)}",
+            f"🛟 9 de cada 10: {entre(f.casi_seguro)}",
+            "",
+            f"<i>Según lo que se ha movido en los últimos {f.contados} días, un "
+            f"{al_dia}% al día, con lo que tienes hoy. No es una predicción: no "
+            "dice si sube o baja, solo cuánto suele moverse. Un desplome de los "
+            "gordos se sale de aquí</i>",
+        ]
+    )
 
 
 def _pct2(valor: float) -> str:

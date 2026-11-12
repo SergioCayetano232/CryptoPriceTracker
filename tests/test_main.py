@@ -4241,6 +4241,35 @@ def _precio_de(config, coin_id, precio, minutos):
     conn.close()
 
 
+def test_futuro(con_cartera, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    for dias in range(1, 30):
+        bitcoin = 70000.0 if dias % 2 else 71400.0
+        _precio_de(con_cartera, "bitcoin", bitcoin, dias * 24 * 60)
+        _precio_de(con_cartera, "solana", 120.0, dias * 24 * 60)
+    _precio_de(con_cartera, "bitcoin", 70000.0, 5)
+    _precio_de(con_cartera, "solana", 120.0, 5)
+
+    main.atender(con_cartera, _mensaje("/futuro 7d"))
+
+    assert "🔮 <b>Tu cartera dentro de 7 días</b>" in enviados[0]
+    assert "2 de cada 3 veces: entre" in enviados[0]
+
+
+def test_futuro_sin_historia(con_cartera, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 70000.0, "solana": 120.0})
+
+    main.atender(con_cartera, _mensaje("/proyeccion"))
+
+    assert "Necesito 15 días seguidos" in enviados[0]
+
+
+def test_futuro_mal_escrito(config, enviados):
+    main.atender(config, _mensaje("/futuro mañana"))
+
+    assert "Dime de 1 a 365 días" in enviados[0]
+
+
 def test_bollinger(config, enviados):
     for dias in range(1, 25):
         _precio_de(config, "bitcoin", 95.0 if dias % 2 else 105.0, dias * 24 * 60)

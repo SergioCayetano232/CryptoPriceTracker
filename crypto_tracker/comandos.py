@@ -17,6 +17,7 @@ COMANDOS = {
     "cartera": "Cuánto vale lo que tienes, con gráfica (ej: /cartera 30d)",
     "reparto": "Qué parte de tu cartera es cada cripto, con gráfica",
     "riesgo": "Cuánto depende tu cartera de una cripto y cuánto se mueve",
+    "futuro": "Entre qué cifras puede estar tu cartera (ej: /futuro 30d)",
     "rebalanceo": "Qué mover para un reparto (ej: /rebalanceo btc 60 eth 40)",
     "semana": "Cómo le ha ido a tu cartera esta semana, o a una (ej: /semana btc)",
     "mes": "Cómo va tu cartera desde el día 1 del mes",
@@ -245,6 +246,8 @@ ALIAS = {
     "drawdown": "caida",
     "sobrecompra": "rsi",
     "bandas": "bollinger",
+    "proyeccion": "futuro",
+    "proyección": "futuro",
     "cuándo": "cuando",
     "when": "cuando",
     "día": "dia",
@@ -670,6 +673,10 @@ EJEMPLOS = {
         ("/dia bitcoin 01/09", "cómo cerró ese día, con su máximo y su mínimo"),
         ("/dia bitcoin ayer", "también hoy, ayer y anteayer"),
         ("/dia 01/09/2025", "con año; sin cripto, la primera que vigilo"),
+    ],
+    "futuro": [
+        ("/futuro", "entre qué cifras puede estar tu cartera dentro de 30 días"),
+        ("/futuro 90d", "de 1 a 365 días"),
     ],
     "bollinger": [
         ("/bollinger bitcoin", "si está dentro de su banda de 20 días o se ha salido"),
