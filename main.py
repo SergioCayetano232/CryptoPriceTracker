@@ -190,6 +190,7 @@ from crypto_tracker import (
     videojuego,
     vigiladas,
     volatilidad,
+    volumen,
     vsbtc,
     vuelo,
     whitepaper,
@@ -278,7 +279,12 @@ def ejecutar_ciclo(
 
     # Guardar no es critico: si falla el disco, aun queremos avisar.
     try:
-        database.save_prices(config.database_path, precios, config.vs_currency)
+        database.save_prices(
+            config.database_path,
+            precios,
+            config.vs_currency,
+            coingecko.volumenes(list(precios)),
+        )
     except database.DatabaseError as e:
         logger.error("No se pudo guardar en la base de datos: %s", e)
 
@@ -327,6 +333,7 @@ def ejecutar_ciclo(
     revisar_rsi(config, vigiladas, calladas)
     revisar_cruces(config, vigiladas, calladas)
     revisar_estables(config, list(precios), calladas)
+    revisar_volumen(config, vigiladas, calladas)
     if calladas:
         avisos = [a for a in avisos if a.coin_id not in calladas]
         hechas = [p for p in hechas if p.coin_id not in calladas]
@@ -721,6 +728,54 @@ def revisar_estables(config: Config, coin_ids: list[str], calladas: set[str]) ->
             database.guardar_estable(config.database_path, d.coin_id, fuera)
         except database.DatabaseError as e:
             logger.error("No se pudo apuntar el aviso de %s: %s", d.simbolo, e)
+
+
+def revisar_volumen(
+    config: Config, vigiladas: dict[str, float], calladas: set[str]
+) -> None:
+    """Avisa una vez cuando una que vigilas mueve el triple de lo normal."""
+    if not config.aviso_volumen or _silenciado(config):
+        return
+
+    ahora = datetime.now(timezone.utc)
+    for coin_id, actual in coingecko.volumenes(list(vigiladas)).items():
+        if coin_id in calladas:
+            continue
+        try:
+            serie = database.get_volumenes(
+                config.database_path, coin_id, volumen.HORAS, config.vs_currency
+            )
+            avisado = database.volumen_avisado(config.database_path, coin_id)
+        except database.DatabaseError as e:
+            logger.error("No se pudo mirar el volumen de %s: %s", coin_id, e)
+            continue
+
+        normal = volumen.normal(serie, ahora)
+        if normal is None:
+            continue
+        v = volumen.Volumen(
+            coin_id, actual, normal, vigiladas[coin_id], coingecko.cambio_24h(coin_id)
+        )
+
+        if volumen.toca(v, avisado):
+            if not telegram.send_message(
+                config.telegram_token,
+                config.telegram_chat_id,
+                alerts.formatear_volumen(v, config.vs_currency),
+                sin_sonido=_sin_sonido(config),
+            ):
+                # Sin apuntarlo, lo vuelve a intentar el siguiente ciclo.
+                logger.error("No se pudo avisar del volumen de %s", coin_id)
+                continue
+            logger.info("Volumen raro en %s: %.1f veces", coin_id, v.veces)
+
+        nuevo = volumen.sigue(v, avisado)
+        if nuevo == avisado:
+            continue
+        try:
+            database.guardar_volumen_avisado(config.database_path, coin_id, nuevo)
+        except database.DatabaseError as e:
+            logger.error("No se pudo apuntar el volumen de %s: %s", coin_id, e)
 
 
 def revisar_cruces(

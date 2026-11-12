@@ -213,6 +213,7 @@ from .verdes import Verdes
 from .version import Version
 from .videojuego import PRECIO as PRECIO_VIDEOJUEGO
 from .videojuego import Videojuego
+from .volumen import Volumen
 from .vsbtc import Contra
 from .vuelo import PRECIO as PRECIO_VUELO
 from .vuelo import Vuelo
@@ -1440,6 +1441,23 @@ def formatear_estable(d: Desvio, vuelve: bool = False) -> str:
         f"Está a <b>{precio}</b>, un <b>{d.porcentaje:+.2f}%</b>. Una estable "
         "no debería moverse así: mira qué pasa antes de dejar dinero ahí\n"
         "<i>Te aviso otra vez cuando vuelva</i>"
+    )
+
+
+def formatear_volumen(v: Volumen, currency: str) -> str:
+    """Aviso de que una que vigilas mueve mucho más volumen de lo normal."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(v.coin_id.replace("-", " ").title())
+    veces = f"{v.veces:.1f}".replace(".", ",")
+    precio = f"Está a {simbolo}{_num(v.precio)}"
+    if v.cambio is not None:
+        cambio = f"{v.cambio:+.1f}".replace(".", ",")
+        precio += f" ({_flecha(v.cambio)} {cambio}% en 24 h)"
+    return (
+        f"📢 <b>{nombre} mueve mucho más de lo normal</b>\n"
+        f"{simbolo}{grande(v.actual)} negociados en 24 h, {veces} veces lo normal\n"
+        f"{precio}\n"
+        "<i>Suele haber noticia detrás. No repito hasta que se calme</i>"
     )
 
 

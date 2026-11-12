@@ -36,6 +36,8 @@ _hechas = 0
 # Variacion en 24 h de cada cripto segun CoinGecko, de la ultima consulta en
 # que salio. Va en la misma peticion que el precio, asi que no gasta cuota.
 _cambios: dict[str, float] = {}
+# Lo negociado en 24 h, igual: viene en la misma peticion.
+_volumenes: dict[str, float] = {}
 
 # Lo que valen las estables en dólares, para ver si se salen de su dólar.
 _usd: dict[str, float] = {}
@@ -153,6 +155,11 @@ def cambio_24h(coin_id: str) -> float | None:
     return _cambios.get(coin_id)
 
 
+def volumenes(coin_ids: list[str]) -> dict[str, float]:
+    """Lo negociado en 24 h de las que vinieron en la ultima consulta."""
+    return {c: _volumenes[c] for c in coin_ids if c in _volumenes}
+
+
 def precio_usd(coin_id: str) -> float | None:
     """Lo que vale en dólares segun la ultima consulta. Solo de las estables."""
     return _usd.get(coin_id)
@@ -195,6 +202,7 @@ def _pedir_precios(coin_ids: list[str], vs_currency: str) -> dict[str, float]:
         "ids": ",".join(coin_ids),
         "vs_currencies": monedas,
         "include_24hr_change": "true",
+        "include_24hr_vol": "true",
     }
     data = _pedir(API_URL, params)
     _leer_usd(data, coin_ids)
@@ -297,6 +305,12 @@ def _extract_prices(
             _cambios[coin_id] = float(cambio)
         else:
             _cambios.pop(coin_id, None)
+
+        volumen = entry.get(f"{vs_currency}_24h_vol")
+        if isinstance(volumen, (int, float)) and math.isfinite(volumen) and volumen > 0:
+            _volumenes[coin_id] = float(volumen)
+        else:
+            _volumenes.pop(coin_id, None)
 
     faltan = [c for c in coin_ids if c not in prices]
     if faltan:

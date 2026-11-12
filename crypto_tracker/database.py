@@ -22,7 +22,8 @@ CREATE TABLE IF NOT EXISTS prices (
     coin_id    TEXT    NOT NULL,
     price      REAL    NOT NULL,
     currency   TEXT    NOT NULL,
-    created_at TEXT    NOT NULL
+    created_at TEXT    NOT NULL,
+    volume     REAL
 );
 
 CREATE INDEX IF NOT EXISTS idx_prices_coin_fecha
@@ -157,6 +158,7 @@ COLUMNAS_NUEVAS = [
     ("alertas_puntuales", "caduca_at", "TEXT"),
     ("alertas_puntuales", "nota", "TEXT"),
     ("movimientos", "nota", "TEXT"),
+    ("prices", "volume", "REAL"),
 ]
 
 
@@ -168,19 +170,28 @@ def _columnas_nuevas(conn: sqlite3.Connection) -> None:
             logger.info("Añadida la columna %s a %s", columna, tabla)
 
 
-def save_prices(db_path: str, prices: dict[str, float], currency: str) -> int:
+def save_prices(
+    db_path: str,
+    prices: dict[str, float],
+    currency: str,
+    volumenes: dict[str, float] | None = None,
+) -> int:
     """Guarda una tanda de precios. Devuelve cuantas filas metio."""
     if not prices:
         return 0
 
     # Misma marca de tiempo para toda la tanda: son de la misma consulta.
     ahora = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    filas = [(coin_id, precio, currency, ahora) for coin_id, precio in prices.items()]
+    volumenes = volumenes or {}
+    filas = [
+        (coin_id, precio, currency, ahora, volumenes.get(coin_id))
+        for coin_id, precio in prices.items()
+    ]
 
     with _connect(db_path) as conn:
         conn.executemany(
-            "INSERT INTO prices (coin_id, price, currency, created_at) "
-            "VALUES (?, ?, ?, ?)",
+            "INSERT INTO prices (coin_id, price, currency, created_at, volume) "
+            "VALUES (?, ?, ?, ?, ?)",
             filas,
         )
 
@@ -313,6 +324,25 @@ def get_serie(
         ).fetchall()
 
     return [(datetime.fromisoformat(f["created_at"]), f["price"]) for f in filas]
+
+
+def get_volumenes(
+    db_path: str, coin_id: str, horas: float, currency: str
+) -> list[tuple[datetime, float]]:
+    """Como get_serie, con lo negociado en 24 h. Lo de antes de guardarlo no sale."""
+    desde = (datetime.now(timezone.utc) - timedelta(hours=horas)).isoformat(
+        timespec="seconds"
+    )
+
+    with _connect(db_path) as conn:
+        filas = conn.execute(
+            "SELECT created_at, volume FROM prices WHERE coin_id = ? "
+            "AND currency = ? AND created_at >= ? AND volume IS NOT NULL "
+            "ORDER BY created_at, id",
+            (coin_id, currency, desde),
+        ).fetchall()
+
+    return [(datetime.fromisoformat(f["created_at"]), f["volume"]) for f in filas]
 
 
 def get_series(
@@ -686,6 +716,25 @@ def guardar_zona_rsi(db_path: str, coin_id: str, zona: str | None) -> None:
         conn.execute(
             "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
             (f"rsi:{coin_id}", zona),
+        )
+
+
+def volumen_avisado(db_path: str, coin_id: str) -> bool:
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT 1 FROM ajustes WHERE clave = ?", (f"volumen:{coin_id}",)
+        ).fetchone()
+    return fila is not None
+
+
+def guardar_volumen_avisado(db_path: str, coin_id: str, avisado: bool) -> None:
+    with _connect(db_path) as conn:
+        if not avisado:
+            conn.execute("DELETE FROM ajustes WHERE clave = ?", (f"volumen:{coin_id}",))
+            return
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, '1')",
+            (f"volumen:{coin_id}",),
         )
 
 

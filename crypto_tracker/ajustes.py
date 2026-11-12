@@ -57,6 +57,11 @@ def lineas(config: Config) -> list[str]:
     else:
         texto.append("🌟 Sin aviso de cruce de medias")
 
+    if config.aviso_volumen:
+        texto.append("📢 Aviso si el volumen pasa del triple de lo normal")
+    else:
+        texto.append("📢 Sin aviso de volumen")
+
     if config.copia_semanal:
         texto.append("📦 Copia de seguridad cada semana")
     else:

@@ -610,6 +610,59 @@ def test_puntual_con_caducidad_va_y_vuelve(db):
     assert database.get_puntuales(db, "eur")[0].caduca == caduca
 
 
+def test_volumenes(db):
+    database.save_prices(
+        db, {"bitcoin": 63000.0, "solana": 150.0}, "eur", {"bitcoin": 3e10}
+    )
+    database.save_prices(db, {"bitcoin": 64000.0}, "eur")
+
+    serie = database.get_volumenes(db, "bitcoin", 1, "eur")
+
+    assert [v for _, v in serie] == [3e10]
+    assert database.get_volumenes(db, "solana", 1, "eur") == []
+    assert database.get_volumenes(db, "bitcoin", 1, "usd") == []
+
+
+def test_volumen_avisado_va_y_vuelve(db):
+    assert database.volumen_avisado(db, "bitcoin") is False
+
+    database.guardar_volumen_avisado(db, "bitcoin", True)
+    assert database.volumen_avisado(db, "bitcoin") is True
+    assert database.volumen_avisado(db, "solana") is False
+
+    database.guardar_volumen_avisado(db, "bitcoin", False)
+    assert database.volumen_avisado(db, "bitcoin") is False
+
+
+def test_base_de_datos_vieja_gana_el_volumen_sin_perder_precios(tmp_path):
+    import sqlite3
+
+    ruta = str(tmp_path / "vieja.db")
+    conn = sqlite3.connect(ruta)
+    conn.execute(
+        "CREATE TABLE prices (id INTEGER PRIMARY KEY AUTOINCREMENT, coin_id TEXT "
+        "NOT NULL, price REAL NOT NULL, currency TEXT NOT NULL, created_at TEXT "
+        "NOT NULL)"
+    )
+    hace_una_hora = datetime.now(timezone.utc) - timedelta(hours=1)
+    conn.execute(
+        "INSERT INTO prices (coin_id, price, currency, created_at) "
+        "VALUES ('bitcoin', 63000, 'eur', ?)",
+        (hace_una_hora.isoformat(timespec="seconds"),),
+    )
+    conn.commit()
+    conn.close()
+
+    database.init_db(ruta)
+    database.save_prices(ruta, {"bitcoin": 64000.0}, "eur", {"bitcoin": 3e10})
+
+    assert [p for _, p in database.get_serie(ruta, "bitcoin", 2, "eur")] == [
+        63000.0,
+        64000.0,
+    ]
+    assert [v for _, v in database.get_volumenes(ruta, "bitcoin", 2, "eur")] == [3e10]
+
+
 def test_base_de_datos_vieja_gana_la_columna_sin_perder_alertas(tmp_path):
     import sqlite3
 

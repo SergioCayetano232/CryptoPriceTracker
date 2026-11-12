@@ -316,6 +316,30 @@ def test_cruce_con_historico_bastante(monkeypatch):
     assert load_config().aviso_cruce is True
 
 
+def test_volumen_con_poco_historico(monkeypatch):
+    from crypto_tracker.config import load_config
+
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "x")
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "1")
+    monkeypatch.setenv("WATCHLIST", "bitcoin:%5")
+    monkeypatch.setenv("HISTORY_DAYS", "5")
+    monkeypatch.setenv("AVISO_VOLUMEN", "si")
+
+    with pytest.raises(ConfigError, match="AVISO_VOLUMEN"):
+        load_config()
+
+
+def test_volumen_puesto(monkeypatch):
+    from crypto_tracker.config import load_config
+
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "x")
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "1")
+    monkeypatch.setenv("WATCHLIST", "bitcoin:%5")
+    monkeypatch.setenv("AVISO_VOLUMEN", "si")
+
+    assert load_config().aviso_volumen is True
+
+
 # --- horas tranquilas ---
 
 

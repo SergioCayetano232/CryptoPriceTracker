@@ -13,6 +13,7 @@ def sin_esperas(monkeypatch):
     # que la variacion de un test no se cuele en el siguiente
     monkeypatch.setattr(coingecko, "_cambios", {})
     monkeypatch.setattr(coingecko, "_usd", {})
+    monkeypatch.setattr(coingecko, "_volumenes", {})
 
 
 class RespuestaFalsa:
@@ -449,6 +450,36 @@ def test_si_deja_de_venir_se_olvida_la_vieja(monkeypatch):
     coingecko.get_prices(["bitcoin"], "eur")
 
     assert coingecko.cambio_24h("bitcoin") is None
+
+
+def test_volumen_en_la_misma_peticion(monkeypatch):
+    pedido = {}
+
+    def get(url, params=None, headers=None, timeout=None):
+        pedido.update(params)
+        return RespuestaFalsa({"bitcoin": {"eur": 63000.0, "eur_24h_vol": 3.2e10}})
+
+    monkeypatch.setattr(requests, "get", get)
+
+    coingecko.get_prices(["bitcoin"], "eur")
+
+    assert pedido["include_24hr_vol"] == "true"
+    assert coingecko.volumenes(["bitcoin", "solana"]) == {"bitcoin": 3.2e10}
+
+
+def test_volumen_que_deja_de_venir(monkeypatch):
+    respuestas = [
+        {"bitcoin": {"eur": 63000.0, "eur_24h_vol": 3.2e10}},
+        {"bitcoin": {"eur": 64000.0, "eur_24h_vol": None}},
+    ]
+    monkeypatch.setattr(
+        requests, "get", lambda *a, **k: RespuestaFalsa(respuestas.pop(0))
+    )
+
+    coingecko.get_prices(["bitcoin"], "eur")
+    coingecko.get_prices(["bitcoin"], "eur")
+
+    assert coingecko.volumenes(["bitcoin"]) == {}
 
 
 def test_maximos(monkeypatch):

@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 
 from .cruce import LARGA
 from .rsi import PERIODO
+from .volumen import MIN_DIAS as MIN_DIAS_VOLUMEN
 
 # Carga el .env en las variables de entorno. Si no existe no pasa nada,
 # se usaran las variables del sistema (util para Docker o servidores).
@@ -69,6 +70,7 @@ class Config:
     concentracion: float | None = None
     aviso_rsi: bool = False
     aviso_cruce: bool = False
+    aviso_volumen: bool = False
     copia_semanal: bool = False
 
 
@@ -438,6 +440,10 @@ def parse_aviso_cruce(raw: str) -> bool:
     return _si_o_no(raw, "AVISO_CRUCE")
 
 
+def parse_aviso_volumen(raw: str) -> bool:
+    return _si_o_no(raw, "AVISO_VOLUMEN")
+
+
 def parse_copia_semanal(raw: str) -> bool:
     return _si_o_no(raw, "COPIA_SEMANAL")
 
@@ -490,6 +496,13 @@ def load_config() -> Config:
             f"HISTORY_DAYS es {history_days}. Sube HISTORY_DAYS."
         )
 
+    aviso_volumen = parse_aviso_volumen(os.getenv("AVISO_VOLUMEN", ""))
+    if aviso_volumen and history_days and history_days <= MIN_DIAS_VOLUMEN:
+        raise ConfigError(
+            f"AVISO_VOLUMEN necesita al menos {MIN_DIAS_VOLUMEN + 1} dias guardados "
+            f"y HISTORY_DAYS es {history_days}. Sube HISTORY_DAYS."
+        )
+
     return Config(
         telegram_token=_require("TELEGRAM_BOT_TOKEN"),
         telegram_chat_id=_require("TELEGRAM_CHAT_ID"),
@@ -509,5 +522,6 @@ def load_config() -> Config:
         concentracion=parse_concentracion(os.getenv("CONCENTRACION", "")),
         aviso_rsi=aviso_rsi,
         aviso_cruce=aviso_cruce,
+        aviso_volumen=aviso_volumen,
         copia_semanal=parse_copia_semanal(os.getenv("COPIA_SEMANAL", "")),
     )

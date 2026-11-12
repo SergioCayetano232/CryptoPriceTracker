@@ -596,6 +596,17 @@ vuelva a saltar el mismo día cuando van casi iguales, tienen que separarse un
 Necesita 200 días guardados: con `HISTORY_DAYS` más corto no arranca, y con
 `/rellenar btc` no tienes que esperar. Se calla con `/mute bitcoin`.
 
+**Enterarte cuando una cripto se mueve más de lo normal:**
+
+```
+AVISO_VOLUMEN=si
+```
+Te avisa una vez cuando lo negociado en 24 h de una que vigilas pasa del triple
+de lo normal (la mediana de sus últimos 30 días), que suele ser que hay noticia
+detrás. No repite hasta que baje del doble. El volumen viene en la misma
+consulta que el precio, así que no gasta más. Necesita una semana guardando
+volumen: `/rellenar` no lo baja. Se calla con `/mute bitcoin`.
+
 **Enterarte si una estable se sale de su dólar:**
 
 No hay que poner nada. Si tienes o vigilas USDT, USDC o DAI (`tether`,
@@ -719,6 +730,7 @@ Todo lo que va haciendo queda apuntado en `data/tracker.log`.
 | `CONCENTRACION` | Aviso si una sola cripto pasa de ese % de la cartera (`70%`, entre 50 y 100). Vacío, sin aviso | vacío |
 | `AVISO_RSI` | Con `si`, aviso al entrar en sobrecompra o sobreventa. Vacío, sin aviso | vacío |
 | `AVISO_CRUCE` | Con `si`, aviso cuando la media de 50 días cruza la de 200. Necesita `HISTORY_DAYS` de 200 o más. Vacío, sin aviso | vacío |
+| `AVISO_VOLUMEN` | Con `si`, aviso cuando el volumen de 24 h pasa del triple de lo normal. Vacío, sin aviso | vacío |
 | `COPIA_SEMANAL` | Con `si`, te manda la base de datos cada 7 días. Vacío, sin copia | vacío |
 
 No bajes mucho `CHECK_INTERVAL`. La clave gratuita de CoinGecko da 10.000
@@ -911,6 +923,7 @@ crypto_tracker/
   avisorsi.py    cuándo avisar de sobrecompra o sobreventa
   estables.py    cuándo una estable se sale de su dólar
   cruce.py       la cruz dorada y la de la muerte
+  volumen.py     cuándo se negocia mucho más de lo normal, para AVISO_VOLUMEN
   redondo.py     la siguiente cifra redonda, para /redondo
   rsi.py         el RSI de 14 días, para /rsi
   caida.py       lo que ha bajado desde el máximo, para /caida

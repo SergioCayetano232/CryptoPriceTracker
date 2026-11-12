@@ -9097,6 +9097,118 @@ def test_sin_aviso_cruce_no_avisa(con_cruce, enviados, monkeypatch):
     assert _avisos_cruce(enviados) == []
 
 
+@pytest.fixture
+def con_volumen(config):
+    from dataclasses import replace
+
+    for horas in range(12, 12 * 24, 12):
+        hace = datetime.now(timezone.utc) - timedelta(hours=horas)
+        _volumen_hace(config, 1e10, hace)
+    return replace(config, aviso_volumen=True)
+
+
+def _volumen_hace(config, volumen, cuando):
+    import sqlite3
+
+    conn = sqlite3.connect(config.database_path)
+    conn.execute(
+        "INSERT INTO prices (coin_id, price, currency, created_at, volume) "
+        "VALUES ('bitcoin', 100, 'eur', ?, ?)",
+        (cuando.isoformat(timespec="seconds"), volumen),
+    )
+    conn.commit()
+    conn.close()
+
+
+def _con_volumen_de(monkeypatch, volumen):
+    _precio(monkeypatch, {"bitcoin": 110.0})
+    monkeypatch.setattr(coingecko, "volumenes", lambda ids: {"bitcoin": volumen})
+
+
+def _avisos_volumen(enviados):
+    return [t for t in enviados if "más de lo normal" in t]
+
+
+def test_volumen_avisa_una_vez(con_volumen, enviados, monkeypatch):
+    _con_volumen_de(monkeypatch, 4e10)
+
+    main.ejecutar_ciclo(con_volumen, {})
+    main.ejecutar_ciclo(con_volumen, {})
+
+    [aviso] = _avisos_volumen(enviados)
+    assert "📢 <b>Bitcoin mueve mucho más de lo normal</b>" in aviso
+    assert "4,0 veces lo normal" in aviso
+    assert database.volumen_avisado(con_volumen.database_path, "bitcoin")
+
+
+def test_volumen_guarda_lo_de_cada_consulta(con_volumen, enviados, monkeypatch):
+    _con_volumen_de(monkeypatch, 1.2e10)
+
+    main.ejecutar_ciclo(con_volumen, {})
+
+    serie = database.get_volumenes(con_volumen.database_path, "bitcoin", 1, "eur")
+    assert [v for _, v in serie] == [1.2e10]
+    assert _avisos_volumen(enviados) == []
+
+
+def test_volumen_al_calmarse_vuelve_a_avisar(con_volumen, enviados, monkeypatch):
+    database.guardar_volumen_avisado(con_volumen.database_path, "bitcoin", True)
+    _con_volumen_de(monkeypatch, 2.5e10)
+    main.ejecutar_ciclo(con_volumen, {})
+    assert database.volumen_avisado(con_volumen.database_path, "bitcoin")
+
+    _con_volumen_de(monkeypatch, 1.5e10)
+    main.ejecutar_ciclo(con_volumen, {})
+    assert not database.volumen_avisado(con_volumen.database_path, "bitcoin")
+
+    _con_volumen_de(monkeypatch, 3.5e10)
+    main.ejecutar_ciclo(con_volumen, {})
+    assert len(_avisos_volumen(enviados)) == 1
+
+
+def test_volumen_con_poca_historia_no_avisa(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    _volumen_hace(config, 1e10, datetime.now(timezone.utc) - timedelta(days=2))
+    _con_volumen_de(monkeypatch, 9e10)
+
+    main.ejecutar_ciclo(replace(config, aviso_volumen=True), {})
+
+    assert _avisos_volumen(enviados) == []
+
+
+def test_volumen_si_falla_telegram_lo_reintenta(con_volumen, enviados, monkeypatch):
+    _con_volumen_de(monkeypatch, 4e10)
+    monkeypatch.setattr(telegram, "send_message", lambda *a, **k: False)
+
+    main.ejecutar_ciclo(con_volumen, {})
+
+    assert not database.volumen_avisado(con_volumen.database_path, "bitcoin")
+
+
+def test_volumen_callada_espera(con_volumen, enviados, monkeypatch):
+    _con_volumen_de(monkeypatch, 4e10)
+    database.callar_cripto(
+        con_volumen.database_path,
+        "bitcoin",
+        datetime.now(timezone.utc) + timedelta(hours=1),
+    )
+
+    main.ejecutar_ciclo(con_volumen, {})
+
+    assert _avisos_volumen(enviados) == []
+
+
+def test_sin_aviso_volumen_no_avisa(con_volumen, enviados, monkeypatch):
+    from dataclasses import replace
+
+    _con_volumen_de(monkeypatch, 4e10)
+
+    main.ejecutar_ciclo(replace(con_volumen, aviso_volumen=False), {})
+
+    assert _avisos_volumen(enviados) == []
+
+
 def _guardar_en(config, coin_id, precio, cuando):
     import sqlite3
 
