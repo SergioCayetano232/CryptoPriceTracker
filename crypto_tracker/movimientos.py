@@ -35,6 +35,7 @@ class Movimiento:
     antes: Posicion | None
     cuando: datetime
     nota: str | None = None  # el porqué; las de antes no la tienen
+    comision: float | None = None  # ya va dentro de coste; las de antes no la guardaban
 
 
 def interpretar_deshacer(argumento: str) -> int | None:

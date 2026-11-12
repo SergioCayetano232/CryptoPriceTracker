@@ -44,6 +44,7 @@ from .cine import PRECIO as PRECIO_CINE
 from .cine import Cine
 from .coche import PRECIO as PRECIO_COCHE
 from .coche import Coche
+from .comisiones import Comisiones
 from .comparar import Resultado
 from .comparar import media as media_comparar
 from .compensar import Compensacion
@@ -1277,6 +1278,42 @@ def formatear_vsbtc(c: Contra, currency: str) -> str:
             "guardado de ese día"
         )
     texto.append(f"<i>{pie}</i>")
+    return "\n".join(texto)
+
+
+def formatear_comisiones(c: Comisiones, currency: str, año: int | None) -> str:
+    """Respuesta de /comisiones."""
+    if not c.con:
+        de = f" en {año}" if año else ""
+        return (
+            f"No tienes ninguna comisión apuntada{de}. Se ponen al final de la "
+            "compra o la venta: /compra bitcoin 0.01 600 com 1.5 (o com 0.1%)"
+        )
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    de = f" de {año}" if año else ""
+    operaciones = "1 operación" if c.con == 1 else f"{c.con} operaciones"
+    resumen = f"Has pagado <b>{simbolo}{_num(c.total)}</b> en {operaciones}"
+    if c.porcentaje is not None:
+        resumen += f", un {c.porcentaje:.2f}% de lo que moviste".replace(".", ",")
+    texto = [f"💸 <b>Tus comisiones{de}</b>", "", resumen]
+
+    if len(c.por_año) > 1:
+        texto += ["", "📅 <b>Por año</b>"]
+        texto += [f"{a}: {simbolo}{_num(t)}" for a, t in c.por_año.items()]
+    if len(c.por_cripto) > 1:
+        texto += ["", "🪙 <b>Por cripto</b>"]
+        texto += [
+            f"{escape(coin.replace('-', ' ').title())}: {simbolo}{_num(t)}"
+            for coin, t in c.por_cripto.items()
+        ]
+
+    if c.sin:
+        cuantas = (
+            "1 compra o venta no lleva comisión apuntada"
+            if c.sin == 1
+            else f"{c.sin} compras y ventas no llevan comisión apuntada"
+        )
+        texto.append(f"\n<i>{cuantas}, o es de antes de guardarla aparte</i>")
     return "\n".join(texto)
 
 

@@ -30,6 +30,7 @@ COMANDOS = {
     "arrepentido": "Lo que valdría hoy lo que vendiste, ¿hiciste bien?",
     "rentabilidad": "Lo que ganas al año, contando cuándo metiste cada euro",
     "impuestos": "Lo que le tocaría a Hacienda de lo que ganaste vendiendo",
+    "comisiones": "Lo que llevas pagado en comisiones (ej: /comisiones 2026)",
     "sivendo": "Lo que ganarías y pagarías antes de vender (ej: /sivendo btc 0.5)",
     "compensar": "Qué vender en pérdidas para pagar menos a Hacienda este año",
     "primera": "Tu primera compra y cuánto ha cambiado desde entonces",
@@ -274,6 +275,9 @@ ALIAS = {
     "vsbitcoin": "vsbtc",
     "contrabtc": "vsbtc",
     "depósito": "deposito",
+    "comision": "comisiones",
+    "comisión": "comisiones",
+    "fees": "comisiones",
     "banco": "deposito",
     "café": "cafe",
     "coffee": "cafe",
@@ -686,6 +690,10 @@ EJEMPLOS = {
         ("/apy eth 4%", "lo que tendrías de tu ethereum en 1, 3, 5 y 10 años"),
         ("/apy 2 eth 4%", "con la cantidad que digas, aunque no la tengas"),
         ("/apy eth 4% 5a", "solo a esos años"),
+    ],
+    "comisiones": [
+        ("/comisiones", "todo lo que llevas pagado, por año y por cripto"),
+        ("/comisiones 2025", "solo las de ese año"),
     ],
     "deposito": [
         ("/deposito", "tu cartera contra un depósito al 3% al año"),

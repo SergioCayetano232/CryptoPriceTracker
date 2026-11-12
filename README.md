@@ -191,6 +191,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/ganancias` | Lo que has ganado o perdido de verdad con lo que ya vendiste |
 | `/arrepentido` | Lo que valdría hoy lo que vendiste contra lo que te dieron, cripto a cripto, para saber si hiciste bien en vender. Gasta una consulta |
 | `/impuestos` | Lo que le tocaría a Hacienda de lo que ganaste vendiendo este año, tramo a tramo (19, 21, 23, 27 y 30 %). `/impuestos 2025`, el año que digas. Va con FIFO, como Hacienda: lo primero que compraste es lo primero que vendes (lo del `PORTFOLIO` del `.env` cuenta como lo más viejo). Por eso puede no coincidir con `/ganancias`, que va con precio medio. Es orientativo |
+| `/comisiones` | Lo que llevas pagado en comisiones, en dinero y en % de lo que moviste, por año y por cripto. `/comisiones 2025`, solo ese año. Cuentan las que pones con `com` en `/compra` y `/venta`; las apuntadas antes de esta versión no guardaban la comisión aparte y no salen. También `/fees` |
 | `/sivendo btc 0.5` | Lo que te darían, lo que le sacarías y lo que le tocaría a Hacienda, contando lo que ya llevas ganado este año. No apunta nada. También `/sivendo btc todo` y `/sivendo btc 0.5 @80000`, a ese precio |
 | `/compensar` | Si llevas ganancia este año, qué vender de lo que va en pérdidas y cuánto, para bajar lo que le toca a Hacienda y cuánto te ahorrarías. Va con FIFO: si para llegar a lo que pierde hay que vender antes lo que gana, lo cuenta. No apunta nada y tiene que hacerse antes del 1 de enero. Es orientativo y sin comisiones. También `/perdidas` |
 | `/primera` | Tu primera compra, cuánto hace, cuánto ha cambiado el precio desde entonces y lo que vale hoy lo que compraste (`/primera btc`, la primera de esa). Solo las apuntadas con `/compra` |
@@ -797,6 +798,7 @@ crypto_tracker/
   limite.py      lo que llevas comprado este mes, para /limite
   apy.py         cuánta cripto tendrías en staking, para /apy
   deposito.py    tu cartera contra un depósito, para /deposito
+  comisiones.py  lo pagado en comisiones, para /comisiones
   plan.py        cuánto tardas en llegar a una cifra, para /plan
   posicion.py    cuánto meter según lo que aceptas perder, para /posicion
   promediar.py   cuánto comprar para bajar tu precio medio, para /promediar

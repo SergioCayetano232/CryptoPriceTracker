@@ -8655,6 +8655,33 @@ def test_vender_con_comision_sin_conexion_la_apunta_sin_ella(
     assert venta.coste is None
 
 
+def test_comisiones(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"solana": 140.0, "bitcoin": 60000.0})
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
+    main.atender(config, _mensaje("/compra solana 5 700 com 1,5"))
+    main.atender(config, _mensaje("/venta bitcoin 0.01 600 com 1%"))
+    main.atender(config, _mensaje("/compra solana 1 140"))
+
+    main.atender(config, _mensaje("/comisiones"))
+
+    assert "Has pagado <b>€7,50</b> en 2 operaciones" in enviados[-1]
+    assert "un 0,58% de lo que moviste" in enviados[-1]
+    assert "Bitcoin: €6,00\nSolana: €1,50" in enviados[-1]
+    assert "1 compra o venta no lleva comisión apuntada" in enviados[-1]
+
+
+def test_comisiones_de_un_año_sin_ninguna(config, enviados):
+    main.atender(config, _mensaje("/fees 2025"))
+
+    assert "No tienes ninguna comisión apuntada en 2025" in enviados[0]
+
+
+def test_comisiones_año_raro(config, enviados):
+    main.atender(config, _mensaje("/comisiones 1990"))
+
+    assert "Dime un año entre 2009" in enviados[0]
+
+
 def test_compra_con_comision_y_deshacer(config, enviados, monkeypatch):
     _precio(monkeypatch, {"solana": 140.0})
     main.atender(config, _mensaje("/compra solana 5 700 com 1,5"))

@@ -846,6 +846,22 @@ def test_movimientos_viejos_ganan_la_nota_sin_perderse(tmp_path):
         "por el halving",
     )
     assert database.get_movimientos(ruta)[0].nota == "por el halving"
+    assert database.get_movimientos(ruta)[1].comision is None
+
+
+def test_movimiento_con_comision(db):
+    database.apuntar_movimiento(
+        db,
+        "bitcoin",
+        "compra",
+        0.01,
+        601.5,
+        None,
+        Posicion("bitcoin", 0.01, 601.5),
+        comision=1.5,
+    )
+
+    assert database.get_movimientos(db)[0].comision == 1.5
 
 
 def test_estables_avisadas(db):

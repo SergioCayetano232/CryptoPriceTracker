@@ -59,6 +59,7 @@ from crypto_tracker import (
     coingecko,
     comandos,
     comision,
+    comisiones,
     comparar,
     compensar,
     compras,
@@ -1351,6 +1352,9 @@ def responder(
     if nombre == "vsbtc":
         return _vsbtc(config)
 
+    if nombre == "comisiones":
+        return _comisiones(config, argumento)
+
     if nombre == "deposito":
         return _deposito(config, argumento)
 
@@ -1906,7 +1910,15 @@ def _comprar(config: Config, argumento: str) -> str | comandos.ConBotones:
 
     ahora = movimientos.comprar(antes, coin_id, cantidad, coste)
     numero = database.apuntar_movimiento(
-        config.database_path, coin_id, "compra", cantidad, coste, antes, ahora, apunte
+        config.database_path,
+        coin_id,
+        "compra",
+        cantidad,
+        coste,
+        antes,
+        ahora,
+        apunte,
+        pagada,
     )
     logger.info("Cartera: compra %s de %s por %s", cantidad, coin_id, coste)
     texto = alerts.formatear_compra(
@@ -1953,7 +1965,15 @@ def _vender(config: Config, argumento: str) -> str | comandos.ConBotones:
         except comision.ComisionError as e:
             return telegram.escape(str(e))
     numero = database.apuntar_movimiento(
-        config.database_path, coin_id, "venta", vendido, cobrado, antes, queda, apunte
+        config.database_path,
+        coin_id,
+        "venta",
+        vendido,
+        cobrado,
+        antes,
+        queda,
+        apunte,
+        pagada,
     )
     logger.info("Cartera: vende %s de %s por %s", vendido, coin_id, cobrado)
     return comandos.ConBotones(
@@ -2268,6 +2288,17 @@ def _rentabilidad(config: Config) -> str:
             )
         return "No he podido consultar los precios. Prueba en un rato."
     return alerts.formatear_rentabilidad(resultado, config.vs_currency)
+
+
+def _comisiones(config: Config, argumento: str) -> str:
+    try:
+        año = comisiones.interpretar(argumento, date.today().year)
+    except comisiones.ComisionesError as e:
+        return telegram.escape(str(e))
+    todos = database.get_movimientos(config.database_path, None)
+    return alerts.formatear_comisiones(
+        comisiones.calcular(todos, año), config.vs_currency, año
+    )
 
 
 def _deposito(config: Config, argumento: str) -> str:
