@@ -38,6 +38,7 @@ COMANDOS = {
     "hodl": "Cuántos días llevas sin vender cada cripto de tu cartera",
     "record": "Lo máximo que ha valido tu cartera y cuánto le falta para volver",
     "vsbtc": "Tu cartera contra haber metido lo mismo en bitcoin",
+    "deposito": "Tu cartera contra un depósito (ej: /deposito 3%)",
     "recordar": "Avísame cada semana de mi compra (ej: /recordar lunes 50 btc)",
     "deshacer": "Quitar la última compra o venta que apuntaste",
     "corregir": "Cambiar una compra o venta antigua (ej: /corregir 12 importe 700)",
@@ -272,6 +273,8 @@ ALIAS = {
     "pico": "record",
     "vsbitcoin": "vsbtc",
     "contrabtc": "vsbtc",
+    "depósito": "deposito",
+    "banco": "deposito",
     "café": "cafe",
     "coffee": "cafe",
     "salario": "sueldo",
@@ -683,6 +686,10 @@ EJEMPLOS = {
         ("/apy eth 4%", "lo que tendrías de tu ethereum en 1, 3, 5 y 10 años"),
         ("/apy 2 eth 4%", "con la cantidad que digas, aunque no la tengas"),
         ("/apy eth 4% 5a", "solo a esos años"),
+    ],
+    "deposito": [
+        ("/deposito", "tu cartera contra un depósito al 3% al año"),
+        ("/deposito 2,5%", "con el interés que digas"),
     ],
     "plan": [
         ("/plan 10000 50", "cuánto tardas en llegar a 10.000 metiendo 50 cada semana"),

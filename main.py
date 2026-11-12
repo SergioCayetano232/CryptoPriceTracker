@@ -78,6 +78,7 @@ from crypto_tracker import (
     database,
     dato,
     dca,
+    deposito,
     dia,
     diario,
     diasemana,
@@ -1295,6 +1296,9 @@ def responder(
     if nombre == "vsbtc":
         return _vsbtc(config)
 
+    if nombre == "deposito":
+        return _deposito(config, argumento)
+
     if nombre == "compras":
         return _compras(config, argumento)
 
@@ -2209,6 +2213,32 @@ def _rentabilidad(config: Config) -> str:
             )
         return "No he podido consultar los precios. Prueba en un rato."
     return alerts.formatear_rentabilidad(resultado, config.vs_currency)
+
+
+def _deposito(config: Config, argumento: str) -> str:
+    try:
+        tipo = deposito.interpretar(argumento)
+    except deposito.DepositoError as e:
+        return telegram.escape(str(e))
+    todos = database.get_movimientos(config.database_path, None)
+    if not any(m.tipo == "compra" for m in todos):
+        return (
+            "No has apuntado ninguna compra por aquí, y lo del PORTFOLIO del .env "
+            f"no lleva fecha. Apúntalas así: {movimientos.EJEMPLO_COMPRA}"
+        )
+    _, tienes = rentabilidad.contables(todos)
+    precios = _consultar(config, list(tienes)) if tienes else {}
+    if precios is None:
+        return "No he podido consultar los precios. Prueba en un rato."
+    resultado = deposito.calcular(todos, precios, datetime.now(timezone.utc), tipo)
+    if resultado is None:
+        if not rentabilidad.contables(todos)[0]:
+            return (
+                "Tus compras no llevan lo que costaron, así que no puedo compararlas. "
+                f"La próxima, con precio: {movimientos.EJEMPLO_COMPRA}"
+            )
+        return "No he podido consultar los precios. Prueba en un rato."
+    return alerts.formatear_deposito(resultado, config.vs_currency)
 
 
 def _calendario(config: Config, argumento: str) -> str | comandos.Foto:

@@ -61,6 +61,7 @@ from .cuando import Cuando
 from .cumple import Cumple
 from .dado import CARAS
 from .dado import QUE_HACER as QUE_HACER_DADO
+from .deposito import Contra as ContraDeposito
 from .dia import Dia
 from .diasemana import NOMBRES, DiasSemana
 from .doble import Cartera as CarteraDoble
@@ -1273,6 +1274,61 @@ def formatear_vsbtc(c: Contra, currency: str) -> str:
         pie += (
             f". {c.fuera} movimientos no cuentan: sin precio o sin bitcoin "
             "guardado de ese día"
+        )
+    texto.append(f"<i>{pie}</i>")
+    return "\n".join(texto)
+
+
+def formatear_deposito(c: ContraDeposito, currency: str) -> str:
+    """Respuesta de /deposito."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    tipo = _pct(c.tipo)
+    en_deposito = f"Ese dinero en un depósito al {tipo}%, en las mismas fechas, sería "
+    if c.deposito > 0:
+        en_deposito += (
+            f"{simbolo}{_num(c.deposito)} ({simbolo}{_num(c.intereses)} de intereses)"
+        )
+    else:
+        en_deposito += "nada: sacaste más de lo que tendría"
+    texto = [
+        f"🏦 <b>Tu cartera contra un depósito al {tipo}%</b>",
+        f"Lo que compraste vale hoy <b>{simbolo}{_num(c.real)}</b>",
+        en_deposito,
+        "",
+    ]
+
+    diferencia = f"<b>{simbolo}{_num(abs(c.diferencia))}</b>"
+    if c.ventaja is not None:
+        diferencia += f" ({c.ventaja:+.1f}%)".replace(".", ",")
+    if abs(c.diferencia) < 0.01:
+        texto.append("🤝 Vas igual que el depósito")
+    elif c.diferencia > 0:
+        texto.append(f"🏆 Le ganas al depósito por {diferencia}")
+    else:
+        texto.append(f"🐢 El depósito te gana por {diferencia}")
+
+    if c.empate is not None:
+        empate = f"{abs(c.empate):,.1f}".replace(",", "@").replace(".", ",")
+        empate = empate.replace("@", ".")
+        if c.empate > 0:
+            texto.append(
+                f"📅 Para empatar con tu cartera, el depósito tendría que dar un "
+                f"<b>{empate}%</b> al año"
+            )
+        else:
+            texto.append(
+                f"📅 Tu cartera pierde un {empate}% al año: cualquier depósito le gana"
+            )
+
+    pie = (
+        f"Con tus compras y ventas desde el {c.desde.astimezone():%d/%m/%Y}. "
+        "Sin impuestos, ni en uno ni en otro"
+    )
+    if c.fuera == 1:
+        pie += ". 1 movimiento no cuenta: sin precio, o venta de lo del .env"
+    elif c.fuera:
+        pie += (
+            f". {c.fuera} movimientos no cuentan: sin precio, o ventas de lo del .env"
         )
     texto.append(f"<i>{pie}</i>")
     return "\n".join(texto)

@@ -8276,6 +8276,45 @@ def test_compras_sin_lo_que_costaron(config, enviados, monkeypatch):
     assert "no llevan lo que costaron" in enviados[0]
 
 
+# --- /deposito ---
+
+
+def test_deposito(config, enviados, monkeypatch):
+    _movimiento_hace(config, "bitcoin", "compra", 0.02, 1000, 365 * 24)
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 55000.0})
+
+    main.atender(config, _mensaje("/deposito"))
+
+    assert "contra un depósito al 3%" in enviados[0]
+    assert "sería €1.030,00 (€30,00 de intereses)" in enviados[0]
+    assert "🏆 Le ganas al depósito por <b>€70,00</b>" in enviados[0]
+    assert "tendría que dar un <b>10,0%</b> al año" in enviados[0]
+
+
+def test_deposito_con_interes(config, enviados, monkeypatch):
+    _movimiento_hace(config, "bitcoin", "compra", 0.02, 1000, 365 * 24)
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 50000.0})
+
+    main.atender(config, _mensaje("/banco 2,5%"))
+
+    assert "contra un depósito al 2,5%" in enviados[0]
+    assert "🐢 El depósito te gana por <b>€25,00</b>" in enviados[0]
+
+
+def test_deposito_mal_escrito(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+
+    main.atender(config, _mensaje("/deposito mucho"))
+
+    assert "no es un interés" in enviados[0]
+
+
+def test_deposito_sin_compras(config, enviados):
+    main.atender(config, _mensaje("/deposito"))
+
+    assert "No has apuntado ninguna compra" in enviados[0]
+
+
 # --- /rentabilidad ---
 
 
