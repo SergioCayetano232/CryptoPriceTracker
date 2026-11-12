@@ -4241,6 +4241,27 @@ def _precio_de(config, coin_id, precio, minutos):
     conn.close()
 
 
+def test_soporte(config, enviados):
+    precios = [100, 95, 90, 95, 100, 105, 110, 105, 100, 95, 91, 95, 100, 105, 109, 104]
+    for i, precio in enumerate(precios):
+        _precio_de(config, "bitcoin", precio, (len(precios) - i) * 24 * 60)
+    _precio_de(config, "bitcoin", 100, 60)
+
+    main.atender(config, _mensaje("/soporte"))
+
+    assert "🧱 <b>Bitcoin</b>: soportes y resistencias" in enviados[0]
+    assert "🔴 €109,50 · 2 toques" in enviados[0]
+    assert "🟢 €90,50 · 2 toques" in enviados[0]
+
+
+def test_soporte_pocos_dias(config, enviados):
+    _precio_de(config, "bitcoin", 100, 60)
+
+    main.atender(config, _mensaje("/resistencia btc"))
+
+    assert "Necesito al menos 5 días guardados de <b>bitcoin</b>" in enviados[0]
+
+
 def test_diames(config, enviados):
     from datetime import timedelta
 

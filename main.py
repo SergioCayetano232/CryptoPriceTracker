@@ -175,6 +175,7 @@ from crypto_tracker import (
     simbolos,
     sivendo,
     sofa,
+    soporte,
     spotify,
     stop,
     sube,
@@ -1467,6 +1468,9 @@ def responder(
 
     if nombre == "volatilidad":
         return _volatilidad(config, argumento)
+
+    if nombre == "soporte":
+        return _soporte(config, argumento)
 
     if nombre == "rango":
         return _rango(config, argumento)
@@ -2914,6 +2918,28 @@ def _rango(config: Config, argumento: str) -> str:
     return alerts.formatear_rango(
         coin_id, resultado, horas, config.vs_currency, primero if falta else None
     )
+
+
+def _soporte(config: Config, argumento: str) -> str:
+    try:
+        coin_id, horas = soporte.interpretar(argumento)
+    except periodo.PeriodoError as e:
+        return telegram.escape(str(e))
+    if not coin_id:
+        vigiladas = _con_cambios(config).watchlist
+        if not vigiladas:
+            return f"¿De cuál? Por ejemplo: {soporte.EJEMPLO}"
+        coin_id = vigiladas[0].coin_id
+
+    serie = database.get_serie(config.database_path, coin_id, horas, config.vs_currency)
+    resultado = soporte.calcular(serie)
+    if resultado is None:
+        return (
+            f"Necesito al menos 5 días guardados de <b>{telegram.escape(coin_id)}</b> "
+            f"({periodo.nombre(horas)}). Con /rellenar {telegram.escape(coin_id)} "
+            "bajo los que faltan"
+        )
+    return alerts.formatear_soporte(coin_id, resultado, horas, config.vs_currency)
 
 
 def _caida(config: Config, argumento: str) -> str:

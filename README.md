@@ -235,6 +235,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/diames bitcoin` | Qué día del mes ha salido más barata y cuál más cara, comparando cada día con la media de las dos semanas de antes y de después (así una subida de fondo no hace que el día 1 salga siempre el más barato), y si sale mejor comprar a principio, a mitad o a final de mes. Para elegir el día de una compra mensual. Sin tramo, el último año; necesita al menos un mes seguido guardado. Con `HISTORY_DAYS=90`, que es lo que viene, solo hay tres meses: pon `366` o usa `/rellenar`. Sale de lo guardado y no gasta consultas |
 | `/horas bitcoin 30d` | A qué hora del día suele estar más barata y a cuál más cara, comparando cada hora con la media de su día, con una barrita de las 24 horas y cómo suele estar a la hora de ahora (sin tramo, 30 días). Solo cuenta los días que tiene casi enteros. Sale de lo guardado y no gasta consultas |
 | `/rango bitcoin 30d` | Su máximo y su mínimo en ese tramo con hace cuánto fueron, su media y en qué punto del rango está hoy (sin tramo, 7 días). Sale de lo guardado y no gasta consultas |
+| `/soporte bitcoin 90d` | Los precios donde ha girado al menos dos veces: hasta 3 resistencias por arriba y 3 soportes por abajo, el más cercano primero, con cuántas veces lo ha tocado, la última y a cuánto está. Un giro es el máximo o el mínimo de un día comparado con los dos de antes y los dos de después; los que quedan a menos de un 2 % cuentan como el mismo. Sirve para poner alertas con sentido. Sin tramo, 90 días. Sale de lo guardado y no gasta consultas. También `/resistencia` |
 | `/dia bitcoin 01/09` | Qué día de la semana fue, a cuánto cerró, su máximo y su mínimo, y cuánto ha cambiado desde entonces. Vale `ayer` y con año (`01/09/2025`). Sale de lo guardado y no gasta consultas |
 | `/cuando bitcoin 60000` | La última vez que estuvo a ese precio (o más abajo, si ahora está por encima), hace cuánto y lo que ha cambiado desde entonces. Vale `60k`. Sale de lo guardado y no gasta consultas |
 | `/redondo bitcoin` | Cuánto le falta para la siguiente cifra redonda por arriba y por abajo (de 64.000 a 70.000 y a 60.000). A secas, las que vigilas. Sale de lo guardado y no gasta consultas |
@@ -921,6 +922,7 @@ crypto_tracker/
   horas.py       la hora más barata y la más cara, para /horas
   reparto.py     qué parte de la cartera es cada una, para /reparto
   rango.py       el máximo, el mínimo y la media de /rango
+  soporte.py     dónde ha girado varias veces, para /soporte
   dia.py         a cuánto estaba un día concreto, para /dia
   cuando.py      la última vez que estuvo a un precio, para /cuando
   avisados.py    el último aviso de cada una, para /ultimo

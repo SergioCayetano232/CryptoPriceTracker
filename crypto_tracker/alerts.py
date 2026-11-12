@@ -191,6 +191,7 @@ from .semanal import Semana
 from .sivendo import Simulacion
 from .sofa import PRECIO as PRECIO_SOFA
 from .sofa import Sofa
+from .soporte import Nivel, Soportes
 from .spotify import PRECIO as PRECIO_SPOTIFY
 from .spotify import Spotify
 from .stop import Stop
@@ -3767,6 +3768,51 @@ def formatear_diames(
     if incompleto:
         texto.append(f"<i>Solo tengo precios desde el {d.desde:%d/%m/%Y}.</i>")
     return "\n".join(texto)
+
+
+def formatear_soporte(coin_id: str, s: Soportes, horas: float, currency: str) -> str:
+    """Respuesta de /soporte."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(coin_id.replace("-", " ").title())
+    texto = [
+        f"🧱 <b>{nombre}</b>: soportes y resistencias, {nombre_periodo(horas)}",
+        f"Está a <b>{simbolo}{_num(s.precio)}</b>",
+    ]
+    if not s.soportes and not s.resistencias:
+        texto.append(
+            "\nNo ha girado dos veces en el mismo sitio. Prueba con un tramo más "
+            f"largo: /soporte {escape(coin_id)} 180d"
+        )
+        return "\n".join(texto)
+
+    def linea(emoji: str, n: Nivel) -> str:
+        toques = f"{n.toques} toques, el último el {n.ultimo:%d/%m}"
+        distancia = f"{s.distancia(n):+.1f}%".replace(".", ",")
+        return f"{emoji} {simbolo}{_num(n.precio)} · {toques} · <b>{distancia}</b>"
+
+    texto += ["", "<b>Resistencias</b>, por arriba"]
+    if s.resistencias:
+        texto += [linea("🔴", n) for n in s.resistencias]
+    else:
+        texto.append("Ninguna por arriba: está por encima de donde ha girado")
+    texto += ["", "<b>Soportes</b>, por abajo"]
+    if s.soportes:
+        texto += [linea("🟢", n) for n in s.soportes]
+    else:
+        texto.append("Ninguno por abajo: está por debajo de donde ha girado")
+
+    cerca = (s.soportes or s.resistencias)[0]
+    texto.append(
+        "\n<i>Precios donde ha girado al menos dos veces. Para poner una alerta "
+        f"con sentido: /alerta {escape(coin_id)} {_redondo_alerta(cerca.precio)}</i>"
+    )
+    return "\n".join(texto)
+
+
+def _redondo_alerta(precio: float) -> str:
+    # Tres cifras: 62.345,70 se escribe 62300, que es como lo pondría uno.
+    redondo = round(precio, 2 - math.floor(math.log10(precio)))
+    return f"{redondo:f}".rstrip("0").rstrip(".")
 
 
 def _pct2(valor: float) -> str:
