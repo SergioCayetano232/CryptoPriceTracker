@@ -268,6 +268,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/backup` | Te manda un zip con la base de datos entera: precios, compras, ventas y alertas. También `/respaldo` |
 | `/rellenar btc 90d` | Baja de CoinGecko los precios pasados que no tiene, para que `/rsi`, `/media`, `/racha` y compañía funcionen sin esperar semanas. Solo mete lo que falta, así que se puede repetir. Sin tramo, todo lo que quepa en `HISTORY_DAYS` (hasta un año); a secas, las que vigilas. Hasta 90 días viene un precio por hora y con más, uno al día. Gasta una consulta por cripto |
 | `/mercado` | Lo que vale todo el mercado cripto, cómo va en 24 h y qué parte es de Bitcoin, Ethereum y las estables |
+| `/dominancia` | Qué parte de todo el mercado es bitcoin y cuántos puntos ha ganado o perdido en 24 h, 7 y 30 días, para saber si el dinero se va a las altcoins o vuelve a bitcoin. Debajo, la parte de Ethereum, las estables y el resto. CoinGecko solo da la de ahora, así que en `--loop` guarda una foto al día (una consulta más al día) y compara con esas: los primeros días no tiene con qué. También `/altcoins` |
 | `/halving` | Cuántos días faltan para el próximo halving de Bitcoin, cuánto va de ciclo y cuánto bajará lo que se paga por bloque. La fecha es aproximada y no gasta consultas |
 | `/cumple` | Los años de Bitcoin, los días que lleva funcionando y cuánto falta para su cumpleaños (el 3 de enero) |
 | `/whitepaper` | Los años del whitepaper de Bitcoin, los días desde que Satoshi lo publicó y cuánto falta para que cumpla (el 31 de octubre) |
@@ -832,6 +833,7 @@ crypto_tracker/
   quiz.py        las preguntas de /quiz
   glosario.py    las palabras que explica /glosario
   mercado.py     el mercado entero, para /mercado
+  dominancia.py  cómo cambia la parte de bitcoin, para /dominancia
   halving.py     cuánto falta para el próximo halving, para /halving
   cumple.py      los años de Bitcoin, para /cumple
   whitepaper.py  los años del whitepaper, para /whitepaper

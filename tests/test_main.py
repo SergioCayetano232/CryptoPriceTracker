@@ -66,6 +66,16 @@ def sin_fotos_de_verdad(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def sin_dominancia_de_verdad(monkeypatch):
+    """El bucle saca una foto al día del mercado; sin esto iría a CoinGecko."""
+
+    def sin_red(cur):
+        raise coingecko.CoinGeckoError("sin red en los tests")
+
+    monkeypatch.setattr(coingecko, "mercado_global", sin_red)
+
+
+@pytest.fixture(autouse=True)
 def sin_miedo_de_verdad(monkeypatch):
     """El resumen diario lo pide; sin esto los tests irian a alternative.me."""
     monkeypatch.setattr(miedo, "pedir", lambda: [])
@@ -4239,6 +4249,56 @@ def _precio_de(config, coin_id, precio, minutos):
     )
     conn.commit()
     conn.close()
+
+
+def _mercado_global(monkeypatch, bitcoin):
+    from crypto_tracker.mercado import Mercado
+
+    llamadas = []
+
+    def mercado_global(cur):
+        llamadas.append(cur)
+        return Mercado(2.4e12, 1.0, bitcoin, 12.0, 6.0)
+
+    monkeypatch.setattr(coingecko, "mercado_global", mercado_global)
+    return llamadas
+
+
+def test_dominancia(config, enviados, monkeypatch):
+    from crypto_tracker.dominancia import Foto
+
+    hace_semana = datetime.now(timezone.utc) - timedelta(days=7)
+    database.guardar_dominancia(config.database_path, Foto(hace_semana, 56.0, 13, 6))
+    _mercado_global(monkeypatch, 58.0)
+
+    main.atender(config, _mensaje("/dominancia"))
+
+    assert "👑 <b>Dominancia de Bitcoin: 58,0%</b>" in enviados[0]
+    assert "🔺 +2,0 puntos en 7 días" in enviados[0]
+    assert "El dinero vuelve a bitcoin" in enviados[0]
+    # Ya que ha consultado, se queda como la foto de hoy.
+    assert len(database.get_dominancia(config.database_path, 1)) == 1
+
+
+def test_foto_dominancia_una_al_dia(config, monkeypatch):
+    llamadas = _mercado_global(monkeypatch, 58.0)
+
+    main.foto_dominancia(config)
+    main.foto_dominancia(config)
+
+    assert len(llamadas) == 1
+    assert len(database.get_dominancia(config.database_path, 1)) == 1
+
+
+def test_foto_dominancia_sin_conexion(config, monkeypatch):
+    def falla(cur):
+        raise coingecko.CoinGeckoError("sin red")
+
+    monkeypatch.setattr(coingecko, "mercado_global", falla)
+
+    main.foto_dominancia(config)
+
+    assert database.get_dominancia(config.database_path, 1) == []
 
 
 def test_futuro(con_cartera, enviados, monkeypatch):

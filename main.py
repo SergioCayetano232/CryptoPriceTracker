@@ -86,6 +86,7 @@ from crypto_tracker import (
     diario,
     diasemana,
     doble,
+    dominancia,
     emoji,
     equilibrio,
     estables,
@@ -208,6 +209,7 @@ from crypto_tracker.config import (
     load_config,
     minutos_mute,
 )
+from crypto_tracker.mercado import Mercado
 from crypto_tracker.precio import en_sats
 
 logger = logging.getLogger("crypto_tracker")
@@ -909,6 +911,7 @@ def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:
             resumen_anual(config)
             recordatorios(config)
             copia_semanal(config)
+            foto_dominancia(config)
         except KeyboardInterrupt:
             raise
         except Exception as e:
@@ -1376,6 +1379,9 @@ def responder(
 
     if nombre == "tendencias":
         return _tendencias(config)
+
+    if nombre == "dominancia":
+        return _dominancia(config)
 
     if nombre == "mercado":
         return _mercado(config)
@@ -2819,6 +2825,51 @@ def _mercado(config: Config) -> str | comandos.ConBotones:
     if datos.total is None and datos.bitcoin is None:
         return texto
     return comandos.ConBotones(alerts.con_fuente(texto), botones.actualizar("/mercado"))
+
+
+def _dominancia(config: Config) -> str:
+    try:
+        datos = coingecko.mercado_global(config.vs_currency)
+    except coingecko.CoinGeckoError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+    if datos.bitcoin is None:
+        return "CoinGecko no ha dicho qué parte es de bitcoin. Prueba en un rato."
+
+    ahora = datetime.now(timezone.utc)
+    fotos = database.get_dominancia(config.database_path, dominancia.HORAS)
+    resultado = dominancia.calcular(datos, fotos, ahora)
+    # Ya que se ha consultado, que sirva de foto de hoy si no la había.
+    _guardar_foto(config, datos, ahora)
+    return alerts.con_fuente(alerts.formatear_dominancia(resultado))
+
+
+def foto_dominancia(config: Config) -> None:
+    """Una vez al día apunta qué parte del mercado es bitcoin. Gasta una consulta."""
+    ahora = datetime.now(timezone.utc)
+    try:
+        if not dominancia.toca_guardar(
+            database.ultima_dominancia(config.database_path), ahora
+        ):
+            return
+        datos = coingecko.mercado_global(config.vs_currency)
+    except (database.DatabaseError, coingecko.CoinGeckoError) as e:
+        # Si falla, lo intenta el siguiente ciclo: no es un aviso, no corre prisa.
+        logger.warning("No se pudo apuntar la dominancia: %s", e)
+        return
+    if datos.bitcoin is not None:
+        _guardar_foto(config, datos, ahora)
+
+
+def _guardar_foto(config: Config, datos: Mercado, ahora: datetime) -> None:
+    try:
+        ultima = database.ultima_dominancia(config.database_path)
+        if dominancia.toca_guardar(ultima, ahora):
+            database.guardar_dominancia(
+                config.database_path,
+                dominancia.Foto(ahora, datos.bitcoin, datos.ethereum, datos.estables),
+            )
+    except database.DatabaseError as e:
+        logger.warning("No se pudo apuntar la dominancia: %s", e)
 
 
 def _comparar(config: Config, argumento: str) -> str:

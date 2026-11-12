@@ -8,6 +8,7 @@ from pathlib import Path
 
 from .avisados import Aviso
 from .config import Posicion
+from .dominancia import Foto
 from .movimientos import Movimiento
 from .puntuales import Puntual
 from .recordar import Recordatorio, a_texto, de_texto
@@ -90,6 +91,16 @@ CREATE TABLE IF NOT EXISTS movimientos (
     created_at      TEXT NOT NULL,
     nota            TEXT,
     comision        REAL
+);
+
+-- Una foto al día de qué parte del mercado es cada una, para /dominancia.
+-- CoinGecko solo da la de ahora.
+CREATE TABLE IF NOT EXISTS dominancia (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at TEXT NOT NULL,
+    bitcoin    REAL NOT NULL,
+    ethereum   REAL,
+    estables   REAL
 );
 """
 
@@ -345,6 +356,46 @@ def get_volumenes(
         ).fetchall()
 
     return [(datetime.fromisoformat(f["created_at"]), f["volume"]) for f in filas]
+
+
+def guardar_dominancia(db_path: str, foto: Foto) -> None:
+    with _connect(db_path) as conn:
+        conn.execute(
+            "INSERT INTO dominancia (created_at, bitcoin, ethereum, estables) "
+            "VALUES (?, ?, ?, ?)",
+            (
+                foto.cuando.isoformat(timespec="seconds"),
+                foto.bitcoin,
+                foto.ethereum,
+                foto.estables,
+            ),
+        )
+
+
+def get_dominancia(db_path: str, horas: float) -> list[Foto]:
+    desde = (datetime.now(timezone.utc) - timedelta(hours=horas)).isoformat(
+        timespec="seconds"
+    )
+    with _connect(db_path) as conn:
+        filas = conn.execute(
+            "SELECT * FROM dominancia WHERE created_at >= ? ORDER BY created_at",
+            (desde,),
+        ).fetchall()
+    return [
+        Foto(
+            datetime.fromisoformat(f["created_at"]),
+            f["bitcoin"],
+            f["ethereum"],
+            f["estables"],
+        )
+        for f in filas
+    ]
+
+
+def ultima_dominancia(db_path: str) -> datetime | None:
+    with _connect(db_path) as conn:
+        fila = conn.execute("SELECT MAX(created_at) AS c FROM dominancia").fetchone()
+    return datetime.fromisoformat(fila["c"]) if fila["c"] else None
 
 
 def get_series(

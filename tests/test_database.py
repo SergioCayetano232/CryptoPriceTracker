@@ -623,6 +623,19 @@ def test_volumenes(db):
     assert database.get_volumenes(db, "bitcoin", 1, "usd") == []
 
 
+def test_dominancia(db):
+    from crypto_tracker.dominancia import Foto
+
+    assert database.ultima_dominancia(db) is None
+    ahora = datetime.now(timezone.utc).replace(microsecond=0)
+    database.guardar_dominancia(db, Foto(ahora - timedelta(days=40), 50.0, 15.0, 5.0))
+    database.guardar_dominancia(db, Foto(ahora, 58.0, None, None))
+
+    assert database.ultima_dominancia(db) == ahora
+    [foto] = database.get_dominancia(db, 24)
+    assert foto == Foto(ahora, 58.0, None, None)
+
+
 def test_volumen_avisado_va_y_vuelve(db):
     assert database.volumen_avisado(db, "bitcoin") is False
 

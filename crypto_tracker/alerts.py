@@ -70,6 +70,7 @@ from .diames import POCOS_MESES as POCOS_MESES_DIAMES
 from .diames import DiasMes
 from .diasemana import NOMBRES, DiasSemana
 from .doble import Cartera as CarteraDoble
+from .dominancia import Dominancia
 from .emoji import cara as cara_emoji
 from .enletras import dinero as dinero_en_letras
 from .equilibrio import Cartera
@@ -3884,6 +3885,45 @@ def formatear_futuro(f: Futuro, currency: str) -> str:
             "gordos se sale de aquí</i>",
         ]
     )
+
+
+def formatear_dominancia(d: Dominancia) -> str:
+    """Respuesta de /dominancia."""
+    m = d.ahora
+
+    def pct(valor: float) -> str:
+        return f"{valor:.1f}%".replace(".", ",")
+
+    texto = [f"👑 <b>Dominancia de Bitcoin: {pct(m.bitcoin)}</b>", ""]
+    for dias, puntos in d.cambios:
+        tramo = "24 h" if dias == 1 else f"{dias} días"
+        cambio = f"{puntos:+.1f}".replace(".", ",")
+        texto.append(f"{_flecha(puntos)} {cambio} puntos en {tramo}")
+    if not d.cambios:
+        texto.append(
+            "Aún no tengo de días anteriores para comparar: guardo una al día "
+            "mientras está en marcha con --loop"
+        )
+
+    if d.hacia == "bitcoin":
+        texto.append("\n🟠 El dinero vuelve a bitcoin: las altcoins pierden peso")
+    elif d.hacia == "altcoins":
+        texto.append("\n🌈 El dinero se va a las altcoins: bitcoin pierde peso")
+    elif d.hacia == "":
+        texto.append("\n⚖️ Ni a un lado ni a otro: se reparte más o menos igual")
+
+    texto.append("")
+    if m.ethereum is not None:
+        texto.append(f"Ethereum: {pct(m.ethereum)}")
+    if m.estables is not None:
+        texto.append(f"Estables: {pct(m.estables)}")
+    if m.resto is not None:
+        texto.append(f"El resto de altcoins: {pct(m.resto)}")
+    texto.append(
+        "<i>Qué parte de todo el mercado es bitcoin. Si sube aunque bitcoin "
+        "baje, las demás bajan más</i>"
+    )
+    return "\n".join(texto)
 
 
 def _pct2(valor: float) -> str:
