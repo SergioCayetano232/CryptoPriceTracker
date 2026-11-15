@@ -4586,6 +4586,31 @@ def test_futuro_mal_escrito(config, enviados):
     assert "Dime de 1 a 365 días" in enviados[0]
 
 
+def test_fibonacci(config, enviados):
+    for horas, precio in [(72, 100.0), (48, 200.0), (24, 150.0), (1, 150.0)]:
+        _precio_de(config, "bitcoin", precio, horas * 60)
+
+    main.atender(config, _mensaje("/fibo btc 7d"))
+
+    assert "🌀 <b>Bitcoin</b>: Fibonacci, últimos 7 días" in enviados[0]
+    assert "🛟 Por debajo, el 61,8%" in enviados[0]
+
+
+def test_fibonacci_quieta(config, enviados):
+    _precio_de(config, "bitcoin", 100.0, 120)
+    _precio_de(config, "bitcoin", 100.1, 60)
+
+    main.atender(config, _mensaje("/fibonacci"))
+
+    assert "apenas se ha movido" in enviados[0]
+
+
+def test_fibonacci_sin_precios(config, enviados):
+    main.atender(config, _mensaje("/fibonacci solana"))
+
+    assert "No tengo precios guardados de <b>solana</b>" in enviados[0]
+
+
 def test_macd(config, enviados):
     for dias in range(1, 61):
         _precio_de(config, "bitcoin", 100.0 + (60 - dias) ** 2, dias * 24 * 60)

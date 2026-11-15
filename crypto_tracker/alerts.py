@@ -83,6 +83,7 @@ from .estables import Desvio
 from .estacional import MESES as MESES_ESTACIONAL
 from .estacional import POCOS_AÑOS, Estacional
 from .ethereum import Ethereum
+from .fibonacci import Fibonacci
 from .frase import Frase
 from .funding import Funding
 from .futbol import PRECIO as PRECIO_FUTBOL
@@ -3502,6 +3503,75 @@ def formatear_rebalanceo(
         pie += f" Para otro reparto: {EJEMPLO_REBALANCEO}"
     lineas += ["", f"<i>{pie}</i>"]
     return "\n".join(lineas)
+
+
+def formatear_fibonacci(
+    coin_id: str,
+    f: Fibonacci,
+    horas: float,
+    currency: str,
+    desde: datetime | None = None,
+) -> str:
+    """Respuesta de /fibonacci. desde va si no hay precios de todo el tramo."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(coin_id.replace("-", " ").title())
+    r = f.rango
+
+    def pct(valor: float) -> str:
+        return f"{valor:.1f}".replace(".", ",").removesuffix(",0") + "%"
+
+    def precio(valor: float) -> str:
+        return f"{simbolo}{_num(valor)}"
+
+    alto = f"{precio(r.maximo)} ({r.cuando_maximo.astimezone():%d/%m})"
+    bajo = f"{precio(r.minimo)} ({r.cuando_minimo.astimezone():%d/%m})"
+    if f.subiendo:
+        que = f"Subió de {bajo} a {alto}: hasta dónde podría corregir"
+    else:
+        que = f"Bajó de {alto} a {bajo}: hasta dónde podría rebotar"
+    texto = [
+        f"🌀 <b>{nombre}</b>: Fibonacci, {nombre_periodo(horas)}",
+        que,
+        "",
+    ]
+
+    puesto = False
+    for n in f.niveles:
+        if not puesto and n.precio < f.ahora:
+            texto.append(f"👉 <b>Ahora {precio(f.ahora)}</b>")
+            puesto = True
+        extremo = ""
+        if n.pct == 0:
+            extremo = " · el máximo" if f.subiendo else " · el mínimo"
+        elif n.pct == 100:
+            extremo = " · el mínimo" if f.subiendo else " · el máximo"
+        texto.append(f"{pct(n.pct)}: {precio(n.precio)}{extremo}")
+    if not puesto:
+        texto.append(f"👉 <b>Ahora {precio(f.ahora)}</b>")
+
+    def nombre_nivel(n) -> str:
+        if n.pct in (0, 100):
+            return "el máximo" if n.precio == r.maximo else "el mínimo"
+        return f"el {pct(n.pct)}"
+
+    texto.append("")
+    for emoji, donde, n in (
+        ("🛟", "Por debajo", f.debajo),
+        ("🧱", "Por encima", f.encima),
+    ):
+        if n:
+            a = f"{(n.precio / f.ahora - 1) * 100:+.1f}".replace(".", ",")
+            texto.append(
+                f"{emoji} {donde}, {nombre_nivel(n)} ({precio(n.precio)}), a un {a}%"
+            )
+    texto.append(
+        "<i>Los niveles entre el máximo y el mínimo donde muchos esperan que "
+        "frene el precio, y por eso a veces frena. El que más se mira es el "
+        "61,8%. Sale de lo guardado</i>"
+    )
+    if desde is not None:
+        texto.append(f"<i>Solo tengo precios desde el {desde.astimezone():%d/%m}</i>")
+    return "\n".join(texto)
 
 
 def formatear_rango(

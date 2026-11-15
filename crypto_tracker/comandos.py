@@ -68,6 +68,7 @@ COMANDOS = {
     "rsi": "Si ha subido o bajado demasiado rápido (ej: /rsi btc)",
     "bollinger": "Si se ha salido de su banda normal (ej: /bollinger btc)",
     "macd": "Si coge o pierde empuje, con el MACD (ej: /macd bitcoin)",
+    "fibonacci": "Dónde podría frenar el precio (ej: /fibonacci btc 90d)",
     "caida": "Cuánto ha bajado desde el máximo (ej: /caida btc 30d)",
     "sube": "Cuánto ha subido desde el mínimo (ej: /sube btc 30d)",
     "volatilidad": "Cuánto se mueve, para elegir el % (ej: /volatilidad btc 30d)",
@@ -263,6 +264,8 @@ ALIAS = {
     "sobrecompra": "rsi",
     "bandas": "bollinger",
     "empuje": "macd",
+    "fibo": "fibonacci",
+    "retroceso": "fibonacci",
     "dominance": "dominancia",
     "altcoins": "dominancia",
     "proyeccion": "futuro",
@@ -713,6 +716,10 @@ EJEMPLOS = {
     "futuro": [
         ("/futuro", "entre qué cifras puede estar tu cartera dentro de 30 días"),
         ("/futuro 90d", "de 1 a 365 días"),
+    ],
+    "fibonacci": [
+        ("/fibonacci btc", "los niveles entre el máximo y el mínimo de 90 días"),
+        ("/fibonacci btc 30d", "en otro tramo"),
     ],
     "macd": [
         ("/macd bitcoin", "si va con empuje al alza o a la baja y desde cuándo"),

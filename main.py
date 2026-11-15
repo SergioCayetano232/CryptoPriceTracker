@@ -97,6 +97,7 @@ from crypto_tracker import (
     excusa,
     exportar,
     extremos,
+    fibonacci,
     fifo,
     frase,
     funding,
@@ -1588,6 +1589,9 @@ def responder(
 
     if nombre == "futuro":
         return _futuro(config, argumento)
+
+    if nombre == "fibonacci":
+        return _fibonacci(config, argumento)
 
     if nombre == "macd":
         return _macd(config, argumento)
@@ -3619,6 +3623,38 @@ def _futuro(config: Config, argumento: str) -> str:
             "bajo los que faltan"
         )
     return alerts.formatear_futuro(resultado, config.vs_currency)
+
+
+def _fibonacci(config: Config, argumento: str) -> str:
+    try:
+        coin_id, horas = fibonacci.interpretar(argumento)
+    except periodo.PeriodoError as e:
+        return telegram.escape(str(e))
+    if not coin_id:
+        vigiladas = _con_cambios(config).watchlist
+        if not vigiladas:
+            return f"¿De cuál? Por ejemplo: {fibonacci.EJEMPLO}"
+        coin_id = vigiladas[0].coin_id
+
+    serie = database.get_serie(config.database_path, coin_id, horas, config.vs_currency)
+    resultado = fibonacci.calcular(serie)
+    if resultado is None:
+        if len(serie) < 2:
+            return (
+                f"No tengo precios guardados de <b>{telegram.escape(coin_id)}</b> "
+                f"({periodo.nombre(horas)}). Con /rellenar {telegram.escape(coin_id)} "
+                "bajo los que faltan"
+            )
+        return (
+            f"<b>{telegram.escape(coin_id)}</b> apenas se ha movido "
+            f"({periodo.nombre(horas)}): los niveles saldrían todos pegados"
+        )
+
+    primero = serie[0][0]
+    falta = periodo.falta_principio(primero, datetime.now(timezone.utc), horas)
+    return alerts.formatear_fibonacci(
+        coin_id, resultado, horas, config.vs_currency, primero if falta else None
+    )
 
 
 def _macd(config: Config, argumento: str) -> str:
