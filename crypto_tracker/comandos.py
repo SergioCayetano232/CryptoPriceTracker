@@ -58,6 +58,7 @@ COMANDOS = {
     "verdes": "Cuántos días ha subido y cuántos ha bajado (ej: /verdes btc 30d)",
     "diasemana": "Qué día de la semana suele subir más (ej: /diasemana btc 90d)",
     "diames": "Qué día del mes suele salir más barato (ej: /diames btc)",
+    "estacional": "Qué meses del año suele subir o bajar (ej: /estacional btc)",
     "horas": "A qué hora suele estar más barata (ej: /horas btc 30d)",
     "rango": "Entre qué precios se ha movido y dónde está hoy (ej: /rango btc 30d)",
     "soporte": "Dónde ha girado varias veces arriba y abajo (ej: /soporte btc)",
@@ -241,6 +242,8 @@ ALIAS = {
     "fear": "miedo",
     "mempool": "comisionred",
     "financiacion": "funding",
+    "meses": "estacional",
+    "estacionalidad": "estacional",
     "financiación": "funding",
     "comisiónred": "comisionred",
     "market": "mercado",
@@ -683,6 +686,10 @@ EJEMPLOS = {
         ("/dia bitcoin 01/09", "cómo cerró ese día, con su máximo y su mínimo"),
         ("/dia bitcoin ayer", "también hoy, ayer y anteayer"),
         ("/dia 01/09/2025", "con año; sin cripto, la primera que vigilo"),
+    ],
+    "estacional": [
+        ("/estacional btc", "cada mes desde 2017, y si sube más de lo que baja"),
+        ("/estacional", "a secas, la primera que vigilo"),
     ],
     "funding": [
         ("/funding btc", "lo que pagan los de futuros de bitcoin y si está apalancado"),

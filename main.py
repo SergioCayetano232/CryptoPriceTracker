@@ -91,6 +91,7 @@ from crypto_tracker import (
     emoji,
     equilibrio,
     estables,
+    estacional,
     ethereum,
     excusa,
     exportar,
@@ -1471,6 +1472,9 @@ def responder(
     if nombre == "miedo":
         return _miedo()
 
+    if nombre == "estacional":
+        return _estacional(config, argumento)
+
     if nombre == "funding":
         return _funding(config, argumento)
 
@@ -2829,6 +2833,36 @@ def _comisionred(config: Config) -> str | comandos.ConBotones:
     if datos is None:
         return texto
     return comandos.ConBotones(texto, botones.actualizar("/comisionred"))
+
+
+def _estacional(config: Config, argumento: str) -> str:
+    if len(argumento.split()) > 1:
+        return "De una en una. Por ejemplo: /estacional btc"
+    if argumento:
+        coin_id = simbolos.a_id(argumento)
+    else:
+        vigiladas = _con_cambios(config).watchlist
+        if not vigiladas:
+            return "¿De cuál? Por ejemplo: /estacional btc"
+        coin_id = vigiladas[0].coin_id
+
+    try:
+        velas = estacional.pedir(funding.par(coin_id, argumento))
+    except estacional.EstacionalError as e:
+        if str(e) == "sin datos":
+            return (
+                f"Binance no tiene <b>{telegram.escape(coin_id)}</b> contra el dólar. "
+                "Prueba con su símbolo, como /estacional btc"
+            )
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+
+    resultado = estacional.calcular(estacional.leer(velas, datetime.now(timezone.utc)))
+    if resultado is None:
+        return (
+            f"<b>{telegram.escape(coin_id)}</b> lleva muy poco en Binance: aún no "
+            "tiene ningún mes entero"
+        )
+    return alerts.formatear_estacional(coin_id, resultado)
 
 
 def _funding(config: Config, argumento: str) -> str | comandos.ConBotones:

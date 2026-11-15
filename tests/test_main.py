@@ -16,6 +16,7 @@ from crypto_tracker import (
     consejo,
     dado,
     database,
+    estacional,
     excusa,
     frase,
     funding,
@@ -4108,6 +4109,44 @@ def test_top_sin_conexion(config, enviados, monkeypatch):
 
 
 # --- /miedo ---
+
+
+def test_estacional(config, enviados, monkeypatch):
+    pedidos = []
+
+    def pedir(par):
+        pedidos.append(par)
+        return [
+            [1, "1", "0", "0", "1", "0", 2],
+            [1735689600000, "100", "0", "0", "110", "0", 1738367999999],
+        ]
+
+    monkeypatch.setattr(estacional, "pedir", pedir)
+
+    main.atender(config, _mensaje("/meses eth"))
+
+    assert pedidos == ["ETHUSDT"]
+    assert "📅 <b>Ethereum</b> mes a mes, desde 2025" in enviados[0]
+    assert "🔺 Ene: <b>+10,0%</b> · subió 1 de 1" in enviados[0]
+
+
+def test_estacional_sin_datos(config, enviados, monkeypatch):
+    def pedir(par):
+        raise estacional.EstacionalError("sin datos")
+
+    monkeypatch.setattr(estacional, "pedir", pedir)
+
+    main.atender(config, _mensaje("/estacional noexiste"))
+
+    assert "Binance no tiene <b>noexiste</b> contra el dólar" in enviados[0]
+
+
+def test_estacional_recien_salida(config, enviados, monkeypatch):
+    monkeypatch.setattr(estacional, "pedir", lambda par: [])
+
+    main.atender(config, _mensaje("/estacional btc"))
+
+    assert "aún no tiene ningún mes entero" in enviados[0]
 
 
 def test_funding(config, monkeypatch):

@@ -77,6 +77,8 @@ from .emoji import cara as cara_emoji
 from .enletras import dinero as dinero_en_letras
 from .equilibrio import Cartera
 from .estables import Desvio
+from .estacional import MESES as MESES_ESTACIONAL
+from .estacional import POCOS_AÑOS, Estacional
 from .ethereum import Ethereum
 from .frase import Frase
 from .funding import Funding
@@ -3729,6 +3731,41 @@ def formatear_diasemana(
     if incompleto:
         texto += f"\n<i>Solo tengo precios desde el {s.desde:%d/%m}.</i>"
     return texto
+
+
+def formatear_estacional(coin_id: str, e: Estacional, hoy: date | None = None) -> str:
+    """Respuesta de /estacional."""
+    nombre = escape(coin_id.replace("-", " ").title())
+    este = (hoy or date.today()).month
+
+    def pct(valor: float) -> str:
+        return f"{valor:+.1f}%".replace(".", ",")
+
+    texto = [f"📅 <b>{nombre}</b> mes a mes, desde {e.desde}", ""]
+    for m in e.meses:
+        marca = " ← este mes" if m.mes == este else ""
+        texto.append(
+            f"{_flecha(m.suele)} {MESES_ESTACIONAL[m.mes - 1][:3].title()}: "
+            f"<b>{pct(m.suele)}</b> · subió {m.subio} de {m.veces}{marca}"
+        )
+
+    mejor, peor = e.mejor, e.peor
+    if len(e.meses) > 1:
+        texto += [
+            "",
+            f"🏆 El mejor, <b>{MESES_ESTACIONAL[mejor.mes - 1]}</b> "
+            f"({pct(mejor.suele)})",
+            f"💀 El peor, <b>{MESES_ESTACIONAL[peor.mes - 1]}</b> ({pct(peor.suele)})",
+        ]
+    texto += [
+        "",
+        "<i>Lo que suele hacer cada mes del primer día al último (la mediana, "
+        "para que un año loco no lo tape todo), en dólares. Datos de Binance. Lo "
+        "que pasó no tiene por qué repetirse</i>",
+    ]
+    if e.años < POCOS_AÑOS:
+        texto.append(f"<i>Con menos de {POCOS_AÑOS} años es casi azar</i>")
+    return "\n".join(texto)
 
 
 def formatear_diames(
