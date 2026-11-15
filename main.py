@@ -61,6 +61,7 @@ from crypto_tracker import (
     comandos,
     comision,
     comisiones,
+    comisionred,
     comparar,
     compensar,
     compras,
@@ -1469,6 +1470,9 @@ def responder(
     if nombre == "miedo":
         return _miedo()
 
+    if nombre == "comisionred":
+        return _comisionred(config)
+
     if nombre == "comparar":
         return _comparar(config, argumento)
 
@@ -2805,6 +2809,22 @@ def _aleatoria(config: Config) -> str | comandos.ConBotones:
     puesto, m = elegida
     texto = alerts.formatear_aleatoria(puesto, m, config.vs_currency)
     return comandos.ConBotones(texto, botones.para_aleatoria(m.coin_id))
+
+
+def _comisionred(config: Config) -> str | comandos.ConBotones:
+    try:
+        ahora, semana = comisionred.pedir()
+    except comisionred.ComisionRedError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+
+    datos = comisionred.leer(ahora, semana)
+    precio = database.get_last_price(config.database_path, "bitcoin")
+    if precio is None:
+        precio = (_consultar(config, ["bitcoin"]) or {}).get("bitcoin")
+    texto = alerts.formatear_comisionred(datos, precio, config.vs_currency)
+    if datos is None:
+        return texto
+    return comandos.ConBotones(texto, botones.actualizar("/comisionred"))
 
 
 def _miedo() -> str | comandos.ConBotones:

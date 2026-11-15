@@ -47,6 +47,8 @@ from .cine import Cine
 from .coche import PRECIO as PRECIO_COCHE
 from .coche import Coche
 from .comisiones import Comisiones
+from .comisionred import TAMAÑO as TAMAÑO_ENVIO
+from .comisionred import ComisionRed, en_dinero
 from .comparar import Resultado
 from .comparar import media as media_comparar
 from .compensar import Compensacion
@@ -4658,6 +4660,49 @@ def formatear_aleatoria(puesto: int, m: Movida, currency: str) -> str:
         f"Vale {simbolo}{_num(m.precio)}  ·  En 24 h: {flecha} {m.variacion:+.2f}%\n"
         f"<i>Para vigilarla: /vigilar {escape(m.coin_id)} %5</i>"
     )
+
+
+def formatear_comisionred(
+    c: ComisionRed | None, precio_btc: float | None, currency: str
+) -> str:
+    """Respuesta de /comisionred. Sin precio de bitcoin, solo en sats."""
+    if c is None:
+        return "mempool.space no me ha dado las comisiones. Prueba en un rato."
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+
+    def cuesta(sats: int) -> str:
+        if not precio_btc:
+            return f"{_es(f'{sats:,}')} sats"
+        dinero = en_dinero(sats, precio_btc)
+        if dinero < 0.01:
+            return f"menos de 1 céntimo ({sats} sats)"
+        return f"{simbolo}{_es(f'{dinero:,.2f}')}"
+
+    texto = ["⛓️ <b>Lo que cuesta mover bitcoin ahora</b>", ""]
+    for t in c.tarifas:
+        texto.append(
+            f"{t.emoji} {t.nombre}: <b>{cuesta(t.sats)}</b> · {t.sats_vb} sat/vB"
+        )
+
+    normal = f"{c.semana:g}".replace(".", ",") if c.semana else ""
+    veredicto = {
+        "regalada": "🎁 Casi regalada: da igual cuándo lo hagas",
+        "barata": f"🟢 Barata: lo normal esta semana es {normal} sat/vB. "
+        "Buen momento para pasarlo a tu monedero",
+        "normal": f"🟡 Normal para esta semana ({normal} sat/vB)",
+        "cara": f"🔴 Cara: lo normal esta semana es {normal} sat/vB. "
+        "Si no corre prisa, espera",
+    }.get(c.nivel)
+    if veredicto:
+        texto += ["", veredicto]
+
+    texto += [
+        "",
+        f"<i>Un envío normal, de una entrada y dos salidas ({TAMAÑO_ENVIO} vB). "
+        "Si juntas muchas entradas pequeñas, sale más caro. Datos de "
+        '<a href="https://mempool.space">mempool.space</a></i>',
+    ]
+    return "\n".join(texto)
 
 
 def formatear_miedo(lista: list[Indice]) -> str:

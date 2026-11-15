@@ -12,6 +12,7 @@ from crypto_tracker import (
     caraocruz,
     coingecko,
     comandos,
+    comisionred,
     consejo,
     dado,
     database,
@@ -4106,6 +4107,34 @@ def test_top_sin_conexion(config, enviados, monkeypatch):
 
 
 # --- /miedo ---
+
+
+def test_comisionred(config, monkeypatch):
+    mandados = _con_botones(monkeypatch)
+    monkeypatch.setattr(
+        comisionred,
+        "pedir",
+        lambda: ({"halfHourFee": 30}, [{"avgFee_50": 10}]),
+    )
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: {"bitcoin": 80000.0})
+
+    main.atender(config, _mensaje("/mempool"))
+
+    texto, teclado = mandados[0]
+    assert "🚶 En media hora: <b>€3,38</b> · 30 sat/vB" in texto
+    assert "🔴 Cara" in texto
+    assert teclado == [[("🔄 Actualizar", "/comisionred")]]
+
+
+def test_comisionred_sin_conexion(config, enviados, monkeypatch):
+    def falla():
+        raise comisionred.ComisionRedError("mempool.space no contesta")
+
+    monkeypatch.setattr(comisionred, "pedir", falla)
+
+    main.atender(config, _mensaje("/comisionred"))
+
+    assert "No he podido mirarlo ahora mismo" in enviados[0]
 
 
 def test_miedo(config, monkeypatch):
