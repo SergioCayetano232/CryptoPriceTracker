@@ -79,6 +79,7 @@ from .equilibrio import Cartera
 from .estables import Desvio
 from .ethereum import Ethereum
 from .frase import Frase
+from .funding import Funding
 from .futbol import PRECIO as PRECIO_FUTBOL
 from .futbol import Futbol
 from .futuro import Futuro
@@ -3892,6 +3893,32 @@ def formatear_sharpe(s: Sharpe, btc: Sharpe | None, dias: int) -> str:
         f"<i>Lo que gana por cada punto que se mueve, en {s.contados} días con lo "
         "que tienes hoy. De 1 para arriba está bien; no resta lo que daría un "
         "depósito</i>",
+    ]
+    return "\n".join(texto)
+
+
+def formatear_funding(f: Funding) -> str:
+    """Respuesta de /funding."""
+    simbolo = escape(f.par.removesuffix("USDT"))
+
+    def pct(valor: float) -> str:
+        return f"{valor:+.4f}%".replace(".", ",")
+
+    texto = [
+        f"{f.emoji} <b>Funding de {simbolo}: {pct(f.ahora)}</b> cada 8 h",
+        f"<b>{f.nivel}</b>",
+    ]
+    if f.que_pasa:
+        texto.append(f.que_pasa)
+    texto.append("")
+    if f.semana is not None:
+        texto.append(f"Media de la semana: {pct(f.semana)}")
+    texto.append(f"Al año serían un {_decimal(f.al_año)}%")
+    texto += [
+        "",
+        "<i>Lo que pagan cada 8 h los que apuestan a que sube a los que apuestan "
+        "a que baja; en negativo, al revés. Lo normal es +0,01%. Datos de los "
+        "futuros de Binance</i>",
     ]
     return "\n".join(texto)
 

@@ -178,6 +178,7 @@ COMANDOS = {
     "glosario": "Qué significa hodl, fomo, dca... (ej: /glosario fomo)",
     "miedo": "El índice de miedo y codicia del mercado",
     "comisionred": "Lo que cuesta ahora mover bitcoin y si está barato",
+    "funding": "Si los de futuros apuestan a que sube o baja (ej: /funding btc)",
     "buscar": "Encuentra el id de una cripto (ej: /buscar btc)",
     "copia": "Lo que vigilo y tu cartera, listo para pegar en el .env",
     "ajustes": "Lo que tienes puesto: moneda, horas tranquilas, avisos...",
@@ -239,6 +240,8 @@ ALIAS = {
     "codicia": "miedo",
     "fear": "miedo",
     "mempool": "comisionred",
+    "financiacion": "funding",
+    "financiación": "funding",
     "comisiónred": "comisionred",
     "market": "mercado",
     "compare": "comparar",
@@ -680,6 +683,10 @@ EJEMPLOS = {
         ("/dia bitcoin 01/09", "cómo cerró ese día, con su máximo y su mínimo"),
         ("/dia bitcoin ayer", "también hoy, ayer y anteayer"),
         ("/dia 01/09/2025", "con año; sin cripto, la primera que vigilo"),
+    ],
+    "funding": [
+        ("/funding btc", "lo que pagan los de futuros de bitcoin y si está apalancado"),
+        ("/funding", "a secas, la primera que vigilo"),
     ],
     "sharpe": [
         ("/sharpe", "los últimos 90 días, comparado con bitcoin"),

@@ -355,6 +355,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/glosario fomo` | Lo que significa una palabra cripto: hodl, fomo, fud, dca, ath, ballena... A secas, la lista de las que sabe |
 | `/miedo` | El índice de miedo y codicia del mercado (0 pánico, 100 euforia), con el de ayer y el de hace una semana. Viene de alternative.me y no gasta consultas de CoinGecko |
 | `/comisionred` | Lo que cuesta ahora mover bitcoin, con prisa y sin ella, en dinero y en sat/vB, para un envío normal de una entrada y dos salidas. Te dice si está barata, normal o cara comparada con lo normal de la semana. Viene de mempool.space y no gasta consultas de CoinGecko. También `/mempool` |
+| `/funding btc` | Lo que pagan cada 8 horas en los futuros de Binance los que apuestan a que sube a los que apuestan a que baja, la media de la semana y un nivel: de "muchos apostando a que baja" a "muy apalancado al alza", que es cuando suelen venir las caídas bruscas. A secas, la primera que vigilo. No gasta consultas de CoinGecko. También `/financiacion` |
 | `/buscar btc` | Encuentra el id de CoinGecko de una cripto |
 | `/copia` | Las líneas `WATCHLIST`, `PORTFOLIO` y `RESUMEN_DIARIO` como están ahora, con lo cambiado por Telegram, listas para pegar en el `.env`. Para guardarlo por si cambias de servidor |
 | `/ajustes` | Lo que tienes puesto en el `.env`: la moneda, cada cuánto consulta, los días que guarda, el resumen, el aviso de movimientos bruscos, el de máximos y mínimos y las horas tranquilas |
@@ -788,6 +789,7 @@ crypto_tracker/
   config.py      lee el .env
   coingecko.py   consulta los precios
   comisionred.py lo que cuesta mover bitcoin, de mempool.space, para /comisionred
+  funding.py     lo que se pagan los de futuros en Binance, para /funding
   database.py    guarda el histórico
   telegram.py    manda los mensajes
   botones.py     los botones de debajo de los avisos

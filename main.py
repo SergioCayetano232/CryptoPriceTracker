@@ -97,6 +97,7 @@ from crypto_tracker import (
     extremos,
     fifo,
     frase,
+    funding,
     futbol,
     futuro,
     galleta,
@@ -1470,6 +1471,9 @@ def responder(
     if nombre == "miedo":
         return _miedo()
 
+    if nombre == "funding":
+        return _funding(config, argumento)
+
     if nombre == "comisionred":
         return _comisionred(config)
 
@@ -2825,6 +2829,36 @@ def _comisionred(config: Config) -> str | comandos.ConBotones:
     if datos is None:
         return texto
     return comandos.ConBotones(texto, botones.actualizar("/comisionred"))
+
+
+def _funding(config: Config, argumento: str) -> str | comandos.ConBotones:
+    if len(argumento.split()) > 1:
+        return "De una en una. Por ejemplo: /funding btc"
+    if argumento:
+        coin_id = simbolos.a_id(argumento)
+    else:
+        vigiladas = _con_cambios(config).watchlist
+        if not vigiladas:
+            return "¿De cuál? Por ejemplo: /funding btc"
+        coin_id = vigiladas[0].coin_id
+
+    par = funding.par(coin_id, argumento)
+    try:
+        ahora, antes = funding.pedir(par)
+    except funding.FundingError as e:
+        if str(e) == "sin futuros":
+            return (
+                f"<b>{telegram.escape(coin_id)}</b> no tiene futuros en Binance. "
+                "Prueba con su símbolo, como /funding btc"
+            )
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+
+    resultado = funding.leer(par, ahora, antes)
+    if resultado is None:
+        return "Binance no me ha dado el funding. Prueba en un rato."
+    return comandos.ConBotones(
+        alerts.formatear_funding(resultado), botones.actualizar(f"/funding {coin_id}")
+    )
 
 
 def _miedo() -> str | comandos.ConBotones:

@@ -18,6 +18,7 @@ from crypto_tracker import (
     database,
     excusa,
     frase,
+    funding,
     grafica,
     miedo,
     refran,
@@ -4107,6 +4108,41 @@ def test_top_sin_conexion(config, enviados, monkeypatch):
 
 
 # --- /miedo ---
+
+
+def test_funding(config, monkeypatch):
+    mandados = _con_botones(monkeypatch)
+    pedidos = []
+
+    def pedir(par):
+        pedidos.append(par)
+        return {"lastFundingRate": "0.0001"}, [{"fundingRate": "0.0001"}]
+
+    monkeypatch.setattr(funding, "pedir", pedir)
+
+    main.atender(config, _mensaje("/funding sol"))
+
+    texto, teclado = mandados[0]
+    assert pedidos == ["SOLUSDT"]
+    assert "😐 <b>Funding de SOL: +0,0100%</b>" in texto
+    assert teclado == [[("🔄 Actualizar", "/funding solana")]]
+
+
+def test_funding_sin_futuros(config, enviados, monkeypatch):
+    def pedir(par):
+        raise funding.FundingError("sin futuros")
+
+    monkeypatch.setattr(funding, "pedir", pedir)
+
+    main.atender(config, _mensaje("/funding usdc"))
+
+    assert "<b>usd-coin</b> no tiene futuros en Binance" in enviados[0]
+
+
+def test_funding_de_una_en_una(config, enviados):
+    main.atender(config, _mensaje("/funding btc eth"))
+
+    assert "De una en una" in enviados[0]
 
 
 def test_comisionred(config, monkeypatch):
