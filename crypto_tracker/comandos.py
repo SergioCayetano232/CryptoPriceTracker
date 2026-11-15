@@ -67,6 +67,7 @@ COMANDOS = {
     "redondo": "Cuánto le falta para la siguiente cifra redonda (ej: /redondo btc)",
     "rsi": "Si ha subido o bajado demasiado rápido (ej: /rsi btc)",
     "bollinger": "Si se ha salido de su banda normal (ej: /bollinger btc)",
+    "macd": "Si coge o pierde empuje, con el MACD (ej: /macd bitcoin)",
     "caida": "Cuánto ha bajado desde el máximo (ej: /caida btc 30d)",
     "sube": "Cuánto ha subido desde el mínimo (ej: /sube btc 30d)",
     "volatilidad": "Cuánto se mueve, para elegir el % (ej: /volatilidad btc 30d)",
@@ -261,6 +262,7 @@ ALIAS = {
     "drawdown": "caida",
     "sobrecompra": "rsi",
     "bandas": "bollinger",
+    "empuje": "macd",
     "dominance": "dominancia",
     "altcoins": "dominancia",
     "proyeccion": "futuro",
@@ -711,6 +713,10 @@ EJEMPLOS = {
     "futuro": [
         ("/futuro", "entre qué cifras puede estar tu cartera dentro de 30 días"),
         ("/futuro 90d", "de 1 a 365 días"),
+    ],
+    "macd": [
+        ("/macd bitcoin", "si va con empuje al alza o a la baja y desde cuándo"),
+        ("/macd", "a secas, la primera que vigilo"),
     ],
     "bollinger": [
         ("/bollinger bitcoin", "si está dentro de su banda de 20 días o se ha salido"),

@@ -121,6 +121,8 @@ from .luz import PRECIO as PRECIO_LUZ
 from .luz import Luz
 from .macbook import PRECIO as PRECIO_MACBOOK
 from .macbook import Macbook
+from .macd import LENTA, RAPIDA, Macd
+from .macd import SEÑAL as SEÑAL_MACD
 from .maximo import Maximo, hace
 from .media import lado_de_todas
 from .mejor import Extremo
@@ -3926,6 +3928,49 @@ def _redondo_alerta(precio: float) -> str:
     # Tres cifras: 62.345,70 se escribe 62300, que es como lo pondría uno.
     redondo = round(precio, 2 - math.floor(math.log10(precio)))
     return f"{redondo:f}".rstrip("0").rstrip(".")
+
+
+def formatear_macd(coin_id: str, m: Macd, currency: str) -> str:
+    """Respuesta de /macd."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(coin_id.replace("-", " ").title())
+
+    def dinero(valor: float) -> str:
+        signo = "-" if valor < 0 else ""
+        return f"{signo}{simbolo}{_num(abs(valor))}"
+
+    texto = [f"📶 <b>{nombre}</b>: MACD de {RAPIDA} y {LENTA} días", ""]
+    if m.arriba:
+        texto.append("🐂 <b>Empuje al alza</b>: el MACD va por encima de su señal")
+    else:
+        texto.append("🐻 <b>Empuje a la baja</b>: el MACD va por debajo de su señal")
+
+    if m.cruce_hace == 0:
+        texto.append("✂️ La ha cruzado hoy")
+    elif m.cruce_hace == 1:
+        texto.append("✂️ La cruzó ayer")
+    elif m.cruce_hace is not None:
+        texto.append(f"Desde hace {m.cruce_hace} días")
+    else:
+        texto.append(f"Así en todos los {m.dias} días que tengo")
+
+    if m.cogiendo_fuerza:
+        texto.append("💪 Y cogiendo fuerza")
+    else:
+        texto.append("🫠 Pero perdiendo fuerza: si sigue así, puede girar pronto")
+
+    fondo = "sube" if m.macd > 0 else "baja"
+    texto += [
+        f"De fondo {fondo}: la media de {RAPIDA} días va "
+        f"{'por encima' if m.macd > 0 else 'por debajo'} de la de {LENTA}",
+        "",
+        f"MACD {dinero(m.macd)} · Señal {dinero(m.señal)} · "
+        f"Diferencia {'+' if m.histograma > 0 else ''}{dinero(m.histograma)}",
+        f"<i>La media de {RAPIDA} días menos la de {LENTA}, contra su propia media "
+        f"de {SEÑAL_MACD}. Cruzarla hacia arriba suele leerse como compra y hacia "
+        "abajo como venta, pero llega con retraso. Sale de lo guardado</i>",
+    ]
+    return "\n".join(texto)
 
 
 def formatear_bollinger(coin_id: str, b: Bandas, currency: str) -> str:

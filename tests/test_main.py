@@ -4586,6 +4586,22 @@ def test_futuro_mal_escrito(config, enviados):
     assert "Dime de 1 a 365 días" in enviados[0]
 
 
+def test_macd(config, enviados):
+    for dias in range(1, 61):
+        _precio_de(config, "bitcoin", 100.0 + (60 - dias) ** 2, dias * 24 * 60)
+
+    main.atender(config, _mensaje("/macd btc"))
+
+    assert "📶 <b>Bitcoin</b>: MACD de 12 y 26 días" in enviados[0]
+    assert "🐂 <b>Empuje al alza</b>" in enviados[0]
+
+
+def test_macd_sin_historia(config, enviados):
+    main.atender(config, _mensaje("/empuje"))
+
+    assert "Necesito 35 días seguidos" in enviados[0]
+
+
 def test_bollinger(config, enviados):
     for dias in range(1, 25):
         _precio_de(config, "bitcoin", 95.0 if dias % 2 else 105.0, dias * 24 * 60)

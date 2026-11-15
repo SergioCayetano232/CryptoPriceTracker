@@ -124,6 +124,7 @@ from crypto_tracker import (
     loteria,
     luz,
     macbook,
+    macd,
     maximo,
     media,
     mejor,
@@ -1587,6 +1588,9 @@ def responder(
 
     if nombre == "futuro":
         return _futuro(config, argumento)
+
+    if nombre == "macd":
+        return _macd(config, argumento)
 
     if nombre == "bollinger":
         return _bollinger(config, argumento)
@@ -3615,6 +3619,30 @@ def _futuro(config: Config, argumento: str) -> str:
             "bajo los que faltan"
         )
     return alerts.formatear_futuro(resultado, config.vs_currency)
+
+
+def _macd(config: Config, argumento: str) -> str:
+    if len(argumento.split()) > 1:
+        return "De una en una. Por ejemplo: /macd bitcoin"
+    if argumento:
+        coin_id = simbolos.a_id(argumento)
+    else:
+        vigiladas = _con_cambios(config).watchlist
+        if not vigiladas:
+            return "¿De cuál? Por ejemplo: /macd bitcoin"
+        coin_id = vigiladas[0].coin_id
+
+    serie = database.get_serie(
+        config.database_path, coin_id, macd.HORAS, config.vs_currency
+    )
+    resultado = macd.calcular(volatilidad.por_dias(serie))
+    if resultado is None:
+        return (
+            f"Necesito {macd.MINIMO + 1} días seguidos de precios de "
+            f"<b>{telegram.escape(coin_id)}</b> y no los tengo. Con /rellenar "
+            f"{telegram.escape(coin_id)} bajo los que faltan"
+        )
+    return alerts.formatear_macd(coin_id, resultado, config.vs_currency)
 
 
 def _bollinger(config: Config, argumento: str) -> str:

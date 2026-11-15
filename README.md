@@ -244,6 +244,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/redondo bitcoin` | Cuánto le falta para la siguiente cifra redonda por arriba y por abajo (de 64.000 a 70.000 y a 60.000). A secas, las que vigilas. Sale de lo guardado y no gasta consultas |
 | `/rsi bitcoin` | Su RSI de 14 días: por encima de 70 ha subido demasiado rápido (sobrecomprada) y por debajo de 30 ha bajado demasiado (sobrevendida). Necesita 15 días seguidos guardados y no gasta consultas |
 | `/bollinger bitcoin` | Sus bandas de Bollinger: la media de 20 días y dos veces lo que se suele separar de ella, por arriba y por abajo. Te dice si el precio está dentro, por encima (muy estirada) o por debajo (muy aplastada), con una barrita de dónde está, y si la banda está de las más estrechas de lo guardado, que suele ir antes de un movimiento fuerte. Necesita 20 días seguidos guardados y no gasta consultas. También `/bandas` |
+| `/macd bitcoin` | Si va con empuje al alza o a la baja según el MACD (la media de 12 días menos la de 26, contra su propia media de 9): desde cuándo, si coge o pierde fuerza y hacia dónde va de fondo. Cruzar su señal hacia arriba se suele leer como compra y hacia abajo como venta, con retraso. A secas, la primera que vigilo. Necesita 35 días seguidos guardados. Sale de lo guardado y no gasta consultas. También `/empuje` |
 | `/caida bitcoin 30d` | Cuánto ha bajado desde el máximo del tramo y cuál fue su peor caída, de qué precio a cuál y cuánto tardó en volver (sin tramo, 30 días). Con `/caida cartera`, lo mismo con lo que vale tu cartera entera. Sale de lo guardado y no gasta consultas |
 | `/sube bitcoin 30d` | Lo contrario: cuánto ha subido desde el mínimo del tramo y cuál fue su mejor subida, de qué precio a cuál (sin tramo, 30 días). También con `/minimo`. Sale de lo guardado y no gasta consultas |
 | `/comparar btc eth sol 7d` | Qué tal le ha ido a cada una en ese tramo, de la mejor a la peor (sin tramo, 7 días; sin criptos, las que vigilas) |
@@ -946,6 +947,7 @@ crypto_tracker/
   redondo.py     la siguiente cifra redonda, para /redondo
   rsi.py         el RSI de 14 días, para /rsi
   bollinger.py   las bandas de 20 días, para /bollinger
+  macd.py        las medias de 12 y 26 días contra la de 9, para /macd
   futuro.py      entre qué cifras puede estar tu cartera, para /futuro
   sharpe.py      lo que gana la cartera para lo que se mueve, para /sharpe
   caida.py       lo que ha bajado desde el máximo, para /caida
