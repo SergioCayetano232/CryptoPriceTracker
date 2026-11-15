@@ -203,6 +203,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/record` | Lo máximo que ha valido tu cartera con los precios guardados, qué día fue y cuánto le falta para volver. Ojo: es lo que tienes hoy a los precios de entonces, no lo que tenías ese día. No gasta consultas. También `/pico` |
 | `/vsbtc` | Lo que vale hoy lo que has comprado por Telegram, contra haber metido ese mismo dinero en bitcoin los mismos días (y sacado lo mismo al vender). Usa el precio de bitcoin que tiene guardado, así que necesita llevar vigilándolo desde tus compras. Lo del `PORTFOLIO` del `.env` no cuenta, porque no lleva fecha. También `/vsbitcoin` |
 | `/deposito 3%` | Lo que vale hoy lo que has comprado por Telegram, contra haber tenido ese mismo dinero en un depósito al 3 % al año, en las mismas fechas (y sacado lo mismo al vender), con lo que habría puesto de intereses. Debajo, qué interés tendría que dar el depósito para empatar con tu cartera. Sin decir el %, un 3 %. Sin impuestos ni en uno ni en otro. También `/banco` |
+| `/inflacion` | Si tu cartera le gana a la subida de precios en España: cuánto han subido desde tu primera compra, cuánto haría falta hoy para comprar lo mismo que con lo que pusiste (cada compra y venta con la inflación desde su fecha) y si lo que te queda vale más o menos, en % de poder de compra. Con el IPCA de España de Eurostat, que sale con uno o dos meses de retraso. Solo cuenta lo apuntado con `/compra` y `/venta` con precio. También `/ipc` |
 | `/compras` | Tu mejor y tu peor compra, con el % y lo que va ganando o perdiendo cada una a precio de hoy, y cuántas van en verde. Con `/compras btc`, solo las de esa. Solo las apuntadas por Telegram con lo que costaron |
 | `/rentabilidad` | Lo que has metido, sacado y te queda, lo que ganas en total y cuánto sale **al año**, contando cuándo entró y salió cada euro (la TIR, como en los fondos). Con menos de un mes no lo pasa a anual. Solo lo apuntado por Telegram con precio. También `/tir` |
 | `/movimientos` | Tus últimas compras y ventas, con un botón para deshacer la última (`/movimientos btc`, solo las de esa) |
@@ -813,6 +814,7 @@ crypto_tracker/
   limite.py      lo que llevas comprado este mes, para /limite
   apy.py         cuánta cripto tendrías en staking, para /apy
   deposito.py    tu cartera contra un depósito, para /deposito
+  inflacion.py   tu cartera contra el IPC de España, para /inflacion
   comisiones.py  lo pagado en comisiones, para /comisiones
   plan.py        cuánto tardas en llegar a una cifra, para /plan
   posicion.py    cuánto meter según lo que aceptas perder, para /posicion

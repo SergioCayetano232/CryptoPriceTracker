@@ -105,6 +105,7 @@ from .hotel import Hotel
 from .hoy import Hoy
 from .hoy import mejor_y_peor as extremos_hoy
 from .impuestos import Impuestos
+from .inflacion import Inflacion
 from .iphone import PRECIO as PRECIO_IPHONE
 from .iphone import Iphone
 from .jamon import PRECIO as PRECIO_JAMON
@@ -1386,6 +1387,59 @@ def formatear_deposito(c: ContraDeposito, currency: str) -> str:
     elif c.fuera:
         pie += (
             f". {c.fuera} movimientos no cuentan: sin precio, o ventas de lo del .env"
+        )
+    texto.append(f"<i>{pie}</i>")
+    return "\n".join(texto)
+
+
+def formatear_inflacion(i: Inflacion, currency: str) -> str:
+    """Respuesta de /inflacion."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    subida = f"{i.subida:.1f}".replace(".", ",")
+    texto = [
+        "🎈 <b>Tu cartera contra la inflación</b>",
+        f"Desde tu primera compra ({i.desde.astimezone():%m/%Y}), los precios en "
+        f"España han subido un <b>{subida}%</b>",
+        "",
+    ]
+    if i.necesario > 0:
+        texto += [
+            f"Pusiste {simbolo}{_num(i.puesto)}: para comprar lo mismo hoy harían "
+            f"falta {simbolo}{_num(i.necesario)}",
+            f"Lo que te queda vale <b>{simbolo}{_num(i.vale)}</b>",
+            "",
+        ]
+        diferencia = f"{simbolo}{_num(abs(i.diferencia))}"
+        de_verdad = f"{abs(i.de_verdad):.1f}".replace(".", ",")
+        if abs(i.diferencia) < 0.01:
+            texto.append("🤝 Vas justo igual que la inflación")
+        elif i.diferencia > 0:
+            texto.append(
+                f"✅ Le ganas a la inflación: <b>{de_verdad}%</b> más de poder de "
+                f"compra ({diferencia} por encima)"
+            )
+        else:
+            texto.append(
+                f"🔥 La inflación te gana: has perdido un <b>{de_verdad}%</b> de "
+                f"poder de compra ({diferencia} por debajo)"
+            )
+    else:
+        texto.append(
+            f"Ya sacaste más de lo que metiste, contando la inflación. Lo que te "
+            f"queda, {simbolo}{_num(i.vale)}, es todo ganancia"
+        )
+
+    pie = (
+        f"Con el IPCA de España de Eurostat, hasta {i.hasta:%m/%Y}, y la fecha de "
+        "cada compra y venta"
+    )
+    if currency.lower() != "eur":
+        pie += f". Es la inflación del euro y tu cartera va en {currency.upper()}"
+    if i.fuera == 1:
+        pie += ". 1 movimiento no cuenta: sin precio, o venta de lo del .env"
+    elif i.fuera:
+        pie += (
+            f". {i.fuera} movimientos no cuentan: sin precio, o ventas de lo del .env"
         )
     texto.append(f"<i>{pie}</i>")
     return "\n".join(texto)

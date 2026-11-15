@@ -116,6 +116,7 @@ from crypto_tracker import (
     hoy,
     hubiera,
     impuestos,
+    inflacion,
     iphone,
     jamon,
     kebab,
@@ -1590,6 +1591,9 @@ def responder(
     if nombre == "futuro":
         return _futuro(config, argumento)
 
+    if nombre == "inflacion":
+        return _inflacion(config)
+
     if nombre == "fibonacci":
         return _fibonacci(config, argumento)
 
@@ -2392,6 +2396,32 @@ def _comisiones(config: Config, argumento: str) -> str:
     return alerts.formatear_comisiones(
         comisiones.calcular(todos, año), config.vs_currency, año
     )
+
+
+def _inflacion(config: Config) -> str:
+    todos = database.get_movimientos(config.database_path, None)
+    if not any(m.tipo == "compra" for m in todos):
+        return (
+            "No has apuntado ninguna compra por aquí, y lo del PORTFOLIO del .env "
+            f"no lleva fecha. Apúntalas así: {movimientos.EJEMPLO_COMPRA}"
+        )
+    dentro, tienes = rentabilidad.contables(todos)
+    if not dentro:
+        return (
+            "Tus compras no llevan lo que costaron, así que no puedo compararlas. "
+            f"La próxima, con precio: {movimientos.EJEMPLO_COMPRA}"
+        )
+    try:
+        ipc = inflacion.pedir()
+    except inflacion.InflacionError as e:
+        return f"No he podido mirar el IPC: {telegram.escape(str(e))}"
+    precios = _consultar(config, list(tienes)) if tienes else {}
+    if precios is None:
+        return "No he podido consultar los precios. Prueba en un rato."
+    resultado = inflacion.calcular(todos, precios, datetime.now(timezone.utc), ipc)
+    if resultado is None:
+        return "No he podido consultar los precios. Prueba en un rato."
+    return alerts.formatear_inflacion(resultado, config.vs_currency)
 
 
 def _deposito(config: Config, argumento: str) -> str:

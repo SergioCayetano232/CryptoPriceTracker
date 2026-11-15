@@ -22,6 +22,7 @@ from crypto_tracker import (
     frase,
     funding,
     grafica,
+    inflacion,
     miedo,
     refran,
     tarot,
@@ -8727,6 +8728,55 @@ def test_compras_sin_lo_que_costaron(config, enviados, monkeypatch):
     monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 60000.0})
 
     main.atender(config, _mensaje("/compras"))
+
+    assert "no llevan lo que costaron" in enviados[0]
+
+
+# --- /inflacion ---
+
+
+def test_inflacion(config, enviados, monkeypatch):
+    from datetime import date
+
+    _movimiento_hace(config, "bitcoin", "compra", 0.02, 1000, 400 * 24)
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 60000.0})
+    monkeypatch.setattr(
+        inflacion, "pedir", lambda: {date(2020, 1, 1): 100.0, date(2026, 9, 1): 110.0}
+    )
+
+    main.atender(config, _mensaje("/ipc"))
+
+    assert "🎈 <b>Tu cartera contra la inflación</b>" in enviados[0]
+    assert "✅ Le ganas a la inflación" in enviados[0]
+
+
+def test_inflacion_sin_eurostat(config, enviados, monkeypatch):
+    _movimiento_hace(config, "bitcoin", "compra", 0.02, 1000, 400 * 24)
+
+    def pedir():
+        raise inflacion.InflacionError("Eurostat no contesta")
+
+    monkeypatch.setattr(inflacion, "pedir", pedir)
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+
+    main.atender(config, _mensaje("/inflacion"))
+
+    assert "No he podido mirar el IPC: Eurostat no contesta" in enviados[0]
+
+
+def test_inflacion_sin_compras(config, enviados, monkeypatch):
+    monkeypatch.setattr(inflacion, "pedir", lambda: pytest.fail())
+
+    main.atender(config, _mensaje("/inflacion"))
+
+    assert "No has apuntado ninguna compra" in enviados[0]
+
+
+def test_inflacion_sin_lo_que_costaron(config, enviados, monkeypatch):
+    _movimiento_hace(config, "bitcoin", "compra", 0.01, None, 48)
+    monkeypatch.setattr(inflacion, "pedir", lambda: pytest.fail())
+
+    main.atender(config, _mensaje("/inflacion"))
 
     assert "no llevan lo que costaron" in enviados[0]
 
