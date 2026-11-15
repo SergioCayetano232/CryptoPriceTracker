@@ -16,6 +16,7 @@ from crypto_tracker import (
     consejo,
     dado,
     database,
+    direccion,
     estacional,
     excusa,
     frase,
@@ -4109,6 +4110,130 @@ def test_top_sin_conexion(config, enviados, monkeypatch):
 
 
 # --- /miedo ---
+
+
+BC1 = "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
+
+
+def _saldo(monkeypatch, sats, txs):
+    pedidas = []
+
+    def pedir(d):
+        pedidas.append(d)
+        return direccion.Saldo(sats, txs)
+
+    monkeypatch.setattr(direccion, "pedir", pedir)
+    return pedidas
+
+
+def test_direccion_añadir_ver_y_quitar(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 80000.0})
+    _saldo(monkeypatch, 50_000_000, 3)
+
+    main.atender(config, _mensaje(f"/direccion {BC1} frío"))
+    main.atender(config, _mensaje(f"/monedero {BC1}"))
+    main.atender(config, _mensaje("/direccion"))
+    main.atender(config, _mensaje("/direccion quitar FRÍO"))
+    main.atender(config, _mensaje("/direccion"))
+
+    assert "👀 Vigilo <b>frío</b>: ahora tiene 0,5 BTC (€40.000,00)" in enviados[0]
+    assert "Ya la vigilo como <b>frío</b>" in enviados[1]
+    assert "• <b>frío</b>: 0,5 BTC" in enviados[2]
+    assert "Ya no vigilo <b>frío</b>" in enviados[3]
+    assert "No vigilo ninguna" in enviados[4]
+
+
+def test_direccion_que_no_existe(config, enviados, monkeypatch):
+    def pedir(d):
+        raise direccion.DireccionError("mempool.space dice que esa dirección no existe")
+
+    monkeypatch.setattr(direccion, "pedir", pedir)
+
+    main.atender(config, _mensaje(f"/direccion {BC1}"))
+
+    assert "No he podido mirarla" in enviados[0]
+    assert database.direcciones(config.database_path) == {}
+
+
+def test_direccion_mal_escrita(config, enviados):
+    main.atender(config, _mensaje("/direccion hola"))
+
+    assert "no parece una dirección de bitcoin" in enviados[0]
+
+
+def test_direccion_maximo(config, enviados, monkeypatch):
+    _saldo(monkeypatch, 0, 0)
+    for i in range(direccion.MAXIMO):
+        v = direccion.Vigilada(f"bc1q{'a' * 30}{i}", f"n{i}", 0, 0)
+        database.guardar_direccion(config.database_path, v.direccion, v.guardar())
+
+    main.atender(config, _mensaje(f"/direccion {BC1}"))
+
+    assert "Como mucho vigilo 10" in enviados[0]
+
+
+def _vigilando(config):
+    v = direccion.Vigilada(BC1, "frío", 50_000_000, 3)
+    database.guardar_direccion(config.database_path, BC1, v.guardar())
+
+
+def test_revisar_direcciones_avisa_una_vez(config, enviados, monkeypatch):
+    _vigilando(config)
+    _saldo(monkeypatch, 40_000_000, 4)
+
+    main.revisar_direcciones(config, 80000.0)
+    main.revisar_direcciones(config, 80000.0)
+
+    assert len(enviados) == 1
+    assert "🔔 <b>Se ha movido frío</b>" in enviados[0]
+    assert "📤 Han salido <b>0,1 BTC (€8.000,00)</b>" in enviados[0]
+
+
+def test_revisar_direcciones_quieta(config, enviados, monkeypatch):
+    _vigilando(config)
+    _saldo(monkeypatch, 50_000_000, 3)
+
+    main.revisar_direcciones(config, 80000.0)
+
+    assert enviados == []
+
+
+def test_revisar_direcciones_si_falla_telegram_lo_reintenta(config, monkeypatch):
+    _vigilando(config)
+    _saldo(monkeypatch, 60_000_000, 4)
+    monkeypatch.setattr(telegram, "send_message", lambda *a, **kw: False)
+
+    main.revisar_direcciones(config, 80000.0)
+
+    guardada = database.direcciones(config.database_path)[BC1]
+    assert direccion.cargar(BC1, guardada).txs == 3
+
+
+def test_revisar_direcciones_callado_espera(config, enviados, monkeypatch):
+    _vigilando(config)
+    _saldo(monkeypatch, 60_000_000, 4)
+    monkeypatch.setattr(
+        main, "_silenciado", lambda c: datetime.now(timezone.utc) + timedelta(hours=1)
+    )
+
+    main.revisar_direcciones(config, 80000.0)
+
+    assert enviados == []
+    guardada = database.direcciones(config.database_path)[BC1]
+    assert direccion.cargar(BC1, guardada).txs == 3
+
+
+def test_revisar_direcciones_sin_mempool_sigue(config, enviados, monkeypatch):
+    _vigilando(config)
+
+    def pedir(d):
+        raise direccion.DireccionError("mempool.space no contesta")
+
+    monkeypatch.setattr(direccion, "pedir", pedir)
+
+    main.revisar_direcciones(config, 80000.0)
+
+    assert enviados == []
 
 
 def test_estacional(config, enviados, monkeypatch):

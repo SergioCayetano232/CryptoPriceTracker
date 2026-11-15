@@ -71,6 +71,9 @@ from .dia import Dia
 from .diames import POCOS_MESES as POCOS_MESES_DIAMES
 from .diames import DiasMes
 from .diasemana import NOMBRES, DiasSemana
+from .direccion import EJEMPLO as EJEMPLO_DIRECCION
+from .direccion import VER as VER_DIRECCION
+from .direccion import Saldo, Vigilada, a_btc
 from .doble import Cartera as CarteraDoble
 from .dominancia import Dominancia
 from .emoji import cara as cara_emoji
@@ -3731,6 +3734,71 @@ def formatear_diasemana(
     if incompleto:
         texto += f"\n<i>Solo tengo precios desde el {s.desde:%d/%m}.</i>"
     return texto
+
+
+def _btc(sats: int, precio: float | None, currency: str) -> str:
+    """'0,05 BTC (€3.200,00)'. Sin precio, solo los BTC."""
+    btc = f"{a_btc(abs(sats)):.8f}".rstrip("0").rstrip(".").replace(".", ",")
+    if not precio:
+        return f"{btc} BTC"
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    return f"{btc} BTC ({simbolo}{_num(a_btc(abs(sats)) * precio)})"
+
+
+def _corta(direccion: str) -> str:
+    return f"{direccion[:6]}…{direccion[-4:]}"
+
+
+def formatear_direcciones(
+    lista: list[Vigilada], precio: float | None, currency: str
+) -> str:
+    """/direccion a secas."""
+    if not lista:
+        return (
+            "No vigilo ninguna dirección. Añade una así: "
+            f"<code>{escape(EJEMPLO_DIRECCION)}</code>"
+        )
+    texto = ["👀 <b>Las direcciones que vigilo</b>", ""]
+    for v in lista:
+        texto.append(
+            f"• <b>{escape(v.nombre)}</b>: {_btc(v.sats, precio, currency)} · "
+            f'<a href="{VER_DIRECCION.format(v.direccion)}">{_corta(v.direccion)}</a>'
+        )
+    if len(lista) > 1:
+        total = sum(v.sats for v in lista)
+        texto += ["", f"Entre todas: <b>{_btc(total, precio, currency)}</b>"]
+    texto += [
+        "",
+        "<i>Te aviso en cuanto entre o salga algo, sin esperar a que se "
+        "confirme. Para dejar de vigilar una: /direccion quitar nombre</i>",
+    ]
+    return "\n".join(texto)
+
+
+def formatear_direccion_nueva(v: Vigilada, precio: float | None, currency: str) -> str:
+    return (
+        f"👀 Vigilo <b>{escape(v.nombre)}</b>: ahora tiene "
+        f"{_btc(v.sats, precio, currency)}. Te aviso en cuanto se mueva"
+    )
+
+
+def formatear_movimiento_direccion(
+    v: Vigilada, cambio: int, ahora: Saldo, precio: float | None, currency: str
+) -> str:
+    """El aviso de cuando una de /direccion se mueve. v es como estaba antes."""
+    texto = [f"🔔 <b>Se ha movido {escape(v.nombre)}</b>"]
+    if cambio > 0:
+        texto.append(f"📥 Han entrado <b>{_btc(cambio, precio, currency)}</b>")
+    elif cambio < 0:
+        texto.append(f"📤 Han salido <b>{_btc(cambio, precio, currency)}</b>")
+    else:
+        texto.append("Ha tenido movimiento, pero el saldo sigue igual")
+    texto += [
+        f"Ahora tiene {_btc(ahora.sats, precio, currency)}",
+        "",
+        f'<a href="{VER_DIRECCION.format(v.direccion)}">Verlo en mempool.space</a>',
+    ]
+    return "\n".join(texto)
 
 
 def formatear_estacional(coin_id: str, e: Estacional, hoy: date | None = None) -> str:

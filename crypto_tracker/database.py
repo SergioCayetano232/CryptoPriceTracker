@@ -735,6 +735,36 @@ def guardar_limite_compras(db_path: str, limite: float | None) -> None:
         )
 
 
+def direcciones(db_path: str) -> dict[str, str]:
+    """Las de /direccion: {dirección: lo guardado}, por orden de alta."""
+    with _connect(db_path) as conn:
+        filas = conn.execute(
+            "SELECT clave, valor FROM ajustes WHERE clave LIKE 'direccion:%' "
+            "ORDER BY rowid"
+        ).fetchall()
+    return {f["clave"].removeprefix("direccion:"): f["valor"] for f in filas}
+
+
+def guardar_direccion(db_path: str, direccion: str, valor: str | None) -> None:
+    """None la quita."""
+    with _connect(db_path) as conn:
+        if valor is None:
+            conn.execute(
+                "DELETE FROM ajustes WHERE clave = ?", (f"direccion:{direccion}",)
+            )
+            return
+        # UPDATE y no REPLACE: REPLACE borra la fila y la pone al final de la lista.
+        cursor = conn.execute(
+            "UPDATE ajustes SET valor = ? WHERE clave = ?",
+            (valor, f"direccion:{direccion}"),
+        )
+        if cursor.rowcount == 0:
+            conn.execute(
+                "INSERT INTO ajustes (clave, valor) VALUES (?, ?)",
+                (f"direccion:{direccion}", valor),
+            )
+
+
 def lado_cruce(db_path: str, coin_id: str) -> str | None:
     """Dónde estaba la media de 50 la última vez. Sin fila, aún no se ha mirado."""
     with _connect(db_path) as conn:

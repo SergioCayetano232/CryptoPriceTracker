@@ -86,6 +86,7 @@ from crypto_tracker import (
     diames,
     diario,
     diasemana,
+    direccion,
     doble,
     dominancia,
     emoji,
@@ -345,6 +346,7 @@ def ejecutar_ciclo(
     revisar_cruces(config, vigiladas, calladas)
     revisar_estables(config, list(precios), calladas)
     revisar_volumen(config, vigiladas, calladas)
+    revisar_direcciones(config, precios.get("bitcoin"))
     if calladas:
         avisos = [a for a in avisos if a.coin_id not in calladas]
         hechas = [p for p in hechas if p.coin_id not in calladas]
@@ -834,6 +836,48 @@ def revisar_cruces(
             database.guardar_lado_cruce(config.database_path, coin_id, nuevo)
         except database.DatabaseError as e:
             logger.error("No se pudo apuntar el cruce de %s: %s", coin_id, e)
+
+
+def revisar_direcciones(config: Config, precio_btc: float | None) -> None:
+    """Avisa cuando entra o sale algo de una de /direccion."""
+    if _silenciado(config):
+        return
+    try:
+        vigiladas = _direcciones_guardadas(config)
+    except database.DatabaseError as e:
+        logger.error("No se pudieron leer las direcciones: %s", e)
+        return
+
+    for v in vigiladas:
+        try:
+            saldo = direccion.pedir(v.direccion)
+        except direccion.DireccionError as e:
+            logger.warning("No se pudo mirar %s: %s", v.direccion, e)
+            continue
+        cambio = direccion.movida(v, saldo)
+        if cambio is None:
+            continue
+
+        if not telegram.send_message(
+            config.telegram_token,
+            config.telegram_chat_id,
+            alerts.formatear_movimiento_direccion(
+                v, cambio, saldo, precio_btc, config.vs_currency
+            ),
+            sin_sonido=_sin_sonido(config),
+        ):
+            # Sin apuntarlo, lo vuelve a intentar el siguiente ciclo.
+            logger.error("No se pudo avisar de que se movió %s", v.nombre)
+            continue
+        logger.info("Se ha movido la dirección %s: %+d sats", v.nombre, cambio)
+
+        nueva = direccion.Vigilada(v.direccion, v.nombre, saldo.sats, saldo.txs)
+        try:
+            database.guardar_direccion(
+                config.database_path, v.direccion, nueva.guardar()
+            )
+        except database.DatabaseError as e:
+            logger.error("No se pudo apuntar la dirección %s: %s", v.nombre, e)
 
 
 def revisar_rsi(
@@ -1471,6 +1515,9 @@ def responder(
 
     if nombre == "miedo":
         return _miedo()
+
+    if nombre == "direccion":
+        return _direccion(config, argumento)
 
     if nombre == "estacional":
         return _estacional(config, argumento)
@@ -2833,6 +2880,70 @@ def _comisionred(config: Config) -> str | comandos.ConBotones:
     if datos is None:
         return texto
     return comandos.ConBotones(texto, botones.actualizar("/comisionred"))
+
+
+def _direcciones_guardadas(config: Config) -> list[direccion.Vigilada]:
+    guardadas = database.direcciones(config.database_path)
+    lista = [direccion.cargar(d, v) for d, v in guardadas.items()]
+    return [v for v in lista if v is not None]
+
+
+def _precio_btc(config: Config) -> float | None:
+    precio = database.get_last_price(config.database_path, "bitcoin")
+    if precio is None:
+        precio = (_consultar(config, ["bitcoin"]) or {}).get("bitcoin")
+    return precio
+
+
+def _direccion(config: Config, argumento: str) -> str:
+    try:
+        que, cual, nombre = direccion.interpretar(argumento)
+    except direccion.DireccionError as e:
+        return telegram.escape(str(e))
+    vigiladas = _direcciones_guardadas(config)
+
+    if que == "quitar":
+        v = direccion.buscar(vigiladas, cual)
+        if v is None:
+            return f"No vigilo ninguna que se llame <b>{telegram.escape(cual)}</b>."
+        database.guardar_direccion(config.database_path, v.direccion, None)
+        return f"Ya no vigilo <b>{telegram.escape(v.nombre)}</b>."
+
+    if que == "ver":
+        # Con lo de ahora y no lo guardado, por si el bot no está en --loop. No se
+        # guarda: si se ha movido, el aviso del ciclo se perdería.
+        al_dia = []
+        for v in vigiladas:
+            try:
+                saldo = direccion.pedir(v.direccion)
+                v = direccion.Vigilada(v.direccion, v.nombre, saldo.sats, v.txs)
+            except direccion.DireccionError as e:
+                logger.warning("No se pudo mirar %s: %s", v.direccion, e)
+            al_dia.append(v)
+        return alerts.formatear_direcciones(
+            al_dia, _precio_btc(config) if al_dia else None, config.vs_currency
+        )
+
+    ya = direccion.buscar(vigiladas, cual)
+    if ya is not None:
+        return f"Ya la vigilo como <b>{telegram.escape(ya.nombre)}</b>."
+    if direccion.buscar(vigiladas, nombre) is not None:
+        return (
+            f"Ya tienes una llamada <b>{telegram.escape(nombre)}</b>. "
+            "Ponle otro nombre."
+        )
+    if len(vigiladas) >= direccion.MAXIMO:
+        return f"Como mucho vigilo {direccion.MAXIMO}. Quita alguna antes."
+    try:
+        saldo = direccion.pedir(cual)
+    except direccion.DireccionError as e:
+        return f"No he podido mirarla: {telegram.escape(str(e))}"
+
+    nueva = direccion.Vigilada(cual, nombre, saldo.sats, saldo.txs)
+    database.guardar_direccion(config.database_path, cual, nueva.guardar())
+    return alerts.formatear_direccion_nueva(
+        nueva, _precio_btc(config), config.vs_currency
+    )
 
 
 def _estacional(config: Config, argumento: str) -> str:
