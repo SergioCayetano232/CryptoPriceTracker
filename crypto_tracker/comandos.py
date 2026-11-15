@@ -18,6 +18,7 @@ COMANDOS = {
     "reparto": "Qué parte de tu cartera es cada cripto, con gráfica",
     "riesgo": "Cuánto depende tu cartera de una cripto y cuánto se mueve",
     "futuro": "Entre qué cifras puede estar tu cartera (ej: /futuro 30d)",
+    "sharpe": "Cuánto gana tu cartera para lo que se mueve (ej: /sharpe 90d)",
     "rebalanceo": "Qué mover para un reparto (ej: /rebalanceo btc 60 eth 40)",
     "semana": "Cómo le ha ido a tu cartera esta semana, o a una (ej: /semana btc)",
     "mes": "Cómo va tu cartera desde el día 1 del mes",
@@ -676,6 +677,10 @@ EJEMPLOS = {
         ("/dia bitcoin 01/09", "cómo cerró ese día, con su máximo y su mínimo"),
         ("/dia bitcoin ayer", "también hoy, ayer y anteayer"),
         ("/dia 01/09/2025", "con año; sin cripto, la primera que vigilo"),
+    ],
+    "sharpe": [
+        ("/sharpe", "los últimos 90 días, comparado con bitcoin"),
+        ("/sharpe 365d", "de 30 a 365 días"),
     ],
     "futuro": [
         ("/futuro", "entre qué cifras puede estar tu cartera dentro de 30 días"),

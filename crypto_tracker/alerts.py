@@ -192,6 +192,7 @@ from .rsi import PERIODO, SOBRECOMPRA, SOBREVENTA, Rsi, hasta_zona
 from .sat import CANTIDADES as CANTIDADES_SAT
 from .sat import SATS_POR_BTC, Sat
 from .semanal import Semana
+from .sharpe import Sharpe
 from .sivendo import Simulacion
 from .sofa import PRECIO as PRECIO_SOFA
 from .sofa import Sofa
@@ -3859,6 +3860,37 @@ def formatear_bollinger(coin_id: str, b: Bandas, currency: str) -> str:
         f"<i>La media de {PERIODO_BOLLINGER} días y dos veces lo que se suele "
         "separar de ella, por arriba y por abajo. Sale de lo guardado</i>"
     )
+    return "\n".join(texto)
+
+
+def formatear_sharpe(s: Sharpe, btc: Sharpe | None, dias: int) -> str:
+    """Respuesta de /sharpe. btc a None si no hay con qué comparar."""
+    ratio = f"{s.ratio:.2f}".replace(".", ",")
+    texto = [
+        f"📐 <b>Tu Sharpe de los últimos {dias} días: {ratio}</b>",
+        f"Nota: {s.nota}",
+        "",
+        # Lo de verdad y no al año: un mes malo pasado a un año daba -300%.
+        f"{_flecha(s.gana)} En estos días: {_decimal(s.gana)}%",
+        f"🎢 Se mueve al año: {_decimal(s.se_mueve)}%",
+    ]
+    if btc:
+        suyo = f"{btc.ratio:.2f}".replace(".", ",")
+        # Por debajo de 0,1 de diferencia es ruido de unos pocos días.
+        if abs(s.ratio - btc.ratio) < 0.1:
+            que = "Casi igual que bitcoin"
+        elif s.ratio > btc.ratio:
+            que = "Mejor que bitcoin"
+        else:
+            que = "Peor que bitcoin: te saldría más a cuenta tener solo bitcoin"
+        texto += ["", f"₿ Bitcoin: {suyo} ({btc.nota})", f"{que}"]
+
+    texto += [
+        "",
+        f"<i>Lo que gana por cada punto que se mueve, en {s.contados} días con lo "
+        "que tienes hoy. De 1 para arriba está bien; no resta lo que daría un "
+        "depósito</i>",
+    ]
     return "\n".join(texto)
 
 

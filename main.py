@@ -175,6 +175,7 @@ from crypto_tracker import (
     salud,
     sat,
     semanal,
+    sharpe,
     simbolos,
     sivendo,
     sofa,
@@ -1521,6 +1522,9 @@ def responder(
 
     if nombre == "mitad":
         return _mitad(config)
+
+    if nombre == "sharpe":
+        return _sharpe(config, argumento)
 
     if nombre == "futuro":
         return _futuro(config, argumento)
@@ -3349,6 +3353,42 @@ def _rsi(config: Config, argumento: str) -> str:
             "vigilo, y desde que las vigilo: míralas con /vigilar"
         )
     return alerts.formatear_rsi(coin_id, resultado, config.vs_currency)
+
+
+def _sharpe(config: Config, argumento: str) -> str:
+    try:
+        dias = sharpe.interpretar(argumento)
+    except sharpe.SharpeError as e:
+        return telegram.escape(str(e))
+    posiciones = list(_con_cambios(config).cartera)
+    if not posiciones:
+        return SIN_CARTERA
+
+    horas = (dias + 1) * 24
+    coin_ids = [p.coin_id for p in posiciones]
+    filas = database.get_series(
+        config.database_path, coin_ids, horas, config.vs_currency
+    )
+    serie = cartera.serie_valor(posiciones, filas)
+    resultado = sharpe.calcular(volatilidad.por_dias(serie))
+    if resultado is None:
+        return (
+            f"Necesito {sharpe.MIN_CAMBIOS + 1} días seguidos con el precio de todo "
+            "lo que tienes, y que se haya movido algo. Con /rellenar bajo los que "
+            "faltan"
+        )
+
+    # Si solo tienes bitcoin, compararte con él no dice nada.
+    btc = None
+    if coin_ids != ["bitcoin"]:
+        btc = sharpe.calcular(
+            volatilidad.por_dias(
+                database.get_serie(
+                    config.database_path, "bitcoin", horas, config.vs_currency
+                )
+            )
+        )
+    return alerts.formatear_sharpe(resultado, btc, dias)
 
 
 def _futuro(config: Config, argumento: str) -> str:
