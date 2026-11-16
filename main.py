@@ -1026,6 +1026,7 @@ def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:
             resumen_semanal(config)
             resumen_mensual(config)
             resumen_anual(config)
+            aviso_compensar(config)
             recordatorios(config)
             copia_semanal(config)
             foto_dominancia(config)
@@ -2334,6 +2335,14 @@ def _valor_cierre(config: Config, año: int) -> float | None:
 
 def _compensar(config: Config) -> str:
     hoy = date.today()
+    plan = _plan_compensar(config, hoy)
+    if isinstance(plan, str):
+        return plan
+    return alerts.formatear_compensar(plan, config.vs_currency, hoy)
+
+
+def _plan_compensar(config: Config, hoy: date) -> compensar.Compensacion | str:
+    """Lo de /compensar sin el texto. Un str es que no se pudo."""
     todos = database.get_movimientos(config.database_path, None)
     este_año = impuestos.calcular(todos, hoy.year)
     cartera = _con_cambios(config).cartera
@@ -2348,8 +2357,7 @@ def _compensar(config: Config) -> str:
         except coingecko.CoinGeckoError as e:
             return f"No he podido mirar los precios: {telegram.escape(str(e))}"
 
-    plan = compensar.calcular(este_año, fifo.lotes(todos, cartera), precios)
-    return alerts.formatear_compensar(plan, config.vs_currency, hoy)
+    return compensar.calcular(este_año, fifo.lotes(todos, cartera), precios)
 
 
 def _deshacer(config: Config, argumento: str) -> str:
@@ -5292,6 +5300,42 @@ def resumen_anual(config: Config, ahora: datetime | None = None) -> None:
         )
     except database.DatabaseError as e:
         logger.error("No se pudo apuntar el resumen anual: %s", e)
+
+
+def aviso_compensar(config: Config, ahora: datetime | None = None) -> None:
+    """En diciembre, si vendiendo algo en pérdidas pagarías menos este año."""
+    config = _con_cambios(config)
+    if config.resumen_diario is None:
+        return
+
+    ahora = ahora or datetime.now().astimezone()
+    try:
+        ultimo = database.ultimo_resumen(config.database_path, database.AVISO_COMPENSAR)
+    except database.DatabaseError as e:
+        logger.error("No se pudo leer el aviso de compensar: %s", e)
+        return
+    if not compensar.toca_aviso(ahora, config.resumen_diario, ultimo):
+        return
+    if _silenciado(config):
+        return
+
+    hoy = ahora.astimezone().date()
+    plan = _plan_compensar(config, hoy)
+    # Sin precios lo intenta mañana; sin nada que ahorrar, también, por si vendes.
+    if isinstance(plan, str) or not plan.ventas:
+        return
+    texto = (
+        "⏰ <b>Aún llegas a pagar menos a Hacienda este año</b>\n\n"
+        + alerts.formatear_compensar(plan, config.vs_currency, hoy)
+    )
+    if not telegram.send_message(config.telegram_token, config.telegram_chat_id, texto):
+        logger.error("No se pudo enviar el aviso de compensar, lo reintento luego")
+        return
+    logger.info("Aviso de compensar enviado: te ahorrarías %.2f", plan.ahorro)
+    try:
+        database.guardar_resumen(config.database_path, hoy, database.AVISO_COMPENSAR)
+    except database.DatabaseError as e:
+        logger.error("No se pudo apuntar el aviso de compensar: %s", e)
 
 
 def resumen_mensual(config: Config, ahora: datetime | None = None) -> None:

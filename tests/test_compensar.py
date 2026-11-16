@@ -1,13 +1,13 @@
 """Tests de /compensar: qué vender y cuánto te ahorras."""
 
-from datetime import date, datetime, timezone
+from datetime import date, datetime, time, timezone
 
 import pytest
 
 import main
-from crypto_tracker import coingecko, database, fifo
+from crypto_tracker import coingecko, database, fifo, telegram
 from crypto_tracker.alerts import formatear_compensar
-from crypto_tracker.compensar import Compensacion, Venta, calcular
+from crypto_tracker.compensar import Compensacion, Venta, calcular, toca_aviso
 from crypto_tracker.config import Config, Posicion, Watch
 from crypto_tracker.fifo import Lote
 from crypto_tracker.impuestos import Impuestos, por_tramos
@@ -261,3 +261,117 @@ def test_si_no_hay_precios_lo_dice(config, monkeypatch):
     monkeypatch.setattr(coingecko, "get_prices", falla)
 
     assert "No he podido" in main.responder(config, "compensar", "")
+
+
+# --- el aviso de diciembre ---
+
+NUEVE = time(9, 0)
+
+
+def _el(mes, dia, hora=9, minuto=30):
+    return datetime(date.today().year, mes, dia, hora, minuto).astimezone()
+
+
+@pytest.mark.parametrize(
+    "cuando, sale",
+    [
+        (_el(12, 15), True),
+        (_el(12, 28), True),
+        (_el(12, 14), False),
+        (_el(12, 29), False),
+        (_el(11, 15), False),
+        (_el(12, 15, 8), False),  # antes de la hora del resumen
+    ],
+)
+def test_toca_aviso(cuando, sale):
+    assert toca_aviso(cuando, NUEVE, None) is sale
+
+
+def test_toca_aviso_una_vez_al_año():
+    año = date.today().year
+
+    assert not toca_aviso(_el(12, 20), NUEVE, date(año, 12, 15))
+    assert toca_aviso(_el(12, 20), NUEVE, date(año - 1, 12, 15))
+
+
+@pytest.fixture
+def enviados(monkeypatch):
+    lista = []
+
+    def send_message(token, chat_id, texto, **k):
+        lista.append(texto)
+        return True
+
+    monkeypatch.setattr(telegram, "send_message", send_message)
+    return lista
+
+
+@pytest.fixture
+def con_resumen(config):
+    from dataclasses import replace
+
+    return replace(config, resumen_diario=NUEVE)
+
+
+def _con_perdidas(config, monkeypatch):
+    _precios(monkeypatch, {"bitcoin": 200.0, "solana": 50.0})
+    main.responder(config, "compra", "btc 1 100")
+    main.responder(config, "venta", "btc 1 500")  # +400
+    main.responder(config, "compra", "sol 10 1000")
+
+
+def test_aviso_de_diciembre(con_resumen, enviados, monkeypatch):
+    _con_perdidas(con_resumen, monkeypatch)
+
+    main.aviso_compensar(con_resumen, _el(12, 15))
+    main.aviso_compensar(con_resumen, _el(12, 16))
+
+    [texto] = enviados
+    assert texto.startswith("⏰ <b>Aún llegas a pagar menos a Hacienda este año</b>")
+    assert "<b>Solana</b>: vende 8" in texto
+    assert len(database.get_movimientos(con_resumen.database_path, None)) == 3
+
+
+def test_aviso_de_diciembre_sin_nada_que_ahorrar(con_resumen, enviados, monkeypatch):
+    _precios(monkeypatch, {"bitcoin": 200.0})
+    main.responder(con_resumen, "compra", "btc 1 100")
+    main.responder(con_resumen, "venta", "btc 0.5 500")
+
+    main.aviso_compensar(con_resumen, _el(12, 15))
+
+    assert enviados == []
+    # No se apunta: si mañana hay algo en pérdidas, avisa.
+    assert database.ultimo_resumen(con_resumen.database_path, "aviso_compensar") is None
+
+
+def test_aviso_de_diciembre_fuera_de_fechas(con_resumen, enviados, monkeypatch):
+    _con_perdidas(con_resumen, monkeypatch)
+
+    main.aviso_compensar(con_resumen, _el(11, 15))
+
+    assert enviados == []
+
+
+def test_aviso_de_diciembre_sin_resumen_diario(config, enviados, monkeypatch):
+    _con_perdidas(config, monkeypatch)
+
+    main.aviso_compensar(config, _el(12, 15))
+
+    assert enviados == []
+
+
+def test_aviso_de_diciembre_si_falla_telegram_lo_reintenta(con_resumen, monkeypatch):
+    _con_perdidas(con_resumen, monkeypatch)
+    intentos = []
+
+    def send_message(token, chat_id, texto, **k):
+        intentos.append(texto)
+        return len(intentos) > 1
+
+    monkeypatch.setattr(telegram, "send_message", send_message)
+
+    main.aviso_compensar(con_resumen, _el(12, 15))
+    main.aviso_compensar(con_resumen, _el(12, 16))
+    main.aviso_compensar(con_resumen, _el(12, 17))
+
+    assert len(intentos) == 2

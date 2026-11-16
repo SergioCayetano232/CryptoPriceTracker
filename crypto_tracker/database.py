@@ -121,6 +121,8 @@ BAJON = "bajon_cartera"
 LIMITE_COMPRAS = "limite_compras"
 # La cripto de la que ya se avisó que pesaba demasiado. Sin fila, de ninguna.
 CONCENTRADA = "concentracion_cartera"
+# El día que se mandó en diciembre lo de /compensar, para no repetirlo.
+AVISO_COMPENSAR = "aviso_compensar"
 # El día que se avisó de que la cartera pasaba del límite del modelo 721.
 AVISO_721 = "aviso_721"
 

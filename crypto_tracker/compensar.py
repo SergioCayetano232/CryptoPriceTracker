@@ -1,13 +1,20 @@
 """/compensar: qué vender en pérdidas para bajar lo que le toca a Hacienda."""
 
 from dataclasses import dataclass
+from datetime import date, datetime, time
 
+from .diario import toca_resumen
 from .fifo import Lote
 from .impuestos import Impuestos, cuota
 from .movimientos import RESTO
 
 # Por debajo de un céntimo no merece una línea ni una venta.
 CENTIMO = 0.01
+
+# El aviso de diciembre: con tiempo para pensarlo y antes de que el exchange
+# vaya lento por fiestas. Si ese día el bot está parado, lo intenta los siguientes.
+AVISO_DESDE = 15
+AVISO_HASTA = 28
 
 
 @dataclass(frozen=True)
@@ -92,3 +99,13 @@ def calcular(
     return Compensacion(
         este_año.año, este_año.ganancia, ventas, sin_mirar, este_año.sin_datos
     )
+
+
+def toca_aviso(ahora: datetime, hora: time, ultimo: date | None) -> bool:
+    """Una vez al año, entre el 15 y el 28 de diciembre, a la hora del resumen."""
+    local = ahora.astimezone()
+    if local.month != 12 or not AVISO_DESDE <= local.day <= AVISO_HASTA:
+        return False
+    if ultimo is not None and ultimo.year == local.year:
+        return False
+    return toca_resumen(local, hora, ultimo)

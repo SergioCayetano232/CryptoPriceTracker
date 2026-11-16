@@ -196,7 +196,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/comisiones` | Lo que llevas pagado en comisiones, en dinero y en % de lo que moviste, por año y por cripto. `/comisiones 2025`, solo ese año. Cuentan las que pones con `com` en `/compra` y `/venta`; las apuntadas antes de esta versión no guardaban la comisión aparte y no salen. También `/fees` |
 | `/sivendo btc 0.5` | Lo que te darían, lo que le sacarías y lo que le tocaría a Hacienda, contando lo que ya llevas ganado este año. No apunta nada. También `/sivendo btc todo` y `/sivendo btc 0.5 @80000`, a ese precio |
 | `/permuta btc eth 0.01` | Lo que le tocaría a Hacienda si cambias una cripto por otra: en España cuenta como venderla, aunque no veas un euro. Te dice cuánta te darían de la otra, lo que le sacarías y a qué precio contará la nueva cuando la vendas. No apunta nada. También `/permuta btc eth todo` y con `com 0.1%` al final, la comisión. También `/swap` |
-| `/compensar` | Si llevas ganancia este año, qué vender de lo que va en pérdidas y cuánto, para bajar lo que le toca a Hacienda y cuánto te ahorrarías. Va con FIFO: si para llegar a lo que pierde hay que vender antes lo que gana, lo cuenta. No apunta nada y tiene que hacerse antes del 1 de enero. Es orientativo y sin comisiones. También `/perdidas` |
+| `/compensar` | Si llevas ganancia este año, qué vender de lo que va en pérdidas y cuánto, para bajar lo que le toca a Hacienda y cuánto te ahorrarías. Va con FIFO: si para llegar a lo que pierde hay que vender antes lo que gana, lo cuenta. No apunta nada y tiene que hacerse antes del 1 de enero. Es orientativo y sin comisiones. Si tienes resumen diario, te llega solo en diciembre cuando hay algo que ahorrar. También `/perdidas` |
 | `/modelo721` | Si te toca presentar el modelo 721, el de las criptos en exchanges de fuera de España: pasa si a 31 de diciembre valen más de 50.000 €. Del 1 de enero al 31 de marzo te dice lo que valía tu cartera ese día y cuánto te queda de plazo; el resto del año, cuánto le falta para el límite. No sabe dónde tienes cada cripto, así que mira la cartera entera. Con `AVISO_721=si` te avisa una vez al año al pasar de 50.000 €. También `/721` |
 | `/primera` | Tu primera compra, cuánto hace, cuánto ha cambiado el precio desde entonces y lo que vale hoy lo que compraste (`/primera btc`, la primera de esa). Solo las apuntadas con `/compra` |
 | `/pelotazo` | Tu mejor compra y la peor: lo que pagaste, cuándo, lo que valen hoy y cuánto han subido o bajado. Gasta una consulta |
@@ -677,6 +677,11 @@ que peor, el mejor y el peor mes, cuántas compras y ventas hiciste, lo ganado
 vendiendo y tu mejor y tu peor compra, mirada a 31 de diciembre. Con
 `/anual 2025` lo ves de cualquier año, también el que va en curso. Para que la
 cartera salga del año entero, `HISTORY_DAYS=366`.
+
+Y entre el 15 y el 28 de diciembre, una sola vez, **lo que te ahorrarías en
+Hacienda**: si llevas ganancia vendiendo este año y algo de tu cartera va en
+pérdidas, lo mismo que `/compensar`, a tiempo de venderlo antes del 1 de enero.
+Si no hay nada que ahorrar, no te llega nada.
 
 **Que no te despierte:**
 ```
