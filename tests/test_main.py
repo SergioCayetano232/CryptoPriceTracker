@@ -9896,3 +9896,149 @@ def test_caida_de_la_cartera_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/caida cartera"))
 
     assert enviados[0] == main.SIN_CARTERA
+
+
+# --- /modelo721 ---
+
+
+def _hoy_es(monkeypatch, dia):
+    from datetime import date
+
+    class Fecha(date):
+        @classmethod
+        def today(cls):
+            return dia
+
+    monkeypatch.setattr(main, "date", Fecha)
+
+
+def _precio_el_31(config, coin_id, precio, año=2025):
+    import sqlite3
+
+    from crypto_tracker.modelo721 import cierre
+
+    conn = sqlite3.connect(config.database_path)
+    conn.execute(
+        "INSERT INTO prices (coin_id, price, currency, created_at) VALUES (?,?,?,?)",
+        (coin_id, precio, "eur", cierre(año).isoformat(timespec="seconds")),
+    )
+    conn.commit()
+    conn.close()
+
+
+def test_modelo721_fuera_de_plazo(config, enviados, monkeypatch):
+    from datetime import date
+
+    _hoy_es(monkeypatch, date(2026, 11, 16))
+    config = _con_cartera(config, Posicion("bitcoin", 0.5, 20000))
+    _precio(monkeypatch, {"bitcoin": 80000.0})
+
+    main.atender(config, _mensaje("/modelo721"))
+
+    texto = enviados[0]
+    assert "<b>Modelo 721</b>" in texto
+    assert "31/12" not in texto
+    assert "Hoy vale €40.000,00: le faltan €10.000,00" in texto
+
+
+def test_modelo721_pasa_hoy(config, enviados, monkeypatch):
+    from datetime import date
+
+    _hoy_es(monkeypatch, date(2026, 11, 16))
+    config = _con_cartera(config, Posicion("bitcoin", 1, 20000))
+    _precio(monkeypatch, {"bitcoin": 80000.0})
+
+    main.atender(config, _mensaje("/721"))
+
+    assert "tendrás que presentarlo en 2027" in enviados[0]
+
+
+def test_modelo721_en_plazo_te_toca(config, enviados, monkeypatch):
+    from datetime import date
+
+    _hoy_es(monkeypatch, date(2026, 3, 1))
+    config = _con_cartera(config, Posicion("bitcoin", 1, 20000))
+    _precio_el_31(config, "bitcoin", 60000.0)
+    _precio(monkeypatch, {"bitcoin": 40000.0})
+
+    main.atender(config, _mensaje("/modelo721"))
+
+    texto = enviados[0]
+    assert "El 31/12/2025 tu cartera valía <b>€60.000,00</b>" in texto
+    assert "<b>te toca presentarlo</b>" in texto
+    assert "quedan 30 días" in texto
+
+
+def test_modelo721_deshace_lo_comprado_despues(config, enviados, monkeypatch):
+    from datetime import date
+
+    _hoy_es(monkeypatch, date(2026, 3, 1))
+    config = _con_cartera(config, Posicion("bitcoin", 0.5, 20000))
+    _precio_el_31(config, "bitcoin", 60000.0)
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+
+    main.atender(config, _mensaje("/compra bitcoin 0.5 30000"))  # ya en 2026
+    main.atender(config, _mensaje("/modelo721"))
+
+    assert "El 31/12/2025 tu cartera valía €30.000,00" in enviados[-1]
+    assert "no te toca" in enviados[-1]
+
+
+def test_modelo721_sin_el_precio_del_31(config, enviados, monkeypatch):
+    from datetime import date
+
+    _hoy_es(monkeypatch, date(2026, 1, 15))
+    config = _con_cartera(config, Posicion("bitcoin", 1, 20000))
+    _precio(monkeypatch, {"bitcoin": 40000.0})
+
+    main.atender(config, _mensaje("/modelo721"))
+
+    assert "No tengo guardado lo que valía tu cartera el 31/12/2025" in enviados[0]
+
+
+def test_modelo721_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/modelo721"))
+
+    assert enviados[0] == main.SIN_CARTERA
+
+
+def _avisos_721(enviados):
+    return [t for t in enviados if t.startswith("🏛️")]
+
+
+def test_aviso_721_una_vez_al_año(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    config = replace(
+        _con_cartera(config, Posicion("bitcoin", 1, 20000)), aviso_721=True
+    )
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+
+    main.ejecutar_ciclo(config, {})
+    main.ejecutar_ciclo(config, {})
+
+    [aviso] = _avisos_721(enviados)
+    assert "<b>Tu cartera pasa de €50.000,00</b>" in aviso
+    assert "Vale €60.000,00" in aviso
+
+
+def test_aviso_721_por_debajo_no_avisa(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    config = replace(
+        _con_cartera(config, Posicion("bitcoin", 1, 20000)), aviso_721=True
+    )
+    _precio(monkeypatch, {"bitcoin": 40000.0})
+
+    main.ejecutar_ciclo(config, {})
+
+    assert _avisos_721(enviados) == []
+
+
+def test_sin_aviso_721_no_avisa(config, enviados, monkeypatch):
+    config = _con_cartera(config, Posicion("bitcoin", 1, 20000))
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+
+    main.ejecutar_ciclo(config, {})
+
+    assert _avisos_721(enviados) == []

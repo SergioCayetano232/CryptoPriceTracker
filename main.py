@@ -139,6 +139,7 @@ from crypto_tracker import (
     miedo,
     millonario,
     mitad,
+    modelo721,
     moneda,
     movimientos,
     mundo,
@@ -350,6 +351,7 @@ def ejecutar_ciclo(
     revisar_cruces(config, vigiladas, calladas)
     revisar_estables(config, list(precios), calladas)
     revisar_volumen(config, vigiladas, calladas)
+    revisar_721(config, valor, calladas)
     revisar_direcciones(config, precios.get("bitcoin"))
     if calladas:
         avisos = [a for a in avisos if a.coin_id not in calladas]
@@ -745,6 +747,37 @@ def revisar_estables(config: Config, coin_ids: list[str], calladas: set[str]) ->
             database.guardar_estable(config.database_path, d.coin_id, fuera)
         except database.DatabaseError as e:
             logger.error("No se pudo apuntar el aviso de %s: %s", d.simbolo, e)
+
+
+def revisar_721(config: Config, valor: float | None, calladas: set[str]) -> None:
+    """Avisa una vez al año cuando la cartera pasa del límite del modelo 721."""
+    if not config.aviso_721 or valor is None:
+        return
+    if puntuales.CARTERA in calladas or _silenciado(config):
+        return
+
+    hoy = date.today()
+    try:
+        avisado = database.ultimo_resumen(config.database_path, database.AVISO_721)
+    except database.DatabaseError as e:
+        logger.error("No se pudo leer el aviso del modelo 721: %s", e)
+        return
+    if not modelo721.toca_avisar(valor, avisado, hoy):
+        return
+
+    if not telegram.send_message(
+        config.telegram_token,
+        config.telegram_chat_id,
+        alerts.formatear_aviso_721(valor, hoy),
+        sin_sonido=_sin_sonido(config),
+    ):
+        logger.error("No se pudo avisar del modelo 721")
+        return
+    logger.info("Aviso del modelo 721: la cartera vale %.2f", valor)
+    try:
+        database.guardar_resumen(config.database_path, hoy, database.AVISO_721)
+    except database.DatabaseError as e:
+        logger.error("No se pudo apuntar el aviso del modelo 721: %s", e)
 
 
 def revisar_volumen(
@@ -1286,6 +1319,9 @@ def responder(
 
     if nombre == "compensar":
         return _compensar(config)
+
+    if nombre == "modelo721":
+        return _modelo721(config)
 
     if nombre == "deshacer":
         return _deshacer(config, argumento)
@@ -2230,6 +2266,35 @@ def _permuta(config: Config, argumento: str) -> str:
     except movimientos.MovimientoError as e:
         return telegram.escape(str(e))
     return alerts.formatear_permuta(resultado, config.vs_currency)
+
+
+def _modelo721(config: Config) -> str:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    hoy = date.today()
+    cierre = None
+    if modelo721.en_plazo(hoy):
+        cierre = _valor_cierre(config, hoy.year - 1)
+    return alerts.formatear_modelo721(
+        modelo721.calcular(valor, cierre, hoy), config.vs_currency, hoy
+    )
+
+
+def _valor_cierre(config: Config, año: int) -> float | None:
+    """Lo que valía la cartera el 31 de diciembre, con los precios guardados."""
+    fin = modelo721.cierre(año)
+    todos = database.get_movimientos(config.database_path, None)
+    posiciones = modelo721.cartera_en(list(_con_cambios(config).cartera), todos, fin)
+    if not posiciones:
+        return 0.0
+    horas = modelo721.horas_desde(fin, datetime.now(timezone.utc))
+    precios = {}
+    for p in posiciones:
+        precio = database.get_price_at(config.database_path, p.coin_id, horas)
+        if precio:
+            precios[p.coin_id] = precio
+    return cartera.valor_total(posiciones, precios)
 
 
 def _compensar(config: Config) -> str:

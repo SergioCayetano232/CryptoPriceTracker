@@ -141,6 +141,9 @@ from .miedo import hace as dia_miedo
 from .miedo import nombre as nombre_miedo
 from .millonario import Millonario, cantidad
 from .mitad import Cartera as CarteraMitad
+from .modelo721 import LIMITE as LIMITE_721
+from .modelo721 import SUBIDA as SUBIDA_721
+from .modelo721 import Modelo721
 from .movimientos import (
     Movimiento,
     descuadre,
@@ -1707,6 +1710,68 @@ def _sivendo_hacienda(s: Simulacion, simbolo: str) -> str:
     return (
         "💸 A Hacienda, nada. Si pierdes, lo puedes restar de lo que ganes los "
         "próximos 4 años."
+    )
+
+
+def formatear_modelo721(m: Modelo721, currency: str, hoy: date) -> str:
+    """Respuesta de /modelo721."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    limite = f"{simbolo}{_num(LIMITE_721)}"
+    dias = "queda 1 día" if m.dias == 1 else f"quedan {m.dias} días"
+    lineas = ["🏛️ <b>Modelo 721</b>", ""]
+
+    if m.en_plazo:
+        if m.cierre is None:
+            lineas.append(
+                f"No tengo guardado lo que valía tu cartera el 31/12/{m.año}, así "
+                "que no sé si te toca presentar lo de ese año."
+            )
+        elif m.toca:
+            lineas.append(
+                f"El 31/12/{m.año} tu cartera valía <b>{simbolo}{_num(m.cierre)}</b>, "
+                f"más de {limite}: <b>te toca presentarlo</b>. Tienes hasta el 31 de "
+                f"marzo, {dias}."
+            )
+        else:
+            lineas.append(
+                f"El 31/12/{m.año} tu cartera valía {simbolo}{_num(m.cierre)}: no "
+                f"pasa de {limite}, así que lo de {m.año} no te toca."
+            )
+        lineas.append("")
+
+    if m.falta < 0:
+        lineas.append(
+            f"Hoy vale <b>{simbolo}{_num(m.hoy)}</b>. Si el 31 de diciembre sigue "
+            f"por encima de {limite}, tendrás que presentarlo en {hoy.year + 1}."
+        )
+    else:
+        lineas.append(
+            f"Hoy vale {simbolo}{_num(m.hoy)}: le faltan "
+            f"{simbolo}{_num(m.falta)} para pasar de {limite}."
+        )
+
+    lineas += [
+        "",
+        "<i>Solo cuenta lo que tengas en exchanges de fuera de España. Lo de tu "
+        "propia wallet o un exchange español no va. Yo miro la cartera entera.</i>",
+        f"<i>Si ya lo presentaste, solo vuelve a tocar si sube más de "
+        f"{simbolo}{_num(SUBIDA_721)} desde lo que declaraste.</i>",
+    ]
+    if currency.lower() != "eur":
+        lineas.append(
+            f"<i>Ojo: va en {currency.upper()}, y el límite es de 50.000 €.</i>"
+        )
+    return "\n".join(lineas)
+
+
+def formatear_aviso_721(valor: float, hoy: date) -> str:
+    """El aviso de cuando la cartera pasa del límite del 721."""
+    return (
+        f"🏛️ <b>Tu cartera pasa de €{_num(LIMITE_721)}</b>\n\n"
+        f"Vale €{_num(valor)}. Si el 31 de diciembre sigue por encima y la tienes en "
+        f"exchanges de fuera, tendrás que presentar el modelo 721 antes del 31 de "
+        f"marzo de {hoy.year + 1}.\n\n"
+        "<i>Te lo digo una vez al año. Más en /modelo721</i>"
     )
 
 

@@ -72,6 +72,7 @@ class Config:
     aviso_cruce: bool = False
     aviso_volumen: bool = False
     copia_semanal: bool = False
+    aviso_721: bool = False
 
 
 def _require(name: str) -> str:
@@ -444,6 +445,10 @@ def parse_aviso_volumen(raw: str) -> bool:
     return _si_o_no(raw, "AVISO_VOLUMEN")
 
 
+def parse_aviso_721(raw: str) -> bool:
+    return _si_o_no(raw, "AVISO_721")
+
+
 def parse_copia_semanal(raw: str) -> bool:
     return _si_o_no(raw, "COPIA_SEMANAL")
 
@@ -503,11 +508,20 @@ def load_config() -> Config:
             f"y HISTORY_DAYS es {history_days}. Sube HISTORY_DAYS."
         )
 
+    vs_currency = os.getenv("VS_CURRENCY", "eur").strip().lower() or "eur"
+    aviso_721 = parse_aviso_721(os.getenv("AVISO_721", ""))
+    # El límite de Hacienda es en euros: en dólares avisaría donde no toca.
+    if aviso_721 and vs_currency != "eur":
+        raise ConfigError(
+            f"AVISO_721 va en euros y VS_CURRENCY es {vs_currency}. "
+            "Pon VS_CURRENCY=eur."
+        )
+
     return Config(
         telegram_token=_require("TELEGRAM_BOT_TOKEN"),
         telegram_chat_id=_require("TELEGRAM_CHAT_ID"),
         watchlist=_parse_watchlist(_require("WATCHLIST")),
-        vs_currency=os.getenv("VS_CURRENCY", "eur").strip().lower() or "eur",
+        vs_currency=vs_currency,
         check_interval=check_interval,
         database_path=os.getenv("DATABASE_PATH", "data/prices.db").strip()
         or "data/prices.db",
@@ -524,4 +538,5 @@ def load_config() -> Config:
         aviso_cruce=aviso_cruce,
         aviso_volumen=aviso_volumen,
         copia_semanal=parse_copia_semanal(os.getenv("COPIA_SEMANAL", "")),
+        aviso_721=aviso_721,
     )

@@ -340,6 +340,31 @@ def test_volumen_puesto(monkeypatch):
     assert load_config().aviso_volumen is True
 
 
+def test_aviso_721_puesto(monkeypatch):
+    from crypto_tracker.config import load_config
+
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "x")
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "1")
+    monkeypatch.setenv("WATCHLIST", "bitcoin:%5")
+    monkeypatch.setenv("VS_CURRENCY", "eur")
+    monkeypatch.setenv("AVISO_721", "si")
+
+    assert load_config().aviso_721 is True
+
+
+def test_aviso_721_en_dolares(monkeypatch):
+    from crypto_tracker.config import load_config
+
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "x")
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "1")
+    monkeypatch.setenv("WATCHLIST", "bitcoin:%5")
+    monkeypatch.setenv("VS_CURRENCY", "usd")
+    monkeypatch.setenv("AVISO_721", "si")
+
+    with pytest.raises(ConfigError, match="AVISO_721"):
+        load_config()
+
+
 # --- horas tranquilas ---
 
 
