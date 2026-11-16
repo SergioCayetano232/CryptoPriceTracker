@@ -4,7 +4,7 @@ import difflib
 import html
 from dataclasses import dataclass
 
-from . import simbolos
+from . import lenguaje, simbolos
 
 # Lo que sale en el menu de Telegram al escribir "/".
 COMANDOS = {
@@ -523,6 +523,8 @@ AYUDA = (
     "🤖 <b>Esto es lo que sé hacer</b>\n\n"
     + "\n".join(f"/{nombre} — {texto}" for nombre, texto in COMANDOS.items())
     + "\n\nCon ejemplos de uno: /ayuda alerta"
+    + "\nTambién sin barra: «avísame si btc baja de 60000», «cuánto vale eth», "
+    "«cómo va mi cartera» o «cállate 2 horas»."
 )
 
 # Para /ayuda alerta. Solo los que tienen varias formas; el resto con su linea basta.
@@ -888,7 +890,9 @@ def interpretar(texto: str) -> tuple[str, str] | None:
     if not partes:
         return None
     if not partes[0].startswith("/"):
-        return ("precio", texto.strip()) if _son_criptos(texto) else None
+        if _son_criptos(texto):
+            return "precio", texto.strip()
+        return lenguaje.entender(texto)
 
     # En los grupos Telegram le pega el nombre del bot: /status@MiBot
     nombre = partes[0][1:].split("@")[0].lower()

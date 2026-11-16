@@ -170,6 +170,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/precio` | Sin decir cuál, todas las que vigilas |
 | `/precio btc usd` | En otra moneda solo esa vez (`eur`, `usd` o `gbp`; también `$` o `dólares`). Vale con varias y con `/precio usd` a secas. No sale lo tuyo de la cartera, que va en la moneda del `.env` |
 | `btc` o `btc eth` | Sin barra, lo mismo que `/precio`. Solo con las conocidas, para que un "hola" no se lo tome como una cripto |
+| `avísame si btc baja de 60000` | Algunas frases también las entiende sin barra: «avísame cuando eth suba un 10%» es `/alerta eth +10%`, «cuánto vale sol» es `/precio sol`, «cómo va mi cartera» es `/cartera`, «cállate 2 horas» es `/mute 2h` y «qué sabes hacer» es `/ayuda`. Nunca apunta compras ni ventas así: si lo entendiera mal, te descuadraría la cartera |
 | `/ath bitcoin` | Su máximo histórico, cuándo fue y cuánto le falta para volver, y debajo su mínimo histórico y cuánto ha subido desde ahí (vale `/ath btc eth`, solo con el máximo, y a secas, las que vigilas) |
 | `/cartera` | Tu cartera: cuánto vale, cuánto ganas o pierdes, el total en sats y la gráfica de 7 días |
 | `/cartera 30d` | Lo mismo, con la gráfica del tramo que digas |
@@ -986,6 +987,7 @@ crypto_tracker/
   aniversario.py las compras que cumplen años, para el resumen del día
   cuota.py       cuenta las consultas a CoinGecko
   comandos.py    entiende lo que le escribes
+  lenguaje.py    frases sin barra, como "avísame si btc baja de 60000"
 main.py          junta todo
 tests/           los tests
 windows/         para dejarlo corriendo en un servidor

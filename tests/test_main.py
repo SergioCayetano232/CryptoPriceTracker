@@ -10381,3 +10381,40 @@ def test_mientras_calla_no_cuenta_nada(config, enviados):
     main.fin_del_silencio(config)
 
     assert enviados == []
+
+
+# --- frases sin barra ---
+
+
+def test_frase_crea_una_alerta(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 63000.0})
+
+    main.atender(config, _mensaje("Avísame si BTC baja de 60.000€"))
+
+    [a] = database.get_puntuales(config.database_path, "eur")
+    assert (a.coin_id, a.objetivo, a.sube) == ("bitcoin", 60000.0, False)
+    assert "60.000" in enviados[0]
+
+
+def test_frase_de_porcentaje(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"ethereum": 2000.0})
+
+    main.atender(config, _mensaje("avísame cuando eth suba un 10%"))
+
+    [a] = database.get_puntuales(config.database_path, "eur")
+    assert a.objetivo == pytest.approx(2200)
+    assert a.sube
+
+
+def test_frase_de_callar(config, enviados):
+    main.atender(config, _mensaje("cállate 2 horas"))
+
+    assert enviados[0].startswith("🔕 Callado hasta las")
+    assert database.silenciado_hasta(config.database_path) is not None
+
+
+def test_frase_que_no_entiende(config, enviados):
+    main.atender(config, _mensaje("he comprado 0.01 btc por 600"))
+
+    assert enviados[0] == comandos.NO_ENTIENDO
+    assert database.get_movimientos(config.database_path) == []
