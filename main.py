@@ -154,6 +154,7 @@ from crypto_tracker import (
     pan,
     pelotazo,
     peluqueria,
+    perdido,
     periodo,
     permuta,
     piso,
@@ -1024,6 +1025,7 @@ def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:
         try:
             estado, problema = ejecutar_ciclo(config, estado, sin_precio)
             fallos = 0
+            fin_del_silencio(config)
             resumen_diario(config)
             resumen_semanal(config)
             resumen_mensual(config)
@@ -1276,7 +1278,12 @@ def responder(
         calladas = database.criptos_calladas(config.database_path)
         database.silenciar_hasta(config.database_path, None)
         database.descallar_todas(config.database_path)
-        return "🔔 Vuelvo a avisar." if estaba or calladas else "No estaba callado."
+        if not estaba and not calladas:
+            return "No estaba callado."
+        desde = database.acabar_silencio(config.database_path) if estaba else None
+        if desde is None:
+            return "🔔 Vuelvo a avisar."
+        return "🔔 Vuelvo a avisar.\n\n" + _lo_perdido(config, desde)
 
     if nombre == "horario":
         return _horario(config, argumento)
@@ -5602,6 +5609,57 @@ def mensaje_de_prueba(config: Config) -> int:
 
     logger.error("No se pudo enviar. Revisa el token y el chat_id del .env")
     return 1
+
+
+def _lo_perdido(config: Config, desde: datetime) -> str:
+    config = _con_cambios(config)
+    ahora = datetime.now(timezone.utc)
+    horas = (ahora - desde).total_seconds() / 3600
+    coin_ids = [w.coin_id for w in config.watchlist]
+    series = {
+        c: database.get_serie(config.database_path, c, horas, config.vs_currency)
+        for c in coin_ids
+    }
+    posiciones = list(config.cartera)
+    serie_cartera = []
+    if posiciones:
+        filas = database.get_series(
+            config.database_path,
+            [p.coin_id for p in posiciones],
+            horas,
+            config.vs_currency,
+        )
+        serie_cartera = cartera.serie_valor(posiciones, filas)
+    resultado = perdido.calcular(desde, ahora, series, serie_cartera)
+    return alerts.formatear_perdido(
+        resultado, config.vs_currency, salud.cuanto(resultado.tiempo)
+    )
+
+
+def fin_del_silencio(config: Config) -> None:
+    """Si el silencio se acabó solo, lo que te has perdido. Con /unmute va en él."""
+    try:
+        desde = database.inicio_silencio(config.database_path)
+    except database.DatabaseError as e:
+        logger.error("No se pudo leer el inicio del silencio: %s", e)
+        return
+    if desde is None or _silenciado(config):
+        return
+
+    try:
+        texto = "🔔 <b>Se acabó el silencio</b>, vuelvo a avisar.\n\n" + _lo_perdido(
+            config, desde
+        )
+    except database.DatabaseError as e:
+        logger.error("No se pudo mirar lo que pasó mientras callaba: %s", e)
+        return
+    if not telegram.send_message(config.telegram_token, config.telegram_chat_id, texto):
+        logger.error("No se pudo contar lo que pasó mientras callaba, lo reintento")
+        return
+    try:
+        database.acabar_silencio(config.database_path)
+    except database.DatabaseError as e:
+        logger.error("No se pudo apuntar el final del silencio: %s", e)
 
 
 def _silenciado(config: Config) -> datetime | None:

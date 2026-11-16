@@ -376,7 +376,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/mute 2h` | Calla los avisos ese rato, con un botón para deshacerlo |
 | `/mute hasta 8:00` | Calla los avisos hasta esa hora (si ya ha pasado, la de mañana) |
 | `/mute bitcoin 2h` | Calla solo esa cripto; las demás siguen avisando. Sus `/alerta` esperan a que vuelva |
-| `/unmute` | Vuelve a avisar, también de las que callaste una a una |
+| `/unmute` | Vuelve a avisar, también de las que callaste una a una, y te cuenta lo que te has perdido: cuánto se ha movido cada una que vigilas mientras callaba, entre qué precios, y tu cartera. Si el silencio se acaba solo, te llega lo mismo al acabarse |
 | `/unmute bitcoin` | Vuelve a avisar solo de esa |
 | `/ayuda` | La lista de comandos |
 | `/ayuda alerta` | Ese comando con ejemplos de todo lo que admite |

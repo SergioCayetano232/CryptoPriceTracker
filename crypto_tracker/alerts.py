@@ -170,6 +170,7 @@ from .pan import Pan
 from .pelotazo import Jugada, Pelotazo
 from .peluqueria import PRECIO as PRECIO_PELUQUERIA
 from .peluqueria import Peluqueria
+from .perdido import Perdido
 from .periodo import nombre as nombre_periodo
 from .permuta import Permuta
 from .piso import METROS as METROS_PISO
@@ -3667,6 +3668,31 @@ def formatear_ratio(una: str, otra: str, r: Ratio, horas: float) -> str:
         "Con el precio del final de cada día</i>"
     )
     return texto
+
+
+# Con más, el mensaje ya no se lee de un vistazo, que es la idea.
+MAX_PERDIDO = 8
+
+
+def formatear_perdido(p: Perdido, currency: str, cuanto: str) -> str:
+    """Lo que ha pasado mientras callaba. cuanto es el tiempo ya en texto."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    lineas = [f"👀 <b>Mientras callaba</b> ({cuanto})", ""]
+    if not p.movidas:
+        lineas.append("No guardé precios mientras callaba.")
+    for m in p.movidas[:MAX_PERDIDO]:
+        lineas.append(
+            f"{_flecha(m.cambio)} <b>{_nombre(m.coin_id)}</b> {_signo(m.cambio)}: "
+            f"de {simbolo}{_num(m.antes)} a {simbolo}{_num(m.ahora)} "
+            f"<i>(entre {simbolo}{_num(m.minimo)} y {simbolo}{_num(m.maximo)})</i>"
+        )
+    if len(p.movidas) > MAX_PERDIDO:
+        lineas.append(
+            f"<i>y {len(p.movidas) - MAX_PERDIDO} más, que se movieron menos</i>"
+        )
+    if p.cartera is not None:
+        lineas += ["", f"💼 Tu cartera: {_signo(p.cartera)}"]
+    return "\n".join(lineas)
 
 
 def formatear_tarjeta(t: Tarjeta) -> str:

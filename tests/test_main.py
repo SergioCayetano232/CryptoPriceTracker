@@ -10292,3 +10292,92 @@ def test_tarjeta_mal_escrita(con_semana, enviados):
     main.atender(con_semana, _mensaje("/tarjeta bitcoin"))
 
     assert "Escríbelo así" in enviados[0]
+
+
+# --- lo que te has perdido mientras callaba ---
+
+
+def _callado_hace(config, horas):
+    """Como si el /mute se hubiera puesto hace esas horas."""
+    import sqlite3
+    from datetime import datetime, timedelta, timezone
+
+    cuando = datetime.now(timezone.utc) - timedelta(hours=horas)
+    conn = sqlite3.connect(config.database_path)
+    conn.execute(
+        "UPDATE ajustes SET valor = ? WHERE clave = 'silenciado_desde'",
+        (cuando.isoformat(timespec="seconds"),),
+    )
+    conn.commit()
+    conn.close()
+
+
+def test_unmute_cuenta_lo_que_te_has_perdido(config, enviados):
+    main.atender(config, _mensaje("/mute 3h"))
+    _callado_hace(config, 2)
+    for precio, horas in ((60000.0, 1.5), (66000.0, 1), (63000.0, 0.5)):
+        _guardar(config, "bitcoin", precio, horas)
+
+    main.atender(config, _mensaje("/unmute"))
+
+    texto = enviados[-1]
+    assert texto.startswith("🔔 Vuelvo a avisar.")
+    assert "<b>Mientras callaba</b> (2 h)" in texto
+    assert "<b>Bitcoin</b> +5,0%: de €60.000,00 a €63.000,00" in texto
+    assert "(entre €60.000,00 y €66.000,00)" in texto
+    assert database.inicio_silencio(config.database_path) is None
+
+
+def test_unmute_sin_precios_guardados(config, enviados):
+    main.atender(config, _mensaje("/mute 3h"))
+
+    main.atender(config, _mensaje("/unmute"))
+
+    assert "No guardé precios mientras callaba." in enviados[-1]
+
+
+def test_alargar_el_mute_no_cambia_el_principio(config, enviados):
+    main.atender(config, _mensaje("/mute 1h"))
+    _callado_hace(config, 2)
+    antes = database.inicio_silencio(config.database_path)
+
+    main.atender(config, _mensaje("/mute 3h"))
+
+    assert database.inicio_silencio(config.database_path) == antes
+
+
+def test_unmute_de_una_sola_no_cuenta_nada(config, enviados):
+    main.atender(config, _mensaje("/mute bitcoin 2h"))
+
+    main.atender(config, _mensaje("/unmute bitcoin"))
+
+    assert "Mientras callaba" not in enviados[-1]
+
+
+def test_si_el_silencio_se_acaba_solo_lo_cuenta_una_vez(config, enviados):
+    from datetime import datetime, timedelta, timezone
+
+    main.atender(config, _mensaje("/mute 3h"))
+    _callado_hace(config, 2)
+    _guardar(config, "bitcoin", 60000.0, 1)
+    _guardar(config, "bitcoin", 57000.0, 0.5)
+    # Se acabó hace un minuto.
+    database.silenciar_hasta(
+        config.database_path, datetime.now(timezone.utc) - timedelta(minutes=1)
+    )
+
+    main.fin_del_silencio(config)
+    main.fin_del_silencio(config)
+
+    avisos = [t for t in enviados if "Se acabó el silencio" in t]
+    assert len(avisos) == 1
+    assert "<b>Bitcoin</b> -5,0%" in avisos[0]
+
+
+def test_mientras_calla_no_cuenta_nada(config, enviados):
+    main.atender(config, _mensaje("/mute 3h"))
+    enviados.clear()
+
+    main.fin_del_silencio(config)
+
+    assert enviados == []

@@ -106,6 +106,8 @@ CREATE TABLE IF NOT EXISTS dominancia (
 
 # Clave donde se guarda hasta cuando callamos, en ISO y UTC.
 SILENCIO = "silenciado_hasta"
+# Desde cuándo, para contarte al volver lo que te has perdido.
+SILENCIO_DESDE = "silenciado_desde"
 
 # Dia del ultimo resumen diario, para no mandarlo dos veces si se reinicia.
 ULTIMO_RESUMEN = "ultimo_resumen"
@@ -477,6 +479,25 @@ def silenciar_hasta(db_path: str, cuando: datetime | None) -> None:
             "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
             (SILENCIO, cuando.isoformat(timespec="seconds")),
         )
+        # IGNORE: si alargas el silencio, sigue contando desde el principio.
+        ahora = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        conn.execute(
+            "INSERT OR IGNORE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (SILENCIO_DESDE, ahora),
+        )
+
+
+def inicio_silencio(db_path: str) -> datetime | None:
+    """Cuándo empezó el último silencio, si aún no te he contado lo que pasó."""
+    return _leer_fecha(db_path, SILENCIO_DESDE)
+
+
+def acabar_silencio(db_path: str) -> datetime | None:
+    """Como inicio_silencio, pero lo borra: ya está contado."""
+    desde = inicio_silencio(db_path)
+    with _connect(db_path) as conn:
+        conn.execute("DELETE FROM ajustes WHERE clave = ?", (SILENCIO_DESDE,))
+    return desde
 
 
 def silenciado_hasta(db_path: str) -> datetime | None:
