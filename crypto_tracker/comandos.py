@@ -543,6 +543,7 @@ EJEMPLOS = {
         ("/stop eth -15%", "si pierdes un 15% sobre tu precio medio"),
         ("/stop btc +50%", "si ganas un 50%"),
         ("/stop cartera -20%", "con todo lo que metiste en la cartera"),
+        ("/stop btc -10% movil", "si cae un 10% desde lo más alto que toque"),
     ],
     "recordar": [
         ("/recordar lunes 50 btc", "cada lunes, con un botón para apuntarla"),

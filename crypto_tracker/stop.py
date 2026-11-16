@@ -7,6 +7,8 @@ from .puntuales import CARTERA, numero
 from .simbolos import a_id
 
 EJEMPLO = "/stop eth -15%"
+EJEMPLO_MOVIL = "/stop eth -10% movil"
+MOVIL = ("movil", "móvil", "sigue", "trailing")
 
 
 class StopError(Exception):
@@ -43,6 +45,30 @@ class Stop:
         """Lo que sale en /alertas y en el aviso, para que no parezca una normal."""
         pct = f"{self.porcentaje:+g}".replace(".", ",")
         return f"Stop: {pct}% sobre lo que te costó"
+
+
+def separar_movil(argumento: str) -> tuple[str, bool]:
+    """'eth -10% movil' -> ('eth -10%', True)."""
+    partes = argumento.split()
+    if len(partes) == 3 and partes[2].lower() in MOVIL:
+        return " ".join(partes[:2]), True
+    return argumento, False
+
+
+def objetivo_movil(maximo: float, porcentaje: float) -> float:
+    """porcentaje va en negativo, como en /stop: -10 es un 10% por debajo."""
+    return maximo * (1 + porcentaje / 100)
+
+
+def subir(objetivo: float, porcentaje: float, precio: float) -> float | None:
+    """El objetivo nuevo si el precio ha marcado otro máximo. Si no, None."""
+    nuevo = objetivo_movil(precio, porcentaje)
+    return nuevo if nuevo > objetivo else None
+
+
+def nota_movil(porcentaje: float) -> str:
+    pct = f"{porcentaje:+g}".replace(".", ",")
+    return f"Stop móvil: {pct}% desde lo más alto"
 
 
 def interpretar(argumento: str) -> tuple[str, float]:

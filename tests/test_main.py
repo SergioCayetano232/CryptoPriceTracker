@@ -10118,3 +10118,67 @@ def test_vsbolsa_sin_movimientos(config, enviados, monkeypatch):
     main.atender(config, _mensaje("/vsbolsa"))
 
     assert "No has apuntado ninguna compra" in enviados[0]
+
+
+# --- /stop movil ---
+
+
+def test_stop_movil(con_semana, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 80000.0})
+
+    main.atender(con_semana, _mensaje("/stop btc -10% movil"))
+
+    texto = enviados[0]
+    assert "<b>Bitcoin</b> baja un 10% desde lo más alto" in texto
+    assert "Ahora está a €80.000,00, así que hoy saltaría a <b>€72.000,00</b>" in texto
+    [a] = database.get_puntuales(con_semana.database_path, "eur")
+    assert a.objetivo == pytest.approx(72000)
+    assert not a.sube
+    assert a.nota == "Stop móvil: -10% desde lo más alto"
+    assert database.moviles(con_semana.database_path) == {a.id: -10.0}
+
+
+def test_stop_movil_sube_con_el_precio_y_salta(con_semana, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 80000.0, "solana": 100.0})
+    main.atender(con_semana, _mensaje("/stop btc -10% movil"))
+
+    for btc in (90000.0, 85000.0):  # máximo nuevo y un poco de bajada
+        _precio(monkeypatch, {"bitcoin": btc, "solana": 100.0})
+        main.ejecutar_ciclo(con_semana, {})
+    [a] = database.get_puntuales(con_semana.database_path, "eur")
+    assert a.objetivo == pytest.approx(81000)
+    assert len(enviados) == 1
+
+    _precio(monkeypatch, {"bitcoin": 80000.0, "solana": 100.0})
+    main.ejecutar_ciclo(con_semana, {})
+
+    assert "Stop móvil: -10% desde lo más alto" in enviados[-1]
+    assert database.get_puntuales(con_semana.database_path, "eur") == []
+    assert database.moviles(con_semana.database_path) == {}
+
+
+def test_stop_movil_de_la_cartera(con_semana, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 66000.0, "solana": 100.0})
+
+    main.atender(con_semana, _mensaje("/stop cartera -20% movil"))
+
+    assert (
+        "Ahora vale €7.600,00, así que hoy saltaría a <b>€6.080,00</b>" in enviados[0]
+    )
+
+
+def test_stop_movil_al_quitarlo_no_queda_nada(con_semana, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 80000.0})
+    main.atender(con_semana, _mensaje("/stop btc -10% movil"))
+
+    main.atender(con_semana, _mensaje("/quitar 1"))
+
+    assert database.moviles(con_semana.database_path) == {}
+
+
+def test_stop_movil_de_ganancia(con_semana, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+
+    main.atender(con_semana, _mensaje("/stop btc +10% movil"))
+
+    assert "El móvil es para cuando baja" in enviados[0]

@@ -5509,6 +5509,29 @@ def formatear_stop(s: Stop, numero: int, currency: str) -> str:
     return texto
 
 
+def formatear_stop_movil(
+    coin_id: str,
+    porcentaje: float,
+    ahora: float,
+    objetivo: float,
+    numero: int,
+    currency: str,
+) -> str:
+    """Respuesta al crear un /stop movil."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    es_cartera = coin_id == CARTERA
+    nombre = "tu cartera" if es_cartera else escape(coin_id.replace("-", " ").title())
+    esta = "vale" if es_cartera else "está a"
+    return (
+        f"🛑 Te aviso si <b>{nombre}</b> baja un {_pct(abs(porcentaje))}% desde lo "
+        "más alto que toque.\n"
+        f"Ahora {esta} {simbolo}{_num(ahora)}, así que hoy saltaría a "
+        f"<b>{simbolo}{_num(objetivo)}</b>. Si sube, el aviso sube con ella; si "
+        "baja, se queda donde estaba.\n"
+        f"Es la número {numero} de /alertas."
+    )
+
+
 def formatear_stop_pasado(s: Stop) -> str:
     """/stop a un % por el que ya has pasado: saltaría en el siguiente ciclo."""
     nombre, coste, _ = _stop_quien(s)

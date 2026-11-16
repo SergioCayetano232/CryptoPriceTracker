@@ -935,6 +935,45 @@ def get_puntuales(db_path: str, currency: str) -> list[Puntual]:
     ]
 
 
+def guardar_movil(db_path: str, alerta_id: int, porcentaje: float) -> None:
+    """Un /stop movil es una /alerta más; aquí va el % con el que sube."""
+    with _connect(db_path) as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (f"movil:{alerta_id}", repr(porcentaje)),
+        )
+
+
+def moviles(db_path: str) -> dict[int, float]:
+    """{número de la alerta: %}. De paso quita los de alertas que ya no están."""
+    with _connect(db_path) as conn:
+        # Al saltar o con /quitar se borra la alerta, y esto se quedaría huérfano.
+        conn.execute(
+            "DELETE FROM ajustes WHERE clave LIKE 'movil:%' AND "
+            "CAST(substr(clave, 7) AS INTEGER) NOT IN "
+            "(SELECT id FROM alertas_puntuales)"
+        )
+        filas = conn.execute(
+            "SELECT clave, valor FROM ajustes WHERE clave LIKE 'movil:%'"
+        ).fetchall()
+
+    salen = {}
+    for f in filas:
+        try:
+            salen[int(f["clave"].removeprefix("movil:"))] = float(f["valor"])
+        except ValueError:
+            continue
+    return salen
+
+
+def subir_puntual(db_path: str, alerta_id: int, objetivo: float) -> None:
+    with _connect(db_path) as conn:
+        conn.execute(
+            "UPDATE alertas_puntuales SET objetivo = ? WHERE id = ?",
+            (objetivo, alerta_id),
+        )
+
+
 def borrar_puntual(db_path: str, alerta_id: int) -> bool:
     """Quita una alerta. False si no existia."""
     with _connect(db_path) as conn:

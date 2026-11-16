@@ -325,6 +325,7 @@ def ejecutar_ciclo(
     if valor is not None:
         con_cartera[puntuales.CARTERA] = valor
 
+    pendientes = subir_moviles(config, pendientes, con_cartera)
     hechas = puntuales.cumplidas(pendientes, con_cartera)
     avisos += [
         alerts.Alert(
@@ -619,6 +620,36 @@ def revisar_extremos(
         avisos.append(aviso)
 
     return avisos
+
+
+def subir_moviles(
+    config: Config, pendientes: list[puntuales.Puntual], precios: dict[str, float]
+) -> list[puntuales.Puntual]:
+    """Los /stop movil suben con el precio. Bajando se quedan donde estaban."""
+    try:
+        moviles = database.moviles(config.database_path)
+    except database.DatabaseError as e:
+        logger.error("No se pudieron leer los stops móviles: %s", e)
+        return pendientes
+
+    salen = []
+    for a in pendientes:
+        precio = precios.get(a.coin_id)
+        nuevo = None
+        if a.id in moviles and precio is not None:
+            nuevo = stop.subir(a.objetivo, moviles[a.id], precio)
+        if nuevo is None:
+            salen.append(a)
+            continue
+        try:
+            database.subir_puntual(config.database_path, a.id, nuevo)
+        except database.DatabaseError as e:
+            logger.error("No se pudo subir el stop móvil %d: %s", a.id, e)
+            salen.append(a)
+            continue
+        logger.info("Stop móvil %d sube a %s", a.id, nuevo)
+        salen.append(replace(a, objetivo=nuevo))
+    return salen
 
 
 def revisar_bajon(config: Config, valor: float | None, calladas: set[str]) -> None:
@@ -2830,9 +2861,12 @@ def recordatorios(config: Config, ahora: datetime | None = None) -> None:
 
 def _stop(config: Config, argumento: str) -> str:
     try:
+        argumento, movil = stop.separar_movil(argumento)
         coin_id, porcentaje = stop.interpretar(argumento)
     except stop.StopError as e:
         return telegram.escape(str(e))
+    if movil and porcentaje > 0:
+        return f"El móvil es para cuando baja. Escríbelo así: {stop.EJEMPLO_MOVIL}"
 
     es_cartera = coin_id == puntuales.CARTERA
     posiciones = [p for p in config.cartera if es_cartera or p.coin_id == coin_id]
@@ -2851,6 +2885,9 @@ def _stop(config: Config, argumento: str) -> str:
     valores, faltan = cartera.valorar(posiciones, precios)
     if faltan:
         return "Ahora mismo no tengo el precio de todo. Prueba en un rato."
+    if movil:
+        valor = cartera.total(valores) if es_cartera else valores[0]
+        return _stop_movil(config, coin_id, porcentaje, valor)
 
     try:
         s = stop.calcular(
@@ -2878,6 +2915,30 @@ def _stop(config: Config, argumento: str) -> str:
     )
     logger.info("Stop %d creado: %s a %s", alerta.id, coin_id, s.objetivo)
     return alerts.con_fuente(alerts.formatear_stop(s, alerta.id, config.vs_currency))
+
+
+def _stop_movil(
+    config: Config, coin_id: str, porcentaje: float, valor: cartera.Valor
+) -> str:
+    # En la cartera manda lo que vale todo; en una cripto, su precio.
+    ahora = valor.valor if coin_id == puntuales.CARTERA else valor.precio
+    objetivo = stop.objetivo_movil(ahora, porcentaje)
+    alerta = database.crear_puntual(
+        config.database_path,
+        coin_id,
+        objetivo,
+        False,
+        config.vs_currency,
+        None,
+        stop.nota_movil(porcentaje),
+    )
+    database.guardar_movil(config.database_path, alerta.id, porcentaje)
+    logger.info("Stop móvil %d creado: %s a %s", alerta.id, coin_id, objetivo)
+    return alerts.con_fuente(
+        alerts.formatear_stop_movil(
+            coin_id, porcentaje, ahora, objetivo, alerta.id, config.vs_currency
+        )
+    )
 
 
 def _precio(config: Config, argumento: str) -> str | comandos.ConBotones:

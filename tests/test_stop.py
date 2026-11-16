@@ -3,7 +3,16 @@
 import pytest
 
 from crypto_tracker.cartera import Valor
-from crypto_tracker.stop import Stop, StopError, calcular, interpretar
+from crypto_tracker.stop import (
+    Stop,
+    StopError,
+    calcular,
+    interpretar,
+    nota_movil,
+    objetivo_movil,
+    separar_movil,
+    subir,
+)
 
 
 @pytest.mark.parametrize(
@@ -88,3 +97,38 @@ def test_cartera_sin_lo_que_te_costo():
 )
 def test_nota(porcentaje, nota):
     assert Stop("ethereum", porcentaje, 2500, 2700).nota == nota
+
+
+@pytest.mark.parametrize(
+    "texto, sale",
+    [
+        ("eth -10% movil", ("eth -10%", True)),
+        ("eth -10% Móvil", ("eth -10%", True)),
+        ("eth -10% trailing", ("eth -10%", True)),
+        ("eth -10%", ("eth -10%", False)),
+        ("eth -10% otra", ("eth -10% otra", False)),
+    ],
+)
+def test_separar_movil(texto, sale):
+    assert separar_movil(texto) == sale
+
+
+def test_objetivo_movil():
+    assert objetivo_movil(80000, -10) == pytest.approx(72000)
+
+
+@pytest.mark.parametrize(
+    "precio, sale",
+    [
+        (90000, 81000),  # otro máximo: sube
+        (80000, None),  # igual que el máximo de antes
+        (75000, None),  # bajando no se toca
+    ],
+)
+def test_subir(precio, sale):
+    nuevo = subir(72000, -10, precio)
+    assert nuevo == (pytest.approx(sale) if sale else None)
+
+
+def test_nota_movil():
+    assert nota_movil(-7.5) == "Stop móvil: -7,5% desde lo más alto"
