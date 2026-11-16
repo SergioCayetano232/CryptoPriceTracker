@@ -43,6 +43,7 @@ COMANDOS = {
     "hodl": "Cuántos días llevas sin vender cada cripto de tu cartera",
     "record": "Lo máximo que ha valido tu cartera y cuánto le falta para volver",
     "vsbtc": "Tu cartera contra haber metido lo mismo en bitcoin",
+    "vsbolsa": "Tu cartera contra la bolsa (ej: /vsbolsa o /vsbolsa world)",
     "deposito": "Tu cartera contra un depósito (ej: /deposito 3%)",
     "inflacion": "Si tu cartera le gana a la subida de precios en España",
     "recordar": "Avísame cada semana de mi compra (ej: /recordar lunes 50 btc)",
@@ -485,6 +486,8 @@ ALIAS = {
     "sivender": "sivendo",
     "swap": "permuta",
     "721": "modelo721",
+    "bolsa": "vsbolsa",
+    "sp500": "vsbolsa",
     "intercambiar": "permuta",
     "compensa": "compensar",
     "perdidas": "compensar",
@@ -670,6 +673,10 @@ EJEMPLOS = {
         ("/sivendo btc 0.005", "al precio de ahora"),
         ("/sivendo btc todo", "todo lo que tienes"),
         ("/sivendo btc 0.005 @80000", "si la vendes a ese precio"),
+    ],
+    "vsbolsa": [
+        ("/vsbolsa", "contra un indexado del S&P 500"),
+        ("/vsbolsa world", "contra el MSCI World, todo el mundo"),
     ],
     "permuta": [
         ("/permuta btc eth 0.01", "cambiar 0,01 bitcoin por ethereum"),

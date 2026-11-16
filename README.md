@@ -204,6 +204,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/hodl` | Cuántos días llevas sin vender cada cripto de tu cartera, de la que más a la que menos: desde la última venta o, si nunca vendiste, desde la primera compra. Si lo vendiste todo y volviste a comprar, cuenta desde la nueva compra. También `/diamante` |
 | `/record` | Lo máximo que ha valido tu cartera con los precios guardados, qué día fue y cuánto le falta para volver. Ojo: es lo que tienes hoy a los precios de entonces, no lo que tenías ese día. No gasta consultas. También `/pico` |
 | `/vsbtc` | Lo que vale hoy lo que has comprado por Telegram, contra haber metido ese mismo dinero en bitcoin los mismos días (y sacado lo mismo al vender). Usa el precio de bitcoin que tiene guardado, así que necesita llevar vigilándolo desde tus compras. Lo del `PORTFOLIO` del `.env` no cuenta, porque no lleva fecha. También `/vsbitcoin` |
+| `/vsbolsa` | Tu cartera contra haber metido lo mismo en la bolsa, en las mismas fechas: lo que vale hoy lo que compraste y lo que valdría en un indexado del S&P 500, y quién gana. Con `/vsbolsa world`, contra el MSCI World. Va con ETF que reinvierten los dividendos (SXR8 y EUNL en euros, CSPX e IWDA en dólares), al cierre de cada día, con los precios de Yahoo. Solo cuenta lo apuntado con `/compra` y `/venta` con precio. También `/bolsa` |
 | `/deposito 3%` | Lo que vale hoy lo que has comprado por Telegram, contra haber tenido ese mismo dinero en un depósito al 3 % al año, en las mismas fechas (y sacado lo mismo al vender), con lo que habría puesto de intereses. Debajo, qué interés tendría que dar el depósito para empatar con tu cartera. Sin decir el %, un 3 %. Sin impuestos ni en uno ni en otro. También `/banco` |
 | `/inflacion` | Si tu cartera le gana a la subida de precios en España: cuánto han subido desde tu primera compra, cuánto haría falta hoy para comprar lo mismo que con lo que pusiste (cada compra y venta con la inflación desde su fecha) y si lo que te queda vale más o menos, en % de poder de compra. Con el IPCA de España de Eurostat, que sale con uno o dos meses de retraso. Solo cuenta lo apuntado con `/compra` y `/venta` con precio. También `/ipc` |
 | `/compras` | Tu mejor y tu peor compra, con el % y lo que va ganando o perdiendo cada una a precio de hoy, y cuántas van en verde. Con `/compras btc`, solo las de esa. Solo las apuntadas por Telegram con lo que costaron |
@@ -817,6 +818,7 @@ crypto_tracker/
   apy.py         cuánta cripto tendrías en staking, para /apy
   deposito.py    tu cartera contra un depósito, para /deposito
   inflacion.py   tu cartera contra el IPC de España, para /inflacion
+  vsbolsa.py     tu cartera contra un indexado, con Yahoo, para /vsbolsa
   comisiones.py  lo pagado en comisiones, para /comisiones
   plan.py        cuánto tardas en llegar a una cifra, para /plan
   posicion.py    cuánto meter según lo que aceptas perder, para /posicion

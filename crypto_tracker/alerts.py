@@ -239,6 +239,7 @@ from .version import Version
 from .videojuego import PRECIO as PRECIO_VIDEOJUEGO
 from .videojuego import Videojuego
 from .volumen import Volumen
+from .vsbolsa import Contra as ContraBolsa
 from .vsbtc import Contra
 from .vuelo import PRECIO as PRECIO_VUELO
 from .vuelo import Vuelo
@@ -1302,6 +1303,43 @@ def formatear_vsbtc(c: Contra, currency: str) -> str:
             "guardado de ese día"
         )
     texto.append(f"<i>{pie}</i>")
+    return "\n".join(texto)
+
+
+def formatear_vsbolsa(c: ContraBolsa, currency: str) -> str:
+    """Respuesta de /vsbolsa."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = [
+        f"📈 <b>Tu cartera contra el {c.indice}</b>",
+        f"Lo que compraste vale hoy <b>{simbolo}{_num(c.real)}</b>",
+        f"Con ese dinero en un indexado del {c.indice}, en las mismas fechas, "
+        f"tendrías {simbolo}{_num(c.bolsa)}",
+        "",
+    ]
+    if abs(c.diferencia) < 0.01 or c.ventaja is None:
+        texto.append("🤝 Vas igual que la bolsa")
+    else:
+        pct = f"{c.ventaja:+.1f}".replace(".", ",")
+        diferencia = f"<b>{simbolo}{_num(abs(c.diferencia))}</b> ({pct}%)"
+        if c.diferencia > 0:
+            texto.append(f"🏆 Le ganas al {c.indice} por {diferencia}")
+        else:
+            texto.append(f"🐢 El {c.indice} te gana por {diferencia}")
+            texto.append("Y con mucho menos susto por el camino.")
+
+    pie = f"Con tus compras y ventas desde el {c.desde.astimezone():%d/%m/%Y}"
+    if c.fuera == 1:
+        pie += ". 1 movimiento no cuenta: sin precio o sin cierre de bolsa cerca"
+    elif c.fuera:
+        pie += (
+            f". {c.fuera} movimientos no cuentan: sin precio o sin cierre de "
+            "bolsa cerca"
+        )
+    texto += [
+        f"<i>{pie}</i>",
+        f"<i>Con el ETF {escape(c.ticker)}, que reinvierte los dividendos, al "
+        "cierre de cada día y sin comisiones.</i>",
+    ]
     return "\n".join(texto)
 
 

@@ -207,6 +207,7 @@ from crypto_tracker import (
     vigiladas,
     volatilidad,
     volumen,
+    vsbolsa,
     vsbtc,
     vuelo,
     whitepaper,
@@ -1450,6 +1451,9 @@ def responder(
     if nombre == "vsbtc":
         return _vsbtc(config)
 
+    if nombre == "vsbolsa":
+        return _vsbolsa(config, argumento)
+
     if nombre == "comisiones":
         return _comisiones(config, argumento)
 
@@ -2632,6 +2636,37 @@ def _vsbtc(config: Config) -> str:
     if resultado is None:
         return "No he podido consultar los precios. Prueba en un rato."
     return alerts.con_fuente(alerts.formatear_vsbtc(resultado, config.vs_currency))
+
+
+def _vsbolsa(config: Config, argumento: str) -> str:
+    try:
+        indice = vsbolsa.interpretar(argumento, config.vs_currency)
+    except vsbolsa.BolsaError as e:
+        return telegram.escape(str(e))
+    todos = database.get_movimientos(config.database_path, None)
+    if not todos:
+        return (
+            "No has apuntado ninguna compra por aquí, y lo del PORTFOLIO del .env "
+            f"no lleva fecha. Apúntalas así: {movimientos.EJEMPLO_COMPRA}"
+        )
+    precios = _consultar(config, list({m.coin_id for m in todos}))
+    if precios is None:
+        return "No he podido consultar los precios. Prueba en un rato."
+
+    # Unos días antes, por si la primera compra fue en fin de semana.
+    desde = min(m.cuando for m in todos) - vsbolsa.MARGEN
+    try:
+        serie, ahora = vsbolsa.pedir(indice[1], desde)
+    except vsbolsa.BolsaError as e:
+        return f"No he podido mirar la bolsa: {telegram.escape(str(e))}"
+
+    resultado = vsbolsa.calcular(todos, serie, ahora, precios, indice)
+    if resultado is None:
+        return (
+            "No tengo nada que comparar: tus compras no llevan precio, o no "
+            "he podido consultar el de alguna de hoy."
+        )
+    return alerts.formatear_vsbolsa(resultado, config.vs_currency)
 
 
 def _crear_alerta(config: Config, argumento: str) -> str:

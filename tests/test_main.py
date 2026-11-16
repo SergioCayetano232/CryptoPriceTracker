@@ -27,6 +27,7 @@ from crypto_tracker import (
     refran,
     tarot,
     telegram,
+    vsbolsa,
 )
 from crypto_tracker.config import Config, Posicion, Watch
 from crypto_tracker.precio import Precio
@@ -10042,3 +10043,78 @@ def test_sin_aviso_721_no_avisa(config, enviados, monkeypatch):
     main.ejecutar_ciclo(config, {})
 
     assert _avisos_721(enviados) == []
+
+
+# --- /vsbolsa ---
+
+
+def _bolsa(monkeypatch, cierre, ahora):
+    from datetime import date, timedelta
+
+    pedidos = []
+
+    def pedir(ticker, desde):
+        pedidos.append(ticker)
+        dias = [date.today() - timedelta(days=d) for d in range(10, 0, -1)]
+        return [(d, cierre) for d in dias], ahora
+
+    monkeypatch.setattr(vsbolsa, "pedir", pedir)
+    return pedidos
+
+
+def test_vsbolsa(config, enviados, monkeypatch):
+    _movimiento_hace(config, "solana", "compra", 10, 1000, 48)
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"solana": 150.0})
+    pedidos = _bolsa(monkeypatch, 500.0, 600.0)
+
+    main.atender(config, _mensaje("/vsbolsa"))
+
+    # 1.000 € en SOL valen 1.500; en el ETF, 2 a 600 = 1.200.
+    texto = enviados[0]
+    assert "<b>Tu cartera contra el S&P 500</b>" in texto
+    assert "<b>€1.500,00</b>" in texto
+    assert "tendrías €1.200,00" in texto
+    assert "Le ganas al S&P 500 por <b>€300,00</b> (+25,0%)" in texto
+    assert "SXR8.DE" in texto
+    assert pedidos == ["SXR8.DE"]
+
+
+def test_vsbolsa_te_gana(config, enviados, monkeypatch):
+    _movimiento_hace(config, "solana", "compra", 10, 1000, 48)
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"solana": 50.0})
+    pedidos = _bolsa(monkeypatch, 500.0, 550.0)
+
+    main.atender(config, _mensaje("/bolsa world"))
+
+    assert "El MSCI World te gana por <b>€600,00</b>" in enviados[0]
+    assert pedidos == ["EUNL.DE"]
+
+
+def test_vsbolsa_sin_yahoo(config, enviados, monkeypatch):
+    _movimiento_hace(config, "solana", "compra", 10, 1000, 48)
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"solana": 50.0})
+
+    def pedir(ticker, desde):
+        raise vsbolsa.BolsaError("Yahoo no contesta")
+
+    monkeypatch.setattr(vsbolsa, "pedir", pedir)
+
+    main.atender(config, _mensaje("/vsbolsa"))
+
+    assert "No he podido mirar la bolsa: Yahoo no contesta" in enviados[0]
+
+
+def test_vsbolsa_otro_indice(config, enviados, monkeypatch):
+    monkeypatch.setattr(vsbolsa, "pedir", lambda *a: pytest.fail())
+
+    main.atender(config, _mensaje("/vsbolsa ibex"))
+
+    assert "S&amp;P 500 o el MSCI World" in enviados[0]
+
+
+def test_vsbolsa_sin_movimientos(config, enviados, monkeypatch):
+    monkeypatch.setattr(vsbolsa, "pedir", lambda *a: pytest.fail())
+
+    main.atender(config, _mensaje("/vsbolsa"))
+
+    assert "No has apuntado ninguna compra" in enviados[0]
