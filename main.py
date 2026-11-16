@@ -153,6 +153,7 @@ from crypto_tracker import (
     pelotazo,
     peluqueria,
     periodo,
+    permuta,
     piso,
     pizza,
     plan,
@@ -1280,6 +1281,9 @@ def responder(
     if nombre == "sivendo":
         return _sivendo(config, argumento)
 
+    if nombre == "permuta":
+        return _permuta(config, argumento)
+
     if nombre == "compensar":
         return _compensar(config)
 
@@ -2190,6 +2194,42 @@ def _sivendo(config: Config, argumento: str) -> str:
         sivendo.calcular(antes, vendido, dinero, queda, este_año, historia),
         config.vs_currency,
     )
+
+
+def _permuta(config: Config, argumento: str) -> str:
+    try:
+        origen, destino, cantidad, texto_comision = permuta.interpretar(argumento)
+        antes = movimientos.buscar(_con_cambios(config).cartera, origen)
+        queda = movimientos.vender(antes, origen, cantidad)
+    except movimientos.MovimientoError as e:
+        return telegram.escape(str(e))
+
+    vendido = antes.cantidad if cantidad is None else cantidad
+    precio_origen = _precio_o_pedirlo(config, origen)
+    if isinstance(precio_origen, str):
+        return precio_origen
+    precio_destino = _precio_o_pedirlo(config, destino)
+    if isinstance(precio_destino, str):
+        return precio_destino
+
+    todos = database.get_movimientos(config.database_path, None)
+    este_año = impuestos.calcular(todos, date.today().year)
+    historia = [m for m in todos if m.coin_id == origen]
+    try:
+        resultado = permuta.calcular(
+            antes,
+            vendido,
+            precio_origen,
+            destino,
+            precio_destino,
+            queda,
+            este_año,
+            historia,
+            texto_comision,
+        )
+    except movimientos.MovimientoError as e:
+        return telegram.escape(str(e))
+    return alerts.formatear_permuta(resultado, config.vs_currency)
 
 
 def _compensar(config: Config) -> str:

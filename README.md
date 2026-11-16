@@ -195,6 +195,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/impuestos` | Lo que le tocaría a Hacienda de lo que ganaste vendiendo este año, tramo a tramo (19, 21, 23, 27 y 30 %). `/impuestos 2025`, el año que digas. Va con FIFO, como Hacienda: lo primero que compraste es lo primero que vendes (lo del `PORTFOLIO` del `.env` cuenta como lo más viejo). Por eso puede no coincidir con `/ganancias`, que va con precio medio. Es orientativo |
 | `/comisiones` | Lo que llevas pagado en comisiones, en dinero y en % de lo que moviste, por año y por cripto. `/comisiones 2025`, solo ese año. Cuentan las que pones con `com` en `/compra` y `/venta`; las apuntadas antes de esta versión no guardaban la comisión aparte y no salen. También `/fees` |
 | `/sivendo btc 0.5` | Lo que te darían, lo que le sacarías y lo que le tocaría a Hacienda, contando lo que ya llevas ganado este año. No apunta nada. También `/sivendo btc todo` y `/sivendo btc 0.5 @80000`, a ese precio |
+| `/permuta btc eth 0.01` | Lo que le tocaría a Hacienda si cambias una cripto por otra: en España cuenta como venderla, aunque no veas un euro. Te dice cuánta te darían de la otra, lo que le sacarías y a qué precio contará la nueva cuando la vendas. No apunta nada. También `/permuta btc eth todo` y con `com 0.1%` al final, la comisión. También `/swap` |
 | `/compensar` | Si llevas ganancia este año, qué vender de lo que va en pérdidas y cuánto, para bajar lo que le toca a Hacienda y cuánto te ahorrarías. Va con FIFO: si para llegar a lo que pierde hay que vender antes lo que gana, lo cuenta. No apunta nada y tiene que hacerse antes del 1 de enero. Es orientativo y sin comisiones. También `/perdidas` |
 | `/primera` | Tu primera compra, cuánto hace, cuánto ha cambiado el precio desde entonces y lo que vale hoy lo que compraste (`/primera btc`, la primera de esa). Solo las apuntadas con `/compra` |
 | `/pelotazo` | Tu mejor compra y la peor: lo que pagaste, cuándo, lo que valen hoy y cuánto han subido o bajado. Gasta una consulta |
@@ -919,6 +920,7 @@ crypto_tracker/
   corregir.py    rehacer los movimientos al cambiar uno, para /corregir
   impuestos.py   los tramos del IRPF, para /impuestos
   fifo.py        qué costó lo vendido, contando primero lo más viejo
+  permuta.py     lo que pagas a Hacienda al cambiar una cripto por otra, para /permuta
   sivendo.py     lo que ganarías y pagarías antes de vender, para /sivendo
   compensar.py   qué vender en pérdidas, para /compensar
   primera.py     tu primera compra, para /primera

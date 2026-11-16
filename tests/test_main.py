@@ -2777,6 +2777,71 @@ def test_sivendo_lo_que_no_tienes(config, enviados):
     assert "No tienes solana en la cartera" in enviados[0]
 
 
+# --- /permuta ---
+
+
+def test_permuta_no_apunta_nada(config, enviados, monkeypatch):
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
+    _precio(monkeypatch, {"bitcoin": 70000.0, "ethereum": 2000.0})
+
+    main.atender(config, _mensaje("/permuta btc eth 0.01"))
+
+    texto = enviados[0]
+    assert "<b>Si cambias 0,01 de Bitcoin por Ethereum</b>" in texto
+    assert "Te darían <b>0,35</b> de Ethereum" in texto
+    assert "Te costó €500,00" in texto
+    assert "<b>+€200,00</b> (+40.00%)" in texto
+    assert "A Hacienda, unos <b>€38,00</b>" in texto
+    assert "cuenta como venderla" in texto
+    assert "contará como comprado a €700,00" in texto
+    assert "Te quedarían 0,01 de Bitcoin" in texto
+    assert database.get_movimientos(config.database_path) == []
+
+
+def test_permuta_con_comision(config, enviados, monkeypatch):
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
+    _precio(monkeypatch, {"bitcoin": 70000.0, "ethereum": 2000.0})
+
+    main.atender(config, _mensaje("/permuta btc eth todo com 1%"))
+
+    texto = enviados[0]
+    assert "(con €14,00 de comisión)" in texto
+    assert "<b>+€386,00</b>" in texto
+    assert "Te quedarían" not in texto
+
+
+def test_permuta_con_perdida(config, enviados, monkeypatch):
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
+    _precio(monkeypatch, {"bitcoin": 30000.0, "ethereum": 2000.0})
+
+    main.atender(config, _mensaje("/venta bitcoin 0.01 1500"))  # +1.000
+    main.atender(config, _mensaje("/permuta btc eth todo"))  # -200
+
+    assert "Te ahorrarías unos <b>€38,00</b> de Hacienda" in enviados[1]
+    assert "cuenta como venderla" not in enviados[1]
+
+
+def test_permuta_sin_precio_de_la_otra(config, enviados, monkeypatch):
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
+    _precio(monkeypatch, {"bitcoin": 70000.0})
+
+    main.atender(config, _mensaje("/permuta btc noexiste 0.01"))
+
+    assert "Te darían" not in enviados[0]
+
+
+def test_permuta_lo_que_no_tienes(config, enviados):
+    main.atender(config, _mensaje("/permuta solana btc 1"))
+
+    assert "No tienes solana en la cartera" in enviados[0]
+
+
+def test_permuta_mal_escrita(config, enviados):
+    main.atender(config, _mensaje("/permuta btc"))
+
+    assert "Escríbelo así" in enviados[0]
+
+
 def test_sivendo_sin_precio_posible(config, enviados, monkeypatch):
     config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
 

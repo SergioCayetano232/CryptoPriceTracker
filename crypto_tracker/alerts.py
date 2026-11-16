@@ -166,6 +166,7 @@ from .pelotazo import Jugada, Pelotazo
 from .peluqueria import PRECIO as PRECIO_PELUQUERIA
 from .peluqueria import Peluqueria
 from .periodo import nombre as nombre_periodo
+from .permuta import Permuta
 from .piso import METROS as METROS_PISO
 from .piso import PRECIO as PRECIO_PISO
 from .piso import Piso
@@ -1827,6 +1828,63 @@ def formatear_sivendo(s: Simulacion, currency: str) -> str:
             f"<i>Ojo: va en {currency.upper()}, y Hacienda lo quiere en euros.</i>"
         )
     lineas.append("\n<i>No apunto nada. Es orientativo, con FIFO y sin comisiones.</i>")
+    return "\n".join(lineas)
+
+
+def formatear_permuta(p: Permuta, currency: str) -> str:
+    """Respuesta de /permuta."""
+    s = p.venta
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    origen = escape(s.coin_id.replace("-", " ").title())
+    destino = escape(p.destino.replace("-", " ").title())
+    lineas = [
+        f"🔁 <b>Si cambias {texto_cantidad(s.vendido)} de {origen} por {destino}</b>",
+        "",
+        f"Te darían <b>{texto_cantidad(p.recibes)}</b> de {destino}  "
+        f"<i>(a {simbolo}{_num(p.precio_destino)} cada una)</i>",
+        f"Valen {simbolo}{_num(p.valor)}{_con_comision(p.comision, simbolo)}",
+    ]
+
+    if s.ganancia is None:
+        lineas.append(
+            f"No sé lo que te costó el {origen}, así que no puedo sacar lo que "
+            "le tocaría a Hacienda."
+        )
+    else:
+        ganado = (
+            f"{_flecha(s.ganancia)} Le sacarías <b>{_ganancia(s.ganancia, simbolo)}</b>"
+        )
+        if s.porcentaje is not None:
+            ganado += f" ({s.porcentaje:+.2f}%)"
+        lineas += [f"Te costó {simbolo}{_num(s.coste)}", ganado]
+        if s.ya_ganado:
+            lineas.append(
+                f"Este año ya llevas {_ganancia(s.ya_ganado, simbolo)} vendiendo"
+            )
+        lineas += ["", _sivendo_hacienda(s, simbolo)]
+        if s.ganancia > 0:
+            lineas.append(
+                "Aunque no veas un euro: cambiar una cripto por otra cuenta como "
+                "venderla."
+            )
+
+    lineas.append(
+        f"El {destino} contará como comprado a {simbolo}{_num(p.valor)}: es lo que "
+        "restarás cuando lo vendas."
+    )
+    if s.queda:
+        lineas.append(f"Te quedarían {texto_cantidad(s.queda)} de {origen}")
+
+    if s.sin_datos:
+        cuantas = "1 venta" if s.sin_datos == 1 else f"{s.sin_datos} ventas"
+        lineas.append(f"<i>No cuento {cuantas} de este año: les falta el precio.</i>")
+    if currency.lower() != "eur":
+        lineas.append(
+            f"<i>Ojo: va en {currency.upper()}, y Hacienda lo quiere en euros.</i>"
+        )
+    lineas.append(
+        "\n<i>No apunto nada. Es orientativo, con FIFO y al precio de ahora.</i>"
+    )
     return "\n".join(lineas)
 
 

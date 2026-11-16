@@ -34,6 +34,7 @@ COMANDOS = {
     "impuestos": "Lo que le tocaría a Hacienda de lo que ganaste vendiendo",
     "comisiones": "Lo que llevas pagado en comisiones (ej: /comisiones 2026)",
     "sivendo": "Lo que ganarías y pagarías antes de vender (ej: /sivendo btc 0.5)",
+    "permuta": "Lo que pagas a Hacienda al cambiar una cripto por otra",
     "compensar": "Qué vender en pérdidas para pagar menos a Hacienda este año",
     "primera": "Tu primera compra y cuánto ha cambiado desde entonces",
     "pelotazo": "Tu mejor compra y la peor, por lo que han subido o bajado",
@@ -481,6 +482,8 @@ ALIAS = {
     "irpf": "impuestos",
     "taxes": "impuestos",
     "sivender": "sivendo",
+    "swap": "permuta",
+    "intercambiar": "permuta",
     "compensa": "compensar",
     "perdidas": "compensar",
     "pérdidas": "compensar",
@@ -665,6 +668,11 @@ EJEMPLOS = {
         ("/sivendo btc 0.005", "al precio de ahora"),
         ("/sivendo btc todo", "todo lo que tienes"),
         ("/sivendo btc 0.005 @80000", "si la vendes a ese precio"),
+    ],
+    "permuta": [
+        ("/permuta btc eth 0.01", "cambiar 0,01 bitcoin por ethereum"),
+        ("/permuta btc eth todo", "todo lo que tienes"),
+        ("/permuta btc eth 0.01 com 0.1%", "con la comisión del exchange"),
     ],
     "exportar": [
         ("/exportar bitcoin 30d", "los precios guardados de ese tramo"),
