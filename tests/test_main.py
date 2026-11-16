@@ -10418,3 +10418,42 @@ def test_frase_que_no_entiende(config, enviados):
 
     assert enviados[0] == comandos.NO_ENTIENDO
     assert database.get_movimientos(config.database_path) == []
+
+
+# --- /estocastico ---
+
+
+def test_estocastico(config, enviados):
+    # Sube un poco cada día durante tres semanas: cierra cerca del techo.
+    for dias in range(1, 22):
+        _precio_de(config, "bitcoin", 200.0 - dias, dias * 24 * 60)
+    _precio_de(config, "bitcoin", 200.0, 5)
+
+    main.atender(config, _mensaje("/estocastico btc"))
+
+    texto = enviados[0]
+    assert "🎚️ <b>Bitcoin</b>: estocástico de 14 días" in texto
+    assert "🔥 <b>Sobrecompra</b>" in texto
+    assert "%K 100" in texto
+
+
+def test_estocastico_por_su_otro_nombre(config, enviados):
+    for dias in range(1, 22):
+        _precio_de(config, "bitcoin", 100.0 + dias, dias * 24 * 60)
+    _precio_de(config, "bitcoin", 100.0, 5)
+
+    main.atender(config, _mensaje("/stoch"))
+
+    assert "🧊 <b>Sobreventa</b>" in enviados[0]
+
+
+def test_estocastico_sin_historia(config, enviados):
+    main.atender(config, _mensaje("/estocástico"))
+
+    assert "Necesito 17 días seguidos" in enviados[0]
+
+
+def test_estocastico_de_una_en_una(config, enviados):
+    main.atender(config, _mensaje("/estocastico btc eth"))
+
+    assert "De una en una" in enviados[0]

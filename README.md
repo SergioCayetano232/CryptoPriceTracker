@@ -251,6 +251,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/rsi bitcoin` | Su RSI de 14 días: por encima de 70 ha subido demasiado rápido (sobrecomprada) y por debajo de 30 ha bajado demasiado (sobrevendida). Necesita 15 días seguidos guardados y no gasta consultas |
 | `/bollinger bitcoin` | Sus bandas de Bollinger: la media de 20 días y dos veces lo que se suele separar de ella, por arriba y por abajo. Te dice si el precio está dentro, por encima (muy estirada) o por debajo (muy aplastada), con una barrita de dónde está, y si la banda está de las más estrechas de lo guardado, que suele ir antes de un movimiento fuerte. Necesita 20 días seguidos guardados y no gasta consultas. También `/bandas` |
 | `/macd bitcoin` | Si va con empuje al alza o a la baja según el MACD (la media de 12 días menos la de 26, contra su propia media de 9): desde cuándo, si coge o pierde fuerza y hacia dónde va de fondo. Cruzar su señal hacia arriba se suele leer como compra y hacia abajo como venta, con retraso. A secas, la primera que vigilo. Necesita 35 días seguidos guardados. Sale de lo guardado y no gasta consultas. También `/empuje` |
+| `/estocastico bitcoin` | Dónde está el precio dentro de lo que se ha movido en 14 días, de 0 (lo más bajo) a 100 (lo más alto): por encima de 80, sobrecompra; por debajo de 20, sobreventa. Con su media de 3 días y si la ha cruzado hace poco. Saca el máximo y el mínimo de cada día de lo que tiene guardado, así que necesita 17 días seguidos: `/rellenar` baja los que faltan. También `/stoch` |
 | `/fibonacci btc 90d` | Los niveles de Fibonacci entre el máximo y el mínimo del tramo (23,6%, 38,2%, 50%, 61,8% y 78,6%): si venía subiendo, hasta dónde podría corregir; si venía bajando, hasta dónde podría rebotar. Marca dónde está ahora y el nivel más cerca por debajo y por encima. Sin tramo, 90 días. Sale de lo guardado y no gasta consultas. También `/fibo` y `/retroceso` |
 | `/caida bitcoin 30d` | Cuánto ha bajado desde el máximo del tramo y cuál fue su peor caída, de qué precio a cuál y cuánto tardó en volver (sin tramo, 30 días). Con `/caida cartera`, lo mismo con lo que vale tu cartera entera. Sale de lo guardado y no gasta consultas |
 | `/backtest btc 20%` | Qué habría pasado si hubieras vendido cada vez que subía un 20% y recomprado cada vez que bajaba un 20% desde la última operación, contra no tocar nada. Empieza con 1.000 € y usa los precios que tiene guardados, 90 días si no le dices otro tramo (`/backtest btc 15% 30d`). Te dice también dónde tocaría la próxima. Sin comisiones ni impuestos |
@@ -966,6 +967,7 @@ crypto_tracker/
   rsi.py         el RSI de 14 días, para /rsi
   bollinger.py   las bandas de 20 días, para /bollinger
   macd.py        las medias de 12 y 26 días contra la de 9, para /macd
+  estocastico.py dónde está dentro del rango de 14 días, para /estocastico
   fibonacci.py   los niveles entre el máximo y el mínimo, para /fibonacci
   futuro.py      entre qué cifras puede estar tu cartera, para /futuro
   sharpe.py      lo que gana la cartera para lo que se mueve, para /sharpe

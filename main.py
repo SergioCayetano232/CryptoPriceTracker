@@ -94,6 +94,7 @@ from crypto_tracker import (
     equilibrio,
     estables,
     estacional,
+    estocastico,
     ethereum,
     excusa,
     exportar,
@@ -1690,6 +1691,9 @@ def responder(
 
     if nombre == "macd":
         return _macd(config, argumento)
+
+    if nombre == "estocastico":
+        return _estocastico(config, argumento)
 
     if nombre == "bollinger":
         return _bollinger(config, argumento)
@@ -3960,6 +3964,30 @@ def _macd(config: Config, argumento: str) -> str:
             f"{telegram.escape(coin_id)} bajo los que faltan"
         )
     return alerts.formatear_macd(coin_id, resultado, config.vs_currency)
+
+
+def _estocastico(config: Config, argumento: str) -> str:
+    if len(argumento.split()) > 1:
+        return "De una en una. Por ejemplo: /estocastico bitcoin"
+    if argumento:
+        coin_id = simbolos.a_id(argumento)
+    else:
+        vigiladas = _con_cambios(config).watchlist
+        if not vigiladas:
+            return "¿De cuál? Por ejemplo: /estocastico bitcoin"
+        coin_id = vigiladas[0].coin_id
+
+    serie = database.get_serie(
+        config.database_path, coin_id, estocastico.HORAS, config.vs_currency
+    )
+    resultado = estocastico.calcular(estocastico.velas(serie))
+    if resultado is None:
+        return (
+            f"Necesito {estocastico.MINIMO + 1} días seguidos de precios de "
+            f"<b>{telegram.escape(coin_id)}</b> y no los tengo. Con /rellenar "
+            f"{telegram.escape(coin_id)} bajo los que faltan"
+        )
+    return alerts.formatear_estocastico(coin_id, resultado, config.vs_currency)
 
 
 def _bollinger(config: Config, argumento: str) -> str:

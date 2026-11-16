@@ -73,6 +73,7 @@ COMANDOS = {
     "rsi": "Si ha subido o bajado demasiado rápido (ej: /rsi btc)",
     "bollinger": "Si se ha salido de su banda normal (ej: /bollinger btc)",
     "macd": "Si coge o pierde empuje, con el MACD (ej: /macd bitcoin)",
+    "estocastico": "Si está cerca del techo o del suelo de 14 días (ej: /stoch btc)",
     "fibonacci": "Dónde podría frenar el precio (ej: /fibonacci btc 90d)",
     "caida": "Cuánto ha bajado desde el máximo (ej: /caida btc 30d)",
     "backtest": "Vender al +% y recomprar al -%, contra no tocar (ej: /backtest btc)",
@@ -270,6 +271,8 @@ ALIAS = {
     "sobrecompra": "rsi",
     "bandas": "bollinger",
     "empuje": "macd",
+    "estocástico": "estocastico",
+    "stoch": "estocastico",
     "fibo": "fibonacci",
     "inflación": "inflacion",
     "ipc": "inflacion",
@@ -750,6 +753,13 @@ EJEMPLOS = {
     "macd": [
         ("/macd bitcoin", "si va con empuje al alza o a la baja y desde cuándo"),
         ("/macd", "a secas, la primera que vigilo"),
+    ],
+    "estocastico": [
+        (
+            "/estocastico bitcoin",
+            "si está cerca de lo más alto o lo más bajo de 14 días",
+        ),
+        ("/estocastico", "a secas, la primera que vigilo"),
     ],
     "bollinger": [
         ("/bollinger bitcoin", "si está dentro de su banda de 20 días o se ha salido"),

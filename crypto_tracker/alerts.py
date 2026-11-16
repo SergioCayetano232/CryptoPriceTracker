@@ -84,6 +84,10 @@ from .equilibrio import Cartera
 from .estables import Desvio
 from .estacional import MESES as MESES_ESTACIONAL
 from .estacional import POCOS_AÑOS, Estacional
+from .estocastico import ALTO as ALTO_ESTOCASTICO
+from .estocastico import BAJO as BAJO_ESTOCASTICO
+from .estocastico import PERIODO as PERIODO_ESTOCASTICO
+from .estocastico import Estocastico
 from .ethereum import Ethereum
 from .fibonacci import Fibonacci
 from .frase import Frase
@@ -4359,6 +4363,48 @@ def formatear_macd(coin_id: str, m: Macd, currency: str) -> str:
         f"<i>La media de {RAPIDA} días menos la de {LENTA}, contra su propia media "
         f"de {SEÑAL_MACD}. Cruzarla hacia arriba suele leerse como compra y hacia "
         "abajo como venta, pero llega con retraso. Sale de lo guardado</i>",
+    ]
+    return "\n".join(texto)
+
+
+def formatear_estocastico(coin_id: str, e: Estocastico, currency: str) -> str:
+    """Respuesta de /estocastico."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    dias = PERIODO_ESTOCASTICO
+    texto = [f"🎚️ <b>{_nombre(coin_id)}</b>: estocástico de {dias} días", ""]
+    k = f"{e.k:.0f}"
+    if e.zona == "alto":
+        texto.append(
+            f"🔥 <b>Sobrecompra</b> ({k}): está cerca de lo más alto de las dos "
+            "últimas semanas"
+        )
+    elif e.zona == "bajo":
+        texto.append(
+            f"🧊 <b>Sobreventa</b> ({k}): está cerca de lo más bajo de las dos "
+            "últimas semanas"
+        )
+    else:
+        texto.append(f"⚖️ <b>En medio</b> ({k}): ni cerca del techo ni del suelo")
+
+    hacia = "arriba" if e.cruce_arriba else "abajo"
+    if e.cruce_hace == 0:
+        texto.append(f"✂️ Hoy ha cruzado su media hacia {hacia}")
+    elif e.cruce_hace == 1:
+        texto.append(f"✂️ Ayer cruzó su media hacia {hacia}")
+    elif e.cruce_hace is not None:
+        lado = "encima" if e.cruce_arriba else "debajo"
+        texto.append(f"Va por {lado} de su media desde hace {e.cruce_hace} días")
+
+    texto += [
+        "",
+        f"En {dias} días, entre {simbolo}{_num(e.suelo)} y {simbolo}{_num(e.techo)}"
+        f" · ahora {simbolo}{_num(e.ahora)}",
+        f"%K {e.k:.0f} · %D {e.d:.0f}",
+        f"<i>Dónde está el precio dentro de lo que se ha movido en {dias} días: 100 "
+        f"es lo más alto y 0 lo más bajo. Por encima de {ALTO_ESTOCASTICO} suele "
+        f"leerse como sobrecompra y por debajo de {BAJO_ESTOCASTICO} como "
+        "sobreventa. Se parece al /rsi, pero mira el rango y no la fuerza de las "
+        "subidas. Sale de lo guardado</i>",
     ]
     return "\n".join(texto)
 
