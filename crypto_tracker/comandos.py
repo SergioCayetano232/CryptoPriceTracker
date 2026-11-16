@@ -16,6 +16,7 @@ COMANDOS = {
     "ath": "El máximo y el mínimo histórico (ej: /ath bitcoin)",
     "cartera": "Cuánto vale lo que tienes, con gráfica (ej: /cartera 30d)",
     "reparto": "Qué parte de tu cartera es cada cripto, con gráfica",
+    "tarjeta": "Una imagen de tu cartera para enseñar, solo con %",
     "riesgo": "Cuánto depende tu cartera de una cripto y cuánto se mueve",
     "futuro": "Entre qué cifras puede estar tu cartera (ej: /futuro 30d)",
     "sharpe": "Cuánto gana tu cartera para lo que se mueve (ej: /sharpe 90d)",
@@ -487,6 +488,7 @@ ALIAS = {
     "sivender": "sivendo",
     "swap": "permuta",
     "721": "modelo721",
+    "compartir": "tarjeta",
     "bolsa": "vsbolsa",
     "sp500": "vsbolsa",
     "intercambiar": "permuta",
@@ -754,6 +756,10 @@ EJEMPLOS = {
     "rsi": [
         ("/rsi bitcoin", "el RSI de 14 días: por encima de 70 sobrecomprada"),
         ("/rsi", "a secas, la primera que vigilo"),
+    ],
+    "tarjeta": [
+        ("/tarjeta", "cómo va tu cartera y los últimos 30 días"),
+        ("/tarjeta 90d", "con el tramo que digas"),
     ],
     "backtest": [
         ("/backtest btc", "vender al +20% y recomprar al -20%, en 90 días"),

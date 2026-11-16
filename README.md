@@ -175,6 +175,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/cartera 30d` | Lo mismo, con la gráfica del tramo que digas |
 | `/cartera usd` | Lo que vale en otra moneda (`eur`, `usd` o `gbp`). Sin lo que ganas ni gráfica, que lo que te costó va en la moneda del `.env` |
 | `/reparto` | Qué parte de tu cartera es cada cripto, con una imagen de barras. Si tienes más de 6, las pequeñas van juntas en "Otras" |
+| `/tarjeta` | Una imagen cuadrada para reenviar o subir a redes: lo que gana o pierde tu cartera sobre lo que metiste, cómo ha ido en los últimos 30 días (`/tarjeta 90d` para otro tramo) y el reparto. Solo lleva porcentajes, ni una cifra en dinero. También `/compartir` |
 | `/rebalanceo btc 60 eth 40` | Qué comprar y qué vender, en dinero y en cantidad, para dejar tu cartera con ese reparto. Lo que tienes y no nombras, a venderlo entero. A secas, a partes iguales entre lo que tienes. Al precio de ahora y sin comisiones. También `/rebalancear` |
 | `/riesgo` | Cuánto pesa tu cripto más grande y lo que caería la cartera si esa cae un 20%, a cuántas criptos a partes iguales equivale tu reparto, cuánto se mueve la cartera al día en los últimos 30 días (en % y en dinero), su peor día, si se mueve más o menos que bitcoin, y un nivel: bajo, medio o alto |
 | `/sharpe 90d` | Cuánto gana tu cartera para lo que se mueve: lo que ha ganado en esos días, lo que se mueve al año, con una nota (de 1 para arriba está bien) y comparado con bitcoin. Con lo que tienes hoy y sin restar lo que daría un depósito. Sin tramo, 90 días; de 30 a 365. Necesita 31 días seguidos guardados |
@@ -950,6 +951,7 @@ crypto_tracker/
   estacional.py  qué meses suele subir, con las velas de Binance, para /estacional
   horas.py       la hora más barata y la más cara, para /horas
   reparto.py     qué parte de la cartera es cada una, para /reparto
+  tarjeta.py     tu cartera en %, para la imagen de /tarjeta
   rango.py       el máximo, el mínimo y la media de /rango
   soporte.py     dónde ha girado varias veces, para /soporte
   dia.py         a cuánto estaba un día concreto, para /dia

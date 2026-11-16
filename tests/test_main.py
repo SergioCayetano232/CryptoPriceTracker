@@ -10234,3 +10234,61 @@ def test_backtest_mal_escrito(config, enviados):
     main.atender(config, _mensaje("/backtest btc 150%"))
 
     assert "menor de 100" in enviados[0]
+
+
+# --- /tarjeta ---
+
+
+def test_tarjeta(con_semana, enviados, sin_fotos_de_verdad, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 66000.0, "solana": 100.0})
+    _guardar(con_semana, "bitcoin", 60000.0, 24)
+    _guardar(con_semana, "solana", 100.0, 24)
+    database.save_prices(
+        con_semana.database_path, {"bitcoin": 66000.0, "solana": 100.0}, "eur"
+    )
+
+    main.atender(con_semana, _mensaje("/tarjeta"))
+
+    [(png, pie)] = sin_fotos_de_verdad
+    assert png.startswith(b"\x89PNG")
+    # Metiste 6.000 y vale 7.600; hace un día valía 7.000.
+    assert "+26,7% sobre lo que has metido" in pie
+    assert "+8,6% en los últimos 30 días" in pie
+    assert "Bitcoin 87% · Solana 13%" in pie
+    assert "€" not in pie
+
+
+def test_tarjeta_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/tarjeta"))
+
+    assert enviados[0] == main.SIN_CARTERA
+
+
+def test_tarjeta_sin_nada_que_enseñar(config, enviados, monkeypatch):
+    from crypto_tracker.config import parse_cartera
+
+    config = _con_cartera(config, *parse_cartera("bitcoin:0.1"))
+    _precio(monkeypatch, {"bitcoin": 66000.0})
+
+    main.atender(config, _mensaje("/compartir"))
+
+    assert "Aún no tengo con qué hacerla" in enviados[0]
+
+
+def test_tarjeta_sin_imagen_manda_texto(con_semana, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 66000.0, "solana": 100.0})
+
+    def falla(t):
+        raise grafica.GraficaError("sin matplotlib")
+
+    monkeypatch.setattr(grafica, "dibujar_tarjeta", falla)
+
+    main.atender(con_semana, _mensaje("/tarjeta"))
+
+    assert "<b>Tu tarjeta</b>" in enviados[0]
+
+
+def test_tarjeta_mal_escrita(con_semana, enviados):
+    main.atender(con_semana, _mensaje("/tarjeta bitcoin"))
+
+    assert "Escríbelo así" in enviados[0]

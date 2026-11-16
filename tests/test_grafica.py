@@ -99,3 +99,49 @@ def test_lo_invertido_lejos_de_la_serie_no_peta():
     assert dibujar("cartera", _serie([1.0, 2.0]), "eur", 24, invertido=1000).startswith(
         b"\x89PNG"
     )
+
+
+# --- /tarjeta ---
+
+
+def _tarjeta(total=66.7, tramo=12.5, linea=(0, 6, 12.5)):
+    from datetime import date
+
+    from crypto_tracker.reparto import Trozo
+    from crypto_tracker.tarjeta import Tarjeta
+
+    reparto = [Trozo("bitcoin", 0, 75, 0), Trozo("otras", 0, 25, None)]
+    return Tarjeta(total, tramo, 720, list(linea), reparto, date(2026, 11, 16))
+
+
+def test_tarjeta_sale_un_png():
+    from crypto_tracker.grafica import dibujar_tarjeta
+
+    assert dibujar_tarjeta(_tarjeta()).startswith(b"\x89PNG")
+
+
+def test_tarjeta_sin_lo_invertido_ni_linea():
+    from crypto_tracker.grafica import dibujar_tarjeta
+
+    assert dibujar_tarjeta(_tarjeta(total=None, linea=())).startswith(b"\x89PNG")
+
+
+def test_tarjeta_sin_ningun_porcentaje():
+    from crypto_tracker.grafica import GraficaError, dibujar_tarjeta
+
+    with pytest.raises(GraficaError):
+        dibujar_tarjeta(_tarjeta(total=None, tramo=None, linea=()))
+
+
+@pytest.mark.parametrize(
+    "horas, sale",
+    [
+        (720, "en los últimos 30 días"),
+        (24, "en las últimas 24 h"),
+        (1, "en la última hora"),
+    ],
+)
+def test_en_el_tramo(horas, sale):
+    from crypto_tracker.grafica import _en_el_tramo
+
+    assert _en_el_tramo(horas) == sale

@@ -196,6 +196,7 @@ from crypto_tracker import (
     sueldo,
     supermercado,
     switch,
+    tarjeta,
     tarot,
     taxi,
     telegram,
@@ -1293,6 +1294,9 @@ def responder(
         if not config.cartera:
             return SIN_CARTERA
         return _cartera(config, argumento)
+
+    if nombre == "tarjeta":
+        return _tarjeta(config, argumento)
 
     if nombre == "reparto":
         config = _con_cambios(config)
@@ -5834,6 +5838,42 @@ def _cartera_en(
         f"{config.vs_currency.upper()}, que es en lo que apuntaste lo que te costó.</i>"
     )
     return comandos.ConBotones(alerts.con_fuente(texto), botones.actualizar(comando))
+
+
+def _tarjeta(config: Config, argumento: str) -> str | comandos.Foto:
+    try:
+        horas = tarjeta.interpretar(argumento)
+    except periodo.PeriodoError as e:
+        return telegram.escape(str(e))
+    posiciones = list(_con_cambios(config).cartera)
+    if not posiciones:
+        return SIN_CARTERA
+    precios = _precios_guardados(config, posiciones)
+    valores, faltan = cartera.valorar(posiciones, precios)
+    # Sin una, los % de las demás saldrían inflados.
+    if faltan:
+        return "Ahora mismo no tengo el precio de todo. Prueba en un rato."
+
+    filas = database.get_series(
+        config.database_path, [p.coin_id for p in posiciones], horas, config.vs_currency
+    )
+    resultado = tarjeta.calcular(
+        valores, cartera.serie_valor(posiciones, filas), horas, date.today()
+    )
+    if resultado is None:
+        return "Tu cartera ahora mismo no vale nada, no hay nada que enseñar."
+    if resultado.total is None and resultado.tramo is None:
+        return (
+            "Aún no tengo con qué hacerla: apunta lo que te costó cada una con "
+            f"/compra o espera a que guarde precios ({periodo.nombre(horas)})."
+        )
+    texto = alerts.formatear_tarjeta(resultado)
+    try:
+        png = grafica.dibujar_tarjeta(resultado)
+    except Exception as e:
+        logger.warning("Mando /tarjeta sin imagen: %s", e)
+        return texto
+    return comandos.Foto(png, texto, texto)
 
 
 def _reparto(config: Config) -> str | comandos.Foto:

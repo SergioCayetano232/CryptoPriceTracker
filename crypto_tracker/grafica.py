@@ -7,7 +7,8 @@ from .alerts import SIMBOLOS, _num
 from .calendario import Mes, semanas
 from .mes import MESES
 from .periodo import nombre as nombre_periodo
-from .reparto import Trozo
+from .reparto import OTRAS, Trozo
+from .tarjeta import Tarjeta
 
 VERDE = "#16a34a"
 ROJO = "#dc2626"
@@ -316,6 +317,140 @@ def dibujar_calendario(coin_id: str, m: Mes) -> bytes:
     salida = io.BytesIO()
     fig.savefig(salida, format="png", facecolor=FONDO)
     return salida.getvalue()
+
+
+# La tarjeta va en oscuro: en el móvil y en las redes se ve más que una blanca.
+NOCHE = "#0b1220"
+CLARO = "#f8fafc"
+APAGADO = "#94a3b8"
+VERDE_NOCHE = "#4ade80"
+ROJO_NOCHE = "#f87171"
+
+
+def dibujar_tarjeta(t: Tarjeta) -> bytes:
+    """Cuadrada, para mandarla tal cual. Sin una sola cifra en dinero."""
+    try:
+        import numpy as np
+        from matplotlib.figure import Figure
+    except ImportError as e:
+        raise GraficaError(
+            "Falta matplotlib. Ejecuta: pip install -r requirements.txt"
+        ) from e
+
+    grande = t.total if t.total is not None else t.tramo
+    if grande is None:
+        raise GraficaError("No hay ningún % que enseñar")
+    color = VERDE_NOCHE if grande >= 0 else ROJO_NOCHE
+
+    fig = Figure(figsize=(7.2, 7.2), dpi=150, facecolor=NOCHE)
+    _brillo(fig, np, color)
+
+    fig.text(0.08, 0.92, "MI CARTERA CRIPTO", fontsize=11, weight="bold", color=APAGADO)
+    fig.text(0.92, 0.92, f"{t.dia:%d/%m/%Y}", fontsize=11, color=APAGADO, ha="right")
+    fig.text(0.075, 0.76, _pct_tarjeta(grande), fontsize=62, weight="bold", color=color)
+    if t.total is not None:
+        debajo = "sobre lo que he metido"
+    else:
+        debajo = _en_el_tramo(t.horas)
+    fig.text(0.08, 0.70, debajo, fontsize=13, color=CLARO)
+
+    if len(t.linea) >= 2:
+        if t.total is not None and t.tramo is not None:
+            fig.text(
+                0.08,
+                0.62,
+                f"{_pct_tarjeta(t.tramo)} {_en_el_tramo(t.horas)}",
+                fontsize=11,
+                color=APAGADO,
+            )
+        _linea_tarjeta(fig, t.linea)
+
+    if t.reparto:
+        _reparto_tarjeta(fig, t.reparto)
+
+    fig.text(
+        0.5,
+        0.04,
+        "Solo porcentajes, sin cifras · CryptoPriceTracker",
+        fontsize=8,
+        color=APAGADO,
+        ha="center",
+        alpha=0.7,
+    )
+    salida = io.BytesIO()
+    fig.savefig(salida, format="png", facecolor=NOCHE)
+    return salida.getvalue()
+
+
+def _brillo(fig, np, color: str) -> None:
+    """Una mancha grande y suave del color del resultado, arriba a la derecha."""
+    r, g, b = (int(color[i : i + 2], 16) / 255 for i in (1, 3, 5))
+    fondo = [int(NOCHE[i : i + 2], 16) / 255 for i in (1, 3, 5)]
+    y, x = np.mgrid[0:1:300j, 0:1:300j]
+    fuerza = np.exp(-((x - 0.85) ** 2 + (y - 0.1) ** 2) / 0.12) * 0.22
+    imagen = np.empty((300, 300, 3))
+    for canal, (de, a) in enumerate(zip(fondo, (r, g, b), strict=True)):
+        imagen[..., canal] = de + (a - de) * fuerza
+    ax = fig.add_axes((0, 0, 1, 1), zorder=-1)
+    ax.imshow(imagen, extent=(0, 1, 0, 1), aspect="auto", interpolation="bicubic")
+    ax.axis("off")
+
+
+def _linea_tarjeta(fig, linea: list[float]) -> None:
+    color = VERDE_NOCHE if linea[-1] >= 0 else ROJO_NOCHE
+    ax = fig.add_axes((0.08, 0.34, 0.84, 0.25))
+    ax.set_facecolor("none")
+    x = range(len(linea))
+    suelo = min(linea)
+    ax.plot(x, linea, color=color, lw=2.4, solid_capstyle="round")
+    ax.fill_between(x, linea, suelo, color=color, alpha=0.12, lw=0)
+    # El 0 es donde empezó el tramo: por encima, ganando.
+    ax.axhline(0, color=APAGADO, lw=0.8, ls=(0, (2, 3)), alpha=0.5)
+    ax.plot(len(linea) - 1, linea[-1], "o", color=color, ms=7)
+    ax.set_xlim(0, len(linea) - 1)
+    ax.axis("off")
+
+
+def _reparto_tarjeta(fig, trozos: list[Trozo]) -> None:
+    fig.text(0.08, 0.255, "REPARTO", fontsize=9, weight="bold", color=APAGADO)
+    ax = fig.add_axes((0.08, 0.2, 0.84, 0.035))
+    ax.set_xlim(0, 100)
+    ax.set_ylim(0, 1)
+    ax.axis("off")
+    izquierda = 0.0
+    colores = []
+    for trozo in trozos:
+        color = GRIS if trozo.color is None else PALETA[trozo.color % len(PALETA)]
+        colores.append(color)
+        # Una raya del fondo entre trozos, para que no se peguen.
+        ax.barh(0.5, trozo.peso, left=izquierda, height=1, color=color, lw=0)
+        ax.barh(0.5, 0.6, left=izquierda + trozo.peso - 0.3, height=1, color=NOCHE)
+        izquierda += trozo.peso
+
+    # Como mucho cuatro en la leyenda: con más ya no caben y se lee mal.
+    for i, (trozo, color) in enumerate(zip(trozos[:4], colores, strict=False)):
+        x = 0.08 + i * 0.21
+        nombre = "Otras" if trozo.coin_id == OTRAS else trozo.coin_id.title()
+        fig.text(x, 0.145, "●", fontsize=12, color=color)
+        fig.text(
+            x + 0.03,
+            0.147,
+            f"{nombre[:10]} {trozo.peso:.0f}%",
+            fontsize=10,
+            color=CLARO,
+        )
+
+
+def _en_el_tramo(horas: float) -> str:
+    """'en los últimos 30 días', 'en las últimas 24 h', 'en la última hora'."""
+    tramo = nombre_periodo(horas)
+    if tramo.startswith("última "):
+        return f"en la {tramo}"
+    return f"en {'las' if tramo.startswith('últimas') else 'los'} {tramo}"
+
+
+def _pct_tarjeta(valor: float) -> str:
+    return f"{valor:+.1f}%".replace(".", ",")
 
 
 def _casilla(cambio: float | None, futuro: bool) -> tuple[str, str, str]:

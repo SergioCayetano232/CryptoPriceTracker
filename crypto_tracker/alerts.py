@@ -201,7 +201,7 @@ from .redondo import Redondo
 from .rellenar import Relleno
 from .rentabilidad import MIN_DIAS as MIN_DIAS_RENTABILIDAD
 from .rentabilidad import Rentabilidad
-from .reparto import Trozo, demasiado
+from .reparto import OTRAS, Trozo, demasiado
 from .riesgo import CAIDA as CAIDA_RIESGO
 from .riesgo import Riesgo
 from .rolex import PRECIO as PRECIO_ROLEX
@@ -225,6 +225,7 @@ from .supermercado import PRECIO as PRECIO_SUPER
 from .supermercado import Super
 from .switch import PRECIO as PRECIO_SWITCH
 from .switch import Switch
+from .tarjeta import Tarjeta
 from .tarot import Carta
 from .taxi import PRECIO as PRECIO_TAXI
 from .taxi import Taxi
@@ -3666,6 +3667,24 @@ def formatear_ratio(una: str, otra: str, r: Ratio, horas: float) -> str:
         "Con el precio del final de cada día</i>"
     )
     return texto
+
+
+def formatear_tarjeta(t: Tarjeta) -> str:
+    """El pie de /tarjeta, y lo que va solo si la imagen no sale."""
+    lineas = ["🪪 <b>Tu tarjeta</b>, lista para reenviar"]
+    if t.total is not None:
+        lineas.append(f"{_signo(t.total)} sobre lo que has metido")
+    if t.tramo is not None:
+        lineas.append(f"{_signo(t.tramo)} en los {nombre_periodo(t.horas)}")
+    if t.reparto:
+        lineas.append(
+            " · ".join(
+                f"{'Otras' if r.coin_id == OTRAS else _nombre(r.coin_id)} {r.peso:.0f}%"
+                for r in t.reparto
+            )
+        )
+    lineas.append("<i>Solo lleva porcentajes: nadie ve cuánto tienes.</i>")
+    return "\n".join(lineas)
 
 
 def formatear_reparto(trozos: list[Trozo], total: float, currency: str) -> str:
