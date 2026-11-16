@@ -10182,3 +10182,55 @@ def test_stop_movil_de_ganancia(con_semana, enviados, monkeypatch):
     main.atender(con_semana, _mensaje("/stop btc +10% movil"))
 
     assert "El móvil es para cuando baja" in enviados[0]
+
+
+# --- /backtest ---
+
+
+def _subidas_y_bajadas(config, *precios):
+    # Uno por día, el último de hace una hora.
+    for i, precio in enumerate(precios):
+        _guardar(config, "bitcoin", precio, (len(precios) - 1 - i) * 24 + 1)
+
+
+def test_backtest(config, enviados):
+    _subidas_y_bajadas(config, 100.0, 120.0, 96.0, 100.0)
+
+    main.atender(config, _mensaje("/backtest btc 20% 7d"))
+
+    texto = enviados[0]
+    assert "<b>Bitcoin: vender al +20% y recomprar al -20%</b>" in texto
+    assert "Con la regla: <b>€1.250,00</b> (+25,0%), 1 venta y 1 compra" in texto
+    assert "Sin tocar nada: €1.000,00 (+0,0%)" in texto
+    assert "La regla gana por <b>€250,00</b>" in texto
+    assert "venderías si sube a €115,20" in texto
+    assert "Solo tengo precios desde" in texto
+
+
+def test_backtest_gana_no_tocar(config, enviados):
+    _subidas_y_bajadas(config, 100.0, 120.0, 200.0)
+
+    main.atender(config, _mensaje("/backtest btc"))
+
+    assert "No tocar nada gana por <b>€800,00</b>" in enviados[0]
+    assert "recomprarías si baja a €96,00" in enviados[0]
+
+
+def test_backtest_a_secas_la_primera_que_vigilo(config, enviados):
+    _subidas_y_bajadas(config, 100.0, 105.0)
+
+    main.atender(config, _mensaje("/backtest"))
+
+    assert "Nunca subió un 20%" in enviados[0]
+
+
+def test_backtest_sin_precios(config, enviados):
+    main.atender(config, _mensaje("/backtest solana"))
+
+    assert "No tengo precios guardados de <b>solana</b>" in enviados[0]
+
+
+def test_backtest_mal_escrito(config, enviados):
+    main.atender(config, _mensaje("/backtest btc 150%"))
+
+    assert "menor de 100" in enviados[0]

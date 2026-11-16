@@ -35,6 +35,7 @@ from crypto_tracker import (
     ave,
     avisados,
     avisorsi,
+    backtest,
     backup,
     bajon,
     ballena,
@@ -1627,6 +1628,9 @@ def responder(
 
     if nombre == "caida":
         return _caida(config, argumento)
+
+    if nombre == "backtest":
+        return _backtest(config, argumento)
 
     if nombre == "sube":
         return _sube(config, argumento)
@@ -3449,6 +3453,33 @@ def _soporte(config: Config, argumento: str) -> str:
             "bajo los que faltan"
         )
     return alerts.formatear_soporte(coin_id, resultado, horas, config.vs_currency)
+
+
+def _backtest(config: Config, argumento: str) -> str:
+    try:
+        coin_id, porcentaje, horas = backtest.interpretar(argumento)
+    except periodo.PeriodoError as e:
+        return telegram.escape(str(e))
+    if not coin_id:
+        vigiladas = _con_cambios(config).watchlist
+        if not vigiladas:
+            return f"¿De cuál? Por ejemplo: {backtest.EJEMPLO}"
+        coin_id = vigiladas[0].coin_id
+
+    serie = database.get_serie(config.database_path, coin_id, horas, config.vs_currency)
+    resultado = backtest.calcular(serie, porcentaje)
+    if resultado is None:
+        return (
+            f"No tengo precios guardados de <b>{telegram.escape(coin_id)}</b> "
+            f"({periodo.nombre(horas)}). Solo sé de las que vigilo: míralas "
+            "con /vigilar"
+        )
+
+    primero = serie[0][0]
+    falta = periodo.falta_principio(primero, datetime.now(timezone.utc), horas)
+    return alerts.formatear_backtest(
+        coin_id, resultado, horas, config.vs_currency, primero if falta else None
+    )
 
 
 def _caida(config: Config, argumento: str) -> str:

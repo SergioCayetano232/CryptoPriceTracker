@@ -74,6 +74,7 @@ COMANDOS = {
     "macd": "Si coge o pierde empuje, con el MACD (ej: /macd bitcoin)",
     "fibonacci": "Dónde podría frenar el precio (ej: /fibonacci btc 90d)",
     "caida": "Cuánto ha bajado desde el máximo (ej: /caida btc 30d)",
+    "backtest": "Vender al +% y recomprar al -%, contra no tocar (ej: /backtest btc)",
     "sube": "Cuánto ha subido desde el mínimo (ej: /sube btc 30d)",
     "volatilidad": "Cuánto se mueve, para elegir el % (ej: /volatilidad btc 30d)",
     "vigilar": "Ver o cambiar lo que vigilo (ej: /vigilar solana %5)",
@@ -753,6 +754,11 @@ EJEMPLOS = {
     "rsi": [
         ("/rsi bitcoin", "el RSI de 14 días: por encima de 70 sobrecomprada"),
         ("/rsi", "a secas, la primera que vigilo"),
+    ],
+    "backtest": [
+        ("/backtest btc", "vender al +20% y recomprar al -20%, en 90 días"),
+        ("/backtest btc 10%", "con el % que digas"),
+        ("/backtest btc 15% 30d", "y el tramo que digas"),
     ],
     "caida": [
         ("/caida bitcoin", "cuánto ha bajado desde el máximo de 30 días"),

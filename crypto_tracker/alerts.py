@@ -21,6 +21,8 @@ from .arrepentido import Arrepentido
 from .ave import PRECIO as PRECIO_AVE
 from .ave import Ave
 from .avisados import Ultimo
+from .backtest import INICIAL as INICIAL_BACKTEST
+from .backtest import Backtest
 from .ballena import Ballena
 from .bici import PRECIO as PRECIO_BICI
 from .bici import Bici
@@ -3832,6 +3834,64 @@ def formatear_rango(
         cuando = desde.astimezone()
         texto += f"\n<i>Solo tengo precios desde el {cuando:%d/%m a las %H:%M}.</i>"
     return texto
+
+
+def formatear_backtest(
+    coin_id: str,
+    b: Backtest,
+    horas: float,
+    currency: str,
+    desde: datetime | None = None,
+) -> str:
+    """Respuesta de /backtest. desde va si no hay precios de todo el tramo."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = _nombre(coin_id)
+    pct = _pct(b.porcentaje)
+    operaciones = (
+        f"{_veces(b.ventas, 'venta', 'ventas')} y "
+        f"{_veces(b.compras, 'compra', 'compras')}"
+    )
+    lineas = [
+        f"🧪 <b>{nombre}: vender al +{pct}% y recomprar al -{pct}%</b>",
+        f"<i>{nombre_periodo(horas).capitalize()}, empezando con "
+        f"{simbolo}{_num(INICIAL_BACKTEST)} el {b.desde.astimezone():%d/%m/%Y}</i>",
+        "",
+        f"Con la regla: <b>{simbolo}{_num(b.final)}</b> ({_signo(b.regla)}), "
+        f"{operaciones}",
+        f"Sin tocar nada: {simbolo}{_num(b.hodl)} ({_signo(b.sin_tocar)})",
+        "",
+    ]
+    if not b.ventas:
+        lineas.append(f"🤝 Nunca subió un {pct}%: no habrías hecho nada.")
+    elif abs(b.diferencia) < 0.01:
+        lineas.append("🤝 Te quedas igual que sin tocar nada.")
+    elif b.diferencia > 0:
+        lineas.append(f"🏆 La regla gana por <b>{simbolo}{_num(b.diferencia)}</b>")
+    else:
+        lineas.append(
+            f"🐢 No tocar nada gana por <b>{simbolo}{_num(-b.diferencia)}</b>"
+        )
+
+    if b.dentro:
+        lineas.append(
+            f"Ahora tendrías {nombre}: venderías si sube a {simbolo}{_num(b.siguiente)}"
+        )
+    else:
+        lineas.append(
+            f"Ahora estarías fuera: recomprarías si baja a {simbolo}{_num(b.siguiente)}"
+        )
+
+    if desde is not None:
+        lineas.append(
+            f"\n<i>Solo tengo precios desde el {desde.astimezone():%d/%m/%Y}. "
+            "/rellenar baja los que faltan.</i>"
+        )
+    lineas.append(
+        "\n<i>Con los precios que tengo guardados, sin comisiones ni impuestos: "
+        "cada venta con ganancia paga a Hacienda. Que haya salido bien antes no "
+        "quiere decir que vaya a salir bien después.</i>"
+    )
+    return "\n".join(lineas)
 
 
 def formatear_caida(

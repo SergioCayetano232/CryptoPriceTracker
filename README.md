@@ -251,6 +251,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/macd bitcoin` | Si va con empuje al alza o a la baja según el MACD (la media de 12 días menos la de 26, contra su propia media de 9): desde cuándo, si coge o pierde fuerza y hacia dónde va de fondo. Cruzar su señal hacia arriba se suele leer como compra y hacia abajo como venta, con retraso. A secas, la primera que vigilo. Necesita 35 días seguidos guardados. Sale de lo guardado y no gasta consultas. También `/empuje` |
 | `/fibonacci btc 90d` | Los niveles de Fibonacci entre el máximo y el mínimo del tramo (23,6%, 38,2%, 50%, 61,8% y 78,6%): si venía subiendo, hasta dónde podría corregir; si venía bajando, hasta dónde podría rebotar. Marca dónde está ahora y el nivel más cerca por debajo y por encima. Sin tramo, 90 días. Sale de lo guardado y no gasta consultas. También `/fibo` y `/retroceso` |
 | `/caida bitcoin 30d` | Cuánto ha bajado desde el máximo del tramo y cuál fue su peor caída, de qué precio a cuál y cuánto tardó en volver (sin tramo, 30 días). Con `/caida cartera`, lo mismo con lo que vale tu cartera entera. Sale de lo guardado y no gasta consultas |
+| `/backtest btc 20%` | Qué habría pasado si hubieras vendido cada vez que subía un 20% y recomprado cada vez que bajaba un 20% desde la última operación, contra no tocar nada. Empieza con 1.000 € y usa los precios que tiene guardados, 90 días si no le dices otro tramo (`/backtest btc 15% 30d`). Te dice también dónde tocaría la próxima. Sin comisiones ni impuestos |
 | `/sube bitcoin 30d` | Lo contrario: cuánto ha subido desde el mínimo del tramo y cuál fue su mejor subida, de qué precio a cuál (sin tramo, 30 días). También con `/minimo`. Sale de lo guardado y no gasta consultas |
 | `/comparar btc eth sol 7d` | Qué tal le ha ido a cada una en ese tramo, de la mejor a la peor (sin tramo, 7 días; sin criptos, las que vigilas) |
 | `/quieta` | La que menos se ha movido en las últimas 24 h de las que vigilas, del mínimo al máximo, y debajo las demás. Sale de lo guardado y no gasta consultas |
@@ -966,6 +967,7 @@ crypto_tracker/
   futuro.py      entre qué cifras puede estar tu cartera, para /futuro
   sharpe.py      lo que gana la cartera para lo que se mueve, para /sharpe
   caida.py       lo que ha bajado desde el máximo, para /caida
+  backtest.py    vender al subir y recomprar al bajar, para /backtest
   sube.py        lo que ha subido desde el mínimo, para /sube
   periodo.py     lee tramos como 7d
   moneda.py      la moneda que pides al final de /precio
