@@ -234,6 +234,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/alerta btc 60000 si miedo<20` | Solo salta si además se cumple otra cosa: el índice de miedo (`miedo<20`, `miedo>75`) o el RSI de esa cripto (`rsi<30`, `rsi>70`). Si llega al precio antes, espera a que se cumpla lo otro, y en `/alertas` sale con un 🔗. También vale `y el miedo por debajo de 20`. Con la cartera, solo el miedo |
 | `/alerta bitcoin` | Sin precio, te dice a cuánto está y te pone un ejemplo |
 | `/alerta cartera 5000` | Lo mismo con lo que vale tu cartera entera (también `-10%`). Si espera a que suba, con una barra `▓▓▓▓░░` de lo que llevas |
+| `/escalera btc 80000 90000 100000` | Para vender por tramos al subir en vez de todo de golpe: reparte lo que tienes a partes iguales entre los precios (de 2 a 10) y te dice cuánto vender en cada uno, cuánto cobrarías, lo que ganarías y lo que le tocaría a Hacienda con FIFO. Con `50%` al final, solo reparte la mitad. Cada escalón es una `/alerta` con la cantidad en la nota, así que sale en `/alertas` y se quita con `/quitar`. No vende nada |
 | `/stop eth -15%` | Te avisa una vez si pierdes un 15% sobre tu precio medio, no sobre el precio de ahora. Si compras o vendes, se mueve solo a tu nuevo precio medio. Con `+50%`, al ganar. `/stop cartera -20%` lo mira con todo lo que metiste. Con `/stop btc -10% movil`, te avisa si cae un 10% desde lo más alto que toque desde que lo pones: si sube, el aviso sube con ella. Sale en `/alertas` y se quita con `/quitar` |
 | `/alertas` | Las alertas que tienes puestas y cuánto le falta a cada una, la más cerca primero, con un 🗑 para quitarlas |
 | `/ultimo` | Cuándo te avisó por última vez cada una de las que vigilas, a qué precio y cuánto se ha movido desde entonces. Solo cuenta los avisos que llegaron, no los del silencio |
@@ -956,6 +957,7 @@ crypto_tracker/
   pienso.py      las compras que te estás pensando, para /pienso
   fantasma.py    la cartera de mentira de /fantasma
   herencia.py    lo que tienes y dónde, para /herencia, sin claves
+  escalera.py    vender por tramos al subir, para /escalera
   emocion.py     con qué ánimo compras y vendes, para /emociones
   prediccion.py  a cuánto estará el domingo y tu marcador, para /prediccion
   condicion.py   lo del miedo o el RSI que puede llevar una /alerta

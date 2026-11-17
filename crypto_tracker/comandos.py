@@ -58,6 +58,7 @@ COMANDOS = {
     "deshacer": "Quitar la última compra o venta que apuntaste",
     "corregir": "Cambiar una compra o venta antigua (ej: /corregir 12 importe 700)",
     "alerta": "Avísame una vez a un precio o un % (ej: /alerta btc 70000 o +10% 7d)",
+    "escalera": "Vender por tramos al subir (ej: /escalera btc 80k 90k 100k)",
     "stop": "Avísame al perder o ganar un % sobre lo que pagué (ej: /stop eth -15%)",
     "alertas": "Las alertas que tienes puestas",
     "ultimo": "Cuándo te avisó por última vez cada una y cuánto se ha movido",
@@ -214,6 +215,8 @@ COMANDOS = {
 # /start lo manda Telegram solo la primera vez que abres el chat.
 ALIAS = {
     "legado": "herencia",
+    "escalon": "escalera",
+    "escalones": "escalera",
     "squeeze": "tormenta",
     "emoción": "emocion",
     "sentimientos": "emociones",
@@ -574,6 +577,10 @@ EJEMPLOS = {
         ("/stop btc +50%", "si ganas un 50%"),
         ("/stop cartera -20%", "con todo lo que metiste en la cartera"),
         ("/stop btc -10% movil", "si cae un 10% desde lo más alto que toque"),
+    ],
+    "escalera": [
+        ("/escalera btc 80000 90000 100000", "vender un tercio en cada precio"),
+        ("/escalera btc 80k 90k 50%", "solo la mitad de lo que tienes"),
     ],
     "herencia": [
         ("/herencia", "el papel en un .txt para guardar o imprimir"),

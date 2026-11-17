@@ -10151,6 +10151,82 @@ def test_vsbolsa_sin_movimientos(config, enviados, monkeypatch):
     assert "No has apuntado ninguna compra" in enviados[0]
 
 
+# --- /escalera ---
+
+
+# con_semana: 0,1 BTC por 5.000 (50.000 de media)
+def test_escalera(con_semana, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 66000.0})
+
+    main.atender(con_semana, _mensaje("/escalera btc 80000 100000"))
+
+    texto = enviados[0]
+    assert "🪜 <b>Escalera de venta de Bitcoin</b>" in texto
+    assert "Vendes todo lo que tienes (0,1) en 2 escalones" in texto
+    assert "1. A <b>€80.000,00</b>: vende 0,05 → €4.000,00" in texto
+    assert "(+€1.500,00, a Hacienda €285,00)" in texto
+    assert "2. A <b>€100.000,00</b>: vende 0,05 → €5.000,00" in texto
+    assert "Le sacarías <b>+€4.000,00</b>" in texto
+    assert "son las alertas 1 y 2 de /alertas" in texto
+    a, b = database.get_puntuales(con_semana.database_path, "eur")
+    assert (a.objetivo, a.sube, a.nota) == (80000, True, "Escalera 1/2: vende 0,05")
+    assert (b.objetivo, b.nota) == (100000, "Escalera 2/2: vende 0,05")
+
+
+def test_escalera_salta_el_primer_escalon(con_semana, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 66000.0, "solana": 100.0})
+    main.atender(con_semana, _mensaje("/escalera btc 80k 100k 50%"))
+    enviados.clear()
+
+    _precio(monkeypatch, {"bitcoin": 81000.0, "solana": 100.0})
+    main.ejecutar_ciclo(con_semana, {"bitcoin": "%66000.0"})
+
+    aviso = next(t for t in enviados if "Era tu /alerta" in t)
+    assert "📝 Escalera 1/2: vende 0,025" in aviso
+    [queda] = database.get_puntuales(con_semana.database_path, "eur")
+    assert queda.objetivo == 100000
+
+
+def test_escalera_por_debajo_del_precio(con_semana, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 66000.0})
+
+    main.atender(con_semana, _mensaje("/escalera btc 60000 80000"))
+
+    assert "por encima del precio de ahora" in enviados[0]
+    assert database.get_puntuales(con_semana.database_path, "eur") == []
+
+
+def test_escalera_con_una_alerta_igual(con_semana, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 66000.0})
+    main.atender(con_semana, _mensaje("/alerta btc 80000"))
+
+    main.atender(con_semana, _mensaje("/escalera btc 80000 90000"))
+
+    assert "Ya tienes una alerta a ese precio, la número 1" in enviados[-1]
+    assert len(database.get_puntuales(con_semana.database_path, "eur")) == 1
+
+
+def test_escalera_de_una_que_no_tienes(con_semana, enviados, monkeypatch):
+    pedidas = _precio(monkeypatch, {"ethereum": 2500.0})
+
+    main.atender(con_semana, _mensaje("/escalera eth 3000 4000"))
+
+    assert "No tienes <b>ethereum</b> en la cartera" in enviados[0]
+    assert pedidas == []
+
+
+def test_escalera_mal_escrita(con_semana, enviados):
+    main.atender(con_semana, _mensaje("/escalera btc 80000"))
+
+    assert "al menos dos precios" in enviados[0]
+
+
+def test_escalera_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/escalera btc 80000 90000"))
+
+    assert enviados[0] == main.SIN_CARTERA
+
+
 # --- /stop movil ---
 
 

@@ -88,6 +88,7 @@ from .emocion import Grupo as GrupoEmocion
 from .emoji import cara as cara_emoji
 from .enletras import dinero as dinero_en_letras
 from .equilibrio import Cartera
+from .escalera import Escalera
 from .estables import Desvio
 from .estacional import MESES as MESES_ESTACIONAL
 from .estacional import POCOS_AÑOS, Estacional
@@ -6292,6 +6293,57 @@ def formatear_stop_pasado(s: Stop) -> str:
         f"Con <b>{nombre}</b> ya vas {_signo(s.llevas)} sobre {coste}, "
         f"más allá del {_pct(s.porcentaje)}%. Ponlo más lejos o mira /cartera"
     )
+
+
+def formatear_escalera(e: Escalera, numeros: list[int], currency: str) -> str:
+    """Respuesta al poner una /escalera."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(e.coin_id.replace("-", " ").title())
+    cuanto = "todo lo que tienes"
+    if e.porcentaje < 100:
+        cuanto = f"el {_pct(e.porcentaje)}%"
+    lineas = [
+        f"🪜 <b>Escalera de venta de {nombre}</b>",
+        f"Vendes {cuanto} ({texto_cantidad(e.vendido)}) en "
+        f"{len(e.escalones)} escalones:",
+        "",
+    ]
+    for i, x in enumerate(e.escalones, 1):
+        linea = (
+            f"{i}. A <b>{simbolo}{_num(x.precio)}</b>: vende "
+            f"{texto_cantidad(x.cantidad)} → {simbolo}{_num(x.cobrado)}"
+        )
+        if x.ganancia is not None:
+            linea += f"  <i>({_ganancia(x.ganancia, simbolo)}"
+            if x.hacienda and x.hacienda > 0:
+                linea += f", a Hacienda {simbolo}{_num(x.hacienda)}"
+            linea += ")</i>"
+        lineas.append(linea)
+
+    lineas += ["", f"Si llega arriba del todo, cobrarías {simbolo}{_num(e.cobrado)}"]
+    if e.ganancia is None:
+        lineas.append("No sé lo que te costó, así que no saco lo que ganarías.")
+    else:
+        lineas.append(
+            f"{_flecha(e.ganancia)} Le sacarías <b>{_ganancia(e.ganancia, simbolo)}</b>"
+        )
+        if e.hacienda and e.hacienda > 0:
+            lineas.append(f"💸 A Hacienda, unos <b>{simbolo}{_num(e.hacienda)}</b>")
+    if e.queda > 0:
+        lineas.append(f"Te quedarían {texto_cantidad(e.queda)}")
+
+    cuales = ", ".join(str(n) for n in numeros[:-1]) + f" y {numeros[-1]}"
+    lineas += [
+        "",
+        f"Te aviso al llegar a cada uno: son las alertas {cuales} de /alertas.",
+        "<i>No vendo ni apunto nada. Hacienda, con FIFO, sin comisiones y "
+        "como si todos los escalones cayeran este año.</i>",
+    ]
+    if currency.lower() != "eur":
+        lineas.append(
+            f"<i>Ojo: va en {currency.upper()}, y Hacienda lo quiere en euros.</i>"
+        )
+    return "\n".join(lineas)
 
 
 def _signo(porcentaje: float) -> str:

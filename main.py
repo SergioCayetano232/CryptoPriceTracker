@@ -96,6 +96,7 @@ from crypto_tracker import (
     emocion,
     emoji,
     equilibrio,
+    escalera,
     estables,
     estacional,
     estocastico,
@@ -1566,6 +1567,12 @@ def responder(
 
     if nombre == "herencia":
         return _herencia(config, argumento)
+
+    if nombre == "escalera":
+        config = _con_cambios(config)
+        if not config.cartera:
+            return SIN_CARTERA
+        return _escalera(config, argumento)
 
     if nombre == "stop":
         config = _con_cambios(config)
@@ -3497,6 +3504,58 @@ def _stop(config: Config, argumento: str) -> str:
     database.guardar_stop(config.database_path, alerta.id, porcentaje)
     logger.info("Stop %d creado: %s a %s", alerta.id, coin_id, s.objetivo)
     return alerts.con_fuente(alerts.formatear_stop(s, alerta.id, config.vs_currency))
+
+
+def _escalera(config: Config, argumento: str) -> str:
+    try:
+        coin_id, precios, porcentaje = escalera.interpretar(argumento)
+    except escalera.EscaleraError as e:
+        return telegram.escape(str(e))
+    antes = next((p for p in config.cartera if p.coin_id == coin_id), None)
+    if antes is None:
+        return (
+            f"No tienes <b>{telegram.escape(coin_id)}</b> en la cartera. "
+            "Lo que tienes, en /cartera"
+        )
+
+    ahora = _precio_o_pedirlo(config, coin_id)
+    if isinstance(ahora, str):
+        return ahora
+    todos = database.get_movimientos(config.database_path, None)
+    este_año = impuestos.calcular(todos, date.today().year)
+    historia = [m for m in todos if m.coin_id == coin_id]
+    try:
+        e = escalera.calcular(
+            antes, precios, porcentaje, ahora, este_año.ganancia, historia
+        )
+    except escalera.EscaleraError as error:
+        return telegram.escape(str(error))
+
+    pendientes = database.get_puntuales(config.database_path, config.vs_currency)
+    for x in e.escalones:
+        igual = puntuales.repetida(pendientes, coin_id, x.precio, True)
+        if igual:
+            return (
+                f"Ya tienes una alerta a ese precio, la número {igual.id}. "
+                f"Quítala con /quitar {igual.id} o elige otros escalones."
+            )
+
+    # Cada escalón es una /alerta más: salta, se lista y se quita como las otras.
+    numeros = []
+    for i, x in enumerate(e.escalones, 1):
+        cantidad = movimientos.texto_cantidad(x.cantidad)
+        alerta = database.crear_puntual(
+            config.database_path,
+            coin_id,
+            x.precio,
+            True,
+            config.vs_currency,
+            None,
+            escalera.nota(i, len(e.escalones), cantidad),
+        )
+        numeros.append(alerta.id)
+    logger.info("Escalera de %s creada: %s", coin_id, numeros)
+    return alerts.con_fuente(alerts.formatear_escalera(e, numeros, config.vs_currency))
 
 
 def _stop_movil(
