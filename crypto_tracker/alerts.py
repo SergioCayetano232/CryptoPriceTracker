@@ -194,6 +194,7 @@ from .plan import cuanto as cuanto_plan
 from .posicion import Entrada
 from .ppt import EMOJIS as EMOJIS_PPT
 from .ppt import QUE_HACER as QUE_HACER_PPT
+from .prediccion import Marcador, Prediccion
 from .primera import Primera
 from .promediar import Promedio
 from .ps5 import PRECIO as PRECIO_PS5
@@ -5829,6 +5830,85 @@ def formatear_pienso(
         f"precio de entonces. Si lo descartas antes: /pienso {escape(p.coin_id)} no"
     )
     return "\n".join(texto)
+
+
+def formatear_prediccion(p: Prediccion, currency: str) -> str:
+    """Respuesta a /prediccion btc 70000."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    cambio = (p.predicho / p.entonces - 1) * 100
+    verbo = "sube" if cambio > 0 else "baja"
+    return (
+        f"🔮 Apuntado: <b>{_nombre(p.coin_id)}</b> a "
+        f"<b>{simbolo}{_num(p.predicho)}</b> el domingo "
+        f"{p.cierre.astimezone():%d/%m a las %H:%M}\n"
+        f"Ahora está a {simbolo}{_num(p.entonces)}: dices que {verbo} un "
+        f"{abs(cambio):.1f}%.\n"
+        "Ese día te digo cómo ha quedado y lo sumo a tu marcador. Hasta un día "
+        "antes la puedes cambiar con otra /prediccion."
+    )
+
+
+def formatear_predicciones(
+    pendientes: list[Prediccion], m: Marcador | None, currency: str
+) -> str:
+    """/prediccion a secas: lo que tienes en juego y tu marcador."""
+    if not pendientes and m is None:
+        return (
+            "No has hecho ninguna. Di a cuánto estará el domingo: "
+            "/prediccion btc 70000, y llevo la cuenta de cuánto aciertas"
+        )
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = []
+    if pendientes:
+        texto.append("🔮 <b>En juego</b>")
+        texto += [
+            f"<b>{_nombre(p.coin_id)}</b> a {simbolo}{_num(p.predicho)} el "
+            f"{p.cierre.astimezone():%d/%m}"
+            for p in pendientes
+        ]
+    if m is not None:
+        if texto:
+            texto.append("")
+        texto += _marcador(m)
+    return "\n".join(texto)
+
+
+def formatear_resultado(hechas: list[Prediccion], m: Marcador, currency: str) -> str:
+    """El domingo: cómo han quedado y el marcador."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["🔮 <b>Tus predicciones del domingo</b>"]
+    for p in hechas:
+        lado = "subía" if p.predicho > p.entonces else "bajaba"
+        acierto = (
+            f"✅ acertaste que {lado}" if p.acierta_lado else f"❌ dijiste que {lado}"
+        )
+        quieto = "le ganas" if p.gana_al_quieto else "te gana"
+        texto += [
+            "",
+            f"<b>{_nombre(p.coin_id)}</b>: dijiste {simbolo}{_num(p.predicho)} y quedó "
+            f"en <b>{simbolo}{_num(p.real)}</b>",
+            f"Te fuiste un {p.error:.1f}% · {acierto} (estaba a "
+            f"{simbolo}{_num(p.entonces)})",
+            f"<i>Decir «se queda igual» se iba un {p.error_quieto:.1f}%: {quieto}</i>",
+        ]
+    return "\n".join([*texto, "", *_marcador(m)])
+
+
+def _marcador(m: Marcador) -> list[str]:
+    domingos = "1 predicción" if m.total == 1 else f"{m.total} predicciones"
+    lineas = [
+        f"📊 <b>Tu marcador</b> ({domingos})",
+        f"Hacia dónde iba: <b>{m.lado} de {m.total}</b> (una moneda, la mitad)",
+        f"Te vas de media un {m.error_medio:.1f}%",
+        f"Más cerca que «se queda igual»: {m.al_quieto} de {m.total}",
+    ]
+    if m.mejor_que_moneda is None:
+        lineas.append("<i>Con menos de 4 aún es pronto para saber si tienes ojo</i>")
+    elif m.mejor_que_moneda:
+        lineas.append("👉 Le ganas a una moneda al aire")
+    else:
+        lineas.append("👉 Una moneda al aire lo haría igual o mejor")
+    return lineas
 
 
 def formatear_piensos(lista: list[Pienso], currency: str) -> str:

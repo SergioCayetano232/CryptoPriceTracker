@@ -221,6 +221,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/recompensa eth 0.02` | Apunta staking o un airdrop, al precio de ahora. Si te llegó antes, `/recompensa eth 0.02 50`, con lo que valía entonces. Se suma a lo que te costó, pero no cuenta como dinero metido en `/rentabilidad` ni en `/vsbtc` |
 | `/deshacer` | Quita la última compra o venta y deja la cripto como estaba |
 | `/corregir 12 importe 700` | Cambia la cantidad o el importe de una compra, venta o recompensa antigua y rehace las cuentas de las que van detrás. El número sale en `/movimientos` y en `/exportar movimientos`. No deja hacerlo si una venta posterior se queda sin saldo |
+| `/prediccion btc 70000` | Dices a cuánto estará el domingo a las 20:00 y ese día te digo cómo ha quedado: cuánto te fuiste, si acertaste hacia dónde iba y si le ganas a decir «se queda igual». Lleva tu marcador de todas las semanas y, a partir de cuatro, te dice si lo haces mejor que una moneda al aire. Se puede cambiar hasta un día antes. `/prediccion` a secas, lo que tienes en juego y el marcador; `/prediccion btc no`, la quita. También `/apuesta` |
 | `/pienso btc 500` | Antes de comprar: te dice cómo está ahora (lo que ha subido en 24 h, el miedo y codicia y el RSI) y a las 24 h te pregunta si sigues queriendo, con el precio de entonces y un botón ✅ que la apunta en la cartera, o ❌ para dejarlo. `/pienso` a secas, lo que te estás pensando; `/pienso btc no`, lo olvida |
 | `/recordar lunes 50 btc` | Cada lunes, a la hora del resumen (o a las 9:00 si no tienes), te recuerda tu compra con el precio y lo que te dan los 50 €, y un botón ✅ que la apunta en la cartera. `/recordar` a secas, los que tienes; `/recordar btc no`, lo quita |
 | `/alerta bitcoin 70000` | Te avisa una vez cuando llegue a ese precio |
@@ -935,6 +936,7 @@ crypto_tracker/
   sat.py         lo que vale un satoshi, para /sat
   puntuales.py   las alertas de /alerta
   pienso.py      las compras que te estás pensando, para /pienso
+  prediccion.py  a cuánto estará el domingo y tu marcador, para /prediccion
   condicion.py   lo del miedo o el RSI que puede llevar una /alerta
   vigiladas.py   lo que cambias con /vigilar
   volatilidad.py lo que se mueve cada día, para /volatilidad

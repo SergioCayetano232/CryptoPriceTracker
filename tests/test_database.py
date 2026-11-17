@@ -907,3 +907,30 @@ def test_alerta_con_condicion(db):
 
     [alerta] = database.get_puntuales(db, "eur")
     assert alerta.condicion == Condicion("miedo", True, 20)
+
+
+# --- predicciones ---
+
+
+def test_predicciones(db):
+    from dataclasses import replace
+
+    from crypto_tracker.prediccion import Prediccion
+
+    ahora = datetime(2026, 11, 17, 10, 0, tzinfo=timezone.utc)
+    domingo = datetime(2026, 11, 22, 19, 0, tzinfo=timezone.utc)
+    p = Prediccion(None, "bitcoin", ahora, domingo, 64000, 70000)
+
+    primera = database.guardar_prediccion(db, p, "eur")
+    # Cambiarla antes del domingo quita la de antes.
+    otra = database.guardar_prediccion(db, replace(p, predicho=68000), "eur")
+    assert [x.predicho for x in database.get_predicciones(db, "eur")] == [68000]
+    assert otra.id != primera.id
+
+    database.cerrar_prediccion(db, otra.id, 66000)
+    [cerrada] = database.get_predicciones(db, "eur")
+    assert cerrada.real == 66000
+    assert cerrada.cierre == domingo
+    # La cerrada es marcador: no se quita.
+    assert not database.quitar_prediccion(db, "bitcoin", "eur")
+    assert database.get_predicciones(db, "usd") == []

@@ -166,6 +166,7 @@ from crypto_tracker import (
     plan,
     posicion,
     ppt,
+    prediccion,
     primera,
     promediar,
     proximo,
@@ -1103,6 +1104,7 @@ def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:
             aviso_compensar(config)
             recordatorios(config)
             pensados(config)
+            cerrar_predicciones(config)
             copia_semanal(config)
             foto_dominancia(config)
         except KeyboardInterrupt:
@@ -1453,6 +1455,9 @@ def responder(
 
     if nombre == "pienso":
         return _pienso(config, argumento)
+
+    if nombre == "prediccion":
+        return _prediccion(config, argumento)
 
     if nombre == "stop":
         config = _con_cambios(config)
@@ -3012,6 +3017,112 @@ def _pienso(config: Config, argumento: str) -> str:
             _indicador(config, "rsi", coin_id),
         )
     )
+
+
+def _prediccion(config: Config, argumento: str) -> str:
+    todas = database.get_predicciones(config.database_path, config.vs_currency)
+    if not argumento:
+        pendientes = [p for p in todas if p.real is None]
+        return alerts.formatear_predicciones(
+            pendientes, prediccion.marcador(todas), config.vs_currency
+        )
+    try:
+        coin_id, valor = prediccion.interpretar(argumento)
+    except prediccion.PrediccionError as e:
+        return telegram.escape(str(e))
+
+    if valor is None:
+        if database.quitar_prediccion(
+            config.database_path, coin_id, config.vs_currency
+        ):
+            return f"Hecho, quitada la de <b>{telegram.escape(coin_id)}</b>."
+        return "No tenías ninguna en juego de esa. Mira /prediccion"
+
+    ahora = datetime.now(timezone.utc)
+    cierre = prediccion.cierre(ahora)
+    # Cambiarla a última hora la mandaría al domingo siguiente y borraría esta.
+    antes = next((p for p in todas if p.coin_id == coin_id and p.real is None), None)
+    if antes and antes.cierre != cierre:
+        return (
+            f"La de <b>{telegram.escape(coin_id)}</b> se cierra el "
+            f"{antes.cierre.astimezone():%d/%m a las %H:%M} y ya no se puede "
+            "cambiar. Después pones la de la semana que viene"
+        )
+
+    try:
+        precio = coingecko.get_prices([coin_id], config.vs_currency).get(coin_id)
+    except coingecko.CoinGeckoError as e:
+        return f"No he podido consultar el precio: {telegram.escape(str(e))}"
+    if precio is None:
+        return (
+            f"No encuentro <b>{telegram.escape(coin_id)}</b> en CoinGecko. "
+            f"Prueba con /buscar {telegram.escape(coin_id)}"
+        )
+    if valor == precio:
+        return "Eso es justo lo que vale ahora. Moja un poco: ¿sube o baja?"
+
+    p = database.guardar_prediccion(
+        config.database_path,
+        prediccion.Prediccion(None, coin_id, ahora, cierre, precio, valor),
+        config.vs_currency,
+    )
+    return alerts.con_fuente(alerts.formatear_prediccion(p, config.vs_currency))
+
+
+def cerrar_predicciones(config: Config, ahora: datetime | None = None) -> None:
+    """El domingo a las 20:00, cómo han quedado y el marcador."""
+    ahora = ahora or datetime.now(timezone.utc)
+    try:
+        todas = database.get_predicciones(config.database_path, config.vs_currency)
+    except database.DatabaseError as e:
+        logger.error("No se pudieron leer las predicciones: %s", e)
+        return
+    tocan = prediccion.tocan(todas, ahora)
+    if not tocan or _silenciado(config):
+        return
+
+    hechas = []
+    for p in tocan:
+        real = _precio_del_cierre(config, p, ahora)
+        if real is None:
+            continue  # lo intento en el ciclo siguiente
+        database.cerrar_prediccion(config.database_path, p.id, real)
+        hechas.append(replace(p, real=real))
+    if not hechas:
+        return
+
+    cerradas = {p.id: p for p in hechas}
+    todas = [cerradas.get(p.id, p) for p in todas]
+    telegram.send_message(
+        config.telegram_token,
+        config.telegram_chat_id,
+        alerts.con_fuente(
+            alerts.formatear_resultado(
+                hechas, prediccion.marcador(todas), config.vs_currency
+            )
+        ),
+    )
+    logger.info("Predicciones cerradas: %s", ", ".join(p.coin_id for p in hechas))
+
+
+def _precio_del_cierre(
+    config: Config, p: prediccion.Prediccion, ahora: datetime
+) -> float | None:
+    """El de las 20:00 del domingo, aunque el bot estuviera apagado entonces."""
+    horas = (ahora - p.cierre).total_seconds() / 3600 + 3
+    serie = database.get_serie(
+        config.database_path, p.coin_id, horas, config.vs_currency
+    )
+    real = prediccion.precio_del_cierre(serie, p.cierre)
+    if real is not None:
+        return real
+    try:
+        dias = max(1, math.ceil(horas / 24))
+        bajados = coingecko.historico(p.coin_id, dias, config.vs_currency)
+    except coingecko.CoinGeckoError as e:
+        logger.warning("Sin precio del domingo de %s: %s", p.coin_id, e)
+        return None
+    return prediccion.precio_del_cierre(bajados, p.cierre)
 
 
 def pensados(config: Config, ahora: datetime | None = None) -> None:

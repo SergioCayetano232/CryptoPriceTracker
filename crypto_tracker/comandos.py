@@ -50,6 +50,7 @@ COMANDOS = {
     "inflacion": "Si tu cartera le gana a la subida de precios en España",
     "recordar": "Avísame cada semana de mi compra (ej: /recordar lunes 50 btc)",
     "pienso": "Antes de comprar, 24 h para pensarlo (ej: /pienso btc 500)",
+    "prediccion": "A cuánto estará el domingo, y tu marcador (ej: /prediccion btc 70k)",
     "deshacer": "Quitar la última compra o venta que apuntaste",
     "corregir": "Cambiar una compra o venta antigua (ej: /corregir 12 importe 700)",
     "alerta": "Avísame una vez a un precio o un % (ej: /alerta btc 70000 o +10% 7d)",
@@ -207,6 +208,8 @@ COMANDOS = {
 
 # /start lo manda Telegram solo la primera vez que abres el chat.
 ALIAS = {
+    "predicción": "prediccion",
+    "apuesta": "prediccion",
     "momento": "timing",
     "start": "ayuda",
     "help": "ayuda",
@@ -560,6 +563,11 @@ EJEMPLOS = {
         ("/stop btc +50%", "si ganas un 50%"),
         ("/stop cartera -20%", "con todo lo que metiste en la cartera"),
         ("/stop btc -10% movil", "si cae un 10% desde lo más alto que toque"),
+    ],
+    "prediccion": [
+        ("/prediccion btc 70000", "a cuánto estará el domingo a las 20:00"),
+        ("/prediccion", "lo que tienes en juego y tu marcador"),
+        ("/prediccion btc no", "quitar la que aún no ha llegado"),
     ],
     "pienso": [
         ("/pienso btc 500", "lo que hay ahora, y mañana te pregunto otra vez"),

@@ -10860,3 +10860,98 @@ def test_timing_sin_precios(config, enviados, monkeypatch):
     main.atender(config, _mensaje("/timing"))
 
     assert "No puedo comparar ninguna compra" in enviados[0]
+
+
+# --- /prediccion ---
+
+
+def test_prediccion(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 64000.0})
+
+    main.atender(config, _mensaje("/prediccion btc 70k"))
+
+    assert "🔮 Apuntado: <b>Bitcoin</b> a <b>€70.000,00</b> el domingo" in enviados[0]
+    assert "dices que sube un 9.4%" in enviados[0]
+    [p] = database.get_predicciones(config.database_path, "eur")
+    assert (p.entonces, p.predicho, p.real) == (64000, 70000, None)
+
+
+def test_prediccion_el_domingo_cierra_con_marcador(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 64000.0})
+    main.atender(config, _mensaje("/prediccion btc 70000"))
+    [p] = database.get_predicciones(config.database_path, "eur")
+    # El bot guardó el precio a las 20:00 del domingo.
+    minutos = (datetime.now(timezone.utc) - p.cierre).total_seconds() / 60
+    _precio_de(config, "bitcoin", 66000.0, minutos)
+    enviados.clear()
+
+    main.cerrar_predicciones(config, p.cierre - timedelta(minutes=1))
+    assert enviados == []
+    main.cerrar_predicciones(config, p.cierre + timedelta(minutes=5))
+    main.cerrar_predicciones(config, p.cierre + timedelta(minutes=10))
+
+    [texto] = enviados
+    assert "dijiste €70.000,00 y quedó en <b>€66.000,00</b>" in texto
+    assert "Te fuiste un 6.1% · ✅ acertaste que subía" in texto
+    assert "«se queda igual» se iba un 3.0%: te gana" in texto
+    assert "Hacia dónde iba: <b>1 de 1</b>" in texto
+    assert "aún es pronto" in texto
+
+
+def test_prediccion_con_el_bot_apagado_el_domingo(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 64000.0})
+    main.atender(config, _mensaje("/prediccion btc 60000"))
+    [p] = database.get_predicciones(config.database_path, "eur")
+    pedidos = []
+
+    def historico(coin_id, dias, cur):
+        pedidos.append(dias)
+        return [(p.cierre + timedelta(minutes=30), 61000.0)]
+
+    monkeypatch.setattr(coingecko, "historico", historico)
+    enviados.clear()
+
+    # Se enciende el martes: el precio es el del domingo, no el de ahora.
+    main.cerrar_predicciones(config, p.cierre + timedelta(days=2))
+
+    assert "quedó en <b>€61.000,00</b>" in enviados[0]
+    assert pedidos == [3]
+
+
+def test_prediccion_se_cambia_pero_no_a_ultima_hora(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 64000.0})
+    main.atender(config, _mensaje("/prediccion btc 70000"))
+    main.atender(config, _mensaje("/prediccion btc 68000"))
+    [p] = database.get_predicciones(config.database_path, "eur")
+    assert p.predicho == 68000
+
+    # A menos de un día del domingo, el cierre nuevo ya es el siguiente.
+    monkeypatch.setattr(
+        main.prediccion, "cierre", lambda ahora: p.cierre + timedelta(days=7)
+    )
+    main.atender(config, _mensaje("/prediccion btc 66000"))
+
+    assert "ya no se puede cambiar" in enviados[-1]
+    assert [
+        x.predicho for x in database.get_predicciones(config.database_path, "eur")
+    ] == [68000]
+
+
+def test_prediccion_lista_y_quitar(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 64000.0})
+    main.atender(config, _mensaje("/prediccion"))
+    main.atender(config, _mensaje("/prediccion btc 70000"))
+    main.atender(config, _mensaje("/apuesta"))
+    main.atender(config, _mensaje("/prediccion btc no"))
+
+    assert "No has hecho ninguna" in enviados[0]
+    assert "🔮 <b>En juego</b>" in enviados[2]
+    assert "quitada la de <b>bitcoin</b>" in enviados[3]
+
+
+def test_prediccion_al_mismo_precio(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 64000.0})
+
+    main.atender(config, _mensaje("/prediccion btc 64000"))
+
+    assert "¿sube o baja?" in enviados[0]

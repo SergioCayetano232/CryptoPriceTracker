@@ -3,6 +3,7 @@
 import logging
 import sqlite3
 from contextlib import contextmanager
+from dataclasses import replace
 from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
 
@@ -15,6 +16,7 @@ from .movimientos import Movimiento
 from .pienso import Pienso
 from .pienso import a_texto as texto_pienso
 from .pienso import de_texto as leer_pienso
+from .prediccion import Prediccion
 from .puntuales import Puntual
 from .recordar import Recordatorio, a_texto, de_texto
 
@@ -97,6 +99,18 @@ CREATE TABLE IF NOT EXISTS movimientos (
     created_at      TEXT NOT NULL,
     nota            TEXT,
     comision        REAL
+);
+
+-- Las de /prediccion. real NULL es que aún no ha llegado el domingo.
+CREATE TABLE IF NOT EXISTS predicciones (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    coin_id    TEXT NOT NULL,
+    currency   TEXT NOT NULL,
+    hecha_at   TEXT NOT NULL,
+    cierre_at  TEXT NOT NULL,
+    entonces   REAL NOT NULL,
+    predicho   REAL NOT NULL,
+    real       REAL
 );
 
 -- Una foto al día de qué parte del mercado es cada una, para /dominancia.
@@ -952,6 +966,69 @@ def quitar_pienso(db_path: str, coin_id: str) -> bool:
             "DELETE FROM ajustes WHERE clave = ?", (f"pienso:{coin_id}",)
         )
     return cursor.rowcount > 0
+
+
+def guardar_prediccion(db_path: str, p: Prediccion, currency: str) -> Prediccion:
+    """Una pendiente por cripto: cambiarla quita la de antes."""
+    with _connect(db_path) as conn:
+        conn.execute(
+            "DELETE FROM predicciones WHERE coin_id = ? AND currency = ? "
+            "AND real IS NULL",
+            (p.coin_id, currency),
+        )
+        cursor = conn.execute(
+            "INSERT INTO predicciones "
+            "(coin_id, currency, hecha_at, cierre_at, entonces, predicho) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (
+                p.coin_id,
+                currency,
+                p.hecha.isoformat(timespec="seconds"),
+                p.cierre.isoformat(timespec="seconds"),
+                p.entonces,
+                p.predicho,
+            ),
+        )
+    return replace(p, id=cursor.lastrowid)
+
+
+def get_predicciones(db_path: str, currency: str) -> list[Prediccion]:
+    """Todas, de la más vieja a la más nueva. Las de otra moneda no cuentan."""
+    with _connect(db_path) as conn:
+        filas = conn.execute(
+            "SELECT * FROM predicciones WHERE currency = ? ORDER BY cierre_at, id",
+            (currency,),
+        ).fetchall()
+    return [
+        Prediccion(
+            f["id"],
+            f["coin_id"],
+            datetime.fromisoformat(f["hecha_at"]),
+            datetime.fromisoformat(f["cierre_at"]),
+            f["entonces"],
+            f["predicho"],
+            f["real"],
+        )
+        for f in filas
+    ]
+
+
+def quitar_prediccion(db_path: str, coin_id: str, currency: str) -> bool:
+    """Solo la pendiente: las de domingos pasados son tu marcador."""
+    with _connect(db_path) as conn:
+        cursor = conn.execute(
+            "DELETE FROM predicciones WHERE coin_id = ? AND currency = ? "
+            "AND real IS NULL",
+            (coin_id, currency),
+        )
+    return cursor.rowcount > 0
+
+
+def cerrar_prediccion(db_path: str, prediccion_id: int, real: float) -> None:
+    with _connect(db_path) as conn:
+        conn.execute(
+            "UPDATE predicciones SET real = ? WHERE id = ?", (real, prediccion_id)
+        )
 
 
 def crear_puntual(
