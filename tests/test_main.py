@@ -13,6 +13,7 @@ from crypto_tracker import (
     coingecko,
     comandos,
     comisionred,
+    condicion,
     consejo,
     dado,
     database,
@@ -10585,3 +10586,115 @@ def test_sesgo_sin_indice(config, enviados, monkeypatch):
     main.atender(config, _mensaje("/sesgo"))
 
     assert "alternative.me no tiene el índice" in enviados[0]
+
+
+# --- /alerta con condición ---
+
+
+def _miedo_de(monkeypatch, valor):
+    from crypto_tracker.miedo import Indice
+
+    hoy = datetime.now(timezone.utc).date()
+    monkeypatch.setattr(miedo, "pedir", lambda: [Indice(valor, "Fear", hoy)])
+
+
+def test_crear_alerta_con_condicion(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 65000.0})
+
+    main.atender(config, _mensaje("/alerta btc 60000 si miedo<20"))
+    main.atender(config, _mensaje("/alertas"))
+
+    assert "baje a <b>€60.000,00</b>" in enviados[0]
+    assert "🔗 Y solo si además está el miedo por debajo de 20" in enviados[0]
+    assert "🔗 si el miedo por debajo de 20" in enviados[1]
+
+
+def test_la_alerta_con_condicion_espera_al_miedo(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 65000.0})
+    main.atender(config, _mensaje("/alerta btc 60000 si miedo<20"))
+    enviados.clear()
+    estado = {"bitcoin": "%59000.0"}  # que el aviso de % no salte
+    _precio(monkeypatch, {"bitcoin": 59000.0})
+
+    # Ha llegado al precio, pero el miedo aún no.
+    _miedo_de(monkeypatch, 30)
+    estado, _ = main.ejecutar_ciclo(config, estado)
+    assert enviados == []
+    assert len(database.get_puntuales(config.database_path, "eur")) == 1
+    main.atender(config, _mensaje("/alertas"))
+    assert "falta que se cumpla lo otro" in enviados.pop()
+
+    _miedo_de(monkeypatch, 15)
+    main.ejecutar_ciclo(config, estado)
+
+    assert "✅ El miedo en 15, como pedías" in enviados[0]
+    assert "Era tu /alerta" in enviados[0]
+    assert database.get_puntuales(config.database_path, "eur") == []
+
+
+def test_la_alerta_con_rsi(config, enviados, monkeypatch):
+    # Baja todos los días: el RSI se queda en 0.
+    for dias in range(1, 20):
+        _precio_de(config, "bitcoin", 60000.0 + dias * 500, dias * 24 * 60)
+    database.crear_puntual(
+        config.database_path,
+        "bitcoin",
+        60000,
+        False,
+        "eur",
+        condicion=condicion.Condicion("rsi", True, 30),
+    )
+    _precio(monkeypatch, {"bitcoin": 59000.0})
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%59000.0"})
+
+    assert "✅ El RSI en 0, como pedías" in enviados[0]
+
+
+def test_la_alerta_con_miedo_sin_poder_mirarlo_espera(config, enviados, monkeypatch):
+    database.crear_puntual(
+        config.database_path,
+        "bitcoin",
+        60000,
+        False,
+        "eur",
+        condicion=condicion.Condicion("miedo", True, 20),
+    )
+    _precio(monkeypatch, {"bitcoin": 59000.0})
+
+    def falla():
+        raise miedo.MiedoError("caído")
+
+    monkeypatch.setattr(miedo, "pedir", falla)
+    main.ejecutar_ciclo(config, {"bitcoin": "%59000.0"})
+
+    assert enviados == []
+    assert len(database.get_puntuales(config.database_path, "eur")) == 1
+
+
+def test_alerta_de_la_cartera_con_rsi_no(config, enviados, monkeypatch):
+    database.guardar_posicion(
+        config.database_path, "bitcoin", Posicion("bitcoin", 1.0, 50000)
+    )
+
+    main.atender(config, _mensaje("/alerta cartera 10000 si rsi<30"))
+
+    assert "El RSI es de cada cripto" in enviados[0]
+
+
+def test_alerta_con_condicion_que_no_entiende(config, enviados):
+    main.atender(config, _mensaje("/alerta btc 60000 si volumen>2"))
+
+    assert "Solo sé mirar el miedo y el RSI" in enviados[0]
+
+
+def test_frase_con_condicion(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 65000.0})
+
+    main.atender(
+        config,
+        _mensaje("avísame si btc baja de 60000 y el miedo está por debajo de 20"),
+    )
+
+    [alerta] = database.get_puntuales(config.database_path, "eur")
+    assert alerta.condicion == condicion.Condicion("miedo", True, 20)

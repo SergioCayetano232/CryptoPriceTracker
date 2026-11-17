@@ -5,6 +5,7 @@ import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
+from .condicion import Condicion
 from .periodo import PeriodoError, es_tramo, leer
 from .simbolos import a_id
 
@@ -38,6 +39,7 @@ class Puntual:
     caduca: datetime | None = None  # None, las de antes y las que no lo pidieron
     nota: str | None = None
     creada: datetime | None = None
+    condicion: Condicion | None = None  # lo del miedo o el RSI; las de antes, sin
 
 
 def separar_nota(argumento: str) -> tuple[str, str | None]:

@@ -54,3 +54,31 @@ def test_interpretar_pasa_las_frases():
     # Las criptos a secas siguen yendo a /precio.
     assert interpretar("btc eth") == ("precio", "btc eth")
     assert interpretar("hola") is None
+
+
+@pytest.mark.parametrize(
+    "frase,esperado",
+    [
+        (
+            "Avísame si btc baja de 60000 y el miedo está por debajo de 20",
+            ("alerta", "btc 60000 si miedo<20"),
+        ),
+        (
+            "avísame cuando eth suba un 10% y el RSI esté por encima de 70",
+            ("alerta", "eth +10% si rsi>70"),
+        ),
+    ],
+)
+def test_alerta_con_condicion(frase, esperado):
+    assert entender(frase) == esperado
+
+
+@pytest.mark.parametrize(
+    "frase",
+    [
+        "avísame si btc baja de 60000 y el miedo mucho",
+        "cómo está btc y el miedo por debajo de 20",
+    ],
+)
+def test_condicion_que_no_cuadra(frase):
+    assert entender(frase) is None

@@ -7,6 +7,8 @@ lo entendiera mal, te descuadraría la cartera.
 import re
 import unicodedata
 
+from .condicion import CondicionError, separar
+
 _CRIPTO = r"(?:(?:el|la|mi) )?(?P<cripto>[a-z0-9][a-z0-9-]*)"
 _NUMERO = r"(?P<numero>\d[\d.,]*(?: ?(?:k|mil))?)(?: ?(?:€|eur|euros|\$|dolares))?"
 _PCT = r"(?:un |el )?(?P<pct>\d[\d.,]*) ?(?:%|por ciento)"
@@ -30,6 +32,8 @@ _CALLAR = re.compile(
     r"(?: (?:durante |por )?(?P<cuanto>una|media|\d+) "
     r"(?P<unidad>horas?|minutos?|min|h))?$"
 )
+# "... y el miedo por debajo de 20": la segunda condición de la alerta.
+_CONDICION = re.compile(r" (?:y|si|con) (?:el )?(?:miedo|rsi)\b.*$")
 _AYUDA = re.compile(r"^(?:ayuda|que sabes hacer|que puedes hacer|que haces)$")
 
 # "baja" y "baje": con "cuando" sale el subjuntivo, que es como se dice.
@@ -52,6 +56,17 @@ def entender(texto: str) -> tuple[str, str] | None:
     """('alerta', 'btc 60000'), ('precio', 'eth')... None si no es una de estas."""
     frase = normalizar(texto)
 
+    cola = ""
+    if c := _CONDICION.search(frase):
+        try:
+            _, condicion = separar(c[0])
+        except CondicionError:
+            return None
+        if condicion is None:
+            return None
+        cola = f" si {condicion.guardar()}"
+        frase = frase[: c.start()]
+
     if m := _ALERTA.match(frase):
         cripto = m["cripto"]
         if m["pct"]:
@@ -59,8 +74,11 @@ def entender(texto: str) -> tuple[str, str] | None:
             if m["verbo"] not in (*BAJA, *SUBE):
                 return None
             signo = "-" if m["verbo"] in BAJA else "+"
-            return "alerta", f"{cripto} {signo}{m['pct']}%"
-        return "alerta", f"{cripto} {_numero(m['numero'])}"
+            return "alerta", f"{cripto} {signo}{m['pct']}%{cola}"
+        return "alerta", f"{cripto} {_numero(m['numero'])}{cola}"
+    # Una condición suelta sin alerta delante no es nada de lo de abajo.
+    if cola:
+        return None
 
     if m := _PRECIO.match(frase):
         if m["cripto"] == "cartera":

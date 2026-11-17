@@ -175,7 +175,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/precio` | Sin decir cuál, todas las que vigilas |
 | `/precio btc usd` | En otra moneda solo esa vez (`eur`, `usd` o `gbp`; también `$` o `dólares`). Vale con varias y con `/precio usd` a secas. No sale lo tuyo de la cartera, que va en la moneda del `.env` |
 | `btc` o `btc eth` | Sin barra, lo mismo que `/precio`. Solo con las conocidas, para que un "hola" no se lo tome como una cripto |
-| `avísame si btc baja de 60000` | Algunas frases también las entiende sin barra: «avísame cuando eth suba un 10%» es `/alerta eth +10%`, «cuánto vale sol» es `/precio sol`, «cómo va mi cartera» es `/cartera`, «cállate 2 horas» es `/mute 2h` y «qué sabes hacer» es `/ayuda`. Nunca apunta compras ni ventas así: si lo entendiera mal, te descuadraría la cartera |
+| `avísame si btc baja de 60000` | Algunas frases también las entiende sin barra: «avísame cuando eth suba un 10%» es `/alerta eth +10%`, «avísame si btc baja de 60000 y el miedo está por debajo de 20» es `/alerta btc 60000 si miedo<20`, «cuánto vale sol» es `/precio sol`, «cómo va mi cartera» es `/cartera`, «cállate 2 horas» es `/mute 2h` y «qué sabes hacer» es `/ayuda`. Nunca apunta compras ni ventas así: si lo entendiera mal, te descuadraría la cartera |
 | `/ath bitcoin` | Su máximo histórico, cuándo fue y cuánto le falta para volver, y debajo su mínimo histórico y cuánto ha subido desde ahí (vale `/ath btc eth`, solo con el máximo, y a secas, las que vigilas) |
 | `/cartera` | Tu cartera: cuánto vale, cuánto ganas o pierdes, el total en sats y la gráfica de 7 días |
 | `/cartera 30d` | Lo mismo, con la gráfica del tramo que digas |
@@ -225,6 +225,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/alerta bitcoin +10%` | Te avisa una vez cuando suba un 10% desde ahora |
 | `/alerta bitcoin 70000 7d` | Lo mismo, pero si en 7 días no ha llegado se borra sola y te lo dice |
 | `/alerta bitcoin 70000 vender la mitad` | Con una nota detrás, que te sale en el aviso (también después del tramo) |
+| `/alerta btc 60000 si miedo<20` | Solo salta si además se cumple otra cosa: el índice de miedo (`miedo<20`, `miedo>75`) o el RSI de esa cripto (`rsi<30`, `rsi>70`). Si llega al precio antes, espera a que se cumpla lo otro, y en `/alertas` sale con un 🔗. También vale `y el miedo por debajo de 20`. Con la cartera, solo el miedo |
 | `/alerta bitcoin` | Sin precio, te dice a cuánto está y te pone un ejemplo |
 | `/alerta cartera 5000` | Lo mismo con lo que vale tu cartera entera (también `-10%`). Si espera a que suba, con una barra `▓▓▓▓░░` de lo que llevas |
 | `/stop eth -15%` | Te avisa una vez si pierdes un 15% sobre tu precio medio, no sobre el precio de ahora. Con `+50%`, al ganar. `/stop cartera -20%` lo mira con todo lo que metiste. Con `/stop btc -10% movil`, te avisa si cae un 10% desde lo más alto que toque desde que lo pones: si sube, el aviso sube con ella. Sale en `/alertas` y se quita con `/quitar` |
@@ -931,6 +932,7 @@ crypto_tracker/
   nochevieja.py  lo que queda de año, para /nochevieja
   sat.py         lo que vale un satoshi, para /sat
   puntuales.py   las alertas de /alerta
+  condicion.py   lo del miedo o el RSI que puede llevar una /alerta
   vigiladas.py   lo que cambias con /vigilar
   volatilidad.py lo que se mueve cada día, para /volatilidad
   contexto.py    qué pasó otras veces que se movió así, para los avisos

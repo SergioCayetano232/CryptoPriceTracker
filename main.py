@@ -68,6 +68,7 @@ from crypto_tracker import (
     compras,
     concentracion,
     concierto,
+    condicion,
     consejo,
     contexto,
     convertir,
@@ -334,6 +335,7 @@ def ejecutar_ciclo(
 
     pendientes = subir_moviles(config, pendientes, con_cartera)
     hechas = puntuales.cumplidas(pendientes, con_cartera)
+    hechas, lecturas = _con_condicion(config, hechas)
     avisos += [
         alerts.Alert(
             p.coin_id,
@@ -342,6 +344,7 @@ def ejecutar_ciclo(
             alerts.ALTO if p.sube else alerts.BAJO,
             puntual=True,
             nota=p.nota,
+            condicion=lecturas.get(p.id),
         )
         for p in hechas
     ]
@@ -414,6 +417,52 @@ def ejecutar_ciclo(
         logger.error("No se pudo avisar de: %s", cruzadas)
 
     return estado_nuevo, None
+
+
+def _con_condicion(
+    config: Config, hechas: list[puntuales.Puntual]
+) -> tuple[list[puntuales.Puntual], dict[int, tuple[condicion.Condicion, float]]]:
+    """De las que han llegado al precio, las que además cumplen lo del miedo o RSI.
+
+    Las otras se quedan esperando: si luego cambia el miedo, saltan entonces.
+    """
+    valores: dict[tuple[str, str], float | None] = {}
+    listas, lecturas = [], {}
+    for p in hechas:
+        c = p.condicion
+        if c is None:
+            listas.append(p)
+            continue
+        # El miedo es el mismo para todas; una sola consulta por ciclo.
+        clave = (c.indicador, "" if c.indicador == "miedo" else p.coin_id)
+        if clave not in valores:
+            valores[clave] = _indicador(config, c.indicador, p.coin_id)
+        actual = valores[clave]
+        if actual is not None and c.cumple(actual):
+            listas.append(p)
+            lecturas[p.id] = (c, actual)
+    return listas, lecturas
+
+
+def _indicador(config: Config, indicador: str, coin_id: str) -> float | None:
+    """El miedo de hoy o el RSI de esa cripto. None si no se puede saber."""
+    if indicador == "miedo":
+        try:
+            lista = miedo.pedir()
+        except miedo.MiedoError as e:
+            logger.warning("Alerta con miedo sin comprobar: %s", e)
+            return None
+        return lista[0].valor if lista else None
+
+    try:
+        serie = database.get_serie(
+            config.database_path, coin_id, rsi.HORAS, config.vs_currency
+        )
+    except database.DatabaseError as e:
+        logger.warning("Alerta con RSI sin comprobar: %s", e)
+        return None
+    resultado = rsi.calcular(volatilidad.por_dias(serie))
+    return resultado.valor if resultado else None
 
 
 def _contexto(config: Config, aviso: alerts.Alert) -> contexto.Contexto | None:
@@ -2753,6 +2802,10 @@ def _vsbolsa(config: Config, argumento: str) -> str:
 
 def _crear_alerta(config: Config, argumento: str) -> str:
     try:
+        argumento, cond = condicion.separar(argumento)
+    except condicion.CondicionError as e:
+        return telegram.escape(str(e))
+    try:
         argumento, nota = puntuales.separar_nota(argumento)
         argumento, horas = puntuales.separar_caducidad(argumento)
     except puntuales.PuntualError as e:
@@ -2775,6 +2828,11 @@ def _crear_alerta(config: Config, argumento: str) -> str:
     es_cartera = coin_id == puntuales.CARTERA
     if es_cartera and not _con_cambios(config).cartera:
         return "No tienes cartera. Apunta lo que tienes con /compra bitcoin 0.016 1000"
+    if es_cartera and cond and cond.indicador == "rsi":
+        return (
+            "El RSI es de cada cripto, no de la cartera entera. Con la cartera vale "
+            "el miedo: /alerta cartera 10000 si miedo<20"
+        )
 
     # Hace falta el precio de ahora para saber si esperar a que suba o a que
     # baje. Y de paso se comprueba que el id existe.
@@ -2814,7 +2872,7 @@ def _crear_alerta(config: Config, argumento: str) -> str:
     # dos avisos iguales.
     pendientes = database.get_puntuales(config.database_path, config.vs_currency)
     igual = puntuales.repetida(pendientes, coin_id, objetivo, sube)
-    if igual:
+    if igual and igual.condicion == cond:
         return f"Ya tienes esa alerta, es la número {igual.id}. Mira /alertas"
 
     alerta = database.crear_puntual(
@@ -2825,6 +2883,7 @@ def _crear_alerta(config: Config, argumento: str) -> str:
         config.vs_currency,
         puntuales.caducidad(datetime.now(timezone.utc), horas),
         nota,
+        cond,
     )
     logger.info("Alerta %d creada: %s a %s", alerta.id, coin_id, objetivo)
     return alerts.con_fuente(

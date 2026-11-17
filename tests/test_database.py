@@ -698,6 +698,7 @@ def test_base_de_datos_vieja_gana_la_columna_sin_perder_alertas(tmp_path):
 
     antigua = database.get_puntuales(ruta, "eur")
     assert [(a.coin_id, a.caduca, a.nota) for a in antigua] == [("bitcoin", None, None)]
+    assert antigua[0].condicion is None
     database.crear_puntual(
         ruta, "solana", 200.0, True, "eur", datetime.now(timezone.utc)
     )
@@ -895,3 +896,14 @@ def test_limite_de_compras(db):
 
     database.guardar_limite_compras(db, None)
     assert database.limite_compras(db) is None
+
+
+def test_alerta_con_condicion(db):
+    from crypto_tracker.condicion import Condicion
+
+    database.crear_puntual(
+        db, "bitcoin", 60000, False, "eur", condicion=Condicion("miedo", True, 20)
+    )
+
+    [alerta] = database.get_puntuales(db, "eur")
+    assert alerta.condicion == Condicion("miedo", True, 20)

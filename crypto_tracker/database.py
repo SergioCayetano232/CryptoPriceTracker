@@ -7,6 +7,8 @@ from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
 
 from .avisados import Aviso
+from .condicion import Condicion
+from .condicion import leer as leer_condicion
 from .config import Posicion
 from .dominancia import Foto
 from .movimientos import Movimiento
@@ -56,7 +58,8 @@ CREATE TABLE IF NOT EXISTS alertas_puntuales (
     currency   TEXT    NOT NULL,
     created_at TEXT    NOT NULL,
     caduca_at  TEXT,
-    nota       TEXT
+    nota       TEXT,
+    condicion  TEXT
 );
 
 -- Lo que cambias por Telegram encima del WATCHLIST del .env. regla va con el
@@ -178,6 +181,7 @@ COLUMNAS_NUEVAS = [
     ("movimientos", "nota", "TEXT"),
     ("prices", "volume", "REAL"),
     ("movimientos", "comision", "REAL"),
+    ("alertas_puntuales", "condicion", "TEXT"),
 ]
 
 
@@ -921,26 +925,39 @@ def crear_puntual(
     currency: str,
     caduca: datetime | None = None,
     nota: str | None = None,
+    condicion: Condicion | None = None,
 ) -> Puntual:
     ahora = datetime.now(timezone.utc).replace(microsecond=0)
     created_at = ahora.isoformat()
     caduca_at = caduca.isoformat(timespec="seconds") if caduca else None
+    guardada = condicion.guardar() if condicion else None
     with _connect(db_path) as conn:
         cursor = conn.execute(
             "INSERT INTO alertas_puntuales "
-            "(coin_id, objetivo, sube, currency, created_at, caduca_at, nota) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (coin_id, objetivo, int(sube), currency, created_at, caduca_at, nota),
+            "(coin_id, objetivo, sube, currency, created_at, caduca_at, nota, "
+            "condicion) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                coin_id,
+                objetivo,
+                int(sube),
+                currency,
+                created_at,
+                caduca_at,
+                nota,
+                guardada,
+            ),
         )
-    return Puntual(cursor.lastrowid, coin_id, objetivo, sube, caduca, nota, ahora)
+    return Puntual(
+        cursor.lastrowid, coin_id, objetivo, sube, caduca, nota, ahora, condicion
+    )
 
 
 def get_puntuales(db_path: str, currency: str) -> list[Puntual]:
     """Las alertas pendientes. Las de otra moneda no cuentan, saltarian mal."""
     with _connect(db_path) as conn:
         filas = conn.execute(
-            "SELECT id, coin_id, objetivo, sube, caduca_at, nota, created_at "
-            "FROM alertas_puntuales WHERE currency = ? ORDER BY id",
+            "SELECT id, coin_id, objetivo, sube, caduca_at, nota, created_at, "
+            "condicion FROM alertas_puntuales WHERE currency = ? ORDER BY id",
             (currency,),
         ).fetchall()
 
@@ -953,6 +970,7 @@ def get_puntuales(db_path: str, currency: str) -> list[Puntual]:
             datetime.fromisoformat(f["caduca_at"]) if f["caduca_at"] else None,
             f["nota"],
             datetime.fromisoformat(f["created_at"]),
+            leer_condicion(f["condicion"]),
         )
         for f in filas
     ]

@@ -59,6 +59,7 @@ from .compras import Compra, Resumen
 from .concentracion import Concentracion
 from .concierto import PRECIO as PRECIO_CONCIERTO
 from .concierto import Concierto
+from .condicion import Condicion
 from .config import Posicion, Watch
 from .copia import numero as numero_env
 from .corregir import CANTIDAD, Correccion
@@ -308,6 +309,7 @@ class Alert:
     nota: str | None = None  # la que escribiste en la /alerta
     falta_maximo: float | None = None  # en %; 0 si esta en maximos
     contexto: "Contexto | None" = None  # lo que pasó otras veces que se movió así
+    condicion: tuple[Condicion, float] | None = None  # la de /alerta y su valor
 
 
 def clasificar(price: float, watch: Watch) -> str:
@@ -520,6 +522,9 @@ def formatear(alerta: Alert, currency: str) -> str:
         texto += (
             f"\n<i>Le falta +{alerta.falta_maximo:.2f}% para su máximo histórico</i>"
         )
+    if alerta.condicion:
+        c, valor = alerta.condicion
+        texto += f"\n✅ {_quien_condicion(c)} en {valor:.0f}, como pedías"
     if alerta.nota:
         texto += f"\n📝 {escape(alerta.nota)}"
     if alerta.puntual:
@@ -5722,6 +5727,16 @@ def formatear_toca_comprar(r: Recordatorio, precio: float, currency: str) -> str
     )
 
 
+def _quien_condicion(c: Condicion) -> str:
+    return "El miedo" if c.indicador == "miedo" else "El RSI"
+
+
+def texto_condicion(c: Condicion) -> str:
+    """'el miedo por debajo de 20', para /alerta y /alertas."""
+    quien = _quien_condicion(c).lower().replace("rsi", "RSI")
+    return f"{quien} por {'debajo' if c.menor else 'encima'} de {c.valor:g}"
+
+
 def formatear_puntual(alerta: Puntual, precio: float, currency: str) -> str:
     """Respuesta al crear una /alerta."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
@@ -5747,6 +5762,11 @@ def formatear_puntual(alerta: Puntual, precio: float, currency: str) -> str:
             f"🎯 Te aviso cuando <b>{nombre}</b> {verbo} a "
             f"<b>{simbolo}{_num(alerta.objetivo)}</b>.\n"
             f"Ahora está a {simbolo}{_num(precio)}. {una_vez}"
+        )
+    if alerta.condicion:
+        texto += (
+            f"\n🔗 Y solo si además está {texto_condicion(alerta.condicion)}. Si "
+            "llega al precio antes, espero a que se cumplan las dos"
         )
     if alerta.nota:
         texto += f"\n📝 {escape(alerta.nota)}"
@@ -5871,6 +5891,8 @@ def formatear_puntuales(
         if a.creada:
             puesta = hace(a.creada, ahora or datetime.now(a.creada.tzinfo))
             lineas.append(f"      🕐 <i>puesta {puesta}</i>")
+        if a.condicion:
+            lineas.append(f"      🔗 si {texto_condicion(a.condicion)}")
         if a.nota:
             lineas.append(f"      📝 {escape(a.nota)}")
     lineas.append(f"\nPara quitar una: /quitar {alertas[0].id}")
@@ -6022,6 +6044,9 @@ def _falta(precio: float | None, alerta: Puntual) -> str:
         return ""
     # Entre ciclo y ciclo puede haber llegado ya; saltara en el siguiente.
     if cumplidas([alerta], {alerta.coin_id: precio}):
+        if alerta.condicion:
+            # Aquí no miro el miedo ni el RSI: no sé si saltará ya.
+            return "(ya está en el precio; falta que se cumpla lo otro)"
         return "(ya ha llegado, te aviso en el próximo ciclo)"
     return f"(falta {(alerta.objetivo - precio) / precio * 100:+.2f}%)"
 
