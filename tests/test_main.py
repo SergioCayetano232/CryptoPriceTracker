@@ -2929,7 +2929,9 @@ def test_compra_lleva_boton_para_deshacerla(config, monkeypatch):
     main.atender(config, _mensaje("/compra solana 5 700"))
 
     [m] = database.get_movimientos(config.database_path)
-    assert mandados[0][1] == [[("↩️ Deshacer", f"/deshacer {m.id}")]]
+    assert mandados[0][1][0] == [("↩️ Deshacer", f"/deshacer {m.id}")]
+    # Debajo, los del ánimo con el que la hiciste.
+    assert ("😱 Miedo", f"/emocion {m.id} miedo") in mandados[0][1][1]
 
 
 def test_deshacer_una_compra_mal_apuntada(config, enviados, monkeypatch):
@@ -11022,3 +11024,58 @@ def test_fantasma_empatada_con_bitcoin(config, enviados, monkeypatch):
 
     assert "Vas igual que si no hubieras hecho nada" in enviados[-1]
     assert "-0.0%" not in enviados[-1]
+
+
+# --- /emocion y /emociones ---
+
+
+def test_emociones_con_los_botones(config, monkeypatch):
+    mandados = _con_botones(monkeypatch)
+    _precio(monkeypatch, {"bitcoin": 50000.0})
+    for _ in range(2):
+        main.atender(config, _mensaje("/compra btc 0.01 400"))  # barata: +25%
+        boton = next(d for t, d in mandados[-1][1][1] if "Miedo" in t)
+        main.atender(config, _mensaje(boton))
+    for _ in range(2):
+        main.atender(config, _mensaje("/compra btc 0.01 1000"))  # cara: -50%
+        boton = next(d for t, d in mandados[-1][1][2] if "Euforia" in t)
+        main.atender(config, _mensaje(boton))
+    main.atender(config, _mensaje("/compra btc 0.01 500"))  # sin ánimo
+    mandados.clear()
+
+    main.atender(config, _mensaje("/emociones"))
+
+    texto = mandados[0][0]
+    assert "😱 Miedo: 2 · hoy 🔺 +25.0%" in texto
+    assert "🤩 Euforia: 2 · hoy 🔻 -50.0%" in texto
+    assert (
+        "👉 Tus mejores compras son con miedo (+25.0%) y las peores con euforia"
+        in texto
+    )
+    assert "1 movimiento sin ánimo apuntado" in texto
+
+
+def test_emocion_a_mano_y_en_una_venta(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 50000.0})
+    main.atender(config, _mensaje("/compra btc 0.02 800"))
+    main.atender(config, _mensaje("/venta btc 0.01 400"))
+    venta = database.get_movimientos(config.database_path)[0]
+
+    main.atender(config, _mensaje(f"/emocion {venta.id} pánico"))
+    main.atender(config, _mensaje("/sentimientos"))
+
+    assert f"😱 Apuntado: la {venta.id} fue con miedo" in enviados[2]
+    # Vendiste a 40.000 y hoy está a 50.000: habría valido un 25% más.
+    assert "<b>Ventas</b>\n😱 Miedo: 1 · hoy valdría 🔺 +25.0%" in enviados[3]
+
+
+def test_emocion_de_un_movimiento_que_no_existe(config, enviados):
+    main.atender(config, _mensaje("/emocion 99 miedo"))
+
+    assert "No tengo ningún movimiento con el número 99" in enviados[0]
+
+
+def test_emociones_sin_nada(config, enviados):
+    main.atender(config, _mensaje("/emociones"))
+
+    assert "Aún no has dicho con qué ánimo" in enviados[0]

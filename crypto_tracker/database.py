@@ -101,7 +101,8 @@ CREATE TABLE IF NOT EXISTS movimientos (
     antes_invertido REAL,
     created_at      TEXT NOT NULL,
     nota            TEXT,
-    comision        REAL
+    comision        REAL,
+    emocion         TEXT
 );
 
 -- Las de /prediccion. real NULL es que aún no ha llegado el domingo.
@@ -204,6 +205,7 @@ COLUMNAS_NUEVAS = [
     ("prices", "volume", "REAL"),
     ("movimientos", "comision", "REAL"),
     ("alertas_puntuales", "condicion", "TEXT"),
+    ("movimientos", "emocion", "TEXT"),
 ]
 
 
@@ -1282,6 +1284,15 @@ def get_movimientos(
     return [_movimiento(f) for f in filas]
 
 
+def apuntar_emocion(db_path: str, movimiento_id: int, emocion: str) -> bool:
+    """False si no hay ningún movimiento con ese número."""
+    with _connect(db_path) as conn:
+        cursor = conn.execute(
+            "UPDATE movimientos SET emocion = ? WHERE id = ?", (emocion, movimiento_id)
+        )
+    return cursor.rowcount > 0
+
+
 def get_ventas(db_path: str) -> list[Movimiento]:
     """Todas, sin limite: lo ganado sale de sumarlas."""
     with _connect(db_path) as conn:
@@ -1341,6 +1352,7 @@ def _movimiento(f: sqlite3.Row) -> Movimiento:
         datetime.fromisoformat(f["created_at"]),
         f["nota"],
         f["comision"],
+        f["emocion"],
     )
 
 

@@ -51,6 +51,8 @@ COMANDOS = {
     "recordar": "Avísame cada semana de mi compra (ej: /recordar lunes 50 btc)",
     "pienso": "Antes de comprar, 24 h para pensarlo (ej: /pienso btc 500)",
     "fantasma": "Una cartera de mentira para probar (ej: /fantasma compra btc 200)",
+    "emociones": "Con qué ánimo compras y vendes, y qué te sale de cada uno",
+    "emocion": "Apuntar con qué ánimo hiciste un movimiento (ej: /emocion 12 miedo)",
     "prediccion": "A cuánto estará el domingo, y tu marcador (ej: /prediccion btc 70k)",
     "deshacer": "Quitar la última compra o venta que apuntaste",
     "corregir": "Cambiar una compra o venta antigua (ej: /corregir 12 importe 700)",
@@ -209,6 +211,8 @@ COMANDOS = {
 
 # /start lo manda Telegram solo la primera vez que abres el chat.
 ALIAS = {
+    "emoción": "emocion",
+    "sentimientos": "emociones",
     "simulador": "fantasma",
     "practica": "fantasma",
     "predicción": "prediccion",

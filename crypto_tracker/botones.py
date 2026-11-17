@@ -1,6 +1,7 @@
 """Los botones que van debajo de cada aviso."""
 
 from .alerts import ALTO, SIMBOLOS, Alert, _num
+from .emocion import EMOCIONES
 from .puntuales import CARTERA, Puntual
 from .tendencias import Tendencia
 
@@ -163,6 +164,16 @@ def para_pienso(comando: str, coin_id: str) -> list[list[tuple[str, str]]]:
         [("❌ Al final no", f"/pienso {coin_id} no")],
     ]
     return [f for f in filas if all(_cabe(b) for b in f)]
+
+
+def emociones(movimiento_id: int) -> list[list[tuple[str, str]]]:
+    """Con qué ánimo la has hecho: un toque y queda apuntado para /emociones."""
+    botones = [
+        (f"{icono} {nombre}", f"/emocion {movimiento_id} {clave}")
+        for clave, (icono, nombre) in EMOCIONES.items()
+    ]
+    # De tres en tres: con los cinco en una fila no se leen en el móvil.
+    return [botones[:3], botones[3:]]
 
 
 def para_recordatorio(comando: str, coin_id: str) -> list[list[tuple[str, str]]]:

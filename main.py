@@ -92,6 +92,7 @@ from crypto_tracker import (
     direccion,
     doble,
     dominancia,
+    emocion,
     emoji,
     equilibrio,
     estables,
@@ -1463,6 +1464,12 @@ def responder(
     if nombre == "fantasma":
         return _fantasma(config, argumento)
 
+    if nombre == "emocion":
+        return _emocion(config, argumento)
+
+    if nombre == "emociones":
+        return _emociones(config)
+
     if nombre == "stop":
         config = _con_cambios(config)
         if not config.cartera:
@@ -2222,7 +2229,9 @@ def _comprar(config: Config, argumento: str) -> str | comandos.ConBotones:
         actual = None
     if actual and (linea := alerts.linea_limite(actual, config.vs_currency)):
         texto += "\n\n" + linea
-    return comandos.ConBotones(texto, botones.deshacer_movimiento(numero))
+    return comandos.ConBotones(
+        texto, botones.deshacer_movimiento(numero) + botones.emociones(numero)
+    )
 
 
 def _vender(config: Config, argumento: str) -> str | comandos.ConBotones:
@@ -2270,7 +2279,7 @@ def _vender(config: Config, argumento: str) -> str | comandos.ConBotones:
             pagada,
             apunte,
         ),
-        botones.deshacer_movimiento(numero),
+        botones.deshacer_movimiento(numero) + botones.emociones(numero),
     )
 
 
@@ -3021,6 +3030,35 @@ def _pienso(config: Config, argumento: str) -> str:
             _indicador(config, "rsi", coin_id),
         )
     )
+
+
+def _emocion(config: Config, argumento: str) -> str:
+    try:
+        numero, cual = emocion.interpretar(argumento)
+    except emocion.EmocionError as e:
+        return telegram.escape(str(e))
+    if not database.apuntar_emocion(config.database_path, numero, cual):
+        return f"No tengo ningún movimiento con el número {numero}. Mira /movimientos"
+    icono = emocion.EMOCIONES[cual][0]
+    return (
+        f"{icono} Apuntado: la {numero} fue con {emocion.en_frase(cual)}. Cuando "
+        "haya unas cuantas, /emociones te dice con cuál te va mejor"
+    )
+
+
+def _emociones(config: Config) -> str:
+    todos = database.get_movimientos(config.database_path, None)
+    if not any(m.emocion for m in todos):
+        return (
+            "Aún no has dicho con qué ánimo compras o vendes. Al apuntar una /compra "
+            "o /venta salen unos botones; para las de antes: /emocion 12 miedo "
+            "(el número sale en /movimientos)"
+        )
+    ids = list(dict.fromkeys(m.coin_id for m in todos if m.emocion))
+    # Sin precios sale igual, solo que sin cómo van.
+    precios = _consultar(config, ids) or {}
+    texto = alerts.formatear_emociones(emocion.calcular(todos, precios))
+    return alerts.con_fuente(texto) if precios else texto
 
 
 def _fantasma(config: Config, argumento: str) -> str:

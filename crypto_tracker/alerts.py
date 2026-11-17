@@ -81,6 +81,8 @@ from .direccion import VER as VER_DIRECCION
 from .direccion import Saldo, Vigilada, a_btc
 from .doble import Cartera as CarteraDoble
 from .dominancia import Dominancia
+from .emocion import EMOCIONES, Emociones, en_frase
+from .emocion import Grupo as GrupoEmocion
 from .emoji import cara as cara_emoji
 from .enletras import dinero as dinero_en_letras
 from .equilibrio import Cartera
@@ -5833,6 +5835,46 @@ def formatear_pienso(
         f"precio de entonces. Si lo descartas antes: /pienso {escape(p.coin_id)} no"
     )
     return "\n".join(texto)
+
+
+def formatear_emociones(e: Emociones) -> str:
+    """/emociones: con qué ánimo compras y vendes, y cómo te ha ido con cada uno."""
+    texto = ["🎭 <b>Con qué ánimo compras y vendes</b>"]
+    if e.compras:
+        texto += ["", "<b>Compras</b>", *(_grupo_emocion(g, "hoy") for g in e.compras)]
+    if e.ventas:
+        texto += [
+            "",
+            "<b>Ventas</b>",
+            *(_grupo_emocion(g, "hoy valdría") for g in e.ventas),
+        ]
+
+    par = e.mejor_y_peor()
+    if par:
+        mejor, peor = par
+        texto += [
+            "",
+            f"👉 Tus mejores compras son con {en_frase(mejor.emocion)} "
+            f"({mejor.cambio:+.1f}%) y las peores con {en_frase(peor.emocion)} "
+            f"({peor.cambio:+.1f}%)",
+        ]
+    texto.append(
+        "\n<i>En las compras, lo que valen hoy contra lo que pagaste. En las "
+        "ventas, lo que valdría hoy lo vendido contra lo que te dieron: si sube, "
+        "vendiste antes de tiempo</i>"
+    )
+    if e.sin:
+        cuantos = "1 movimiento" if e.sin == 1 else f"{e.sin} movimientos"
+        texto.append(f"<i>{cuantos} sin ánimo apuntado: /emocion 12 miedo</i>")
+    return "\n".join(texto)
+
+
+def _grupo_emocion(g: GrupoEmocion, como: str) -> str:
+    icono, nombre = EMOCIONES[g.emocion]
+    linea = f"{icono} {nombre}: {g.veces}"
+    if g.cambio is not None:
+        linea += f" · {como} {_flecha(g.cambio)} {g.cambio:+.1f}%"
+    return linea
 
 
 def formatear_fantasma(f: Fantasma, precios: dict[str, float], currency: str) -> str:
