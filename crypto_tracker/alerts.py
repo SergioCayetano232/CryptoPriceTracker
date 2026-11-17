@@ -37,6 +37,8 @@ from .cafe import PRECIO as PRECIO_CAFE
 from .cafe import Cafe
 from .caida import Caida
 from .calendario import Mes
+from .calma import VENTANA as VENTANA_CALMA
+from .calma import Calma
 from .cana import PRECIO as PRECIO_CANA
 from .cana import Cana
 from .caraocruz import QUE_HACER
@@ -5833,6 +5835,48 @@ def formatear_pienso(
     texto.append(
         f"Mañana a las {p.pregunta.astimezone():%H:%M} te pregunto otra vez con el "
         f"precio de entonces. Si lo descartas antes: /pienso {escape(p.coin_id)} no"
+    )
+    return "\n".join(texto)
+
+
+def formatear_aviso_calma(coin_id: str, c: Calma, currency: str) -> str:
+    """El aviso de cuando una se queda mucho más quieta de lo normal."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = [
+        f"🤫 <b>{_nombre(coin_id)}</b> lleva {VENTANA_CALMA} días muy quieta",
+        f"Entre {simbolo}{_num(c.suelo)} y {simbolo}{_num(c.techo)}: se ha movido "
+        f"un {c.rango:.1f}%, cuando lo normal en una semana es un {c.normal:.1f}%.",
+    ]
+    if c.despues is not None:
+        texto.append(
+            f"Las otras {c.veces} veces que estuvo así, la semana siguiente se movió "
+            f"un {c.despues:.1f}% de media, hacia un lado u otro."
+        )
+    texto.append(
+        "<i>Se dice que una calma así va antes de un movimiento fuerte, pero no "
+        "hacia dónde, y no siempre se cumple: mira la línea de arriba. Si quieres "
+        "enterarte: /alerta</i>"
+    )
+    return "\n".join(texto)
+
+
+def formatear_calma(lista: list[tuple[str, Calma | None]]) -> str:
+    """/tormenta: cuánto se mueven esta semana las que vigilas, contra lo normal."""
+    texto = [f"🤫 <b>Lo quietas que están</b> · últimos {VENTANA_CALMA} días", ""]
+    for coin_id, c in lista:
+        if c is None:
+            texto.append(f"<b>{_nombre(coin_id)}</b>: aún no tengo historia bastante")
+            continue
+        linea = (
+            f"<b>{_nombre(coin_id)}</b>: {c.rango:.1f}% (lo normal, {c.normal:.1f}%)"
+        )
+        if c.quieta:
+            linea += " · 🤫 muy quieta"
+        texto.append(linea)
+    texto.append(
+        "\n<i>Lo que se ha movido entre lo más alto y lo más bajo de la semana. "
+        "Muy quieta es de las semanas más tranquilas de lo guardado; se dice que va "
+        "antes de un movimiento fuerte. Para que te avise: AVISO_CALMA=si</i>"
     )
     return "\n".join(texto)
 

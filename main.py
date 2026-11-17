@@ -50,6 +50,7 @@ from crypto_tracker import (
     caida,
     calendario,
     callar,
+    calma,
     cana,
     caraocruz,
     carnet,
@@ -368,6 +369,7 @@ def ejecutar_ciclo(
     revisar_cruces(config, vigiladas, calladas)
     revisar_estables(config, list(precios), calladas)
     revisar_volumen(config, vigiladas, calladas)
+    revisar_calma(config, vigiladas, calladas)
     revisar_721(config, valor, calladas)
     revisar_direcciones(config, precios.get("bitcoin"))
     if calladas:
@@ -886,6 +888,62 @@ def revisar_721(config: Config, valor: float | None, calladas: set[str]) -> None
         database.guardar_resumen(config.database_path, hoy, database.AVISO_721)
     except database.DatabaseError as e:
         logger.error("No se pudo apuntar el aviso del modelo 721: %s", e)
+
+
+def revisar_calma(
+    config: Config, vigiladas: dict[str, float], calladas: set[str]
+) -> None:
+    """Avisa una vez cuando una que vigilas lleva una semana mucho más quieta."""
+    if not config.aviso_calma or _silenciado(config):
+        return
+
+    for coin_id in vigiladas:
+        if coin_id in calladas:
+            continue
+        try:
+            resultado = _calma_de(config, coin_id)
+            avisada = database.calma_avisada(config.database_path, coin_id)
+        except database.DatabaseError as e:
+            logger.error("No se pudo mirar la calma de %s: %s", coin_id, e)
+            continue
+        if resultado is None:
+            continue
+
+        if calma.toca(resultado, avisada):
+            if not telegram.send_message(
+                config.telegram_token,
+                config.telegram_chat_id,
+                alerts.formatear_aviso_calma(coin_id, resultado, config.vs_currency),
+                sin_sonido=_sin_sonido(config),
+            ):
+                # Sin apuntarlo, lo vuelve a intentar el siguiente ciclo.
+                logger.error("No se pudo avisar de la calma de %s", coin_id)
+                continue
+            logger.info("Calma en %s: %.1f%% en una semana", coin_id, resultado.rango)
+
+        nueva = calma.sigue(resultado, avisada)
+        if nueva != avisada:
+            try:
+                database.guardar_calma_avisada(config.database_path, coin_id, nueva)
+            except database.DatabaseError as e:
+                logger.error("No se pudo apuntar la calma de %s: %s", coin_id, e)
+
+
+def _calma_de(config: Config, coin_id: str) -> calma.Calma | None:
+    serie = database.get_serie(
+        config.database_path, coin_id, calma.HORAS, config.vs_currency
+    )
+    return calma.calcular(volatilidad.por_dias(serie))
+
+
+def _calma(config: Config, argumento: str) -> str:
+    if argumento:
+        ids = [simbolos.a_id(p) for p in argumento.split()]
+    else:
+        ids = [w.coin_id for w in _con_cambios(config).watchlist]
+    if not ids:
+        return "¿De cuál? Por ejemplo: /tormenta bitcoin"
+    return alerts.formatear_calma([(c, _calma_de(config, c)) for c in ids])
 
 
 def revisar_volumen(
@@ -1469,6 +1527,9 @@ def responder(
 
     if nombre == "emociones":
         return _emociones(config)
+
+    if nombre == "tormenta":
+        return _calma(config, argumento)
 
     if nombre == "stop":
         config = _con_cambios(config)

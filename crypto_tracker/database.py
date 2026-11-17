@@ -874,6 +874,25 @@ def guardar_volumen_avisado(db_path: str, coin_id: str, avisado: bool) -> None:
         )
 
 
+def calma_avisada(db_path: str, coin_id: str) -> bool:
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT 1 FROM ajustes WHERE clave = ?", (f"calma:{coin_id}",)
+        ).fetchone()
+    return fila is not None
+
+
+def guardar_calma_avisada(db_path: str, coin_id: str, avisada: bool) -> None:
+    with _connect(db_path) as conn:
+        if not avisada:
+            conn.execute("DELETE FROM ajustes WHERE clave = ?", (f"calma:{coin_id}",))
+            return
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, '1')",
+            (f"calma:{coin_id}",),
+        )
+
+
 def guardar_avisos(
     db_path: str, avisos: list[tuple[str, float, bool]], cuando: datetime
 ) -> None:

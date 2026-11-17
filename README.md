@@ -263,6 +263,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/rsi bitcoin` | Su RSI de 14 días: por encima de 70 ha subido demasiado rápido (sobrecomprada) y por debajo de 30 ha bajado demasiado (sobrevendida). Necesita 15 días seguidos guardados y no gasta consultas |
 | `/bollinger bitcoin` | Sus bandas de Bollinger: la media de 20 días y dos veces lo que se suele separar de ella, por arriba y por abajo. Te dice si el precio está dentro, por encima (muy estirada) o por debajo (muy aplastada), con una barrita de dónde está, y si la banda está de las más estrechas de lo guardado, que suele ir antes de un movimiento fuerte. Necesita 20 días seguidos guardados y no gasta consultas. También `/bandas` |
 | `/macd bitcoin` | Si va con empuje al alza o a la baja según el MACD (la media de 12 días menos la de 26, contra su propia media de 9): desde cuándo, si coge o pierde fuerza y hacia dónde va de fondo. Cruzar su señal hacia arriba se suele leer como compra y hacia abajo como venta, con retraso. A secas, la primera que vigilo. Necesita 35 días seguidos guardados. Sale de lo guardado y no gasta consultas. También `/empuje` |
+| `/tormenta` | Lo que se ha movido cada una que vigilas en los últimos 7 días (entre lo más alto y lo más bajo) contra lo que se mueve en una semana normal, y si está «muy quieta»: de las semanas más tranquilas de lo guardado, que se dice que va antes de un movimiento fuerte. Con `/tormenta btc eth`, solo esas. Necesita 38 días guardados y no gasta consultas. También `/squeeze` |
 | `/estocastico bitcoin` | Dónde está el precio dentro de lo que se ha movido en 14 días, de 0 (lo más bajo) a 100 (lo más alto): por encima de 80, sobrecompra; por debajo de 20, sobreventa. Con su media de 3 días y si la ha cruzado hace poco. Saca el máximo y el mínimo de cada día de lo que tiene guardado, así que necesita 17 días seguidos: `/rellenar` baja los que faltan. También `/stoch` |
 | `/fibonacci btc 90d` | Los niveles de Fibonacci entre el máximo y el mínimo del tramo (23,6%, 38,2%, 50%, 61,8% y 78,6%): si venía subiendo, hasta dónde podría corregir; si venía bajando, hasta dónde podría rebotar. Marca dónde está ahora y el nivel más cerca por debajo y por encima. Sin tramo, 90 días. Sale de lo guardado y no gasta consultas. También `/fibo` y `/retroceso` |
 | `/caida bitcoin 30d` | Cuánto ha bajado desde el máximo del tramo y cuál fue su peor caída, de qué precio a cuál y cuánto tardó en volver (sin tramo, 30 días). Con `/caida cartera`, lo mismo con lo que vale tu cartera entera. Sale de lo guardado y no gasta consultas |
@@ -641,6 +642,19 @@ detrás. No repite hasta que baje del doble. El volumen viene en la misma
 consulta que el precio, así que no gasta más. Necesita una semana guardando
 volumen: `/rellenar` no lo baja. Se calla con `/mute bitcoin`.
 
+**Enterarte cuando una cripto se queda demasiado quieta:**
+
+```
+AVISO_CALMA=si
+```
+Te avisa una vez cuando una que vigilas lleva 7 días moviéndose mucho menos de lo
+normal: una de las semanas más tranquilas (el 10 % de abajo) de lo que tiene
+guardado. Se dice que va antes de un movimiento fuerte, aunque no hacia dónde y
+no siempre se cumple: por eso te cuenta cuánto se movió la semana siguiente las
+otras veces. No repite hasta
+que vuelva a moverse. Necesita 38 días guardados: con `/rellenar btc` no tienes
+que esperar. Se calla con `/mute bitcoin`.
+
 **Enterarte si una estable se sale de su dólar:**
 
 No hay que poner nada. Si tienes o vigilas USDT, USDC o DAI (`tether`,
@@ -770,6 +784,7 @@ Todo lo que va haciendo queda apuntado en `data/tracker.log`.
 | `AVISO_RSI` | Con `si`, aviso al entrar en sobrecompra o sobreventa. Vacío, sin aviso | vacío |
 | `AVISO_CRUCE` | Con `si`, aviso cuando la media de 50 días cruza la de 200. Necesita `HISTORY_DAYS` de 200 o más. Vacío, sin aviso | vacío |
 | `AVISO_VOLUMEN` | Con `si`, aviso cuando el volumen de 24 h pasa del triple de lo normal. Vacío, sin aviso | vacío |
+| `AVISO_CALMA` | Con `si`, aviso cuando una lleva una semana mucho más quieta de lo normal. Necesita `HISTORY_DAYS` de 38 o más. Vacío, sin aviso | vacío |
 | `COPIA_SEMANAL` | Con `si`, te manda la base de datos cada 7 días. Vacío, sin copia | vacío |
 
 No bajes mucho `CHECK_INTERVAL`. La clave gratuita de CoinGecko da 10.000
@@ -983,6 +998,7 @@ crypto_tracker/
   estables.py    cuándo una estable se sale de su dólar
   cruce.py       la cruz dorada y la de la muerte
   volumen.py     cuándo se negocia mucho más de lo normal, para AVISO_VOLUMEN
+  calma.py       cuándo una se queda muy quieta, para /tormenta y AVISO_CALMA
   redondo.py     la siguiente cifra redonda, para /redondo
   rsi.py         el RSI de 14 días, para /rsi
   bollinger.py   las bandas de 20 días, para /bollinger

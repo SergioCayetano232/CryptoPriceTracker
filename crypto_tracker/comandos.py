@@ -80,6 +80,7 @@ COMANDOS = {
     "bollinger": "Si se ha salido de su banda normal (ej: /bollinger btc)",
     "macd": "Si coge o pierde empuje, con el MACD (ej: /macd bitcoin)",
     "estocastico": "Si está cerca del techo o del suelo de 14 días (ej: /stoch btc)",
+    "tormenta": "Si alguna está mucho más quieta de lo normal (ej: /tormenta btc)",
     "fibonacci": "Dónde podría frenar el precio (ej: /fibonacci btc 90d)",
     "caida": "Cuánto ha bajado desde el máximo (ej: /caida btc 30d)",
     "backtest": "Vender al +% y recomprar al -%, contra no tocar (ej: /backtest btc)",
@@ -211,6 +212,7 @@ COMANDOS = {
 
 # /start lo manda Telegram solo la primera vez que abres el chat.
 ALIAS = {
+    "squeeze": "tormenta",
     "emoción": "emocion",
     "sentimientos": "emociones",
     "simulador": "fantasma",

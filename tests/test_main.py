@@ -11079,3 +11079,49 @@ def test_emociones_sin_nada(config, enviados):
     main.atender(config, _mensaje("/emociones"))
 
     assert "Aún no has dicho con qué ánimo" in enviados[0]
+
+
+# --- calma ---
+
+
+def _semanas_movidas_y_una_quieta(config):
+    # 50 días subiendo y bajando un 5% y, la última semana, casi quieta.
+    precios = [60000.0 * (1.05 if i % 2 else 1.0) for i in range(50)]
+    precios += [60000.0, 60100.0, 60050.0, 60080.0, 60020.0, 60060.0, 60040.0]
+    for dias_atras, precio in enumerate(reversed(precios)):
+        _precio_de(config, "bitcoin", precio, dias_atras * 24 * 60 + 5)
+
+
+def test_aviso_de_calma_una_vez(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    config = replace(config, aviso_calma=True)
+    _semanas_movidas_y_una_quieta(config)
+    _precio(monkeypatch, {"bitcoin": 60040.0})
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%60040.0"})
+    main.ejecutar_ciclo(config, {"bitcoin": "%60040.0"})
+
+    avisos = [t for t in enviados if "🤫" in t]
+    assert len(avisos) == 1
+    assert "🤫 <b>Bitcoin</b> lleva 7 días muy quieta" in avisos[0]
+    assert "se ha movido un 0.2%" in avisos[0]
+
+
+def test_sin_aviso_de_calma_no_avisa(config, enviados, monkeypatch):
+    _semanas_movidas_y_una_quieta(config)
+    _precio(monkeypatch, {"bitcoin": 60040.0})
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%60040.0"})
+
+    assert not any("🤫" in t for t in enviados)
+
+
+def test_comando_calma(config, enviados):
+    _semanas_movidas_y_una_quieta(config)
+
+    main.atender(config, _mensaje("/tormenta"))
+    main.atender(config, _mensaje("/squeeze eth"))
+
+    assert "<b>Bitcoin</b>: 0.2% (lo normal, 4.9%) · 🤫 muy quieta" in enviados[0]
+    assert "<b>Ethereum</b>: aún no tengo historia bastante" in enviados[1]

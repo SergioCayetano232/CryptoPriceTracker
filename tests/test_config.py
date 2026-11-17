@@ -446,3 +446,27 @@ def test_parse_aviso_rsi_mal():
 
     with pytest.raises(ConfigError, match="AVISO_RSI"):
         parse_aviso_rsi("70")
+
+
+def test_calma_puesta(monkeypatch):
+    from crypto_tracker.config import load_config
+
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "x")
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "1")
+    monkeypatch.setenv("WATCHLIST", "bitcoin:%5")
+    monkeypatch.setenv("AVISO_CALMA", "si")
+
+    assert load_config().aviso_calma is True
+
+
+def test_calma_con_poca_historia(monkeypatch):
+    from crypto_tracker.config import ConfigError, load_config
+
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "x")
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "1")
+    monkeypatch.setenv("WATCHLIST", "bitcoin:%5")
+    monkeypatch.setenv("AVISO_CALMA", "si")
+    monkeypatch.setenv("HISTORY_DAYS", "30")
+
+    with pytest.raises(ConfigError, match="AVISO_CALMA necesita al menos 38"):
+        load_config()

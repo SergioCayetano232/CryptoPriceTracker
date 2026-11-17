@@ -7,9 +7,12 @@ from datetime import datetime, time, timedelta
 
 from dotenv import load_dotenv
 
+from .calma import MIN_SEMANAS, VENTANA
 from .cruce import LARGA
 from .rsi import PERIODO
 from .volumen import MIN_DIAS as MIN_DIAS_VOLUMEN
+
+MIN_DIAS_CALMA = MIN_SEMANAS + VENTANA + 1
 
 # Carga el .env en las variables de entorno. Si no existe no pasa nada,
 # se usaran las variables del sistema (util para Docker o servidores).
@@ -71,6 +74,7 @@ class Config:
     aviso_rsi: bool = False
     aviso_cruce: bool = False
     aviso_volumen: bool = False
+    aviso_calma: bool = False
     copia_semanal: bool = False
     aviso_721: bool = False
 
@@ -445,6 +449,10 @@ def parse_aviso_volumen(raw: str) -> bool:
     return _si_o_no(raw, "AVISO_VOLUMEN")
 
 
+def parse_aviso_calma(raw: str) -> bool:
+    return _si_o_no(raw, "AVISO_CALMA")
+
+
 def parse_aviso_721(raw: str) -> bool:
     return _si_o_no(raw, "AVISO_721")
 
@@ -508,6 +516,14 @@ def load_config() -> Config:
             f"y HISTORY_DAYS es {history_days}. Sube HISTORY_DAYS."
         )
 
+    aviso_calma = parse_aviso_calma(os.getenv("AVISO_CALMA", ""))
+    # Con menos días guardados no hay semanas con las que comparar la de ahora.
+    if aviso_calma and history_days and history_days < MIN_DIAS_CALMA:
+        raise ConfigError(
+            f"AVISO_CALMA necesita al menos {MIN_DIAS_CALMA} dias guardados "
+            f"y HISTORY_DAYS es {history_days}. Sube HISTORY_DAYS."
+        )
+
     vs_currency = os.getenv("VS_CURRENCY", "eur").strip().lower() or "eur"
     aviso_721 = parse_aviso_721(os.getenv("AVISO_721", ""))
     # El límite de Hacienda es en euros: en dólares avisaría donde no toca.
@@ -537,6 +553,7 @@ def load_config() -> Config:
         aviso_rsi=aviso_rsi,
         aviso_cruce=aviso_cruce,
         aviso_volumen=aviso_volumen,
+        aviso_calma=aviso_calma,
         copia_semanal=parse_copia_semanal(os.getenv("COPIA_SEMANAL", "")),
         aviso_721=aviso_721,
     )

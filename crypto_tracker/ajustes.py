@@ -62,6 +62,11 @@ def lineas(config: Config) -> list[str]:
     else:
         texto.append("📢 Sin aviso de volumen")
 
+    if config.aviso_calma:
+        texto.append("🤫 Aviso si una se queda mucho más quieta de lo normal")
+    else:
+        texto.append("🤫 Sin aviso de calma")
+
     if config.copia_semanal:
         texto.append("📦 Copia de seguridad cada semana")
     else:
