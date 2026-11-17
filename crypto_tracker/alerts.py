@@ -263,10 +263,12 @@ from .whitepaper import Whitepaper
 from .zapatillas import PRECIO as PRECIO_ZAPATILLAS
 from .zapatillas import Zapatillas
 
-# Solo para el tipo: ruido.py y contexto.py ya importan de aquí.
+# Solo para el tipo: ruido.py, contexto.py y timing.py ya importan de aquí.
 if TYPE_CHECKING:
     from .contexto import Contexto
     from .ruido import Ruido
+    from .timing import Compra as CompraTiming
+    from .timing import Timing
 
 logger = logging.getLogger(__name__)
 
@@ -1308,6 +1310,70 @@ def _una_compra(titulo: str, c: Compra, simbolo: str) -> list[str]:
     if m.nota:
         lineas.append(f"📝 {escape(m.nota)}")
     return lineas
+
+
+VEREDICTO_TIMING = {
+    "ojo": "Tienes buen ojo (o buena suerte): sueles comprar en los días baratos",
+    "caro": "Sueles comprar en los días caros. Repartir en días fijos te iría mejor: "
+    "/recordar o /pienso",
+    "azar": "Más o menos como comprar un día cualquiera: el momento ni te da ni te "
+    "quita",
+}
+
+
+def formatear_timing(t: "Timing", currency: str, coin_id: str | None) -> str:
+    """/timing: tus compras contra la media de los días de alrededor."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    de = f" de {_nombre(coin_id)}" if coin_id else ""
+    n = len(t.compras)
+    texto = [f"⏱️ <b>¿Aciertas el momento{de}?</b>", ""]
+    if n == 1:
+        cual = "más barata" if t.baratas else "más cara"
+        texto.append(f"Tu compra fue {cual} que la media de los días de alrededor")
+    else:
+        texto.append(
+            f"De {n} compras, <b>{t.baratas}</b> fueron más baratas que la media de "
+            "los días de alrededor"
+        )
+    menos = "menos" if t.ahorro >= 0 else "más"
+    texto.append(
+        f"Pagaste un <b>{abs(t.ahorro):.1f}% {menos}</b> que comprando un día "
+        "cualquiera de esas semanas"
+    )
+    if t.posicion is not None:
+        texto.append(
+            f"Compraste de media en el <b>{t.posicion:.0f}</b> de 100 de lo que se "
+            "movió alrededor (0, el día más barato; 100, el más caro)"
+        )
+    texto += ["", f"👉 {VEREDICTO_TIMING[t.veredicto]}"]
+
+    if n > 1:
+        texto += [
+            "",
+            _compra_timing("🥇 La mejor", t.mejor, simbolo),
+            _compra_timing("🥴 La peor", t.peor, simbolo),
+        ]
+    texto.append(
+        f"\n<i>Comparo lo que pagaste, con comisión, con la media de los "
+        f"{t.ventana} días de antes y de después de cada compra. CoinGecko solo "
+        "da un año hacia atrás</i>"
+    )
+    if t.fuera:
+        cuantas = "1 compra" if t.fuera == 1 else f"{t.fuera} compras"
+        texto.append(
+            f"<i>{cuantas} sin lo que costó o sin precios alrededor, fuera</i>"
+        )
+    return "\n".join(texto)
+
+
+def _compra_timing(titulo: str, c: "CompraTiming", simbolo: str) -> str:
+    m = c.movimiento
+    lado = "por debajo" if c.ahorro >= 0 else "por encima"
+    return (
+        f"{titulo}: {texto_cantidad(m.cantidad)} de {_nombre(m.coin_id)} el "
+        f"{m.cuando.astimezone():%d/%m/%Y} a {simbolo}{_num(c.pagado)}, un "
+        f"{abs(c.ahorro):.1f}% {lado} de la media ({simbolo}{_num(c.media)})"
+    )
 
 
 def formatear_vsbtc(c: Contra, currency: str) -> str:

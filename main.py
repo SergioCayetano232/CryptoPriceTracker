@@ -208,6 +208,7 @@ from crypto_tracker import (
     taxi,
     telegram,
     tesla,
+    timing,
     top,
     tortilla,
     verdes,
@@ -1580,6 +1581,9 @@ def responder(
     if nombre == "compras":
         return _compras(config, argumento)
 
+    if nombre == "timing":
+        return _timing(config, argumento)
+
     if nombre == "calendario":
         return _calendario(config, argumento)
 
@@ -2743,6 +2747,37 @@ def _compras(config: Config, argumento: str) -> str:
         )
     return alerts.con_fuente(
         alerts.formatear_compras(resultado, config.vs_currency, coin_id)
+    )
+
+
+def _timing(config: Config, argumento: str) -> str:
+    coin_id = simbolos.a_id(argumento) if argumento else None
+    todos = database.get_movimientos(config.database_path, None, coin_id)
+    compras_ = timing.a_mirar(todos)
+    if not compras_:
+        de = f" de <b>{telegram.escape(coin_id)}</b>" if coin_id else ""
+        return (
+            f"No has apuntado ninguna compra{de} por aquí. Lo del PORTFOLIO del .env "
+            f"no lleva fecha. Apúntala así: {movimientos.EJEMPLO_COMPRA}"
+        )
+
+    # Una consulta por cripto: lo guardado no llega a las compras de hace meses.
+    dias = timing.dias_a_pedir(compras_, datetime.now(timezone.utc).date())
+    series = {}
+    for cid in dict.fromkeys(m.coin_id for m in compras_):
+        try:
+            series[cid] = coingecko.historico(cid, dias, config.vs_currency)
+        except coingecko.CoinGeckoError as e:
+            logger.warning("/timing sin precios de %s: %s", cid, e)
+
+    resultado = timing.calcular(compras_, series)
+    if resultado is None:
+        return (
+            "No puedo comparar ninguna compra: o no llevan lo que costaron, o son de "
+            "hace más de un año y CoinGecko no me da precios de entonces"
+        )
+    return alerts.con_fuente(
+        alerts.formatear_timing(resultado, config.vs_currency, coin_id)
     )
 
 

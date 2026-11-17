@@ -29,6 +29,7 @@ COMANDOS = {
     "recompensa": "Apuntar staking o un airdrop (ej: /recompensa eth 0.02)",
     "movimientos": "Tus últimas compras y ventas (ej: /movimientos btc)",
     "compras": "Tu mejor y tu peor compra (ej: /compras o /compras btc)",
+    "timing": "Si aciertas el momento de comprar o da igual (ej: /timing btc)",
     "ganancias": "Lo que has ganado o perdido con lo que ya vendiste",
     "arrepentido": "Lo que valdría hoy lo que vendiste, ¿hiciste bien?",
     "rentabilidad": "Lo que ganas al año, contando cuándo metiste cada euro",
@@ -206,6 +207,7 @@ COMANDOS = {
 
 # /start lo manda Telegram solo la primera vez que abres el chat.
 ALIAS = {
+    "momento": "timing",
     "start": "ayuda",
     "help": "ayuda",
     "history": "historico",

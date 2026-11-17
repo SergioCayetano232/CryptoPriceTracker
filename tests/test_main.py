@@ -10799,3 +10799,64 @@ def test_pienso_si_sigue_igual(config, con_botones, monkeypatch):
     main.pensados(config, datetime.now(timezone.utc) + timedelta(days=1, minutes=1))
 
     assert "Está más o menos igual" in con_botones[-1][0]
+
+
+# --- /timing ---
+
+
+def _historico_plano(precio, bache_hace, bache):
+    """Un mes a `precio` con un día a `bache` hace `bache_hace` días."""
+    hoy = datetime.now(timezone.utc).replace(hour=12, minute=0, second=0)
+
+    def historico(coin_id, dias, cur):
+        return [
+            (hoy - timedelta(days=d), bache if d == bache_hace else precio)
+            for d in range(40, -1, -1)
+        ]
+
+    return historico
+
+
+def test_timing(config, enviados, monkeypatch):
+    # Una en el bache y otra cara, cada una con su mes alrededor.
+    _movimiento_hace(config, "bitcoin", "compra", 0.01, 500, 20 * 24)
+    _movimiento_hace(config, "bitcoin", "compra", 0.01, 650, 18 * 24)
+    monkeypatch.setattr(coingecko, "historico", _historico_plano(60000, 20, 50000))
+
+    main.atender(config, _mensaje("/timing"))
+
+    texto = enviados[0]
+    assert "⏱️ <b>¿Aciertas el momento?</b>" in texto
+    assert "De 2 compras, <b>1</b> fueron más baratas" in texto
+    assert "🥇 La mejor: 0,01 de Bitcoin" in texto
+    assert "🥴 La peor: 0,01 de Bitcoin" in texto
+
+
+def test_timing_por_su_otro_nombre_y_de_una(config, enviados, monkeypatch):
+    _movimiento_hace(config, "bitcoin", "compra", 0.01, 500, 20 * 24)
+    monkeypatch.setattr(coingecko, "historico", _historico_plano(60000, 20, 50000))
+
+    main.atender(config, _mensaje("/momento btc"))
+
+    assert "¿Aciertas el momento de Bitcoin?" in enviados[0]
+    assert "Tu compra fue más barata" in enviados[0]
+    assert "Tienes buen ojo" in enviados[0]
+
+
+def test_timing_sin_compras(config, enviados):
+    main.atender(config, _mensaje("/timing"))
+
+    assert "No has apuntado ninguna compra" in enviados[0]
+
+
+def test_timing_sin_precios(config, enviados, monkeypatch):
+    _movimiento_hace(config, "bitcoin", "compra", 0.01, 500, 20 * 24)
+
+    def falla(*a):
+        raise coingecko.CoinGeckoError("caído")
+
+    monkeypatch.setattr(coingecko, "historico", falla)
+
+    main.atender(config, _mensaje("/timing"))
+
+    assert "No puedo comparar ninguna compra" in enviados[0]
