@@ -10955,3 +10955,70 @@ def test_prediccion_al_mismo_precio(config, enviados, monkeypatch):
     main.atender(config, _mensaje("/prediccion btc 64000"))
 
     assert "¿sube o baja?" in enviados[0]
+
+
+# --- /fantasma ---
+
+
+def test_fantasma_entero(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 50000.0, "ethereum": 2000.0})
+    main.atender(config, _mensaje("/fantasma"))
+    main.atender(config, _mensaje("/fantasma compra eth 400"))
+    main.atender(config, _mensaje("/fantasma compra btc 100"))
+
+    _precio(monkeypatch, {"bitcoin": 50000.0, "ethereum": 3000.0})
+    main.atender(config, _mensaje("/fantasma vende eth 50%"))
+    main.atender(config, _mensaje("/fantasma"))
+
+    assert "Aún no tienes cartera fantasma" in enviados[0]
+    assert "👻 Comprado: €400,00 de <b>Ethereum</b> a €2.000,00 (0,2)" in enviados[1]
+    assert "Te quedan €500,00 sin invertir" in enviados[2]
+    assert "👻 Vendido: €300,00 de <b>Ethereum</b>" in enviados[3]
+    texto = enviados[4]
+    assert "<b>Ethereum</b> 0,1 · €200,00 → €300,00 (🔺 +50.0%)" in texto
+    assert "💶 Sin invertir: €800,00" in texto
+    # 800 + 300 + 100 = 1.200; en bitcoin seguiría en 1.000.
+    assert "Total: <b>€1.200,00</b> de €1.000,00 (🔺 +20.0%)" in texto
+    assert "Dejándolo todo en bitcoin el primer día: €1.000,00" in texto
+    assert "👉 Le ganas a no hacer nada con bitcoin" in texto
+    assert "3 operaciones" in texto
+
+
+def test_fantasma_no_llega(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 50000.0})
+
+    main.atender(config, _mensaje("/fantasma compra btc 1500"))
+
+    assert "Solo te quedan 1.000,00 sin invertir" in enviados[0]
+    assert database.get_fantasma(config.database_path) is None
+
+
+def test_fantasma_reinicia(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 50000.0})
+    main.atender(config, _mensaje("/fantasma compra btc 500"))
+
+    main.atender(config, _mensaje("/simulador reinicia 5000"))
+
+    assert "Cartera fantasma nueva con €5.000,00" in enviados[1]
+    f = database.get_fantasma(config.database_path)
+    assert (f.caja, f.posiciones, f.btc_inicio) == (5000, {}, 50000)
+
+
+def test_fantasma_no_toca_la_cartera_de_verdad(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 50000.0})
+
+    main.atender(config, _mensaje("/fantasma compra btc 500"))
+
+    assert database.get_movimientos(config.database_path) == []
+    assert database.get_cambios_cartera(config.database_path) == {}
+
+
+def test_fantasma_empatada_con_bitcoin(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 50000.0, "ethereum": 2000.0})
+    main.atender(config, _mensaje("/fantasma compra eth 400"))
+    _precio(monkeypatch, {"bitcoin": 50000.0, "ethereum": 1999.99})
+
+    main.atender(config, _mensaje("/fantasma"))
+
+    assert "Vas igual que si no hubieras hecho nada" in enviados[-1]
+    assert "-0.0%" not in enviados[-1]

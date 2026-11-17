@@ -12,6 +12,9 @@ from .condicion import Condicion
 from .condicion import leer as leer_condicion
 from .config import Posicion
 from .dominancia import Foto
+from .fantasma import Fantasma
+from .fantasma import a_texto as texto_fantasma
+from .fantasma import de_texto as leer_fantasma
 from .movimientos import Movimiento
 from .pienso import Pienso
 from .pienso import a_texto as texto_pienso
@@ -147,6 +150,8 @@ CONCENTRADA = "concentracion_cartera"
 AVISO_COMPENSAR = "aviso_compensar"
 # El día que se avisó de que la cartera pasaba del límite del modelo 721.
 AVISO_721 = "aviso_721"
+# La cartera de mentira de /fantasma, entera en JSON.
+FANTASMA = "fantasma"
 
 
 class DatabaseError(Exception):
@@ -932,6 +937,27 @@ def quitar_recordatorio(db_path: str, coin_id: str) -> bool:
             "DELETE FROM ajustes WHERE clave = ?", (f"recordar:{coin_id}",)
         )
     return cursor.rowcount > 0
+
+
+def get_fantasma(db_path: str) -> Fantasma | None:
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT valor FROM ajustes WHERE clave = ?", (FANTASMA,)
+        ).fetchone()
+    if fila is None:
+        return None
+    f = leer_fantasma(fila["valor"])
+    if f is None:
+        logger.warning("La cartera fantasma no se entiende: %r", fila["valor"])
+    return f
+
+
+def guardar_fantasma(db_path: str, f: Fantasma) -> None:
+    with _connect(db_path) as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (FANTASMA, texto_fantasma(f)),
+        )
 
 
 def guardar_pienso(db_path: str, p: Pienso) -> None:

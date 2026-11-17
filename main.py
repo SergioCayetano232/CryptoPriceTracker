@@ -101,6 +101,7 @@ from crypto_tracker import (
     excusa,
     exportar,
     extremos,
+    fantasma,
     fibonacci,
     fifo,
     frase,
@@ -1458,6 +1459,9 @@ def responder(
 
     if nombre == "prediccion":
         return _prediccion(config, argumento)
+
+    if nombre == "fantasma":
+        return _fantasma(config, argumento)
 
     if nombre == "stop":
         config = _con_cambios(config)
@@ -3015,6 +3019,64 @@ def _pienso(config: Config, argumento: str) -> str:
             coingecko.cambio_24h(coin_id),
             hoy[0] if hoy else None,
             _indicador(config, "rsi", coin_id),
+        )
+    )
+
+
+def _fantasma(config: Config, argumento: str) -> str:
+    try:
+        orden = fantasma.interpretar(argumento)
+    except fantasma.FantasmaError as e:
+        return telegram.escape(str(e))
+    f = database.get_fantasma(config.database_path)
+
+    if orden[0] == "ver" and f is None:
+        return (
+            "👻 Aún no tienes cartera fantasma. Tienes 1.000 de mentira para "
+            "probar: /fantasma compra btc 200. Para empezar con otra cifra: "
+            "/fantasma reinicia 5000"
+        )
+    if orden[0] == "ver":
+        ids = [*f.posiciones, fantasma.BITCOIN]
+        precios = _consultar(config, list(dict.fromkeys(ids))) or {}
+        return alerts.con_fuente(
+            alerts.formatear_fantasma(f, precios, config.vs_currency)
+        )
+
+    coin_id = fantasma.BITCOIN if orden[0] == "reinicia" else orden[1]
+    try:
+        precios = coingecko.get_prices(
+            list(dict.fromkeys([coin_id, fantasma.BITCOIN])), config.vs_currency
+        )
+    except coingecko.CoinGeckoError as e:
+        return f"No he podido consultar el precio: {telegram.escape(str(e))}"
+    ahora = datetime.now(timezone.utc)
+
+    if orden[0] == "reinicia":
+        nueva = fantasma.nueva(orden[1], ahora, precios.get(fantasma.BITCOIN))
+        database.guardar_fantasma(config.database_path, nueva)
+        return alerts.formatear_fantasma_nueva(orden[1], config.vs_currency)
+
+    precio = precios.get(coin_id)
+    if precio is None:
+        return (
+            f"No encuentro <b>{telegram.escape(coin_id)}</b> en CoinGecko. "
+            f"Prueba con /buscar {telegram.escape(coin_id)}"
+        )
+    f = f or fantasma.nueva(fantasma.INICIAL, ahora, precios.get(fantasma.BITCOIN))
+    try:
+        if orden[0] == "compra":
+            f = fantasma.comprar(f, coin_id, orden[2], precio)
+            euros = orden[2]
+        else:
+            f, euros = fantasma.vender(f, coin_id, orden[2], precio)
+    except fantasma.FantasmaError as e:
+        return telegram.escape(str(e))
+
+    database.guardar_fantasma(config.database_path, f)
+    return alerts.con_fuente(
+        alerts.formatear_operacion_fantasma(
+            orden[0] == "compra", coin_id, euros, precio, f, config.vs_currency
         )
     )
 

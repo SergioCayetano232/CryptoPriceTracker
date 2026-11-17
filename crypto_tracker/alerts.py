@@ -92,6 +92,9 @@ from .estocastico import BAJO as BAJO_ESTOCASTICO
 from .estocastico import PERIODO as PERIODO_ESTOCASTICO
 from .estocastico import Estocastico
 from .ethereum import Ethereum
+from .fantasma import BITCOIN as BITCOIN_FANTASMA
+from .fantasma import EMPATE as EMPATE_FANTASMA
+from .fantasma import Fantasma
 from .fibonacci import Fibonacci
 from .frase import Frase
 from .funding import Funding
@@ -5830,6 +5833,91 @@ def formatear_pienso(
         f"precio de entonces. Si lo descartas antes: /pienso {escape(p.coin_id)} no"
     )
     return "\n".join(texto)
+
+
+def formatear_fantasma(f: Fantasma, precios: dict[str, float], currency: str) -> str:
+    """/fantasma a secas: cómo va la cartera de mentira."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = [
+        f"👻 <b>Tu cartera fantasma</b> · desde el {f.inicio.astimezone():%d/%m/%Y}",
+        "",
+    ]
+    for coin_id, h in sorted(f.posiciones.items()):
+        precio = precios.get(coin_id)
+        linea = f"<b>{_nombre(coin_id)}</b> {texto_cantidad(h.cantidad)}"
+        if precio is not None and h.invertido:
+            vale = h.cantidad * precio
+            cambio = _redondo((vale / h.invertido - 1) * 100)
+            linea += (
+                f" · {simbolo}{_num(h.invertido)} → {simbolo}{_num(vale)} "
+                f"({_flecha(cambio)} {cambio:+.1f}%)"
+            )
+        texto.append(linea)
+    texto.append(f"💶 Sin invertir: {simbolo}{_num(f.caja)}")
+
+    valor = f.valor(precios)
+    if valor is None:
+        texto.append("\n<i>Ahora no tengo el precio de todas: sin total</i>")
+        return "\n".join(texto)
+    cambio = _redondo((valor / f.importe - 1) * 100)
+    texto += [
+        "",
+        f"Total: <b>{simbolo}{_num(valor)}</b> de {simbolo}{_num(f.importe)} "
+        f"({_flecha(cambio)} {cambio:+.1f}%)",
+    ]
+    btc = precios.get(BITCOIN_FANTASMA)
+    en_btc = f.en_bitcoin(btc) if btc else None
+    if en_btc is not None:
+        cambio_btc = _redondo((en_btc / f.importe - 1) * 100)
+        texto.append(
+            f"Dejándolo todo en bitcoin el primer día: {simbolo}{_num(en_btc)} "
+            f"({_flecha(cambio_btc)} {cambio_btc:+.1f}%)"
+        )
+        if f.operaciones:
+            diferencia = (valor / en_btc - 1) * 100
+            if abs(diferencia) < EMPATE_FANTASMA:
+                texto.append("👉 Vas igual que si no hubieras hecho nada con bitcoin")
+            elif diferencia > 0:
+                texto.append("👉 Le ganas a no hacer nada con bitcoin")
+            else:
+                texto.append("👉 No hacer nada con bitcoin te habría ido mejor")
+    veces = "1 operación" if f.operaciones == 1 else f"{f.operaciones} operaciones"
+    texto.append(
+        f"\n<i>Dinero de mentira, sin comisiones · {veces}. "
+        "/fantasma compra btc 200 · /fantasma vende btc todo</i>"
+    )
+    return "\n".join(texto)
+
+
+def _redondo(cambio: float) -> float:
+    """Sin el -0.0% con flecha roja que sale de un céntimo de diferencia."""
+    return round(cambio, 1) + 0.0
+
+
+def formatear_fantasma_nueva(importe: float, currency: str) -> str:
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    return (
+        f"👻 Cartera fantasma nueva con {simbolo}{_num(importe)} de mentira. "
+        "Prueba: /fantasma compra btc 200"
+    )
+
+
+def formatear_operacion_fantasma(
+    compra: bool,
+    coin_id: str,
+    euros: float,
+    precio: float,
+    f: Fantasma,
+    currency: str,
+) -> str:
+    """Respuesta a /fantasma compra o vende."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    verbo = "Comprado" if compra else "Vendido"
+    return (
+        f"👻 {verbo}: {simbolo}{_num(euros)} de <b>{_nombre(coin_id)}</b> a "
+        f"{simbolo}{_num(precio)} ({texto_cantidad(euros / precio)})\n"
+        f"Te quedan {simbolo}{_num(f.caja)} sin invertir. Cómo va: /fantasma"
+    )
 
 
 def formatear_prediccion(p: Prediccion, currency: str) -> str:
