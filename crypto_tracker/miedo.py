@@ -33,8 +33,13 @@ class Indice:
 
 def pedir() -> list[Indice]:
     """Los ultimos dias, el de hoy primero. No gasta cuota de CoinGecko."""
+    return historico(DIAS)
+
+
+def historico(dias: int) -> list[Indice]:
+    """Como pedir, pero tirando hacia atrás lo que haga falta (para /sesgo)."""
     try:
-        respuesta = requests.get(URL, params={"limit": DIAS}, timeout=TIMEOUT)
+        respuesta = requests.get(URL, params={"limit": dias}, timeout=TIMEOUT)
         respuesta.raise_for_status()
         datos = respuesta.json()
     except requests.RequestException as e:

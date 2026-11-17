@@ -144,6 +144,7 @@ from .mes import MESES
 from .meta import Meta
 from .metro import PRECIO as PRECIO_METRO
 from .metro import Metro
+from .miedo import NOMBRES as NOMBRES_MIEDO
 from .miedo import Indice
 from .miedo import hace as dia_miedo
 from .miedo import nombre as nombre_miedo
@@ -217,6 +218,8 @@ from .rsi import PERIODO, SOBRECOMPRA, SOBREVENTA, Rsi, hasta_zona
 from .sat import CANTIDADES as CANTIDADES_SAT
 from .sat import SATS_POR_BTC, Sat
 from .semanal import Semana
+from .sesgo import MINIMO as MINIMO_SESGO
+from .sesgo import Lado, Sesgo
 from .sharpe import Sharpe
 from .sivendo import Simulacion
 from .sofa import PRECIO as PRECIO_SOFA
@@ -5495,6 +5498,61 @@ def formatear_volatilidad(
     if desde:
         texto.append(f"\n<i>Solo tengo precios desde el {desde.astimezone():%d/%m}</i>")
     return "\n".join(texto)
+
+
+# Lo que se dice según el índice medio de los días en que compras o vendes.
+HUMOR_COMPRAS = {
+    "miedo": "Compras sobre todo con miedo: entras cuando los demás huyen, que suele "
+    "salir mejor",
+    "codicia": "Compras sobre todo con codicia: sueles entrar cuando ya ha subido y "
+    "todo el mundo está contento",
+    "neutral": "Ni con miedo ni con codicia: compras sin dejarte llevar mucho",
+}
+HUMOR_VENTAS = {
+    "miedo": "Vendes sobre todo con miedo: ojo, suele ser vender en pleno pánico, "
+    "cerca del suelo",
+    "codicia": "Vendes sobre todo con codicia: recoges cuando todos están eufóricos, "
+    "que suele salir bien",
+    "neutral": "Vendes sin dejarte llevar por el humor del mercado",
+}
+
+
+def formatear_sesgo(s: Sesgo) -> str:
+    """/sesgo: el índice de miedo de los días en que compras y vendes."""
+    texto = ["🧠 <b>Con qué humor del mercado compras y vendes</b>"]
+    for titulo, lado, humores in (
+        ("Compras", s.compras, HUMOR_COMPRAS),
+        ("Ventas", s.ventas, HUMOR_VENTAS),
+    ):
+        if lado is not None:
+            texto += ["", *_lado_sesgo(titulo, lado, humores)]
+
+    texto.append(
+        "\n<i>El índice es el de alternative.me del día de cada movimiento (0 pánico, "
+        "100 euforia). Lo de «hoy» es lo que valen esas compras ahora contra lo que "
+        "pagaste</i>"
+    )
+    if s.sin_indice:
+        cuantos = "1 movimiento" if s.sin_indice == 1 else f"{s.sin_indice} movimientos"
+        texto.append(f"<i>{cuantos} sin índice de ese día, fuera de la cuenta</i>")
+    return "\n".join(texto)
+
+
+def _lado_sesgo(titulo: str, lado: Lado, humores: dict[str, str]) -> list[str]:
+    lineas = [f"<b>{titulo}</b> ({lado.veces}) · índice medio {lado.media:.0f}"]
+    for g in lado.grupos:
+        emoji, nombre = NOMBRES_MIEDO[g.clase]
+        linea = f"{emoji} {nombre}: {g.veces}"
+        if g.cambio is not None:
+            linea += f" · hoy {_flecha(g.cambio)} {g.cambio:+.1f}%"
+        lineas.append(linea)
+    if lado.humor is None:
+        lineas.append(
+            f"<i>Con menos de {MINIMO_SESGO} no me atrevo a decir que es costumbre</i>"
+        )
+    else:
+        lineas.append(f"👉 {humores[lado.humor]}")
+    return lineas
 
 
 def formatear_ruido(

@@ -85,6 +85,7 @@ def sin_dominancia_de_verdad(monkeypatch):
 def sin_miedo_de_verdad(monkeypatch):
     """El resumen diario lo pide; sin esto los tests irian a alternative.me."""
     monkeypatch.setattr(miedo, "pedir", lambda: [])
+    monkeypatch.setattr(miedo, "historico", lambda dias: [])
 
 
 @pytest.fixture(autouse=True)
@@ -10536,3 +10537,51 @@ def test_sin_casos_parecidos_el_aviso_va_sin_contexto(config, enviados, monkeypa
 
     assert "En 24 h" in enviados[0]
     assert "📚" not in enviados[0]
+
+
+# --- /sesgo ---
+
+
+def test_sesgo(config, enviados, monkeypatch):
+    from crypto_tracker.miedo import Indice
+
+    hoy = datetime.now(timezone.utc).date()
+    for horas in (0, 24, 48):
+        _movimiento_hace(config, "bitcoin", "compra", 1, 200, horas)
+    _movimiento_hace(config, "bitcoin", "venta", 1, 100, 72)
+    dias = [hoy - timedelta(days=d) for d in range(5)]
+    pedidos = []
+
+    def historico(n):
+        pedidos.append(n)
+        return [Indice(80, "Extreme Greed", d) for d in dias[:3]] + [
+            Indice(15, "Extreme Fear", d) for d in dias[3:]
+        ]
+
+    monkeypatch.setattr(miedo, "historico", historico)
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 100.0})
+
+    main.atender(config, _mensaje("/sesgo"))
+
+    texto = enviados[0]
+    assert pedidos and pedidos[0] >= 4
+    assert "<b>Compras</b> (3) · índice medio 80" in texto
+    assert "🤑 Codicia extrema: 3 · hoy 🔻 -50.0%" in texto
+    assert "Compras sobre todo con codicia" in texto
+    assert "<b>Ventas</b> (1)" in texto
+    assert "no me atrevo a decir que es costumbre" in texto
+
+
+def test_sesgo_sin_movimientos(config, enviados):
+    main.atender(config, _mensaje("/humor"))
+
+    assert "No has apuntado ninguna compra ni venta" in enviados[0]
+
+
+def test_sesgo_sin_indice(config, enviados, monkeypatch):
+    _movimiento_hace(config, "bitcoin", "compra", 1, 200, 0)
+    monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 100.0})
+
+    main.atender(config, _mensaje("/sesgo"))
+
+    assert "alternative.me no tiene el índice" in enviados[0]

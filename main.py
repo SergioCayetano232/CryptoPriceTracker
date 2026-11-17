@@ -189,6 +189,7 @@ from crypto_tracker import (
     salud,
     sat,
     semanal,
+    sesgo,
     sharpe,
     simbolos,
     sivendo,
@@ -1624,6 +1625,9 @@ def responder(
 
     if nombre == "miedo":
         return _miedo()
+
+    if nombre == "sesgo":
+        return _sesgo(config)
 
     if nombre == "direccion":
         return _direccion(config, argumento)
@@ -3302,6 +3306,31 @@ def _miedo() -> str | comandos.ConBotones:
     if not lista:
         return texto
     return comandos.ConBotones(texto, botones.actualizar("/miedo"))
+
+
+def _sesgo(config: Config) -> str:
+    todos = database.get_movimientos(config.database_path, None)
+    if not todos:
+        return (
+            "No has apuntado ninguna compra ni venta por aquí, y lo del PORTFOLIO "
+            f"del .env no lleva fecha. Apúntalas así: {movimientos.EJEMPLO_COMPRA}"
+        )
+    hoy = datetime.now(timezone.utc).date()
+    try:
+        indices = miedo.historico(sesgo.dias_hacia_atras(todos, hoy))
+    except miedo.MiedoError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+
+    # Sin precios de hoy sale igual, solo que sin el «hoy» de cada grupo.
+    precios = _consultar(config, list({m.coin_id for m in todos})) or {}
+    resultado = sesgo.calcular(todos, indices, precios)
+    if resultado.compras is None and resultado.ventas is None:
+        return (
+            "alternative.me no tiene el índice de los días de tus compras y ventas. "
+            "Prueba en un rato"
+        )
+    texto = alerts.formatear_sesgo(resultado)
+    return alerts.con_fuente(texto) if precios else texto
 
 
 def _mercado(config: Config) -> str | comandos.ConBotones:

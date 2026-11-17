@@ -371,6 +371,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/quiz` | Una pregunta de cultura cripto con tres respuestas en botones. Al pulsar te dice si has acertado y te ofrece otra. También `/trivial`. No gasta consultas |
 | `/glosario fomo` | Lo que significa una palabra cripto: hodl, fomo, fud, dca, ath, ballena... A secas, la lista de las que sabe |
 | `/miedo` | El índice de miedo y codicia del mercado (0 pánico, 100 euforia), con el de ayer y el de hace una semana. Viene de alternative.me y no gasta consultas de CoinGecko |
+| `/sesgo` | Con qué humor del mercado compras y vendes: cuántas de tus compras y ventas fueron con miedo extremo, miedo, neutral, codicia o codicia extrema (el índice de alternative.me del día de cada una), y cómo van hoy las compras de cada grupo. Te dice si sueles comprar con codicia o vender con miedo, a partir de tres. Solo cuenta las de `/compra` y `/venta`, que llevan fecha. También `/humor` |
 | `/comisionred` | Lo que cuesta ahora mover bitcoin, con prisa y sin ella, en dinero y en sat/vB, para un envío normal de una entrada y dos salidas. Te dice si está barata, normal o cara comparada con lo normal de la semana. Viene de mempool.space y no gasta consultas de CoinGecko. También `/mempool` |
 | `/funding btc` | Lo que pagan cada 8 horas en los futuros de Binance los que apuestan a que sube a los que apuestan a que baja, la media de la semana y un nivel: de "muchos apostando a que baja" a "muy apalancado al alza", que es cuando suelen venir las caídas bruscas. A secas, la primera que vigilo. No gasta consultas de CoinGecko. También `/financiacion` |
 | `/direccion bc1q... frío` | Vigila esa dirección de bitcoin con ese nombre y, mientras está en `--loop`, te avisa en cuanto entra o sale algo, sin esperar a que se confirme: cuánto, en BTC y en dinero, y con cuánto se queda. Sirve para tu monedero frío o para seguir a una ballena. Hasta 10. `/direccion` a secas, las que vigilo con lo que tiene cada una; `/direccion quitar frío`, deja de vigilarla. Las mira en mempool.space, así que ellos ven qué direcciones consultas. También `/monedero` |
@@ -979,6 +980,7 @@ crypto_tracker/
   fibonacci.py   los niveles entre el máximo y el mínimo, para /fibonacci
   futuro.py      entre qué cifras puede estar tu cartera, para /futuro
   sharpe.py      lo que gana la cartera para lo que se mueve, para /sharpe
+  sesgo.py       el índice de miedo de tus compras y ventas, para /sesgo
   caida.py       lo que ha bajado desde el máximo, para /caida
   backtest.py    vender al subir y recomprar al bajar, para /backtest
   sube.py        lo que ha subido desde el mínimo, para /sube
