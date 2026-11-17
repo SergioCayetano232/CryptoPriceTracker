@@ -69,6 +69,7 @@ from crypto_tracker import (
     concentracion,
     concierto,
     consejo,
+    contexto,
     convertir,
     copia,
     corregir,
@@ -389,6 +390,7 @@ def ejecutar_ciclo(
         )
         for a in avisos
     ]
+    avisos = [replace(a, contexto=_contexto(config, a)) for a in avisos]
 
     # Todo en un mensaje: si cruzan tres a la vez, tres notificaciones
     # seguidas molestan y encima Telegram empieza a cortar el ritmo.
@@ -411,6 +413,20 @@ def ejecutar_ciclo(
         logger.error("No se pudo avisar de: %s", cruzadas)
 
     return estado_nuevo, None
+
+
+def _contexto(config: Config, aviso: alerts.Alert) -> contexto.Contexto | None:
+    if aviso.coin_id == puntuales.CARTERA or aviso.variacion_24h is None:
+        return None
+    try:
+        serie = database.get_serie(
+            config.database_path, aviso.coin_id, contexto.HORAS, config.vs_currency
+        )
+    except database.DatabaseError as e:
+        # Es un extra; el aviso sale igual sin esa línea.
+        logger.warning("Aviso sin contexto de %s: %s", aviso.coin_id, e)
+        return None
+    return contexto.buscar(serie, aviso.variacion_24h)
 
 
 def _apuntar_avisos(config: Config, avisos: list[alerts.Alert]) -> None:

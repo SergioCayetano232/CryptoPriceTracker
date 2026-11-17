@@ -107,6 +107,11 @@ Cada aviso lleva debajo cuánto ha variado en las últimas 24 h (`En 24 h: 🔺
 +4.17%`), para saber si viene de un subidón o es ruido, y cuánto le falta para
 su máximo histórico.
 
+Si en 24 h se ha movido un 3% o más, añade qué pasó las otras veces que se movió
+parecido en un día, con lo que tiene guardado: `En 90 días cayó más de un 4.0% en
+un día 3 veces: a la semana estaba +1.7% de media y en 2 de 3 siguió bajando`.
+Con menos de tres casos no lo pone, que sería casualidad.
+
 **Puedes mezclar y poner varias separadas por comas:**
 ```
 WATCHLIST=bitcoin:%5,ethereum:100,solana:5
@@ -927,6 +932,7 @@ crypto_tracker/
   puntuales.py   las alertas de /alerta
   vigiladas.py   lo que cambias con /vigilar
   volatilidad.py lo que se mueve cada día, para /volatilidad
+  contexto.py    qué pasó otras veces que se movió así, para los avisos
   ruido.py       los avisos que se dieron la vuelta, para /ruido
   movimientos.py las compras y ventas de /compra y /venta
   ganancias.py   lo ganado con lo vendido, para /ganancias

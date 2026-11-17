@@ -257,8 +257,9 @@ from .whitepaper import Whitepaper
 from .zapatillas import PRECIO as PRECIO_ZAPATILLAS
 from .zapatillas import Zapatillas
 
-# Solo para el tipo: ruido.py ya importa de aquí.
+# Solo para el tipo: ruido.py y contexto.py ya importan de aquí.
 if TYPE_CHECKING:
+    from .contexto import Contexto
     from .ruido import Ruido
 
 logger = logging.getLogger(__name__)
@@ -303,6 +304,7 @@ class Alert:
     extremo_dias: int | None = None  # solo en los de maximo o minimo de N dias
     nota: str | None = None  # la que escribiste en la /alerta
     falta_maximo: float | None = None  # en %; 0 si esta en maximos
+    contexto: "Contexto | None" = None  # lo que pasó otras veces que se movió así
 
 
 def clasificar(price: float, watch: Watch) -> str:
@@ -507,6 +509,8 @@ def formatear(alerta: Alert, currency: str) -> str:
     if alerta.variacion_24h is not None:
         v = alerta.variacion_24h
         texto += f"\n<i>En 24 h: {_flecha(v)} {v:+.2f}%</i>"
+    if alerta.contexto:
+        texto += "\n" + _linea_contexto(alerta.contexto)
     if alerta.falta_maximo == 0:
         texto += "\n🎉 <i>Está en su máximo histórico</i>"
     elif alerta.falta_maximo is not None:
@@ -518,6 +522,15 @@ def formatear(alerta: Alert, currency: str) -> str:
     if alerta.puntual:
         texto += "\n<i>Era tu /alerta, ya la he quitado.</i>"
     return texto
+
+
+def _linea_contexto(c: "Contexto") -> str:
+    verbo, sigue = ("subió", "subiendo") if c.sube else ("cayó", "bajando")
+    return (
+        f"📚 <i>En {c.dias} días {verbo} más de un {c.desde:.1f}% en un día "
+        f"{c.veces} veces: a la semana estaba {c.media:+.1f}% de media y en "
+        f"{c.siguio} de {c.veces} siguió {sigue}</i>"
+    )
 
 
 def sparkline(precios: list[float]) -> str:

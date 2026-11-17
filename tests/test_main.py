@@ -10505,3 +10505,34 @@ def test_ruido_tramo_corto(config, enviados):
     main.atender(config, _mensaje("/ruido 12h"))
 
     assert "al menos 2 días" in enviados[0]
+
+
+# --- Contexto en los avisos ---
+
+
+def test_el_aviso_cuenta_que_paso_las_otras_veces(config, enviados, monkeypatch):
+    # Tres veces subió un 10% en un día y a la semana estaba un 5% más arriba.
+    for vez in range(3):
+        empieza = 60 - vez * 10
+        bloque = [100.0, 110.0, *[110.0] * 6, 115.5]
+        for i, precio in enumerate(bloque):
+            _precio_de(config, "bitcoin", precio, (empieza - i) * 24 * 60)
+    _con_fecha(config, 60000.0, 24)
+    _precio(monkeypatch, {"bitcoin": 66000.0})
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%62000.0"})
+
+    assert (
+        "días subió más de un 8.0% en un día 3 veces: a la semana estaba +5.0% "
+        "de media y en 3 de 3 siguió subiendo</i>"
+    ) in enviados[0]
+
+
+def test_sin_casos_parecidos_el_aviso_va_sin_contexto(config, enviados, monkeypatch):
+    _con_fecha(config, 60000.0, 24)
+    _precio(monkeypatch, {"bitcoin": 66000.0})
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%62000.0"})
+
+    assert "En 24 h" in enviados[0]
+    assert "📚" not in enviados[0]
