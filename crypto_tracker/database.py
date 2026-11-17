@@ -12,6 +12,9 @@ from .condicion import leer as leer_condicion
 from .config import Posicion
 from .dominancia import Foto
 from .movimientos import Movimiento
+from .pienso import Pienso
+from .pienso import a_texto as texto_pienso
+from .pienso import de_texto as leer_pienso
 from .puntuales import Puntual
 from .recordar import Recordatorio, a_texto, de_texto
 
@@ -913,6 +916,40 @@ def quitar_recordatorio(db_path: str, coin_id: str) -> bool:
     with _connect(db_path) as conn:
         cursor = conn.execute(
             "DELETE FROM ajustes WHERE clave = ?", (f"recordar:{coin_id}",)
+        )
+    return cursor.rowcount > 0
+
+
+def guardar_pienso(db_path: str, p: Pienso) -> None:
+    """Uno por cripto: pensarte otra vez la misma cambia la de antes."""
+    with _connect(db_path) as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (f"pienso:{p.coin_id}", texto_pienso(p)),
+        )
+
+
+def get_piensos(db_path: str) -> list[Pienso]:
+    with _connect(db_path) as conn:
+        filas = conn.execute(
+            "SELECT clave, valor FROM ajustes WHERE clave LIKE 'pienso:%' "
+            "ORDER BY clave"
+        ).fetchall()
+
+    lista = []
+    for fila in filas:
+        p = leer_pienso(fila["clave"].removeprefix("pienso:"), fila["valor"])
+        if p is None:
+            logger.warning("Un /pienso que no se entiende: %r", fila["valor"])
+            continue
+        lista.append(p)
+    return lista
+
+
+def quitar_pienso(db_path: str, coin_id: str) -> bool:
+    with _connect(db_path) as conn:
+        cursor = conn.execute(
+            "DELETE FROM ajustes WHERE clave = ?", (f"pienso:{coin_id}",)
         )
     return cursor.rowcount > 0
 

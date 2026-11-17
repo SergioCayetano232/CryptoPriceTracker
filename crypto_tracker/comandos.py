@@ -48,6 +48,7 @@ COMANDOS = {
     "deposito": "Tu cartera contra un depósito (ej: /deposito 3%)",
     "inflacion": "Si tu cartera le gana a la subida de precios en España",
     "recordar": "Avísame cada semana de mi compra (ej: /recordar lunes 50 btc)",
+    "pienso": "Antes de comprar, 24 h para pensarlo (ej: /pienso btc 500)",
     "deshacer": "Quitar la última compra o venta que apuntaste",
     "corregir": "Cambiar una compra o venta antigua (ej: /corregir 12 importe 700)",
     "alerta": "Avísame una vez a un precio o un % (ej: /alerta btc 70000 o +10% 7d)",
@@ -557,6 +558,11 @@ EJEMPLOS = {
         ("/stop btc +50%", "si ganas un 50%"),
         ("/stop cartera -20%", "con todo lo que metiste en la cartera"),
         ("/stop btc -10% movil", "si cae un 10% desde lo más alto que toque"),
+    ],
+    "pienso": [
+        ("/pienso btc 500", "lo que hay ahora, y mañana te pregunto otra vez"),
+        ("/pienso", "lo que te estás pensando"),
+        ("/pienso btc no", "olvidarlo"),
     ],
     "recordar": [
         ("/recordar lunes 50 btc", "cada lunes, con un botón para apuntarla"),

@@ -181,6 +181,8 @@ from .peluqueria import Peluqueria
 from .perdido import Perdido
 from .periodo import nombre as nombre_periodo
 from .permuta import Permuta
+from .pienso import IGUAL as IGUAL_PIENSO
+from .pienso import SUBIDON, Pienso
 from .piso import METROS as METROS_PISO
 from .piso import PRECIO as PRECIO_PISO
 from .piso import Piso
@@ -5725,6 +5727,81 @@ def formatear_toca_comprar(r: Recordatorio, precio: float, currency: str) -> str
         f"{simbolo}{_num(precio)} son <b>{texto_cantidad(r.importe / precio)}</b>.\n"
         "Cuando la hagas, dale al botón y la apunto en la cartera."
     )
+
+
+def formatear_pienso(
+    p: Pienso,
+    currency: str,
+    cambio_24h: float | None,
+    indice: Indice | None,
+    rsi: float | None,
+) -> str:
+    """Respuesta a /pienso: lo que hay ahora, para pensarlo con calma."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = [
+        "🧊 <b>Vale, lo pensamos 24 h</b>",
+        f"Quieres meter {simbolo}{_num(p.importe)} en <b>{_nombre(p.coin_id)}</b>, "
+        f"que está a {simbolo}{_num(p.precio)}.",
+        "",
+    ]
+    if cambio_24h is not None:
+        linea = f"{_flecha(cambio_24h)} {cambio_24h:+.2f}% en 24 h"
+        if cambio_24h >= SUBIDON:
+            linea += ": comprar justo después de un subidón suele salir caro"
+        texto.append(linea)
+    if indice is not None:
+        emoji, nombre = nombre_miedo(indice)
+        texto.append(f"{emoji} Miedo y codicia: {indice.valor} ({nombre.lower()})")
+    if rsi is not None:
+        zona = ": sobrecompra" if rsi >= 70 else ": sobreventa" if rsi <= 30 else ""
+        texto.append(f"📊 RSI {rsi:.0f}{zona}")
+    if texto[-1]:
+        texto.append("")
+
+    texto.append(
+        f"Mañana a las {p.pregunta.astimezone():%H:%M} te pregunto otra vez con el "
+        f"precio de entonces. Si lo descartas antes: /pienso {escape(p.coin_id)} no"
+    )
+    return "\n".join(texto)
+
+
+def formatear_piensos(lista: list[Pienso], currency: str) -> str:
+    """/pienso a secas."""
+    if not lista:
+        return (
+            "No te estás pensando ninguna compra. Antes de la próxima: /pienso btc "
+            "500, y te pregunto otra vez a las 24 h"
+        )
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    lineas = ["🧊 <b>Lo que te estás pensando</b>", ""]
+    for p in lista:
+        lineas.append(
+            f"<b>{_nombre(p.coin_id)}</b> {simbolo}{_num(p.importe)} · te pregunto el "
+            f"{p.pregunta.astimezone():%d/%m a las %H:%M}"
+        )
+    return "\n".join(lineas)
+
+
+def formatear_pensado(p: Pienso, precio: float, currency: str) -> str:
+    """La pregunta de las 24 h."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    cambio = p.cambio(precio)
+    texto = (
+        f"🧊 <b>¿Sigues queriendo {_nombre(p.coin_id)} por "
+        f"{simbolo}{_num(p.importe)}?</b>\n"
+        f"Ayer {simbolo}{_num(p.precio)} → ahora <b>{simbolo}{_num(precio)}</b> "
+        f"({_flecha(cambio)} {cambio:+.2f}%)\n"
+    )
+    if cambio <= -IGUAL_PIENSO:
+        texto += (
+            f"Esperar te ha salido bien: con lo mismo te llevas un "
+            f"{(p.precio / precio - 1) * 100:.1f}% más."
+        )
+    elif cambio >= IGUAL_PIENSO:
+        texto += "Ha seguido subiendo. Si aún lo ves claro, adelante."
+    else:
+        texto += "Está más o menos igual: pensarlo no te ha costado nada."
+    return texto + "\nSi la haces, dale al botón y la apunto en la cartera."
 
 
 def _quien_condicion(c: Condicion) -> str:

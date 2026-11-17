@@ -160,6 +160,7 @@ from crypto_tracker import (
     perdido,
     periodo,
     permuta,
+    pienso,
     piso,
     pizza,
     plan,
@@ -1100,6 +1101,7 @@ def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:
             resumen_anual(config)
             aviso_compensar(config)
             recordatorios(config)
+            pensados(config)
             copia_semanal(config)
             foto_dominancia(config)
         except KeyboardInterrupt:
@@ -1447,6 +1449,9 @@ def responder(
 
     if nombre == "recordar":
         return _recordar(config, argumento)
+
+    if nombre == "pienso":
+        return _pienso(config, argumento)
 
     if nombre == "stop":
         config = _con_cambios(config)
@@ -2924,6 +2929,89 @@ def _recordar(config: Config, argumento: str) -> str:
     return alerts.con_fuente(
         alerts.formatear_recordatorio(r, precio, config.vs_currency, hora)
     )
+
+
+def _pienso(config: Config, argumento: str) -> str:
+    if not argumento:
+        return alerts.formatear_piensos(
+            database.get_piensos(config.database_path), config.vs_currency
+        )
+    try:
+        coin_id, importe = pienso.interpretar(argumento)
+    except pienso.PiensoError as e:
+        return telegram.escape(str(e))
+
+    if importe is None:
+        # Lo mismo si lo quitas tú que si le das al botón cuando ya pregunté.
+        database.quitar_pienso(config.database_path, coin_id)
+        return (
+            "👍 Vale, no apunto nada. Mejor una compra que no haces que una que "
+            "lamentas"
+        )
+
+    try:
+        precio = coingecko.get_prices([coin_id], config.vs_currency).get(coin_id)
+    except coingecko.CoinGeckoError as e:
+        return f"No he podido consultar el precio: {telegram.escape(str(e))}"
+    if precio is None:
+        return (
+            f"No encuentro <b>{telegram.escape(coin_id)}</b> en CoinGecko. "
+            f"Prueba con /buscar {telegram.escape(coin_id)}"
+        )
+
+    p = pienso.Pienso(coin_id, importe, precio, datetime.now(timezone.utc))
+    database.guardar_pienso(config.database_path, p)
+
+    # Lo de alrededor es un extra: si algo falla, se contesta sin esa línea.
+    try:
+        hoy = miedo.pedir()
+    except miedo.MiedoError as e:
+        logger.warning("/pienso sin el índice de miedo: %s", e)
+        hoy = []
+    return alerts.con_fuente(
+        alerts.formatear_pienso(
+            p,
+            config.vs_currency,
+            coingecko.cambio_24h(coin_id),
+            hoy[0] if hoy else None,
+            _indicador(config, "rsi", coin_id),
+        )
+    )
+
+
+def pensados(config: Config, ahora: datetime | None = None) -> None:
+    """A las 24 h de cada /pienso, la pregunta con el precio de entonces."""
+    ahora = ahora or datetime.now(timezone.utc)
+    try:
+        tocan = pienso.tocan(database.get_piensos(config.database_path), ahora)
+    except database.DatabaseError as e:
+        logger.error("No se pudieron leer los /pienso: %s", e)
+        return
+    # Callado, se queda esperando y pregunta al volver.
+    if not tocan or _silenciado(config):
+        return
+
+    try:
+        precios = coingecko.get_prices([p.coin_id for p in tocan], config.vs_currency)
+    except coingecko.CoinGeckoError as e:
+        logger.warning("Sin precio para los /pienso: %s", e)
+        return
+
+    for p in tocan:
+        precio = precios.get(p.coin_id)
+        if precio is None:
+            continue
+        if not telegram.send_message(
+            config.telegram_token,
+            config.telegram_chat_id,
+            alerts.con_fuente(alerts.formatear_pensado(p, precio, config.vs_currency)),
+            botones=botones.para_pienso(pienso.comando_compra(p, precio), p.coin_id),
+        ):
+            logger.error("No se pudo preguntar por el /pienso de %s", p.coin_id)
+            continue
+        # Ya está preguntado: lo que diga el botón es lo que vale.
+        database.quitar_pienso(config.database_path, p.coin_id)
+        logger.info("/pienso de %s preguntado", p.coin_id)
 
 
 def recordatorios(config: Config, ahora: datetime | None = None) -> None:

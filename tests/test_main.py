@@ -10698,3 +10698,104 @@ def test_frase_con_condicion(config, enviados, monkeypatch):
 
     [alerta] = database.get_puntuales(config.database_path, "eur")
     assert alerta.condicion == condicion.Condicion("miedo", True, 20)
+
+
+# --- /pienso ---
+
+
+def test_pienso(config, enviados, monkeypatch):
+    from crypto_tracker.miedo import Indice
+
+    _precio(monkeypatch, {"bitcoin": 64000.0})
+    monkeypatch.setattr(coingecko, "_cambios", {"bitcoin": 11.2})
+    hoy = datetime.now(timezone.utc).date()
+    monkeypatch.setattr(miedo, "pedir", lambda: [Indice(78, "Extreme Greed", hoy)])
+
+    main.atender(config, _mensaje("/pienso btc 500"))
+
+    texto = enviados[0]
+    assert "🧊 <b>Vale, lo pensamos 24 h</b>" in texto
+    assert "Quieres meter €500,00 en <b>Bitcoin</b>, que está a €64.000,00" in texto
+    assert "🔺 +11.20% en 24 h: comprar justo después de un subidón" in texto
+    assert "🤑 Miedo y codicia: 78 (codicia extrema)" in texto
+    [p] = database.get_piensos(config.database_path)
+    assert (p.coin_id, p.importe, p.precio) == ("bitcoin", 500, 64000)
+
+
+def test_pienso_a_las_24_h_pregunta_una_vez(config, con_botones, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 64000.0})
+    main.atender(config, _mensaje("/pienso btc 500"))
+    con_botones.clear()
+    ahora = datetime.now(timezone.utc)
+    _precio(monkeypatch, {"bitcoin": 60800.0})
+
+    main.pensados(config, ahora + timedelta(hours=23))
+    assert con_botones == []
+    main.pensados(config, ahora + timedelta(hours=24, minutes=1))
+    main.pensados(config, ahora + timedelta(hours=25))
+
+    [(texto, botones)] = con_botones
+    assert "¿Sigues queriendo Bitcoin por €500,00?" in texto
+    assert "(🔻 -5.00%)" in texto
+    assert "te llevas un 5.3% más" in texto
+    assert botones == [
+        [("✅ La he comprado", "/compra bitcoin 0,00822368 500")],
+        [("❌ Al final no", "/pienso bitcoin no")],
+    ]
+    assert database.get_piensos(config.database_path) == []
+
+
+def test_pienso_el_boton_apunta_la_compra(config, con_botones, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 62500.0})
+    main.atender(config, _mensaje("/pienso btc 50"))
+    main.pensados(config, datetime.now(timezone.utc) + timedelta(days=1, minutes=1))
+    boton = con_botones[-1][1][0][0][1]
+
+    main.atender(config, _mensaje(boton))
+
+    assert database.get_cambios_cartera(config.database_path) == {
+        "bitcoin": Posicion("bitcoin", 0.0008, 50)
+    }
+
+
+def test_pienso_callado_espera(config, con_botones, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 64000.0})
+    main.atender(config, _mensaje("/pienso btc 500"))
+    con_botones.clear()
+    database.silenciar_hasta(
+        config.database_path, datetime.now(timezone.utc) + timedelta(days=2)
+    )
+
+    main.pensados(config, datetime.now(timezone.utc) + timedelta(days=1, minutes=1))
+
+    assert con_botones == []
+    assert len(database.get_piensos(config.database_path)) == 1
+
+
+def test_pienso_lista_y_olvidar(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 64000.0})
+    main.atender(config, _mensaje("/pienso btc 500"))
+
+    main.atender(config, _mensaje("/pienso"))
+    main.atender(config, _mensaje("/pienso btc no"))
+    main.atender(config, _mensaje("/pienso"))
+
+    assert "<b>Bitcoin</b> €500,00 · te pregunto el" in enviados[1]
+    assert "Vale, no apunto nada" in enviados[2]
+    assert "No te estás pensando ninguna compra" in enviados[3]
+
+
+def test_pienso_mal_escrito(config, enviados):
+    main.atender(config, _mensaje("/pienso btc mucho"))
+
+    assert "no es un importe" in enviados[0]
+
+
+def test_pienso_si_sigue_igual(config, con_botones, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 64000.0})
+    main.atender(config, _mensaje("/pienso btc 500"))
+    _precio(monkeypatch, {"bitcoin": 64100.0})
+
+    main.pensados(config, datetime.now(timezone.utc) + timedelta(days=1, minutes=1))
+
+    assert "Está más o menos igual" in con_botones[-1][0]

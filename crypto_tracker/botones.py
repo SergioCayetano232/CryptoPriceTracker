@@ -156,6 +156,15 @@ def deshacer_movimiento(
     return [[(texto, f"/deshacer {movimiento_id}")]]
 
 
+def para_pienso(comando: str, coin_id: str) -> list[list[tuple[str, str]]]:
+    """Apuntar la compra al precio de ahora, o dejarlo estar."""
+    filas = [
+        [("✅ La he comprado", comando)],
+        [("❌ Al final no", f"/pienso {coin_id} no")],
+    ]
+    return [f for f in filas if all(_cabe(b) for b in f)]
+
+
 def para_recordatorio(comando: str, coin_id: str) -> list[list[tuple[str, str]]]:
     """Apuntar la compra con lo que sale al precio del aviso, o dejar de recordarla."""
     # Si el precio al final es otro, se deshace y se escribe a mano.
