@@ -9063,6 +9063,33 @@ def test_stop(con_semana, enviados, monkeypatch):
     [alerta] = database.get_puntuales(con_semana.database_path, "eur")
     assert (alerta.coin_id, alerta.objetivo, alerta.sube) == ("bitcoin", 42500, False)
     assert alerta.nota == "Stop: -15% sobre lo que te costó"
+    assert "lo muevo solo a tu nuevo precio medio" in enviados[0]
+    assert database.stops(con_semana.database_path) == {alerta.id: -15.0}
+
+
+def test_el_stop_sigue_al_precio_medio_al_comprar(con_semana, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 45000.0, "solana": 100.0})
+    main.atender(con_semana, _mensaje("/stop btc -15%"))
+    # Otra 0,1 por 3.000: la media baja de 50.000 a 40.000.
+    main.atender(con_semana, _mensaje("/compra btc 0.1 3000"))
+
+    main.ejecutar_ciclo(con_semana, {})
+
+    [a] = database.get_puntuales(con_semana.database_path, "eur")
+    assert a.objetivo == pytest.approx(34000)
+    assert not any("Era tu /alerta" in t for t in enviados)
+
+
+def test_el_stop_sin_cambios_en_la_cartera_no_se_mueve(
+    con_semana, enviados, monkeypatch
+):
+    _precio(monkeypatch, {"bitcoin": 66000.0, "solana": 100.0})
+    main.atender(con_semana, _mensaje("/stop btc -15%"))
+
+    main.ejecutar_ciclo(con_semana, {})
+
+    [a] = database.get_puntuales(con_semana.database_path, "eur")
+    assert a.objetivo == 42500
 
 
 def test_el_stop_salta_y_se_borra(con_semana, enviados, monkeypatch):

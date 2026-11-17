@@ -341,6 +341,7 @@ def ejecutar_ciclo(
         con_cartera[puntuales.CARTERA] = valor
 
     pendientes = subir_moviles(config, pendientes, con_cartera)
+    pendientes = seguir_stops(config, pendientes)
     hechas = puntuales.cumplidas(pendientes, con_cartera)
     hechas, lecturas = _con_condicion(config, hechas)
     avisos += [
@@ -727,6 +728,37 @@ def subir_moviles(
             salen.append(a)
             continue
         logger.info("Stop móvil %d sube a %s", a.id, nuevo)
+        salen.append(replace(a, objetivo=nuevo))
+    return salen
+
+
+def seguir_stops(
+    config: Config, pendientes: list[puntuales.Puntual]
+) -> list[puntuales.Puntual]:
+    """Los /stop van sobre tu precio medio: si compras o vendes, se mueven con él."""
+    try:
+        porcentajes = database.stops(config.database_path)
+    except database.DatabaseError as e:
+        logger.error("No se pudieron leer los stops: %s", e)
+        return pendientes
+
+    salen = []
+    for a in pendientes:
+        nuevo = None
+        if a.id in porcentajes:
+            nuevo = stop.seguir(
+                a.objetivo, porcentajes[a.id], a.coin_id, list(config.cartera)
+            )
+        if nuevo is None:
+            salen.append(a)
+            continue
+        try:
+            database.subir_puntual(config.database_path, a.id, nuevo)
+        except database.DatabaseError as e:
+            logger.error("No se pudo mover el stop %d: %s", a.id, e)
+            salen.append(a)
+            continue
+        logger.info("Stop %d se mueve a %s con el precio medio", a.id, nuevo)
         salen.append(replace(a, objetivo=nuevo))
     return salen
 
@@ -3462,6 +3494,7 @@ def _stop(config: Config, argumento: str) -> str:
         None,
         s.nota,
     )
+    database.guardar_stop(config.database_path, alerta.id, porcentaje)
     logger.info("Stop %d creado: %s a %s", alerta.id, coin_id, s.objetivo)
     return alerts.con_fuente(alerts.formatear_stop(s, alerta.id, config.vs_currency))
 

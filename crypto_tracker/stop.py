@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 
 from .cartera import Valor
+from .config import Posicion
 from .puntuales import CARTERA, numero
 from .simbolos import a_id
 
@@ -69,6 +70,33 @@ def subir(objetivo: float, porcentaje: float, precio: float) -> float | None:
 def nota_movil(porcentaje: float) -> str:
     pct = f"{porcentaje:+g}".replace(".", ",")
     return f"Stop móvil: {pct}% desde lo más alto"
+
+
+def coste(coin_id: str, posiciones: list[Posicion]) -> float | None:
+    """Lo que te costó ahora mismo: el precio medio, o todo lo metido en la cartera."""
+    if coin_id == CARTERA:
+        if not posiciones or any(p.invertido is None for p in posiciones):
+            return None
+        return sum(p.invertido for p in posiciones)
+    for p in posiciones:
+        if p.coin_id == coin_id and p.invertido and p.cantidad:
+            return p.invertido / p.cantidad
+    return None
+
+
+def seguir(
+    objetivo: float, porcentaje: float, coin_id: str, posiciones: list[Posicion]
+) -> float | None:
+    """El objetivo nuevo si has comprado o vendido desde que lo pusiste. Si no, None."""
+    nuevo_coste = coste(coin_id, posiciones)
+    # Si ya no la tienes, lo dejo donde estaba en vez de quitarlo sin avisar.
+    if nuevo_coste is None:
+        return None
+    nuevo = nuevo_coste * (1 + porcentaje / 100)
+    # Los decimales del precio medio bailan un poco; eso no es haber comprado.
+    if abs(nuevo - objetivo) <= abs(objetivo) * 1e-9:
+        return None
+    return nuevo
 
 
 def interpretar(argumento: str) -> tuple[str, float]:

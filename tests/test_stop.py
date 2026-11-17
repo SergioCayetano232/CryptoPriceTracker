@@ -3,13 +3,16 @@
 import pytest
 
 from crypto_tracker.cartera import Valor
+from crypto_tracker.config import Posicion
 from crypto_tracker.stop import (
     Stop,
     StopError,
     calcular,
+    coste,
     interpretar,
     nota_movil,
     objetivo_movil,
+    seguir,
     separar_movil,
     subir,
 )
@@ -132,3 +135,53 @@ def test_subir(precio, sale):
 
 def test_nota_movil():
     assert nota_movil(-7.5) == "Stop móvil: -7,5% desde lo más alto"
+
+
+def test_coste_es_el_precio_medio():
+    assert coste("ethereum", [Posicion("ethereum", 2, 6000)]) == 3000
+
+
+def test_coste_de_la_cartera_es_todo_lo_metido():
+    posiciones = [Posicion("bitcoin", 0.1, 5000), Posicion("ethereum", 2, 6000)]
+    assert coste("cartera", posiciones) == 11000
+
+
+@pytest.mark.parametrize(
+    "posiciones",
+    [
+        [],
+        [Posicion("bitcoin", 0.1, 5000)],
+        [Posicion("ethereum", 2)],
+    ],
+)
+def test_coste_sin_saber_lo_que_costo(posiciones):
+    assert coste("ethereum", posiciones) is None
+
+
+def test_coste_de_la_cartera_si_una_no_dice_lo_que_costo():
+    posiciones = [Posicion("bitcoin", 0.1, 5000), Posicion("ethereum", 2)]
+    assert coste("cartera", posiciones) is None
+
+
+def test_seguir_al_comprar_mas_barato():
+    # Tenía 1 a 3000 con stop -10% en 2700; compro otra a 2000 y la media baja a 2500.
+    nuevo = seguir(2700, -10, "ethereum", [Posicion("ethereum", 2, 5000)])
+    assert nuevo == pytest.approx(2250)
+
+
+def test_seguir_un_stop_de_ganancia():
+    nuevo = seguir(4500, 50, "ethereum", [Posicion("ethereum", 2, 8000)])
+    assert nuevo == pytest.approx(6000)
+
+
+def test_seguir_sin_cambios_no_mueve_nada():
+    assert seguir(2700, -10, "ethereum", [Posicion("ethereum", 1, 3000)]) is None
+
+
+def test_seguir_si_lo_has_vendido_todo_se_queda_donde_estaba():
+    assert seguir(2700, -10, "ethereum", []) is None
+
+
+def test_seguir_la_cartera():
+    posiciones = [Posicion("bitcoin", 0.1, 5000), Posicion("ethereum", 2, 7000)]
+    assert seguir(8800, -20, "cartera", posiciones) == pytest.approx(9600)

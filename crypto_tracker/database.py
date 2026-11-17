@@ -1163,30 +1163,50 @@ def get_puntuales(db_path: str, currency: str) -> list[Puntual]:
 
 def guardar_movil(db_path: str, alerta_id: int, porcentaje: float) -> None:
     """Un /stop movil es una /alerta más; aquí va el % con el que sube."""
-    with _connect(db_path) as conn:
-        conn.execute(
-            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
-            (f"movil:{alerta_id}", repr(porcentaje)),
-        )
+    _guardar_pct(db_path, "movil", alerta_id, porcentaje)
 
 
 def moviles(db_path: str) -> dict[int, float]:
     """{número de la alerta: %}. De paso quita los de alertas que ya no están."""
+    return _leer_pct(db_path, "movil")
+
+
+def guardar_stop(db_path: str, alerta_id: int, porcentaje: float) -> None:
+    """El % de un /stop, para moverlo cuando cambie tu precio medio."""
+    _guardar_pct(db_path, "stop", alerta_id, porcentaje)
+
+
+def stops(db_path: str) -> dict[int, float]:
+    """{número de la alerta: %}. Los /stop de antes de esto no salen y no se mueven."""
+    return _leer_pct(db_path, "stop")
+
+
+def _guardar_pct(db_path: str, tipo: str, alerta_id: int, porcentaje: float) -> None:
+    with _connect(db_path) as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (f"{tipo}:{alerta_id}", repr(porcentaje)),
+        )
+
+
+def _leer_pct(db_path: str, tipo: str) -> dict[int, float]:
+    prefijo = f"{tipo}:"
     with _connect(db_path) as conn:
         # Al saltar o con /quitar se borra la alerta, y esto se quedaría huérfano.
         conn.execute(
-            "DELETE FROM ajustes WHERE clave LIKE 'movil:%' AND "
-            "CAST(substr(clave, 7) AS INTEGER) NOT IN "
-            "(SELECT id FROM alertas_puntuales)"
+            "DELETE FROM ajustes WHERE clave LIKE ? AND "
+            "CAST(substr(clave, ?) AS INTEGER) NOT IN "
+            "(SELECT id FROM alertas_puntuales)",
+            (prefijo + "%", len(prefijo) + 1),
         )
         filas = conn.execute(
-            "SELECT clave, valor FROM ajustes WHERE clave LIKE 'movil:%'"
+            "SELECT clave, valor FROM ajustes WHERE clave LIKE ?", (prefijo + "%",)
         ).fetchall()
 
     salen = {}
     for f in filas:
         try:
-            salen[int(f["clave"].removeprefix("movil:"))] = float(f["valor"])
+            salen[int(f["clave"].removeprefix(prefijo))] = float(f["valor"])
         except ValueError:
             continue
     return salen

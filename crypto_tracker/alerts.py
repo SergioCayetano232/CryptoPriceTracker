@@ -6258,10 +6258,7 @@ def formatear_stop(s: Stop, numero: int, currency: str) -> str:
         f"Es la número {numero} de /alertas."
     )
     if s.coin_id != CARTERA:
-        # El objetivo se queda fijo; si compras más, ya no es tu precio medio.
-        texto += (
-            "\n<i>Si compras o vendes, tu precio medio cambia: vuelve a ponerlo.</i>"
-        )
+        texto += "\n<i>Si compras o vendes, lo muevo solo a tu nuevo precio medio.</i>"
     return texto
 
 

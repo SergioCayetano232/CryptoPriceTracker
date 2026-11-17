@@ -934,3 +934,25 @@ def test_predicciones(db):
     # La cerrada es marcador: no se quita.
     assert not database.quitar_prediccion(db, "bitcoin", "eur")
     assert database.get_predicciones(db, "usd") == []
+
+
+def test_stops_guarda_el_porcentaje(db):
+    a = database.crear_puntual(db, "ethereum", 2700.0, False, "eur")
+    database.guardar_stop(db, a.id, -10.0)
+    assert database.stops(db) == {a.id: -10.0}
+
+
+def test_stops_no_se_mezclan_con_los_moviles(db):
+    a = database.crear_puntual(db, "ethereum", 2700.0, False, "eur")
+    b = database.crear_puntual(db, "bitcoin", 60000.0, False, "eur")
+    database.guardar_stop(db, a.id, -10.0)
+    database.guardar_movil(db, b.id, -5.0)
+    assert database.stops(db) == {a.id: -10.0}
+    assert database.moviles(db) == {b.id: -5.0}
+
+
+def test_stops_al_quitar_la_alerta_no_queda_nada(db):
+    a = database.crear_puntual(db, "ethereum", 2700.0, False, "eur")
+    database.guardar_stop(db, a.id, -10.0)
+    database.borrar_puntual(db, a.id)
+    assert database.stops(db) == {}
