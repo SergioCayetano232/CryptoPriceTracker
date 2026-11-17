@@ -116,6 +116,7 @@ from crypto_tracker import (
     gimnasio,
     grafica,
     halving,
+    herencia,
     hodl,
     horas,
     horoscopo,
@@ -1530,6 +1531,9 @@ def responder(
 
     if nombre == "tormenta":
         return _calma(config, argumento)
+
+    if nombre == "herencia":
+        return _herencia(config, argumento)
 
     if nombre == "stop":
         config = _con_cambios(config)
@@ -3090,6 +3094,46 @@ def _pienso(config: Config, argumento: str) -> str:
             hoy[0] if hoy else None,
             _indicador(config, "rsi", coin_id),
         )
+    )
+
+
+def _herencia(config: Config, argumento: str) -> str | comandos.Archivo:
+    try:
+        orden = herencia.interpretar(argumento)
+    except herencia.HerenciaError as e:
+        return telegram.escape(str(e))
+
+    if orden[0] == "nota":
+        database.guardar_herencia(
+            config.database_path, database.NOTA_HERENCIA, orden[1]
+        )
+        if orden[1] is None:
+            return "Hecho, quitada la nota."
+        return "📝 Apuntada la nota. Sale en /herencia, debajo de lo que tienes."
+    if orden[0] == "donde":
+        coin_id, texto = orden[1], orden[2]
+        database.guardar_herencia(config.database_path, coin_id, texto)
+        nombre = telegram.escape(coin_id)
+        if texto is None:
+            return f"Hecho, ya no digo dónde está <b>{nombre}</b>."
+        return f"📍 Apuntado dónde está <b>{nombre}</b>. Míralo con /herencia"
+
+    cartera = list(_con_cambios(config).cartera)
+    if not cartera:
+        return (
+            "No tienes nada en la cartera. Apunta lo que tienes con /compra "
+            "bitcoin 0.016 1000 y luego dónde está con /herencia btc Ledger"
+        )
+    donde, nota = database.get_herencia(config.database_path)
+    precios = _consultar(config, [p.coin_id for p in cartera]) or {}
+    lista = herencia.lineas(cartera, precios, donde)
+    hoy = date.today()
+    papel = alerts.documento_herencia(lista, nota, hoy, config.vs_currency)
+    return comandos.Archivo(
+        papel.encode(),
+        herencia.nombre_archivo(hoy),
+        alerts.pie_herencia(lista, hoy),
+        f"<pre>{telegram.escape(papel)}</pre>",
     )
 
 

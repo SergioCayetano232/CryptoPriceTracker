@@ -153,6 +153,8 @@ AVISO_COMPENSAR = "aviso_compensar"
 AVISO_721 = "aviso_721"
 # La cartera de mentira de /fantasma, entera en JSON.
 FANTASMA = "fantasma"
+# Con el *, ninguna cripto se puede llamar así.
+NOTA_HERENCIA = "*nota"
 
 
 class DatabaseError(Exception):
@@ -958,6 +960,28 @@ def quitar_recordatorio(db_path: str, coin_id: str) -> bool:
             "DELETE FROM ajustes WHERE clave = ?", (f"recordar:{coin_id}",)
         )
     return cursor.rowcount > 0
+
+
+def guardar_herencia(db_path: str, clave: str, texto: str | None) -> None:
+    """clave es la cripto, o NOTA_HERENCIA para la nota general. None la borra."""
+    with _connect(db_path) as conn:
+        if texto is None:
+            conn.execute("DELETE FROM ajustes WHERE clave = ?", (f"herencia:{clave}",))
+            return
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (f"herencia:{clave}", texto),
+        )
+
+
+def get_herencia(db_path: str) -> tuple[dict[str, str], str | None]:
+    """(dónde está cada cripto, la nota general)."""
+    with _connect(db_path) as conn:
+        filas = conn.execute(
+            "SELECT clave, valor FROM ajustes WHERE clave LIKE 'herencia:%'"
+        ).fetchall()
+    donde = {f["clave"].removeprefix("herencia:"): f["valor"] for f in filas}
+    return donde, donde.pop(NOTA_HERENCIA, None)
 
 
 def get_fantasma(db_path: str) -> Fantasma | None:

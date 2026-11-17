@@ -222,6 +222,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/deshacer` | Quita la última compra o venta y deja la cripto como estaba |
 | `/corregir 12 importe 700` | Cambia la cantidad o el importe de una compra, venta o recompensa antigua y rehace las cuentas de las que van detrás. El número sale en `/movimientos` y en `/exportar movimientos`. No deja hacerlo si una venta posterior se queda sin saldo |
 | `/emociones` | Con qué ánimo compras y vendes (tranquilo, aburrido, miedo, FOMO o euforia) y cómo te ha ido con cada uno: lo que valen hoy las compras de cada ánimo y lo que valdría hoy lo que vendiste. Con dos o más de al menos dos ánimos, te dice con cuál compras mejor y con cuál peor. El ánimo se apunta con los botones que salen debajo de cada `/compra` y `/venta`, o a mano con `/emocion 12 miedo` (el número sale en `/movimientos`) |
+| `/herencia` | Un papel para tu familia en un `.txt`, para guardarlo o imprimirlo: lo que tienes, cuánto vale hoy y dónde está cada una, con una nota tuya y qué hacer para recuperarlo (exchanges, carteras propias, estafas, impuesto de sucesiones). Dónde está cada una se apunta con `/herencia btc Ledger en el cajón del escritorio` y la nota con `/herencia nota ...`. **Nunca guarda claves:** si lo que escribes parece una frase de recuperación o una clave privada, no lo apunta. También `/legado` |
 | `/fantasma compra btc 200` | Una cartera de mentira para probar estrategias sin arriesgar: empiezas con 1.000 sin invertir y compras y vendes a precio de ahora (`/fantasma vende btc 50%`, `todo` o un importe). `/fantasma` a secas, cómo va cada una, el total y si le ganas a haber dejado todo en bitcoin el primer día. `/fantasma reinicia 5000` empieza de cero con otra cifra. Sin comisiones. También `/simulador` |
 | `/prediccion btc 70000` | Dices a cuánto estará el domingo a las 20:00 y ese día te digo cómo ha quedado: cuánto te fuiste, si acertaste hacia dónde iba y si le ganas a decir «se queda igual». Lleva tu marcador de todas las semanas y, a partir de cuatro, te dice si lo haces mejor que una moneda al aire. Se puede cambiar hasta un día antes. `/prediccion` a secas, lo que tienes en juego y el marcador; `/prediccion btc no`, la quita. También `/apuesta` |
 | `/pienso btc 500` | Antes de comprar: te dice cómo está ahora (lo que ha subido en 24 h, el miedo y codicia y el RSI) y a las 24 h te pregunta si sigues queriendo, con el precio de entonces y un botón ✅ que la apunta en la cartera, o ❌ para dejarlo. `/pienso` a secas, lo que te estás pensando; `/pienso btc no`, lo olvida |
@@ -954,6 +955,7 @@ crypto_tracker/
   puntuales.py   las alertas de /alerta
   pienso.py      las compras que te estás pensando, para /pienso
   fantasma.py    la cartera de mentira de /fantasma
+  herencia.py    lo que tienes y dónde, para /herencia, sin claves
   emocion.py     con qué ánimo compras y vendes, para /emociones
   prediccion.py  a cuánto estará el domingo y tu marcador, para /prediccion
   condicion.py   lo del miedo o el RSI que puede llevar una /alerta

@@ -113,6 +113,7 @@ from .gimnasio import PRECIO as PRECIO_GIMNASIO
 from .gimnasio import Gimnasio
 from .glosario import TERMINOS, buscar, parecido
 from .halving import Halving
+from .herencia import Linea
 from .hodl import Hodl
 from .horas import Horas
 from .horoscopo import Horoscopo
@@ -5837,6 +5838,65 @@ def formatear_pienso(
         f"precio de entonces. Si lo descartas antes: /pienso {escape(p.coin_id)} no"
     )
     return "\n".join(texto)
+
+
+def documento_herencia(
+    lista: list[Linea], nota: str | None, hoy: date, currency: str
+) -> str:
+    """El papel para tu familia, en texto sin formato para guardarlo o imprimirlo."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = [
+        f"LO QUE TENGO EN CRIPTOMONEDAS · a {hoy:%d/%m/%Y}",
+        "",
+        "Este papel NO lleva ninguna clave ni contraseña. Dice qué hay y dónde.",
+        "",
+    ]
+    for li in lista:
+        valor = (
+            f" (unos {simbolo}{_num(li.valor)} a {hoy:%d/%m/%Y})" if li.valor else ""
+        )
+        texto += [
+            f"- {li.coin_id.replace('-', ' ').title()}: "
+            f"{texto_cantidad(li.cantidad)}{valor}",
+            f"  Dónde: {li.donde or 'sin apuntar'}",
+        ]
+    total = sum(li.valor for li in lista if li.valor)
+    if total:
+        texto += ["", f"En total, unos {simbolo}{_num(total)} a {hoy:%d/%m/%Y}."]
+    if nota:
+        texto += ["", f"Nota: {nota}"]
+    texto += ["", "QUÉ HACER", *PASOS_HERENCIA]
+    return "\n".join(texto)
+
+
+PASOS_HERENCIA = [
+    "1. No se lo des a nadie que te escriba ofreciendo ayuda para recuperarlo: es "
+    "la estafa más común. Ninguna empresa seria te pedirá la frase de recuperación.",
+    "2. Lo que esté en un exchange (Binance, Coinbase, Kraken...): escribe a su "
+    "soporte con el certificado de defunción. Los grandes suelen tener un proceso "
+    "para herederos.",
+    "3. Lo que esté en una cartera propia (Ledger, Trezor, una app del móvil): "
+    "hace falta su frase de recuperación, que no está aquí. Búscala donde dice "
+    "cada línea.",
+    "4. El valor de arriba es orientativo: los precios cambian cada día.",
+    "5. Entra en el impuesto de sucesiones como cualquier otro bien: díselo a "
+    "quien lleve la herencia.",
+]
+
+
+def pie_herencia(lista: list[Linea], hoy: date) -> str:
+    sin = sum(1 for li in lista if not li.donde)
+    texto = (
+        "📜 <b>Lo que tienes y dónde, para tu familia</b>\n"
+        "Guárdalo o imprímelo junto a tus papeles. No lleva ninguna clave."
+    )
+    if sin:
+        cual = "1 cripto" if sin == 1 else f"{sin} criptos"
+        texto += (
+            f"\n⚠️ {cual} sin decir dónde está. Apúntalo así: "
+            "/herencia btc Ledger en el cajón del escritorio"
+        )
+    return texto + f"\n<i>Vuelve a pedirlo cuando cambie la cartera ({hoy:%d/%m})</i>"
 
 
 def formatear_aviso_calma(coin_id: str, c: Calma, currency: str) -> str:

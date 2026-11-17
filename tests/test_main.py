@@ -11125,3 +11125,63 @@ def test_comando_calma(config, enviados):
 
     assert "<b>Bitcoin</b>: 0.2% (lo normal, 4.9%) · 🤫 muy quieta" in enviados[0]
     assert "<b>Ethereum</b>: aún no tengo historia bastante" in enviados[1]
+
+
+# --- /herencia ---
+
+
+def test_herencia(config, enviados, archivos, monkeypatch):
+    database.guardar_posicion(
+        config.database_path, "bitcoin", Posicion("bitcoin", 0.02, 1000)
+    )
+    database.guardar_posicion(
+        config.database_path, "ethereum", Posicion("ethereum", 1, 2000)
+    )
+    _precio(monkeypatch, {"bitcoin": 50000.0, "ethereum": 3000.0})
+
+    main.atender(config, _mensaje("/herencia btc Ledger en el cajón del escritorio"))
+    main.atender(config, _mensaje("/herencia nota Habla con mi hermana"))
+    main.atender(config, _mensaje("/herencia"))
+
+    assert "📍 Apuntado dónde está <b>bitcoin</b>" in enviados[0]
+    assert "📝 Apuntada la nota" in enviados[1]
+    contenido, nombre, pie = archivos[0]
+    papel = contenido.decode()
+    assert nombre.startswith("herencia-cripto-") and nombre.endswith(".txt")
+    assert "NO lleva ninguna clave" in papel
+    # La que más vale, primero.
+    assert papel.index("Ethereum: 1") < papel.index("Bitcoin: 0,02")
+    assert "  Dónde: Ledger en el cajón del escritorio" in papel
+    assert "  Dónde: sin apuntar" in papel
+    assert "En total, unos €4.000,00" in papel
+    assert "Nota: Habla con mi hermana" in papel
+    assert "impuesto de sucesiones" in papel
+    assert "⚠️ 1 cripto sin decir dónde está" in pie
+
+
+def test_herencia_no_guarda_una_semilla(config, enviados):
+    semilla = (
+        "abandon ability able about above absent absorb abstract absurd abuse "
+        "access accident"
+    )
+
+    main.atender(config, _mensaje(f"/herencia btc {semilla}"))
+    main.atender(config, _mensaje(f"/legado nota {semilla}"))
+
+    assert "no la guardo" in enviados[0]
+    assert "no la guardo" in enviados[1]
+    assert database.get_herencia(config.database_path) == ({}, None)
+
+
+def test_herencia_quitar(config, enviados):
+    main.atender(config, _mensaje("/herencia btc Ledger"))
+    main.atender(config, _mensaje("/herencia btc no"))
+
+    assert "ya no digo dónde está <b>bitcoin</b>" in enviados[1]
+    assert database.get_herencia(config.database_path) == ({}, None)
+
+
+def test_herencia_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/herencia"))
+
+    assert "No tienes nada en la cartera" in enviados[0]

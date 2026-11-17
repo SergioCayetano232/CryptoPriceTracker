@@ -51,6 +51,7 @@ COMANDOS = {
     "recordar": "Avísame cada semana de mi compra (ej: /recordar lunes 50 btc)",
     "pienso": "Antes de comprar, 24 h para pensarlo (ej: /pienso btc 500)",
     "fantasma": "Una cartera de mentira para probar (ej: /fantasma compra btc 200)",
+    "herencia": "Lo que tienes y dónde, para tu familia, sin claves",
     "emociones": "Con qué ánimo compras y vendes, y qué te sale de cada uno",
     "emocion": "Apuntar con qué ánimo hiciste un movimiento (ej: /emocion 12 miedo)",
     "prediccion": "A cuánto estará el domingo, y tu marcador (ej: /prediccion btc 70k)",
@@ -212,6 +213,7 @@ COMANDOS = {
 
 # /start lo manda Telegram solo la primera vez que abres el chat.
 ALIAS = {
+    "legado": "herencia",
     "squeeze": "tormenta",
     "emoción": "emocion",
     "sentimientos": "emociones",
@@ -572,6 +574,12 @@ EJEMPLOS = {
         ("/stop btc +50%", "si ganas un 50%"),
         ("/stop cartera -20%", "con todo lo que metiste en la cartera"),
         ("/stop btc -10% movil", "si cae un 10% desde lo más alto que toque"),
+    ],
+    "herencia": [
+        ("/herencia", "el papel en un .txt para guardar o imprimir"),
+        ("/herencia btc Ledger en el cajón", "dónde está cada una, nunca la clave"),
+        ("/herencia nota Habla con mi hermana", "una nota para quien lo lea"),
+        ("/herencia btc no", "quitar dónde está"),
     ],
     "fantasma": [
         ("/fantasma", "cómo va, contra dejarlo todo en bitcoin"),
