@@ -9080,6 +9080,28 @@ def test_el_stop_sigue_al_precio_medio_al_comprar(con_semana, enviados, monkeypa
     assert not any("Era tu /alerta" in t for t in enviados)
 
 
+def test_un_stop_de_antes_tambien_sigue_al_precio_medio(
+    con_semana, enviados, monkeypatch
+):
+    # Puesto antes de que se guardara el %: solo queda la nota.
+    database.crear_puntual(
+        con_semana.database_path,
+        "bitcoin",
+        42500.0,
+        False,
+        "eur",
+        None,
+        "Stop: -15% sobre lo que te costó",
+    )
+    _precio(monkeypatch, {"bitcoin": 45000.0, "solana": 100.0})
+    main.atender(con_semana, _mensaje("/compra btc 0.1 3000"))
+
+    main.ejecutar_ciclo(con_semana, {})
+
+    [a] = database.get_puntuales(con_semana.database_path, "eur")
+    assert a.objetivo == pytest.approx(34000)
+
+
 def test_el_stop_sin_cambios_en_la_cartera_no_se_mueve(
     con_semana, enviados, monkeypatch
 ):

@@ -12,6 +12,7 @@ from crypto_tracker.stop import (
     interpretar,
     nota_movil,
     objetivo_movil,
+    porcentaje_de_nota,
     seguir,
     separar_movil,
     subir,
@@ -185,3 +186,24 @@ def test_seguir_si_lo_has_vendido_todo_se_queda_donde_estaba():
 def test_seguir_la_cartera():
     posiciones = [Posicion("bitcoin", 0.1, 5000), Posicion("ethereum", 2, 7000)]
     assert seguir(8800, -20, "cartera", posiciones) == pytest.approx(9600)
+
+
+@pytest.mark.parametrize(
+    "nota, sale",
+    [
+        ("Stop: -15% sobre lo que te costó", -15.0),
+        ("Stop: +7,5% sobre lo que te costó", 7.5),
+        (None, None),
+        ("vender la mitad", None),
+        ("Stop móvil: -10% desde lo más alto", None),
+        ("Stop: hola% sobre lo que te costó", None),
+    ],
+)
+def test_porcentaje_de_nota(nota, sale):
+    assert porcentaje_de_nota(nota) == sale
+
+
+@pytest.mark.parametrize("porcentaje", [-15.0, 7.5, 50.0])
+def test_porcentaje_de_nota_lee_lo_que_escribe_nota(porcentaje):
+    s = Stop("bitcoin", porcentaje, 50000, 66000)
+    assert porcentaje_de_nota(s.nota) == porcentaje

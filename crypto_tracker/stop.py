@@ -10,6 +10,7 @@ from .simbolos import a_id
 EJEMPLO = "/stop eth -15%"
 EJEMPLO_MOVIL = "/stop eth -10% movil"
 MOVIL = ("movil", "móvil", "sigue", "trailing")
+FINAL_NOTA = "% sobre lo que te costó"
 
 
 class StopError(Exception):
@@ -45,7 +46,18 @@ class Stop:
     def nota(self) -> str:
         """Lo que sale en /alertas y en el aviso, para que no parezca una normal."""
         pct = f"{self.porcentaje:+g}".replace(".", ",")
-        return f"Stop: {pct}% sobre lo que te costó"
+        return f"Stop: {pct}{FINAL_NOTA}"
+
+
+def porcentaje_de_nota(nota: str | None) -> float | None:
+    """'Stop: -15% sobre lo que te costó' -> -15.0. Para los /stop más viejos."""
+    if not nota or not nota.startswith("Stop: ") or not nota.endswith(FINAL_NOTA):
+        return None
+    texto = nota.removeprefix("Stop: ").removesuffix(FINAL_NOTA)
+    try:
+        return float(texto.replace(",", "."))
+    except ValueError:
+        return None
 
 
 def separar_movil(argumento: str) -> tuple[str, bool]:

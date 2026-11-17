@@ -746,10 +746,10 @@ def seguir_stops(
     salen = []
     for a in pendientes:
         nuevo = None
-        if a.id in porcentajes:
-            nuevo = stop.seguir(
-                a.objetivo, porcentajes[a.id], a.coin_id, list(config.cartera)
-            )
+        # Los puestos antes de guardar el % lo llevan en la nota.
+        porcentaje = porcentajes.get(a.id, stop.porcentaje_de_nota(a.nota))
+        if porcentaje is not None:
+            nuevo = stop.seguir(a.objetivo, porcentaje, a.coin_id, list(config.cartera))
         if nuevo is None:
             salen.append(a)
             continue
