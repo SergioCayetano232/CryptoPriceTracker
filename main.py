@@ -184,6 +184,7 @@ from crypto_tracker import (
     riesgo,
     rolex,
     rsi,
+    ruido,
     salud,
     sat,
     semanal,
@@ -1628,6 +1629,9 @@ def responder(
 
     if nombre == "volatilidad":
         return _volatilidad(config, argumento)
+
+    if nombre == "ruido":
+        return _ruido(config, argumento)
 
     if nombre == "soporte":
         return _soporte(config, argumento)
@@ -3417,6 +3421,40 @@ def _volatilidad(config: Config, argumento: str) -> str:
         veces,
         primero if falta else None,
         volatilidad.recomendar(veces, resultado.dias),
+    )
+
+
+def _ruido(config: Config, argumento: str) -> str:
+    try:
+        coin_id, horas = ruido.interpretar(argumento)
+    except periodo.PeriodoError as e:
+        return telegram.escape(str(e))
+
+    vigiladas = _con_cambios(config).watchlist
+    if coin_id:
+        vigiladas = [w for w in vigiladas if w.coin_id == coin_id]
+        if not vigiladas:
+            return (
+                f"No vigilo <b>{telegram.escape(coin_id)}</b>, así que no te ha "
+                "avisado nunca. Lo que vigilo: /vigilar"
+            )
+    if not vigiladas:
+        return "No vigilo ninguna. Empieza con /vigilar bitcoin %5"
+
+    lista, primero = [], None
+    for w in vigiladas:
+        serie = database.get_serie(
+            config.database_path, w.coin_id, horas, config.vs_currency
+        )
+        lista.append(ruido.analizar(serie, w))
+        if serie and (primero is None or serie[0][0] > primero):
+            primero = serie[0][0]
+
+    if primero is None:
+        return "Aún no tengo precios guardados. Vuelve en un rato o usa /rellenar"
+    falta = periodo.falta_principio(primero, datetime.now(timezone.utc), horas)
+    return alerts.formatear_ruido(
+        lista, horas, config.vs_currency, primero if falta else None
     )
 
 

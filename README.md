@@ -227,6 +227,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/ultimo` | Cuándo te avisó por última vez cada una de las que vigilas, a qué precio y cuánto se ha movido desde entonces. Solo cuenta los avisos que llegaron, no los del silencio |
 | `/quitar 3` | Quita la alerta número 3 (`/quitar 2 5` varias, `/quitar bitcoin` las de esa cripto, `/quitar todas` todas) |
 | `/volatilidad bitcoin 30d` | Cuánto se mueve de media al día y cuántos avisos te habría dado `/vigilar` con %2, %5 y %10 (sin tramo, 30 días) |
+| `/ruido` | De los avisos que te habrían dado tus reglas de `/vigilar`, cuántos fueron en falso: en las 24 h siguientes el precio volvió a cruzar la línea (o, en los de %, deshizo la mitad del movimiento). Si más de un tercio lo son, te propone el % o el paso más pequeño que lo arregla, listo para copiar (si vigilas por pasos y ninguno más ancho vale, prueba con %). Con `/ruido bitcoin 90d`, solo una y en otro tramo (sin tramo, 30 días). Sale de lo guardado y no gasta consultas. También `/falsos` |
 | `/vigilar` | Lo que está vigilando y cómo, con un ✖ en cada una para dejarla |
 | `/vigilar solana %5` | Añade una cripto, o cambia cómo vigila una que ya estaba |
 | `/dejar solana` | Deja de vigilarla (`/dejar sol eth` varias a la vez) |
@@ -926,6 +927,7 @@ crypto_tracker/
   puntuales.py   las alertas de /alerta
   vigiladas.py   lo que cambias con /vigilar
   volatilidad.py lo que se mueve cada día, para /volatilidad
+  ruido.py       los avisos que se dieron la vuelta, para /ruido
   movimientos.py las compras y ventas de /compra y /venta
   ganancias.py   lo ganado con lo vendido, para /ganancias
   arrepentido.py lo que valdría hoy lo vendido, para /arrepentido

@@ -4,6 +4,7 @@ import logging
 import math
 from dataclasses import dataclass
 from datetime import date, datetime, time
+from typing import TYPE_CHECKING
 
 from .aceite import PRECIO as PRECIO_ACEITE
 from .aceite import Aceite
@@ -59,6 +60,7 @@ from .concentracion import Concentracion
 from .concierto import PRECIO as PRECIO_CONCIERTO
 from .concierto import Concierto
 from .config import Posicion, Watch
+from .copia import numero as numero_env
 from .corregir import CANTIDAD, Correccion
 from .correlacion import Correlacion
 from .croquetas import PRECIO as PRECIO_CROQUETAS
@@ -254,6 +256,10 @@ from .vuelo import Vuelo
 from .whitepaper import Whitepaper
 from .zapatillas import PRECIO as PRECIO_ZAPATILLAS
 from .zapatillas import Zapatillas
+
+# Solo para el tipo: ruido.py ya importa de aquí.
+if TYPE_CHECKING:
+    from .ruido import Ruido
 
 logger = logging.getLogger(__name__)
 
@@ -5475,6 +5481,57 @@ def formatear_volatilidad(
         ]
     if desde:
         texto.append(f"\n<i>Solo tengo precios desde el {desde.astimezone():%d/%m}</i>")
+    return "\n".join(texto)
+
+
+def formatear_ruido(
+    lista: "list[Ruido]", horas: float, currency: str, desde: datetime | None
+) -> str:
+    """/ruido: cuántos avisos de /vigilar se dieron la vuelta en un día."""
+    texto = [f"🔊 <b>Avisos en falso</b> · <i>{nombre_periodo(horas)}</i>"]
+    for r in lista:
+        c = r.cuenta
+        como = describir(r.watch, currency)
+        texto += ["", f"<b>{_nombre(r.watch.coin_id)}</b>  {como}"]
+        if not c.avisos:
+            texto.append("Ningún aviso en el tramo")
+            continue
+
+        avisos = "1 aviso" if c.avisos == 1 else f"{c.avisos} avisos"
+        if not c.cerrados:
+            texto.append(f"{avisos}, todavía sin 24 h detrás para saber")
+            continue
+        if c.falsos:
+            linea = f"{avisos}, <b>{c.falsos} en falso</b> ({c.proporcion:.0%})"
+        else:
+            linea = f"{avisos}, ninguno en falso"
+        icono = "🔴" if c.mucho else "🟢" if not c.falsos else "🟡"
+        texto.append(f"{icono} {linea}")
+        if c.pendientes:
+            texto.append(f"<i>Más {c.pendientes} de las últimas 24 h, aún por ver</i>")
+
+        if r.propuesta:
+            otra, suya = r.propuesta
+            if otra.percent is not None:
+                regla = f"%{numero_env(otra.percent)}"
+            else:
+                regla = numero_env(otra.step)
+            cuantos = "1 aviso" if suya.avisos == 1 else f"{suya.avisos} avisos"
+            falsos = "ninguno" if not suya.falsos else str(suya.falsos)
+            texto.append(
+                f"👉 Con {regla}: {cuantos}, {falsos} en falso · "
+                f"<code>/vigilar {escape(otra.coin_id)} {regla}</code>"
+            )
+        elif c.mucho:
+            texto.append("Ni abriendo la regla se le quita el ruido")
+
+    texto.append(
+        "\n<i>En falso es que en 24 h lo deshizo: volvió a cruzar el precio, o en "
+        "los de % deshizo la mitad de lo que se movió. Es con tus reglas de hoy "
+        "sobre los precios guardados; no cuenta /alerta ni los avisos automáticos</i>"
+    )
+    if desde:
+        texto.append(f"<i>Solo tengo precios desde el {desde.astimezone():%d/%m}</i>")
     return "\n".join(texto)
 
 

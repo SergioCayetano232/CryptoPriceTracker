@@ -79,6 +79,7 @@ COMANDOS = {
     "backtest": "Vender al +% y recomprar al -%, contra no tocar (ej: /backtest btc)",
     "sube": "Cuánto ha subido desde el mínimo (ej: /sube btc 30d)",
     "volatilidad": "Cuánto se mueve, para elegir el % (ej: /volatilidad btc 30d)",
+    "ruido": "Cuántos avisos fueron en falso y un % mejor (ej: /ruido btc 30d)",
     "vigilar": "Ver o cambiar lo que vigilo (ej: /vigilar solana %5)",
     "dejar": "Dejar de vigilar una o varias (ej: /dejar solana o /dejar sol eth)",
     "comparar": "Qué tal les ha ido, de mejor a peor (ej: /comparar btc eth 7d)",
@@ -262,6 +263,8 @@ ALIAS = {
     "market": "mercado",
     "compare": "comparar",
     "volatility": "volatilidad",
+    "falsos": "ruido",
+    "enfalso": "ruido",
     "range": "rango",
     "streak": "racha",
     "rojos": "verdes",
@@ -753,6 +756,10 @@ EJEMPLOS = {
     "macd": [
         ("/macd bitcoin", "si va con empuje al alza o a la baja y desde cuándo"),
         ("/macd", "a secas, la primera que vigilo"),
+    ],
+    "ruido": [
+        ("/ruido", "todas las que vigilo, en los últimos 30 días"),
+        ("/ruido bitcoin 90d", "solo una y en otro tramo"),
     ],
     "estocastico": [
         (

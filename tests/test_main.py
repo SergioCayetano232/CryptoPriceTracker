@@ -10457,3 +10457,51 @@ def test_estocastico_de_una_en_una(config, enviados):
     main.atender(config, _mensaje("/estocastico btc eth"))
 
     assert "De una en una" in enviados[0]
+
+
+# --- /ruido ---
+
+
+def test_ruido_cuenta_los_avisos_en_falso(config, enviados):
+    # Un vaivén de ±6% cada hora y luego una subida que se queda: con %5,
+    # casi todo es ruido; con %7 solo avisa de la subida.
+    minutos = 70 * 60
+    for i in range(40):
+        _precio_de(config, "bitcoin", 106.0 if i % 2 else 100.0, minutos - i * 60)
+    _precio_de(config, "bitcoin", 125.0, 28 * 60)
+    _precio_de(config, "bitcoin", 125.0, 5)
+
+    main.atender(config, _mensaje("/ruido"))
+
+    texto = enviados[0]
+    assert "🔊 <b>Avisos en falso</b>" in texto
+    assert "<b>Bitcoin</b>  cada 5 % que se mueva" in texto
+    assert "🔴" in texto
+    assert "<code>/vigilar bitcoin %7</code>" in texto
+
+
+def test_ruido_por_su_otro_nombre(config, enviados):
+    _precio_de(config, "bitcoin", 100.0, 3 * 24 * 60)
+    _precio_de(config, "bitcoin", 101.0, 5)
+
+    main.atender(config, _mensaje("/falsos btc 7d"))
+
+    assert "Ningún aviso en el tramo" in enviados[0]
+
+
+def test_ruido_de_una_que_no_vigilo(config, enviados):
+    main.atender(config, _mensaje("/ruido solana"))
+
+    assert "No vigilo <b>solana</b>" in enviados[0]
+
+
+def test_ruido_sin_precios(config, enviados):
+    main.atender(config, _mensaje("/ruido"))
+
+    assert "Aún no tengo precios guardados" in enviados[0]
+
+
+def test_ruido_tramo_corto(config, enviados):
+    main.atender(config, _mensaje("/ruido 12h"))
+
+    assert "al menos 2 días" in enviados[0]
