@@ -15,6 +15,7 @@ import logging
 import math
 import sys
 import time
+from collections.abc import Callable
 from dataclasses import replace
 from datetime import date, datetime, timedelta, timezone
 
@@ -1371,6 +1372,8 @@ def contestar(config: Config, texto: str) -> None:
     )
 
 
+Respuesta = str | comandos.Foto | comandos.Archivo | comandos.ConBotones
+
 SIN_CARTERA = (
     "No tienes cartera puesta. Apunta lo que tienes con "
     "/compra bitcoin 0.016 1000, o añade al .env algo como:\n"
@@ -1378,771 +1381,434 @@ SIN_CARTERA = (
 )
 
 
-def responder(
-    config: Config, nombre: str, argumento: str
-) -> str | comandos.Foto | comandos.Archivo | comandos.ConBotones:
+def responder(config: Config, nombre: str, argumento: str) -> Respuesta:
     """El texto con el que se contesta a cada comando."""
-    if nombre == "ayuda":
-        return comandos.ayuda(argumento)
+    hacer = COMANDOS.get(nombre)
+    if hacer is None:
+        return comandos.no_entiendo(nombre, telegram.escape(argumento))
+    return hacer(config, argumento)
 
-    if nombre == "status":
-        texto = montar_resumen(config)
-        if texto is None:
-            return "No he podido consultar los precios. Prueba en un rato."
-        return comandos.ConBotones(texto, botones.actualizar("/status"))
 
-    if nombre == "resumen":
-        # No lo apunto como enviado: el de las 9 tiene que llegar igual.
-        texto = montar_resumen(
-            config,
-            titulo=TITULO_DIARIO,
-            pie=_linea_miedo(),
-            con_cerca=True,
-            aniversarios=date.today(),
-        )
-        if texto is None:
-            return "No he podido consultar los precios. Prueba en un rato."
-        return comandos.ConBotones(texto, botones.actualizar("/resumen"))
+def _con_cartera(hacer: Callable[[Config, str], Respuesta]):
+    """Los que no tienen sentido sin cartera; mira antes si has cambiado algo."""
 
-    if nombre == "mute":
-        if not argumento:
-            # A secas, si ya estaba callado, mejor decirlo que alargarlo sin querer.
-            estaba = database.silenciado_hasta(config.database_path)
-            calladas = database.criptos_calladas(config.database_path)
-            return comandos.ConBotones(
-                callar.a_secas(estaba, calladas),
-                botones.para_mute(ya_callado=bool(estaba or calladas)),
-            )
-        try:
-            cripto, minutos = callar.interpretar(argumento, datetime.now().astimezone())
-        except ConfigError as e:
-            return str(e)
-        hasta = datetime.now(timezone.utc) + timedelta(minutes=minutos)
-        if cripto:
-            database.callar_cripto(config.database_path, cripto, hasta)
-            return (
-                f"🔕 No te aviso de <b>{telegram.escape(cripto)}</b> hasta las "
-                f"{hasta.astimezone():%H:%M del %d/%m} "
-                f"({salud.cuanto(timedelta(minutes=minutos))}). "
-                f"Las demás siguen avisando. Para deshacerlo, /unmute {cripto}"
-            )
-        database.silenciar_hasta(config.database_path, hasta)
-        return comandos.ConBotones(
-            f"🔕 Callado hasta las {hasta.astimezone():%H:%M del %d/%m} "
-            f"({salud.cuanto(timedelta(minutes=minutos))}).",
-            botones.deshacer_mute(),
-        )
+    def con_cartera(config: Config, argumento: str) -> Respuesta:
+        config = _con_cambios(config)
+        if not config.cartera:
+            return SIN_CARTERA
+        return hacer(config, argumento)
 
-    if nombre == "unmute":
-        if argumento:
-            cripto = simbolos.a_id(argumento)
-            if cripto not in database.criptos_calladas(config.database_path):
-                return f"No tenía callada <b>{telegram.escape(cripto)}</b>."
-            database.callar_cripto(config.database_path, cripto, None)
-            return f"🔔 Vuelvo a avisar de <b>{telegram.escape(cripto)}</b>."
+    return con_cartera
 
+
+def _comando_status(config: Config, argumento: str) -> Respuesta:
+    texto = montar_resumen(config)
+    if texto is None:
+        return "No he podido consultar los precios. Prueba en un rato."
+    return comandos.ConBotones(texto, botones.actualizar("/status"))
+
+
+def _comando_resumen(config: Config, argumento: str) -> Respuesta:
+    # No lo apunto como enviado: el de las 9 tiene que llegar igual.
+    texto = montar_resumen(
+        config,
+        titulo=TITULO_DIARIO,
+        pie=_linea_miedo(),
+        con_cerca=True,
+        aniversarios=date.today(),
+    )
+    if texto is None:
+        return "No he podido consultar los precios. Prueba en un rato."
+    return comandos.ConBotones(texto, botones.actualizar("/resumen"))
+
+
+def _comando_mute(config: Config, argumento: str) -> Respuesta:
+    if not argumento:
+        # A secas, si ya estaba callado, mejor decirlo que alargarlo sin querer.
         estaba = database.silenciado_hasta(config.database_path)
         calladas = database.criptos_calladas(config.database_path)
-        database.silenciar_hasta(config.database_path, None)
-        database.descallar_todas(config.database_path)
-        if not estaba and not calladas:
-            return "No estaba callado."
-        desde = database.acabar_silencio(config.database_path) if estaba else None
-        if desde is None:
-            return "🔔 Vuelvo a avisar."
-        return "🔔 Vuelvo a avisar.\n\n" + _lo_perdido(config, desde)
+        return comandos.ConBotones(
+            callar.a_secas(estaba, calladas),
+            botones.para_mute(ya_callado=bool(estaba or calladas)),
+        )
+    try:
+        cripto, minutos = callar.interpretar(argumento, datetime.now().astimezone())
+    except ConfigError as e:
+        return str(e)
+    hasta = datetime.now(timezone.utc) + timedelta(minutes=minutos)
+    if cripto:
+        database.callar_cripto(config.database_path, cripto, hasta)
+        return (
+            f"🔕 No te aviso de <b>{telegram.escape(cripto)}</b> hasta las "
+            f"{hasta.astimezone():%H:%M del %d/%m} "
+            f"({salud.cuanto(timedelta(minutes=minutos))}). "
+            f"Las demás siguen avisando. Para deshacerlo, /unmute {cripto}"
+        )
+    database.silenciar_hasta(config.database_path, hasta)
+    return comandos.ConBotones(
+        f"🔕 Callado hasta las {hasta.astimezone():%H:%M del %d/%m} "
+        f"({salud.cuanto(timedelta(minutes=minutos))}).",
+        botones.deshacer_mute(),
+    )
 
-    if nombre == "horario":
-        return _horario(config, argumento)
 
-    if nombre == "semana":
-        # De una sola es lo mismo que su histórico de 7 días: no lo duplico.
-        if len(argumento.split()) > 1:
-            return "De una en una. Por ejemplo: /semana bitcoin"
-        if argumento:
-            return _historico(config, f"{argumento} 7d")
-        return _semana(config)
+def _comando_unmute(config: Config, argumento: str) -> Respuesta:
+    if argumento:
+        cripto = simbolos.a_id(argumento)
+        if cripto not in database.criptos_calladas(config.database_path):
+            return f"No tenía callada <b>{telegram.escape(cripto)}</b>."
+        database.callar_cripto(config.database_path, cripto, None)
+        return f"🔔 Vuelvo a avisar de <b>{telegram.escape(cripto)}</b>."
 
-    if nombre == "cartera":
-        config = _con_cambios(config)
-        if not config.cartera:
-            return SIN_CARTERA
-        return _cartera(config, argumento)
+    estaba = database.silenciado_hasta(config.database_path)
+    calladas = database.criptos_calladas(config.database_path)
+    database.silenciar_hasta(config.database_path, None)
+    database.descallar_todas(config.database_path)
+    if not estaba and not calladas:
+        return "No estaba callado."
+    desde = database.acabar_silencio(config.database_path) if estaba else None
+    if desde is None:
+        return "🔔 Vuelvo a avisar."
+    return "🔔 Vuelvo a avisar.\n\n" + _lo_perdido(config, desde)
 
-    if nombre == "tarjeta":
-        return _tarjeta(config, argumento)
 
-    if nombre == "reparto":
-        config = _con_cambios(config)
-        if not config.cartera:
-            return SIN_CARTERA
-        return _reparto(config)
+def _comando_semana(config: Config, argumento: str) -> Respuesta:
+    # De una sola es lo mismo que su histórico de 7 días: no lo duplico.
+    if len(argumento.split()) > 1:
+        return "De una en una. Por ejemplo: /semana bitcoin"
+    if argumento:
+        return _historico(config, f"{argumento} 7d")
+    return _semana(config)
 
-    if nombre == "riesgo":
-        config = _con_cambios(config)
-        if not config.cartera:
-            return SIN_CARTERA
-        return _riesgo(config)
 
-    if nombre == "rebalanceo":
-        config = _con_cambios(config)
-        if not config.cartera:
-            return SIN_CARTERA
-        return _rebalanceo(config, argumento)
+def _comando_vigilar(config: Config, argumento: str) -> Respuesta:
+    return _vigilar(config, argumento) if argumento else _lista_vigiladas(config)
 
-    if nombre == "compra":
-        return _comprar(config, argumento)
 
-    if nombre == "venta":
-        return _vender(config, argumento)
-
-    if nombre == "recompensa":
-        return _recompensa(config, argumento)
-
-    if nombre == "corregir":
-        return _corregir(config, argumento)
-
-    if nombre == "movimientos":
-        return _movimientos(config, argumento)
-
-    if nombre == "primera":
-        return _primera(config, argumento)
-
-    if nombre == "pelotazo":
-        return _pelotazo(config)
-
-    if nombre == "apodo":
-        return _apodo(config)
-
-    if nombre == "ganancias":
-        return _ganancias(config)
-
-    if nombre == "arrepentido":
-        return _arrepentido(config)
-
-    if nombre == "impuestos":
-        return _impuestos(config, argumento)
-
-    if nombre == "sivendo":
-        return _sivendo(config, argumento)
-
-    if nombre == "permuta":
-        return _permuta(config, argumento)
-
-    if nombre == "compensar":
-        return _compensar(config)
-
-    if nombre == "modelo721":
-        return _modelo721(config)
-
-    if nombre == "deshacer":
-        return _deshacer(config, argumento)
-
-    if nombre == "historico":
-        return _historico(config, argumento)
-
-    if nombre == "alerta":
-        return _crear_alerta(config, argumento)
-
-    if nombre == "recordar":
-        return _recordar(config, argumento)
-
-    if nombre == "pienso":
-        return _pienso(config, argumento)
-
-    if nombre == "prediccion":
-        return _prediccion(config, argumento)
-
-    if nombre == "fantasma":
-        return _fantasma(config, argumento)
-
-    if nombre == "emocion":
-        return _emocion(config, argumento)
-
-    if nombre == "emociones":
-        return _emociones(config)
-
-    if nombre == "tormenta":
-        return _calma(config, argumento)
-
-    if nombre == "herencia":
-        return _herencia(config, argumento)
-
-    if nombre == "escalera":
-        config = _con_cambios(config)
-        if not config.cartera:
-            return SIN_CARTERA
-        return _escalera(config, argumento)
-
-    if nombre == "stop":
-        config = _con_cambios(config)
-        if not config.cartera:
-            return SIN_CARTERA
-        return _stop(config, argumento)
-
-    if nombre == "vigilar":
-        return _vigilar(config, argumento) if argumento else _lista_vigiladas(config)
-
-    if nombre == "dejar":
-        return _dejar(config, simbolos.varias(argumento))
-
-    if nombre == "alertas":
+def _comando_quitar(config: Config, argumento: str) -> Respuesta:
+    # A secas, la lista con sus 🗑: mas facil que ir a mirar el numero.
+    if not argumento:
         return _alertas(config)
-
-    if nombre == "quitar":
-        # A secas, la lista con sus 🗑: mas facil que ir a mirar el numero.
-        if not argumento:
-            return _alertas(config)
-        if argumento.lower() == "todas":
-            cuantas = database.borrar_puntuales(
-                config.database_path, config.vs_currency
-            )
-            if not cuantas:
-                return "No tenías ninguna alerta puesta."
-            if cuantas == 1:
-                return "🗑 Alerta quitada."
-            return f"🗑 {cuantas} alertas quitadas."
-        try:
-            numeros = puntuales.numeros(argumento)
-        except puntuales.PuntualError:
-            if len(argumento.split()) == 1:
-                return _quitar_de_cripto(config, simbolos.a_id(argumento))
-            return (
-                "¿Cuál? Mira el número con /alertas y luego, por ejemplo, /quitar 3 "
-                "o /quitar 2 5. Para quitarlas todas: /quitar todas"
-            )
-        quitadas = [
-            n for n in numeros if database.borrar_puntual(config.database_path, n)
-        ]
-        no_estaban = [n for n in numeros if n not in quitadas]
-        return alerts.formatear_quitadas(quitadas, no_estaban)
-
-    if nombre == "consultas":
-        apuntar_consultas(config)
-        ahora = datetime.now(timezone.utc)
-        total = database.get_consultas(config.database_path, cuota.mes(ahora))
-        return cuota.mensaje_estado(total, ahora)
-
-    if nombre == "bot":
-        if _pulso is None:
-            return "Esto solo lo sé con el bot vigilando (--loop)."
-        apuntar_consultas(config)
-        ahora = datetime.now(timezone.utc)
-        return salud.mensaje_bot(
-            _pulso,
-            ahora,
-            len(_con_cambios(config).watchlist),
-            len(database.get_puntuales(config.database_path, config.vs_currency)),
-            _silenciado(config),
-            database.get_consultas(config.database_path, cuota.mes(ahora)),
-            database.guardados(config.database_path),
+    if argumento.lower() == "todas":
+        cuantas = database.borrar_puntuales(config.database_path, config.vs_currency)
+        if not cuantas:
+            return "No tenías ninguna alerta puesta."
+        if cuantas == 1:
+            return "🗑 Alerta quitada."
+        return f"🗑 {cuantas} alertas quitadas."
+    try:
+        numeros = puntuales.numeros(argumento)
+    except puntuales.PuntualError:
+        if len(argumento.split()) == 1:
+            return _quitar_de_cripto(config, simbolos.a_id(argumento))
+        return (
+            "¿Cuál? Mira el número con /alertas y luego, por ejemplo, /quitar 3 "
+            "o /quitar 2 5. Para quitarlas todas: /quitar todas"
         )
-
-    if nombre == "precio":
-        return _precio(config, argumento)
-
-    if nombre == "convertir":
-        return _convertir(config, argumento)
-
-    if nombre == "exportar":
-        return _exportar(config, argumento)
-
-    if nombre == "si":
-        return _si(config, argumento)
-
-    if nombre == "dca":
-        return _dca(config, argumento)
-
-    if nombre == "objetivo":
-        return _objetivo(config, argumento)
-
-    if nombre == "promediar":
-        return _promediar(config, argumento)
-
-    if nombre == "posicion":
-        return _posicion(config, argumento)
-
-    if nombre == "plan":
-        return _plan(config, argumento)
-
-    if nombre == "apy":
-        return _apy(config, argumento)
-
-    if nombre == "limite":
-        return _limite(config, argumento)
-
-    if nombre == "meta":
-        return _meta(config, argumento)
-
-    if nombre == "mes":
-        return _mes(config)
-
-    if nombre == "anual":
-        return _anual(config, argumento)
-
-    if nombre == "hodl":
-        return _hodl(config)
-
-    if nombre == "record":
-        return _record(config)
-
-    if nombre == "vsbtc":
-        return _vsbtc(config)
-
-    if nombre == "vsbolsa":
-        return _vsbolsa(config, argumento)
-
-    if nombre == "comisiones":
-        return _comisiones(config, argumento)
-
-    if nombre == "deposito":
-        return _deposito(config, argumento)
-
-    if nombre == "compras":
-        return _compras(config, argumento)
-
-    if nombre == "timing":
-        return _timing(config, argumento)
-
-    if nombre == "calendario":
-        return _calendario(config, argumento)
-
-    if nombre == "rentabilidad":
-        return _rentabilidad(config)
-
-    if nombre == "ath":
-        return _ath(config, argumento)
-
-    if nombre == "tendencias":
-        return _tendencias(config)
-
-    if nombre == "dominancia":
-        return _dominancia(config)
-
-    if nombre == "mercado":
-        return _mercado(config)
-
-    if nombre == "top":
-        return _top(config)
-
-    if nombre == "aleatoria":
-        return _aleatoria(config)
-
-    if nombre == "glosario":
-        return alerts.formatear_glosario(argumento)
-
-    if nombre == "frase":
-        return alerts.formatear_frase(frase.elegir())
-
-    if nombre == "consejo":
-        return alerts.formatear_consejo(consejo.elegir())
-
-    if nombre == "excusa":
-        return alerts.formatear_excusa(excusa.elegir())
-
-    if nombre == "refran":
-        return alerts.formatear_refran(refran.elegir())
-
-    if nombre == "horoscopo":
-        try:
-            signo = horoscopo.interpretar(argumento)
-        except horoscopo.HoroscopoError as e:
-            return telegram.escape(str(e))
-        return alerts.formatear_horoscopo(horoscopo.leer(signo, date.today()))
-
-    if nombre == "galleta":
-        return alerts.formatear_galleta(galleta.abrir(date.today()))
-
-    if nombre == "tarot":
-        return alerts.formatear_tarot(tarot.sacar())
-
-    if nombre == "bola":
-        try:
-            pregunta = bola.interpretar(argumento)
-        except bola.BolaError as e:
-            return telegram.escape(str(e))
-        return alerts.formatear_bola(pregunta, bola.agitar())
-
-    if nombre == "version":
-        return alerts.formatear_version(version.leer())
-
-    if nombre == "chiste":
-        return alerts.formatear_chiste(chiste.elegir())
-
-    if nombre == "dato":
-        return alerts.formatear_dato(dato.elegir())
-
-    if nombre == "dado":
-        # Lee la cripto igual que /caraocruz, así que uso su misma función.
-        return alerts.formatear_dado(dado.tirar(), caraocruz.interpretar(argumento))
-
-    if nombre == "caraocruz":
-        return alerts.formatear_caraocruz(
-            caraocruz.lanzar(), caraocruz.interpretar(argumento)
-        )
-
-    if nombre == "adivina":
-        return _adivina(config, argumento)
-
-    if nombre == "quiz":
-        elegida = quiz.interpretar(argumento)
-        if elegida is None:
-            return comandos.ConBotones(*alerts.formatear_quiz(quiz.sacar()))
-        return comandos.ConBotones(*alerts.formatear_respuesta_quiz(*elegida))
-
-    if nombre == "ppt":
-        try:
-            tuya = ppt.interpretar(argumento)
-        except ppt.PptError as e:
-            return telegram.escape(str(e))
-        del_bot = ppt.sacar()
-        return alerts.formatear_ppt(tuya, del_bot, ppt.resultado(tuya, del_bot))
-
-    if nombre == "ultimo":
-        return _ultimo(config)
-
-    if nombre == "miedo":
-        return _miedo()
-
-    if nombre == "sesgo":
-        return _sesgo(config)
-
-    if nombre == "direccion":
-        return _direccion(config, argumento)
-
-    if nombre == "estacional":
-        return _estacional(config, argumento)
-
-    if nombre == "funding":
-        return _funding(config, argumento)
-
-    if nombre == "comisionred":
-        return _comisionred(config)
-
-    if nombre == "comparar":
-        return _comparar(config, argumento)
-
-    if nombre == "quieta":
-        return _quieta(config)
-
-    if nombre == "volatilidad":
-        return _volatilidad(config, argumento)
-
-    if nombre == "ruido":
-        return _ruido(config, argumento)
-
-    if nombre == "soporte":
-        return _soporte(config, argumento)
-
-    if nombre == "rango":
-        return _rango(config, argumento)
-
-    if nombre == "racha":
-        return _racha(config, argumento)
-
-    if nombre == "caida":
-        return _caida(config, argumento)
-
-    if nombre == "backtest":
-        return _backtest(config, argumento)
-
-    if nombre == "sube":
-        return _sube(config, argumento)
-
-    if nombre == "verdes":
-        return _verdes(config, argumento)
-
-    if nombre == "extremo":
-        return _extremo(config, argumento)
-
-    if nombre == "diames":
-        return _diames(config, argumento)
-
-    if nombre == "diasemana":
-        return _diasemana(config, argumento)
-
-    if nombre == "horas":
-        return _horas(config, argumento)
-
-    if nombre == "ratio":
-        return _ratio(config, argumento)
-
-    if nombre == "hoy":
-        return _hoy(config, argumento)
-
-    if nombre == "equilibrio":
-        return _equilibrio(config)
-
-    if nombre == "doble":
-        return _doble(config)
-
-    if nombre == "mitad":
-        return _mitad(config)
-
-    if nombre == "sharpe":
-        return _sharpe(config, argumento)
-
-    if nombre == "futuro":
-        return _futuro(config, argumento)
-
-    if nombre == "inflacion":
-        return _inflacion(config)
-
-    if nombre == "fibonacci":
-        return _fibonacci(config, argumento)
-
-    if nombre == "macd":
-        return _macd(config, argumento)
-
-    if nombre == "estocastico":
-        return _estocastico(config, argumento)
-
-    if nombre == "bollinger":
-        return _bollinger(config, argumento)
-
-    if nombre == "rsi":
-        return _rsi(config, argumento)
-
-    if nombre == "rellenar":
-        return _rellenar(config, argumento)
-
-    if nombre == "backup":
-        return _backup(config)
-
-    if nombre == "cuando":
-        return _cuando(config, argumento)
-
-    if nombre == "redondo":
-        return _redondo(config, argumento)
-
-    if nombre == "dia":
-        return _dia(config, argumento)
-
-    if nombre == "correlacion":
-        return _correlacion(config, argumento)
-
-    if nombre == "halving":
-        return alerts.formatear_halving(halving.calcular(date.today()))
-
-    if nombre == "pizza":
-        return _pizza(config)
-
-    if nombre == "mundo":
-        return _mundo(config)
-
-    if nombre == "lambo":
-        return _lambo(config)
-
-    if nombre == "enletras":
-        valor = _valor_guardado(config)
-        if isinstance(valor, str):
-            return valor
-        return alerts.formatear_enletras(valor, config.vs_currency)
-
-    if nombre == "ballena":
-        return _ballena(config)
-
-    if nombre == "cafe":
-        return _cafe(config)
-
-    if nombre == "sueldo":
-        return _sueldo(config)
-
-    if nombre == "gasolina":
-        return _gasolina(config)
-
-    if nombre == "bigmac":
-        return _bigmac(config)
-
-    if nombre == "iphone":
-        return _iphone(config)
-
-    if nombre == "alquiler":
-        return _alquiler(config)
-
-    if nombre == "oro":
-        return _oro(config)
-
-    if nombre == "netflix":
-        return _netflix(config)
-
-    if nombre == "ps5":
-        return _ps5(config)
-
-    if nombre == "tesla":
-        return _tesla(config)
-
-    if nombre == "spotify":
-        return _spotify(config)
-
-    if nombre == "cana":
-        return _cana(config)
-
-    if nombre == "switch":
-        return _switch(config)
-
-    if nombre == "cine":
-        return _cine(config)
-
-    if nombre == "gimnasio":
-        return _gimnasio(config)
-
-    if nombre == "vuelo":
-        return _vuelo(config)
-
-    if nombre == "super":
-        return _super(config)
-
-    if nombre == "kebab":
-        return _kebab(config)
-
-    if nombre == "metro":
-        return _metro(config)
-
-    if nombre == "luz":
-        return _luz(config)
-
-    if nombre == "libro":
-        return _libro(config)
-
-    if nombre == "concierto":
-        return _concierto(config)
-
-    if nombre == "airpods":
-        return _airpods(config)
-
-    if nombre == "zapatillas":
-        return _zapatillas(config)
-
-    if nombre == "ave":
-        return _ave(config)
-
-    if nombre == "menu":
-        return _menu(config)
-
-    if nombre == "hotel":
-        return _hotel(config)
-
-    if nombre == "peluqueria":
-        return _peluqueria(config)
-
-    if nombre == "macbook":
-        return _macbook(config)
-
-    if nombre == "bici":
-        return _bici(config)
-
-    if nombre == "churros":
-        return _churros(config)
-
-    if nombre == "loteria":
-        return _loteria(config)
-
-    if nombre == "piso":
-        return _piso(config)
-
-    if nombre == "futbol":
-        return _futbol(config)
-
-    if nombre == "taxi":
-        return _taxi(config)
-
-    if nombre == "tortilla":
-        return _tortilla(config)
-
-    if nombre == "videojuego":
-        return _videojuego(config)
-
-    if nombre == "sofa":
-        return _sofa(config)
-
-    if nombre == "coche":
-        return _coche(config)
-
-    if nombre == "boda":
-        return _boda(config)
-
-    if nombre == "jamon":
-        return _jamon(config)
-
-    if nombre == "aceite":
-        return _aceite(config)
-
-    if nombre == "paella":
-        return _paella(config)
-
-    if nombre == "croquetas":
-        return _croquetas(config)
-
-    if nombre == "pan":
-        return _pan(config)
-
-    if nombre == "rolex":
-        return _rolex(config)
-
-    if nombre == "emoji":
-        return _emoji(config)
-
-    if nombre == "tiempo":
-        return _tiempo(config)
-
-    if nombre == "carnet":
-        return _carnet(config)
-
-    if nombre == "nochevieja":
-        return _nochevieja(config)
-
-    if nombre == "navidad":
-        return _navidad(config)
-
-    if nombre == "cumple":
-        return alerts.formatear_cumple(cumple.Cumple(date.today()))
-
-    if nombre == "whitepaper":
-        return alerts.formatear_whitepaper(whitepaper.Whitepaper(date.today()))
-
-    if nombre == "merge":
-        return alerts.formatear_merge(merge.Merge(date.today()))
-
-    if nombre == "ethereum":
-        return alerts.formatear_ethereum(ethereum.Ethereum(date.today()))
-
-    if nombre == "adios":
-        return alerts.formatear_adios(adios.Adios(date.today()))
-
-    if nombre == "millonario":
-        return _millonario(config, argumento)
-
-    if nombre == "sat":
-        precio = _precio_o_pedirlo(config, "bitcoin")
-        if isinstance(precio, str):
-            return precio
-        return alerts.formatear_sat(sat.Sat(precio), config.vs_currency)
-
-    if nombre == "ajustes":
-        return ajustes.mensaje(_con_cambios(config))
-
-    if nombre == "copia":
-        actual = _con_cambios(config)
-        return alerts.formatear_copia(
-            copia.lineas(actual.watchlist, actual.cartera, actual.resumen_diario)
-        )
-
-    if nombre == "media":
-        return _media(config, argumento)
-
-    if nombre == "buscar":
-        if not argumento:
-            return "¿Qué busco? Por ejemplo: /buscar btc"
-        try:
-            resultados = coingecko.buscar(argumento)
-        except coingecko.CoinGeckoError as e:
-            return f"No he podido buscar ahora mismo: {telegram.escape(str(e))}"
-        if not resultados:
-            return alerts.formatear_busqueda(argumento, resultados)
-        return alerts.con_fuente(alerts.formatear_busqueda(argumento, resultados))
-
-    return comandos.no_entiendo(nombre, telegram.escape(argumento))
+    quitadas = [n for n in numeros if database.borrar_puntual(config.database_path, n)]
+    no_estaban = [n for n in numeros if n not in quitadas]
+    return alerts.formatear_quitadas(quitadas, no_estaban)
+
+
+def _comando_consultas(config: Config, argumento: str) -> Respuesta:
+    apuntar_consultas(config)
+    ahora = datetime.now(timezone.utc)
+    total = database.get_consultas(config.database_path, cuota.mes(ahora))
+    return cuota.mensaje_estado(total, ahora)
+
+
+def _comando_bot(config: Config, argumento: str) -> Respuesta:
+    if _pulso is None:
+        return "Esto solo lo sé con el bot vigilando (--loop)."
+    apuntar_consultas(config)
+    ahora = datetime.now(timezone.utc)
+    return salud.mensaje_bot(
+        _pulso,
+        ahora,
+        len(_con_cambios(config).watchlist),
+        len(database.get_puntuales(config.database_path, config.vs_currency)),
+        _silenciado(config),
+        database.get_consultas(config.database_path, cuota.mes(ahora)),
+        database.guardados(config.database_path),
+    )
+
+
+def _comando_horoscopo(config: Config, argumento: str) -> Respuesta:
+    try:
+        signo = horoscopo.interpretar(argumento)
+    except horoscopo.HoroscopoError as e:
+        return telegram.escape(str(e))
+    return alerts.formatear_horoscopo(horoscopo.leer(signo, date.today()))
+
+
+def _comando_bola(config: Config, argumento: str) -> Respuesta:
+    try:
+        pregunta = bola.interpretar(argumento)
+    except bola.BolaError as e:
+        return telegram.escape(str(e))
+    return alerts.formatear_bola(pregunta, bola.agitar())
+
+
+def _comando_quiz(config: Config, argumento: str) -> Respuesta:
+    elegida = quiz.interpretar(argumento)
+    if elegida is None:
+        return comandos.ConBotones(*alerts.formatear_quiz(quiz.sacar()))
+    return comandos.ConBotones(*alerts.formatear_respuesta_quiz(*elegida))
+
+
+def _comando_ppt(config: Config, argumento: str) -> Respuesta:
+    try:
+        tuya = ppt.interpretar(argumento)
+    except ppt.PptError as e:
+        return telegram.escape(str(e))
+    del_bot = ppt.sacar()
+    return alerts.formatear_ppt(tuya, del_bot, ppt.resultado(tuya, del_bot))
+
+
+def _comando_enletras(config: Config, argumento: str) -> Respuesta:
+    valor = _valor_guardado(config)
+    if isinstance(valor, str):
+        return valor
+    return alerts.formatear_enletras(valor, config.vs_currency)
+
+
+def _comando_sat(config: Config, argumento: str) -> Respuesta:
+    precio = _precio_o_pedirlo(config, "bitcoin")
+    if isinstance(precio, str):
+        return precio
+    return alerts.formatear_sat(sat.Sat(precio), config.vs_currency)
+
+
+def _comando_copia(config: Config, argumento: str) -> Respuesta:
+    actual = _con_cambios(config)
+    return alerts.formatear_copia(
+        copia.lineas(actual.watchlist, actual.cartera, actual.resumen_diario)
+    )
+
+
+def _comando_buscar(config: Config, argumento: str) -> Respuesta:
+    if not argumento:
+        return "¿Qué busco? Por ejemplo: /buscar btc"
+    try:
+        resultados = coingecko.buscar(argumento)
+    except coingecko.CoinGeckoError as e:
+        return f"No he podido buscar ahora mismo: {telegram.escape(str(e))}"
+    if not resultados:
+        return alerts.formatear_busqueda(argumento, resultados)
+    return alerts.con_fuente(alerts.formatear_busqueda(argumento, resultados))
+
+
+# Cada comando de Telegram y lo que hace. Las lambdas buscan la función al
+# llamarla, así los tests pueden cambiarlas con monkeypatch.
+COMANDOS: dict[str, Callable[[Config, str], Respuesta]] = {
+    "ayuda": lambda c, a: comandos.ayuda(a),
+    "status": _comando_status,
+    "resumen": _comando_resumen,
+    "mute": _comando_mute,
+    "unmute": _comando_unmute,
+    "horario": lambda c, a: _horario(c, a),
+    "semana": _comando_semana,
+    "cartera": _con_cartera(lambda c, a: _cartera(c, a)),
+    "tarjeta": lambda c, a: _tarjeta(c, a),
+    "reparto": _con_cartera(lambda c, a: _reparto(c)),
+    "riesgo": _con_cartera(lambda c, a: _riesgo(c)),
+    "rebalanceo": _con_cartera(lambda c, a: _rebalanceo(c, a)),
+    "compra": lambda c, a: _comprar(c, a),
+    "venta": lambda c, a: _vender(c, a),
+    "recompensa": lambda c, a: _recompensa(c, a),
+    "corregir": lambda c, a: _corregir(c, a),
+    "movimientos": lambda c, a: _movimientos(c, a),
+    "primera": lambda c, a: _primera(c, a),
+    "pelotazo": lambda c, a: _pelotazo(c),
+    "apodo": lambda c, a: _apodo(c),
+    "ganancias": lambda c, a: _ganancias(c),
+    "arrepentido": lambda c, a: _arrepentido(c),
+    "impuestos": lambda c, a: _impuestos(c, a),
+    "sivendo": lambda c, a: _sivendo(c, a),
+    "permuta": lambda c, a: _permuta(c, a),
+    "compensar": lambda c, a: _compensar(c),
+    "modelo721": lambda c, a: _modelo721(c),
+    "deshacer": lambda c, a: _deshacer(c, a),
+    "historico": lambda c, a: _historico(c, a),
+    "alerta": lambda c, a: _crear_alerta(c, a),
+    "recordar": lambda c, a: _recordar(c, a),
+    "pienso": lambda c, a: _pienso(c, a),
+    "prediccion": lambda c, a: _prediccion(c, a),
+    "fantasma": lambda c, a: _fantasma(c, a),
+    "emocion": lambda c, a: _emocion(c, a),
+    "emociones": lambda c, a: _emociones(c),
+    "tormenta": lambda c, a: _calma(c, a),
+    "herencia": lambda c, a: _herencia(c, a),
+    "escalera": _con_cartera(lambda c, a: _escalera(c, a)),
+    "stop": _con_cartera(lambda c, a: _stop(c, a)),
+    "vigilar": _comando_vigilar,
+    "dejar": lambda c, a: _dejar(c, simbolos.varias(a)),
+    "alertas": lambda c, a: _alertas(c),
+    "quitar": _comando_quitar,
+    "consultas": _comando_consultas,
+    "bot": _comando_bot,
+    "precio": lambda c, a: _precio(c, a),
+    "convertir": lambda c, a: _convertir(c, a),
+    "exportar": lambda c, a: _exportar(c, a),
+    "si": lambda c, a: _si(c, a),
+    "dca": lambda c, a: _dca(c, a),
+    "objetivo": lambda c, a: _objetivo(c, a),
+    "promediar": lambda c, a: _promediar(c, a),
+    "posicion": lambda c, a: _posicion(c, a),
+    "plan": lambda c, a: _plan(c, a),
+    "apy": lambda c, a: _apy(c, a),
+    "limite": lambda c, a: _limite(c, a),
+    "meta": lambda c, a: _meta(c, a),
+    "mes": lambda c, a: _mes(c),
+    "anual": lambda c, a: _anual(c, a),
+    "hodl": lambda c, a: _hodl(c),
+    "record": lambda c, a: _record(c),
+    "vsbtc": lambda c, a: _vsbtc(c),
+    "vsbolsa": lambda c, a: _vsbolsa(c, a),
+    "comisiones": lambda c, a: _comisiones(c, a),
+    "deposito": lambda c, a: _deposito(c, a),
+    "compras": lambda c, a: _compras(c, a),
+    "timing": lambda c, a: _timing(c, a),
+    "calendario": lambda c, a: _calendario(c, a),
+    "rentabilidad": lambda c, a: _rentabilidad(c),
+    "ath": lambda c, a: _ath(c, a),
+    "tendencias": lambda c, a: _tendencias(c),
+    "dominancia": lambda c, a: _dominancia(c),
+    "mercado": lambda c, a: _mercado(c),
+    "top": lambda c, a: _top(c),
+    "aleatoria": lambda c, a: _aleatoria(c),
+    "glosario": lambda c, a: alerts.formatear_glosario(a),
+    "frase": lambda c, a: alerts.formatear_frase(frase.elegir()),
+    "consejo": lambda c, a: alerts.formatear_consejo(consejo.elegir()),
+    "excusa": lambda c, a: alerts.formatear_excusa(excusa.elegir()),
+    "refran": lambda c, a: alerts.formatear_refran(refran.elegir()),
+    "horoscopo": _comando_horoscopo,
+    "galleta": lambda c, a: alerts.formatear_galleta(galleta.abrir(date.today())),
+    "tarot": lambda c, a: alerts.formatear_tarot(tarot.sacar()),
+    "bola": _comando_bola,
+    "version": lambda c, a: alerts.formatear_version(version.leer()),
+    "chiste": lambda c, a: alerts.formatear_chiste(chiste.elegir()),
+    "dato": lambda c, a: alerts.formatear_dato(dato.elegir()),
+    # Lee la cripto igual que /caraocruz, así que uso su misma función.
+    "dado": lambda c, a: alerts.formatear_dado(dado.tirar(), caraocruz.interpretar(a)),
+    "caraocruz": lambda c, a: alerts.formatear_caraocruz(
+        caraocruz.lanzar(), caraocruz.interpretar(a)
+    ),
+    "adivina": lambda c, a: _adivina(c, a),
+    "quiz": _comando_quiz,
+    "ppt": _comando_ppt,
+    "ultimo": lambda c, a: _ultimo(c),
+    "miedo": lambda c, a: _miedo(),
+    "sesgo": lambda c, a: _sesgo(c),
+    "direccion": lambda c, a: _direccion(c, a),
+    "estacional": lambda c, a: _estacional(c, a),
+    "funding": lambda c, a: _funding(c, a),
+    "comisionred": lambda c, a: _comisionred(c),
+    "comparar": lambda c, a: _comparar(c, a),
+    "quieta": lambda c, a: _quieta(c),
+    "volatilidad": lambda c, a: _volatilidad(c, a),
+    "ruido": lambda c, a: _ruido(c, a),
+    "soporte": lambda c, a: _soporte(c, a),
+    "rango": lambda c, a: _rango(c, a),
+    "racha": lambda c, a: _racha(c, a),
+    "caida": lambda c, a: _caida(c, a),
+    "backtest": lambda c, a: _backtest(c, a),
+    "sube": lambda c, a: _sube(c, a),
+    "verdes": lambda c, a: _verdes(c, a),
+    "extremo": lambda c, a: _extremo(c, a),
+    "diames": lambda c, a: _diames(c, a),
+    "diasemana": lambda c, a: _diasemana(c, a),
+    "horas": lambda c, a: _horas(c, a),
+    "ratio": lambda c, a: _ratio(c, a),
+    "hoy": lambda c, a: _hoy(c, a),
+    "equilibrio": lambda c, a: _equilibrio(c),
+    "doble": lambda c, a: _doble(c),
+    "mitad": lambda c, a: _mitad(c),
+    "sharpe": lambda c, a: _sharpe(c, a),
+    "futuro": lambda c, a: _futuro(c, a),
+    "inflacion": lambda c, a: _inflacion(c),
+    "fibonacci": lambda c, a: _fibonacci(c, a),
+    "macd": lambda c, a: _macd(c, a),
+    "estocastico": lambda c, a: _estocastico(c, a),
+    "bollinger": lambda c, a: _bollinger(c, a),
+    "rsi": lambda c, a: _rsi(c, a),
+    "rellenar": lambda c, a: _rellenar(c, a),
+    "backup": lambda c, a: _backup(c),
+    "cuando": lambda c, a: _cuando(c, a),
+    "redondo": lambda c, a: _redondo(c, a),
+    "dia": lambda c, a: _dia(c, a),
+    "correlacion": lambda c, a: _correlacion(c, a),
+    "halving": lambda c, a: alerts.formatear_halving(halving.calcular(date.today())),
+    "pizza": lambda c, a: _pizza(c),
+    "mundo": lambda c, a: _mundo(c),
+    "lambo": lambda c, a: _lambo(c),
+    "enletras": _comando_enletras,
+    "ballena": lambda c, a: _ballena(c),
+    "cafe": lambda c, a: _cafe(c),
+    "sueldo": lambda c, a: _sueldo(c),
+    "gasolina": lambda c, a: _gasolina(c),
+    "bigmac": lambda c, a: _bigmac(c),
+    "iphone": lambda c, a: _iphone(c),
+    "alquiler": lambda c, a: _alquiler(c),
+    "oro": lambda c, a: _oro(c),
+    "netflix": lambda c, a: _netflix(c),
+    "ps5": lambda c, a: _ps5(c),
+    "tesla": lambda c, a: _tesla(c),
+    "spotify": lambda c, a: _spotify(c),
+    "cana": lambda c, a: _cana(c),
+    "switch": lambda c, a: _switch(c),
+    "cine": lambda c, a: _cine(c),
+    "gimnasio": lambda c, a: _gimnasio(c),
+    "vuelo": lambda c, a: _vuelo(c),
+    "super": lambda c, a: _super(c),
+    "kebab": lambda c, a: _kebab(c),
+    "metro": lambda c, a: _metro(c),
+    "luz": lambda c, a: _luz(c),
+    "libro": lambda c, a: _libro(c),
+    "concierto": lambda c, a: _concierto(c),
+    "airpods": lambda c, a: _airpods(c),
+    "zapatillas": lambda c, a: _zapatillas(c),
+    "ave": lambda c, a: _ave(c),
+    "menu": lambda c, a: _menu(c),
+    "hotel": lambda c, a: _hotel(c),
+    "peluqueria": lambda c, a: _peluqueria(c),
+    "macbook": lambda c, a: _macbook(c),
+    "bici": lambda c, a: _bici(c),
+    "churros": lambda c, a: _churros(c),
+    "loteria": lambda c, a: _loteria(c),
+    "piso": lambda c, a: _piso(c),
+    "futbol": lambda c, a: _futbol(c),
+    "taxi": lambda c, a: _taxi(c),
+    "tortilla": lambda c, a: _tortilla(c),
+    "videojuego": lambda c, a: _videojuego(c),
+    "sofa": lambda c, a: _sofa(c),
+    "coche": lambda c, a: _coche(c),
+    "boda": lambda c, a: _boda(c),
+    "jamon": lambda c, a: _jamon(c),
+    "aceite": lambda c, a: _aceite(c),
+    "paella": lambda c, a: _paella(c),
+    "croquetas": lambda c, a: _croquetas(c),
+    "pan": lambda c, a: _pan(c),
+    "rolex": lambda c, a: _rolex(c),
+    "emoji": lambda c, a: _emoji(c),
+    "tiempo": lambda c, a: _tiempo(c),
+    "carnet": lambda c, a: _carnet(c),
+    "nochevieja": lambda c, a: _nochevieja(c),
+    "navidad": lambda c, a: _navidad(c),
+    "cumple": lambda c, a: alerts.formatear_cumple(cumple.Cumple(date.today())),
+    "whitepaper": lambda c, a: alerts.formatear_whitepaper(
+        whitepaper.Whitepaper(date.today())
+    ),
+    "merge": lambda c, a: alerts.formatear_merge(merge.Merge(date.today())),
+    "ethereum": lambda c, a: alerts.formatear_ethereum(ethereum.Ethereum(date.today())),
+    "adios": lambda c, a: alerts.formatear_adios(adios.Adios(date.today())),
+    "millonario": lambda c, a: _millonario(c, a),
+    "sat": _comando_sat,
+    "ajustes": lambda c, a: ajustes.mensaje(_con_cambios(c)),
+    "copia": _comando_copia,
+    "media": lambda c, a: _media(c, a),
+    "buscar": _comando_buscar,
+}
 
 
 def _horario(config: Config, argumento: str) -> str:
