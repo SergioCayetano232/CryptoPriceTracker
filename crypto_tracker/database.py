@@ -306,6 +306,17 @@ def get_last_price(db_path: str, coin_id: str) -> float | None:
     return fila["price"] if fila else None
 
 
+def precio_antes(db_path: str, coin_id: str, antes: datetime) -> float | None:
+    """El último guardado antes de ese momento: el del ciclo anterior."""
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT price FROM prices WHERE coin_id = ? AND created_at < ? "
+            "ORDER BY created_at DESC, id DESC LIMIT 1",
+            (coin_id, antes.isoformat(timespec="seconds")),
+        ).fetchone()
+    return fila["price"] if fila else None
+
+
 def ultimo_guardado(db_path: str) -> datetime | None:
     """Cuando se guardo el ultimo precio, de la cripto que sea."""
     with _connect(db_path) as conn:

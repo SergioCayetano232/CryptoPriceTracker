@@ -21,6 +21,9 @@ MONEDAS = {"usd", "eur"}
 
 FUENTE = "<i>Precios de Binance: CoinGecko no contestaba</i>"
 
+# Lo normal es que se separen décimas. Más que esto huele a dato malo, no a mercado.
+MARGEN = 3.0
+
 
 class BinanceError(Exception):
     """Binance tampoco ha dado los precios."""
@@ -80,3 +83,23 @@ def precios(coin_ids: list[str], vs_currency: str = "eur") -> dict[str, float]:
     except ValueError as e:
         raise BinanceError("Binance devolvió algo que no es JSON") from e
     return leer(datos, coin_ids, vs_currency)
+
+
+def sospechosas(
+    ahora: dict[str, float], antes: dict[str, float], de_binance: dict[str, float]
+) -> list[str]:
+    """Las que CoinGecko da muy distinto de Binance, cuando antes cuadraban."""
+    # Que cuadraran antes importa: Binance guarda pares que ya no negocia con su
+    # último precio (monero), y con esas nunca cuadra. Esas, a lo de CoinGecko.
+    return [
+        c
+        for c, precio in ahora.items()
+        if de_binance.get(c)
+        and antes.get(c)
+        and _lejos(precio, de_binance[c])
+        and not _lejos(antes[c], de_binance[c])
+    ]
+
+
+def _lejos(uno: float, otro: float) -> bool:
+    return abs(uno / otro - 1) * 100 > MARGEN

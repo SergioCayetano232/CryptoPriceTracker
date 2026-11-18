@@ -117,3 +117,17 @@ def test_no_es_json(monkeypatch):
 
     with pytest.raises(binance.BinanceError):
         binance.precios(["bitcoin"], "eur")
+
+
+def test_sospechosas():
+    ahora = {"bitcoin": 70000.0, "ethereum": 4000.0, "solana": 150.0, "monero": 460.0}
+    antes = {"bitcoin": 70800.0, "ethereum": 4190.0, "solana": 151.0, "monero": 455.0}
+    bn = {"bitcoin": 70900.0, "ethereum": 4200.0, "monero": 108.0}
+
+    # ethereum: cuadraba y ahora se va un 5%. solana: Binance no la tiene.
+    # monero: Binance tiene un precio viejo, no ha cuadrado nunca.
+    assert binance.sospechosas(ahora, antes, bn) == ["ethereum"]
+
+
+def test_sospechosas_sin_precio_de_antes_se_fia():
+    assert binance.sospechosas({"bitcoin": 90000.0}, {}, {"bitcoin": 63000.0}) == []

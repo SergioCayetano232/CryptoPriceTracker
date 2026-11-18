@@ -365,6 +365,23 @@ def ejecutar_ciclo(
         for p in hechas
     ]
 
+    if not respaldo and avisos:
+        raras = _sospechosas(
+            config,
+            {a.coin_id: precios.get(a.coin_id) for a in avisos},
+            antes_de_guardar,
+        )
+        if raras:
+            avisos = [a for a in avisos if a.coin_id not in raras]
+            hechas = [p for p in hechas if p.coin_id not in raras]
+            # Como si no hubiera pasado: el siguiente ciclo lo vuelve a mirar.
+            estado_nuevo = dict(estado_nuevo)
+            for c in raras:
+                if c in estado:
+                    estado_nuevo[c] = estado[c]
+                else:
+                    estado_nuevo.pop(c, None)
+
     # Guardamos la zona de cada cripto para no repetir el aviso al reiniciar.
     try:
         database.save_state(config.database_path, estado_nuevo)
@@ -658,6 +675,29 @@ def _precios_de_binance(coin_ids: list[str], vs_currency: str) -> dict[str, floa
         coingecko.olvidar_24h()
         logger.warning("Tiro de los precios de Binance para: %s", ", ".join(precios))
     return precios
+
+
+def _sospechosas(
+    config: Config, precios: dict[str, float | None], guardado: datetime
+) -> set[str]:
+    """Las que van a avisar con un precio que Binance no ve ni de cerca."""
+    # La cartera no está en Binance, y sin precio no hay nada que comparar.
+    precios = {c: p for c, p in precios.items() if p and c != puntuales.CARTERA}
+    try:
+        otros = binance.precios(list(precios), config.vs_currency)
+        antes = {
+            c: database.precio_antes(config.database_path, c, guardado) for c in otros
+        }
+    except (binance.BinanceError, database.DatabaseError) as e:
+        # Sin con qué comparar, avisamos igual: mejor eso que callar uno bueno.
+        logger.warning("No he podido comparar con Binance: %s", e)
+        return set()
+    raras = binance.sospechosas(precios, antes, otros)
+    for c in raras:
+        logger.warning(
+            "No aviso de %s: CoinGecko dice %s y Binance %s", c, precios[c], otros[c]
+        )
+    return set(raras)
 
 
 def avisar_sin_precio(

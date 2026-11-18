@@ -11445,6 +11445,54 @@ def _coingecko_caido(monkeypatch):
     monkeypatch.setattr(coingecko, "get_prices", falla)
 
 
+def test_no_avisa_si_binance_no_ve_ese_precio(config, enviados, monkeypatch):
+    _precio_hace(config, 63200.0, 5)  # el ciclo anterior, que sí cuadraba
+    database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
+    _precio(monkeypatch, {"bitcoin": 90000.0})  # un pico que no ha pasado
+    monkeypatch.setattr(binance, "precios", lambda ids, cur: {"bitcoin": 63500.0})
+
+    estado, _ = main.ejecutar_ciclo(config, {"bitcoin": "%63000.0"})
+
+    assert enviados == []
+    assert estado == {"bitcoin": "%63000.0"}
+    # La alerta sigue ahí: si el precio es de verdad, salta en el siguiente.
+    assert len(database.get_puntuales(config.database_path, "eur")) == 1
+
+
+def test_avisa_si_con_binance_no_cuadraba_ni_antes(config, enviados, monkeypatch):
+    _precio_hace(config, 69000.0, 5)
+    database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
+    _precio(monkeypatch, {"bitcoin": 70500.0})
+    monkeypatch.setattr(binance, "precios", lambda ids, cur: {"bitcoin": 20000.0})
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%69000.0"})
+
+    assert "Era tu /alerta" in enviados[0]
+
+
+def test_avisa_si_binance_ve_lo_mismo(config, enviados, monkeypatch):
+    database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
+    _precio(monkeypatch, {"bitcoin": 70500.0})
+    monkeypatch.setattr(binance, "precios", lambda ids, cur: {"bitcoin": 70300.0})
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%69000.0"})
+
+    assert "Era tu /alerta" in enviados[0]
+
+
+def test_avisa_si_binance_no_contesta(config, enviados, monkeypatch):
+    def caido(ids, cur):
+        raise binance.BinanceError("Binance tampoco contesta")
+
+    database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
+    _precio(monkeypatch, {"bitcoin": 70500.0})
+    monkeypatch.setattr(binance, "precios", caido)
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%69000.0"})
+
+    assert "Era tu /alerta" in enviados[0]
+
+
 def test_sin_coingecko_avisa_con_binance(config, enviados, monkeypatch):
     _coingecko_caido(monkeypatch)
     monkeypatch.setattr(binance, "precios", lambda ids, cur: {"bitcoin": 70000.0})
