@@ -951,6 +951,26 @@ def test_stops_no_se_mezclan_con_los_moviles(db):
     assert database.moviles(db) == {b.id: -5.0}
 
 
+def test_parejas_en_los_dos_sentidos(db):
+    a = database.crear_puntual(db, "bitcoin", 60000.0, False, "eur")
+    b = database.crear_puntual(db, "bitcoin", 80000.0, True, "eur")
+    database.guardar_pareja(db, a.id, b.id)
+    database.guardar_movil(db, a.id, -5.0)
+
+    assert database.parejas(db) == {a.id: b.id, b.id: a.id}
+    assert database.moviles(db) == {a.id: -5.0}
+
+
+def test_parejas_al_borrar_una_se_va_su_fila(db):
+    a = database.crear_puntual(db, "bitcoin", 60000.0, False, "eur")
+    b = database.crear_puntual(db, "bitcoin", 80000.0, True, "eur")
+    database.guardar_pareja(db, a.id, b.id)
+    database.borrar_puntual(db, a.id)
+
+    # La de b sigue apuntando a la borrada; los ids no se repiten, no molesta.
+    assert database.parejas(db) == {b.id: a.id}
+
+
 def test_stops_al_quitar_la_alerta_no_queda_nada(db):
     a = database.crear_puntual(db, "ethereum", 2700.0, False, "eur")
     database.guardar_stop(db, a.id, -10.0)

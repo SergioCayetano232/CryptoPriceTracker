@@ -14,6 +14,7 @@ _MILES = re.compile(r"[1-9]\d{0,2}(\.\d{3})+")
 
 EJEMPLO = "/alerta bitcoin 70000"
 EJEMPLO_RELATIVA = "/alerta bitcoin +10%"
+EJEMPLO_PAREJA = "/alerta bitcoin 60000 o 80000"
 
 # Es para acordarte de por que la pusiste, no para escribir un diario.
 MAX_NOTA = 100
@@ -55,6 +56,35 @@ def separar_nota(argumento: str) -> tuple[str, str | None]:
     if len(nota) > MAX_NOTA:
         raise PuntualError(f"La nota es muy larga, como mucho {MAX_NOTA} letras.")
     return " ".join(partes[:corte]), nota
+
+
+def separar_pareja(argumento: str) -> tuple[str, str | None]:
+    """'bitcoin 60000 o 80000 7d' -> ('bitcoin 60000 7d', '80000'). Sin 'o', None."""
+    partes = argumento.split()
+    # Solo justo detrás del precio: una "o" en la nota es parte de la nota.
+    if len(partes) < 4 or partes[2].lower() != "o":
+        return argumento, None
+    return " ".join(partes[:2] + partes[4:]), partes[3]
+
+
+def otro_de_pareja(texto: str, objetivo: float, precio: float) -> float:
+    """El segundo precio de la pareja. Uno tiene que quedar por cada lado."""
+    otro = numero(texto)
+    if otro is None or otro <= 0:
+        raise PuntualError(f"'{texto}' no es un precio. Por ejemplo: {EJEMPLO_PAREJA}")
+    if sube(otro, precio) == sube(objetivo, precio):
+        # Las dos hacia arriba siempre salta antes la más cercana: la otra sobra.
+        raise PuntualError(
+            "Pon uno por encima y otro por debajo de lo que vale ahora. "
+            "Para dos hacia el mismo lado, pon dos /alerta."
+        )
+    return otro
+
+
+def otras_de_pareja(saltan: list[int], parejas: dict[int, int]) -> list[int]:
+    """Las que hay que quitar porque ha saltado su pareja."""
+    otras = [parejas[i] for i in saltan if i in parejas]
+    return [i for i in dict.fromkeys(otras) if i not in saltan]
 
 
 def separar_caducidad(argumento: str) -> tuple[str, float | None]:

@@ -568,6 +568,7 @@ EJEMPLOS = {
         ("/alerta bitcoin 70000", "te aviso una vez cuando llegue"),
         ("/alerta bitcoin +10%", "cuando suba un 10% desde ahora"),
         ("/alerta bitcoin 70000 7d", "si en 7 días no llega, se borra sola"),
+        ("/alerta bitcoin 60000 o 80000", "la que llegue antes, y quito la otra"),
         ("/alerta bitcoin 70000 vender la mitad", "con una nota para el aviso"),
         ("/alerta cartera 5000", "con lo que vale tu cartera entera"),
         ("/alerta bitcoin", "sin precio, te digo a cuánto está"),

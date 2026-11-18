@@ -416,6 +416,9 @@ def ejecutar_ciclo(
     # Todo en un mensaje: si cruzan tres a la vez, tres notificaciones
     # seguidas molestan y encima Telegram empieza a cortar el ritmo.
     texto = alerts.formatear_varios(avisos, config.vs_currency)
+    quitadas = _de_pareja(config, pendientes, hechas)
+    if quitadas:
+        texto += "\n\n" + alerts.formatear_pareja_quitada(quitadas, config.vs_currency)
     if respaldo:
         texto = f"{texto}\n\n{binance.FUENTE}"
     else:
@@ -430,7 +433,7 @@ def ejecutar_ciclo(
         botones=botones.para_avisos(avisos, config.vs_currency),
     ):
         logger.info("Aviso enviado (%d): %s", len(avisos), cruzadas)
-        _borrar_puntuales(config, hechas)
+        _borrar_puntuales(config, hechas + quitadas)
         _apuntar_avisos(config, avisos)
     else:
         # Ni con los reintentos ha salido y el estado ya cambio. El siguiente
@@ -613,6 +616,24 @@ def _caducar(
         _borrar_puntuales(config, viejas)
     # Si no ha llegado el mensaje, el siguiente ciclo lo vuelve a intentar.
     return [p for p in pendientes if p not in viejas]
+
+
+def _de_pareja(
+    config: Config,
+    pendientes: list[puntuales.Puntual],
+    hechas: list[puntuales.Puntual],
+) -> list[puntuales.Puntual]:
+    """Las que sobran porque ha saltado su pareja."""
+    if not hechas:
+        return []
+    try:
+        parejas = database.parejas(config.database_path)
+    except database.DatabaseError as e:
+        # Se queda la otra puesta; te llegaría luego, pero no se pierde nada.
+        logger.error("No se pudieron leer las parejas de /alerta: %s", e)
+        return []
+    otras = puntuales.otras_de_pareja([h.id for h in hechas], parejas)
+    return [p for p in pendientes if p.id in otras]
 
 
 def _borrar_puntuales(config: Config, hechas: list[puntuales.Puntual]) -> None:
@@ -2657,6 +2678,7 @@ def _crear_alerta(config: Config, argumento: str) -> str:
         argumento, cond = condicion.separar(argumento)
     except condicion.CondicionError as e:
         return telegram.escape(str(e))
+    argumento, otro = puntuales.separar_pareja(argumento)
     try:
         argumento, nota = puntuales.separar_nota(argumento)
         argumento, horas = puntuales.separar_caducidad(argumento)
@@ -2676,6 +2698,8 @@ def _crear_alerta(config: Config, argumento: str) -> str:
             coin_id, objetivo = puntuales.interpretar(argumento)
     except puntuales.PuntualError as e:
         return telegram.escape(str(e))
+    if otro and relativa:
+        return f"Con la «o» van dos precios, no %. Así: {puntuales.EJEMPLO_PAREJA}"
 
     es_cartera = coin_id == puntuales.CARTERA
     if es_cartera and not _con_cambios(config).cartera:
@@ -2717,8 +2741,15 @@ def _crear_alerta(config: Config, argumento: str) -> str:
     else:
         try:
             sube = puntuales.sube(objetivo, precio)
+            if otro:
+                otro_objetivo = puntuales.otro_de_pareja(otro, objetivo, precio)
         except puntuales.PuntualError as e:
             return telegram.escape(str(e))
+
+    if otro:
+        return _crear_pareja(
+            config, coin_id, (objetivo, otro_objetivo), precio, horas, nota, cond
+        )
 
     # Con los botones 🎯 y 🔁 es facil pedir dos veces la misma, y luego llegan
     # dos avisos iguales.
@@ -2740,6 +2771,37 @@ def _crear_alerta(config: Config, argumento: str) -> str:
     logger.info("Alerta %d creada: %s a %s", alerta.id, coin_id, objetivo)
     return alerts.con_fuente(
         alerts.formatear_puntual(alerta, precio, config.vs_currency)
+    )
+
+
+def _crear_pareja(
+    config: Config,
+    coin_id: str,
+    objetivos: tuple[float, float],
+    precio: float,
+    horas: float | None,
+    nota: str | None,
+    cond: condicion.Condicion | None,
+) -> str:
+    """/alerta bitcoin 60000 o 80000: dos alertas, y la que no salte se quita."""
+    caduca = puntuales.caducidad(datetime.now(timezone.utc), horas)
+    abajo, arriba = (
+        database.crear_puntual(
+            config.database_path,
+            coin_id,
+            o,
+            o > precio,
+            config.vs_currency,
+            caduca,
+            nota,
+            cond,
+        )
+        for o in sorted(objetivos)
+    )
+    database.guardar_pareja(config.database_path, abajo.id, arriba.id)
+    logger.info("Alertas %d y %d creadas en pareja: %s", abajo.id, arriba.id, coin_id)
+    return alerts.con_fuente(
+        alerts.formatear_pareja(arriba, abajo, precio, config.vs_currency)
     )
 
 

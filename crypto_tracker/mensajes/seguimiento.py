@@ -510,6 +510,39 @@ def formatear_puntual(alerta: Puntual, precio: float, currency: str) -> str:
     return texto
 
 
+def formatear_pareja(
+    arriba: Puntual, abajo: Puntual, precio: float, currency: str
+) -> str:
+    """Respuesta a /alerta bitcoin 60000 o 80000."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    if arriba.coin_id == CARTERA:
+        nombre, ahora = "tu cartera", "Ahora vale"
+    else:
+        nombre = escape(arriba.coin_id.replace("-", " ").title())
+        ahora = "Ahora está a"
+    texto = (
+        f"🎯 Te aviso cuando <b>{nombre}</b> suba a "
+        f"<b>{simbolo}{_num(arriba.objetivo)}</b> o baje a "
+        f"<b>{simbolo}{_num(abajo.objetivo)}</b>, lo que pase antes.\n"
+        f"{ahora} {simbolo}{_num(precio)}. Cuando salte una, quito la otra."
+    )
+    if arriba.caduca:
+        cuando = arriba.caduca.astimezone()
+        texto += f"\n⌛ Si no llega ninguna, se borran el {cuando:%d/%m a las %H:%M}."
+    if arriba.condicion:
+        texto += f"\n🔗 Y solo si además está {texto_condicion(arriba.condicion)}"
+    if arriba.nota:
+        texto += f"\n📝 {escape(arriba.nota)}"
+    return texto
+
+
+def formatear_pareja_quitada(quitadas: list[Puntual], currency: str) -> str:
+    """Debajo del aviso: la otra de la pareja, que ya no hace falta."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    precios = " y ".join(f"{simbolo}{_num(a.objetivo)}" for a in quitadas)
+    return f"🔗 Quito la otra de la pareja, la de {precios}."
+
+
 def _stop_quien(s: Stop) -> tuple[str, str, str]:
     """El nombre, lo que costó y cómo se dice lo de ahora, para /stop."""
     if s.coin_id == CARTERA:

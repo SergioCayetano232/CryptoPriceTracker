@@ -295,6 +295,8 @@ from .mensajes.seguimiento import (
     formatear_fantasma_nueva,
     formatear_lejos,
     formatear_operacion_fantasma,
+    formatear_pareja,
+    formatear_pareja_quitada,
     formatear_pensado,
     formatear_pienso,
     formatear_piensos,

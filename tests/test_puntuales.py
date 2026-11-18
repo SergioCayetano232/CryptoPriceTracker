@@ -27,11 +27,14 @@ from crypto_tracker.puntuales import (
     numero,
     numeros,
     objetivo_relativo,
+    otras_de_pareja,
+    otro_de_pareja,
     por_cercania,
     progreso,
     repetida,
     separar_caducidad,
     separar_nota,
+    separar_pareja,
     sube,
 )
 
@@ -440,3 +443,47 @@ def test_progreso_de_la_cartera():
 )
 def test_sin_progreso(alerta, valor):
     assert progreso(alerta, valor) is None
+
+
+# --- la pareja: /alerta bitcoin 60000 o 80000 ---
+
+
+@pytest.mark.parametrize(
+    "argumento, queda, otro",
+    [
+        ("bitcoin 60000 o 80000", "bitcoin 60000", "80000"),
+        ("bitcoin 60000 O 80k 7d vender", "bitcoin 60000 7d vender", "80k"),
+        ("bitcoin 70000", "bitcoin 70000", None),
+        ("bitcoin 70000 vender o no", "bitcoin 70000 vender o no", None),
+        ("bitcoin 70000 o", "bitcoin 70000 o", None),
+    ],
+)
+def test_separar_pareja(argumento, queda, otro):
+    assert separar_pareja(argumento) == (queda, otro)
+
+
+def test_otro_de_pareja_uno_por_cada_lado():
+    assert otro_de_pareja("80.000", 60000, 70000) == 80000
+    assert otro_de_pareja("60k", 80000, 70000) == 60000
+
+
+@pytest.mark.parametrize("texto", ["75000", "90000"])
+def test_otro_de_pareja_los_dos_del_mismo_lado(texto):
+    with pytest.raises(PuntualError, match="uno por encima y otro por debajo"):
+        otro_de_pareja(texto, 80000, 70000)
+
+
+@pytest.mark.parametrize("texto", ["mucho", "0", "-5"])
+def test_otro_de_pareja_que_no_es_precio(texto):
+    with pytest.raises(PuntualError, match="no es un precio"):
+        otro_de_pareja(texto, 60000, 70000)
+
+
+def test_otras_de_pareja():
+    parejas = {1: 2, 2: 1, 5: 6, 6: 5}
+
+    assert otras_de_pareja([1], parejas) == [2]
+    assert otras_de_pareja([1, 5], parejas) == [2, 6]
+    assert otras_de_pareja([3], parejas) == []
+    # Si saltaran las dos a la vez, no hay ninguna más que quitar.
+    assert otras_de_pareja([1, 2], parejas) == []

@@ -1181,6 +1181,17 @@ def stops(db_path: str) -> dict[int, float]:
     return _leer_pct(db_path, "stop")
 
 
+def guardar_pareja(db_path: str, una: int, otra: int) -> None:
+    """Las dos de /alerta bitcoin 60000 o 80000: cuando salta una, se quita la otra."""
+    _guardar_pct(db_path, "pareja", una, otra)
+    _guardar_pct(db_path, "pareja", otra, una)
+
+
+def parejas(db_path: str) -> dict[int, int]:
+    """{número de la alerta: el de su pareja}, en los dos sentidos."""
+    return {i: int(otra) for i, otra in _leer_pct(db_path, "pareja").items()}
+
+
 def _guardar_pct(db_path: str, tipo: str, alerta_id: int, porcentaje: float) -> None:
     with _connect(db_path) as conn:
         conn.execute(

@@ -2033,6 +2033,85 @@ def test_la_alerta_salta_una_vez_y_se_borra(config, enviados, monkeypatch):
     assert database.get_puntuales(config.database_path, "eur") == []
 
 
+def test_crear_alerta_en_pareja(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 70000.0})
+
+    main.atender(config, _mensaje("/alerta bitcoin 80k o 60.000 7d salir"))
+
+    assert "suba a <b>€80.000,00</b> o baje a <b>€60.000,00</b>" in enviados[0]
+    assert "quito la otra" in enviados[0]
+    assert "📝 salir" in enviados[0]
+    abajo, arriba = database.get_puntuales(config.database_path, "eur")
+    assert (abajo.objetivo, abajo.sube, arriba.objetivo, arriba.sube) == (
+        60000,
+        False,
+        80000,
+        True,
+    )
+    assert abajo.caduca == arriba.caduca is not None
+    assert abajo.nota == arriba.nota == "salir"
+    assert database.parejas(config.database_path) == {
+        abajo.id: arriba.id,
+        arriba.id: abajo.id,
+    }
+
+
+@pytest.mark.parametrize(
+    "texto, error",
+    [
+        ("/alerta bitcoin 75000 o 80000", "uno por encima y otro por debajo"),
+        ("/alerta bitcoin +10% o -5%", "no %"),
+        ("/alerta bitcoin 60000 o mucho", "no es un precio"),
+    ],
+)
+def test_crear_alerta_en_pareja_mal(config, enviados, monkeypatch, texto, error):
+    _precio(monkeypatch, {"bitcoin": 70000.0})
+
+    main.atender(config, _mensaje(texto))
+
+    assert error in enviados[0]
+    assert database.get_puntuales(config.database_path, "eur") == []
+
+
+@pytest.mark.parametrize("precio, otra", [(59000.0, "80.000"), (81000.0, "60.000")])
+def test_la_pareja_salta_y_quita_la_otra(config, enviados, monkeypatch, precio, otra):
+    _precio(monkeypatch, {"bitcoin": 70000.0})
+    main.atender(config, _mensaje("/alerta bitcoin 60000 o 80000"))
+    _precio(monkeypatch, {"bitcoin": precio})
+
+    estado, _ = main.ejecutar_ciclo(config, {"bitcoin": f"%{precio}"})
+    main.ejecutar_ciclo(config, estado)
+
+    assert len(enviados) == 2  # el de crearla y un solo aviso
+    assert "Era tu /alerta" in enviados[1]
+    assert f"Quito la otra de la pareja, la de €{otra},00." in enviados[1]
+    assert database.get_puntuales(config.database_path, "eur") == []
+
+
+def test_la_pareja_sin_saltar_se_quedan_las_dos(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 70000.0})
+    main.atender(config, _mensaje("/alerta bitcoin 60000 o 80000"))
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%70000.0"})
+
+    assert len(enviados) == 1
+    assert len(database.get_puntuales(config.database_path, "eur")) == 2
+
+
+def test_quitar_una_de_la_pareja_deja_la_otra_normal(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 70000.0})
+    main.atender(config, _mensaje("/alerta bitcoin 60000 o 80000"))
+    abajo, arriba = database.get_puntuales(config.database_path, "eur")
+    main.atender(config, _mensaje(f"/quitar {abajo.id}"))
+    _precio(monkeypatch, {"bitcoin": 81000.0})
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%81000.0"})
+
+    assert "Era tu /alerta" in enviados[-1]
+    assert "pareja" not in enviados[-1]
+    assert database.get_puntuales(config.database_path, "eur") == []
+
+
 def test_la_alerta_no_salta_antes_de_tiempo(config, enviados, monkeypatch):
     database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
     _precio(monkeypatch, {"bitcoin": 69000.0})
