@@ -422,8 +422,8 @@ def ejecutar_ciclo(
         _borrar_puntuales(config, hechas)
         _apuntar_avisos(config, avisos)
     else:
-        # El aviso se perdio, pero el estado ya cambio. No insistimos:
-        # el siguiente cruce volvera a avisar. Las de /alerta siguen ahi.
+        # Ni con los reintentos ha salido y el estado ya cambio. El siguiente
+        # cruce volvera a avisar; las de /alerta siguen ahi.
         logger.error("No se pudo avisar de: %s", cruzadas)
 
     return estado_nuevo, None

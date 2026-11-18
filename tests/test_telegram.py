@@ -17,6 +17,29 @@ class RespuestaFalsa:
         return self._data
 
 
+@pytest.fixture(autouse=True)
+def sin_esperas(monkeypatch):
+    esperas = []
+    monkeypatch.setattr(telegram.time, "sleep", esperas.append)
+    return esperas
+
+
+def _en_orden(*respuestas):
+    """requests.post falso que va dando estas respuestas (o lanzándolas)."""
+    pendientes = list(respuestas)
+    llamadas = []
+
+    def post(*a, **k):
+        llamadas.append(1)
+        r = pendientes.pop(0)
+        if isinstance(r, Exception):
+            raise r
+        return r
+
+    post.llamadas = llamadas
+    return post
+
+
 def test_envio_correcto(monkeypatch):
     monkeypatch.setattr(requests, "post", lambda *a, **k: RespuestaFalsa())
 
@@ -364,3 +387,71 @@ def test_imagen_sin_botones_como_antes(monkeypatch):
     telegram.send_photo("token", "123", b"x")
 
     assert "reply_markup" not in enviado
+
+
+def test_corte_de_red_se_reintenta(monkeypatch, sin_esperas):
+    post = _en_orden(requests.ConnectionError(), RespuestaFalsa())
+    monkeypatch.setattr(requests, "post", post)
+
+    assert telegram.send_message("token", "123", "hola") is True
+    assert len(post.llamadas) == 2
+    assert sin_esperas == [2]
+
+
+def test_se_rinde_tras_tres_intentos(monkeypatch, sin_esperas):
+    post = _en_orden(*[requests.Timeout() for _ in range(3)])
+    monkeypatch.setattr(requests, "post", post)
+
+    assert telegram.send_message("token", "123", "hola") is False
+    assert len(post.llamadas) == 3
+    assert sin_esperas == [2, 4]
+
+
+def test_error_suyo_se_reintenta(monkeypatch):
+    caido = RespuestaFalsa(502, {"ok": False, "description": "Bad Gateway"})
+    post = _en_orden(caido, RespuestaFalsa())
+    monkeypatch.setattr(requests, "post", post)
+
+    assert telegram.send_message("token", "123", "hola") is True
+
+
+def test_chat_mal_puesto_no_insiste(monkeypatch, sin_esperas):
+    malo = RespuestaFalsa(400, {"ok": False, "description": "chat not found"})
+    post = _en_orden(malo)
+    monkeypatch.setattr(requests, "post", post)
+
+    assert telegram.send_message("token", "123", "hola") is False
+    assert len(post.llamadas) == 1
+    assert sin_esperas == []
+
+
+def test_429_espera_lo_que_pide(monkeypatch, sin_esperas):
+    frenado = RespuestaFalsa(
+        429,
+        {
+            "ok": False,
+            "description": "Too Many Requests",
+            "parameters": {"retry_after": 7},
+        },
+    )
+    monkeypatch.setattr(requests, "post", _en_orden(frenado, RespuestaFalsa()))
+
+    assert telegram.send_message("token", "123", "hola") is True
+    assert sin_esperas == [7]
+
+
+def test_429_con_espera_larga_lo_deja(monkeypatch, sin_esperas):
+    frenado = RespuestaFalsa(
+        429,
+        {
+            "ok": False,
+            "description": "Too Many Requests",
+            "parameters": {"retry_after": 300},
+        },
+    )
+    post = _en_orden(frenado)
+    monkeypatch.setattr(requests, "post", post)
+
+    assert telegram.send_message("token", "123", "hola") is False
+    assert len(post.llamadas) == 1
+    assert sin_esperas == []

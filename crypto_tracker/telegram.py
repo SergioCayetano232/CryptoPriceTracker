@@ -3,6 +3,7 @@
 import html
 import json
 import logging
+import time
 
 import requests
 
@@ -25,6 +26,14 @@ TIMEOUT_ARCHIVO = 120
 # Telegram corta los mensajes mas largos que esto.
 MAX_LENGTH = 4096
 
+# Como en CoinGecko: tres intentos esperando 2s y luego 4s. Un corte corto de
+# red ya no nos hace perder el aviso.
+INTENTOS = 3
+ESPERA_INICIAL = 2
+# Si con un 429 nos piden esperar más que esto, lo dejo: el bucle no puede
+# quedarse parado minutos por un mensaje.
+ESPERA_MAXIMA = 30
+
 
 class TelegramError(Exception):
     """No se pudo enviar el mensaje."""
@@ -42,7 +51,7 @@ def send_message(
     botones son filas de (texto, datos); los datos vuelven al pulsarlo.
 
     No lanza excepcion: un fallo de Telegram no deberia tumbar el
-    programa, asi que lo registra y devuelve False.
+    programa, asi que reintenta los pasajeros y si no, devuelve False.
     """
     if not text.strip():
         logger.warning("Mensaje vacio, no se envia nada")
@@ -62,33 +71,57 @@ def send_message(
     if botones:
         payload["reply_markup"] = _teclado(botones)
 
+    espera = ESPERA_INICIAL
+    for intento in range(1, INTENTOS + 1):
+        ok, reintentar, pide = _enviar(token, payload)
+        if ok:
+            logger.debug("Mensaje enviado al chat %s", chat_id)
+            return True
+        # Lo que pida Telegram con un 429 manda sobre nuestra espera.
+        espera = max(espera, pide)
+        if not reintentar or intento == INTENTOS or espera > ESPERA_MAXIMA:
+            return False
+        logger.warning("Reintento %d de %d en %ds", intento, INTENTOS - 1, espera)
+        time.sleep(espera)
+        espera *= 2
+
+    return False
+
+
+def _enviar(token: str, payload: dict) -> tuple[bool, bool, int]:
+    """Un intento suelto: (enviado, merece reintentar, segundos que pide esperar)."""
     try:
         response = requests.post(
             API_URL.format(token=token), json=payload, timeout=TIMEOUT
         )
         data = response.json()
     except requests.Timeout:
+        # Puede que sí llegara y salga repetido, pero mejor dos que ninguno.
         logger.error("Telegram tardo mas de %ds en responder", TIMEOUT)
-        return False
+        return False, True, 0
     except requests.ConnectionError:
         logger.error("Sin conexion con Telegram")
-        return False
+        return False, True, 0
     except requests.RequestException as e:
         logger.error("Fallo el envio a Telegram: %s", e)
-        return False
+        return False, True, 0
     except ValueError:
+        # Suele ser una página de error de un proxy o de Telegram caído.
         logger.error("Telegram devolvio algo que no es JSON")
-        return False
+        return False, True, 0
 
     # Telegram siempre contesta JSON con un campo "ok", incluso en los errores.
-    if not data.get("ok"):
-        logger.error(
-            "Telegram rechazo el mensaje: %s", _explain(response.status_code, data)
-        )
-        return False
+    if data.get("ok"):
+        return True, False, 0
 
-    logger.debug("Mensaje enviado al chat %s", chat_id)
-    return True
+    status = response.status_code
+    logger.error("Telegram rechazo el mensaje: %s", _explain(status, data))
+    if status == 429:
+        parametros = data.get("parameters")
+        pide = parametros.get("retry_after", 0) if isinstance(parametros, dict) else 0
+        return False, True, pide if isinstance(pide, int) else 0
+    # Un token o chat mal puesto no se arregla insistiendo; un 5xx a veces sí.
+    return False, status >= 500, 0
 
 
 def _teclado(botones: list[list[tuple[str, str]]]) -> dict:
