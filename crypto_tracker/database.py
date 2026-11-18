@@ -25,6 +25,7 @@ from .pienso import de_texto as leer_pienso
 from .prediccion import Prediccion
 from .puntuales import Puntual
 from .recordar import Recordatorio, a_texto, de_texto
+from .rezagada import Rezagada
 
 logger = logging.getLogger(__name__)
 
@@ -1024,6 +1025,39 @@ def quitar_programado(db_path: str, numero: int) -> bool:
     with _connect(db_path) as conn:
         cursor = conn.execute(
             "DELETE FROM ajustes WHERE clave = ?", (f"cada:{numero}",)
+        )
+    return cursor.rowcount > 0
+
+
+def guardar_rezagada(db_path: str, r: Rezagada) -> None:
+    with _connect(db_path) as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (f"rezagada:{r.coin_id}:{r.contra}", f"{r.porcentaje!r}|{int(r.avisada)}"),
+        )
+
+
+def get_rezagadas(db_path: str) -> list[Rezagada]:
+    with _connect(db_path) as conn:
+        filas = conn.execute(
+            "SELECT clave, valor FROM ajustes WHERE clave LIKE 'rezagada:%' "
+            "ORDER BY clave"
+        ).fetchall()
+    lista = []
+    for f in filas:
+        try:
+            _, coin_id, contra = f["clave"].split(":")
+            pct, avisada = f["valor"].split("|")
+            lista.append(Rezagada(coin_id, contra, float(pct), avisada == "1"))
+        except ValueError:
+            logger.warning("Una /rezagada que no se entiende: %r", f["valor"])
+    return lista
+
+
+def quitar_rezagada(db_path: str, coin_id: str, contra: str) -> bool:
+    with _connect(db_path) as conn:
+        cursor = conn.execute(
+            "DELETE FROM ajustes WHERE clave = ?", (f"rezagada:{coin_id}:{contra}",)
         )
     return cursor.rowcount > 0
 

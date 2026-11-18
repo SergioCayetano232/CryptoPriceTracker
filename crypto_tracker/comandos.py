@@ -50,6 +50,7 @@ COMANDOS = {
     "inflacion": "Si tu cartera le gana a la subida de precios en España",
     "recordar": "Avísame cada semana de mi compra (ej: /recordar lunes 50 btc)",
     "cada": "Mándame un comando solo (ej: /cada viernes 20:00 /cartera)",
+    "rezagada": "Avísame si una va peor que otra en 7 días (ej: /rezagada eth btc 10)",
     "pienso": "Antes de comprar, 24 h para pensarlo (ej: /pienso btc 500)",
     "fantasma": "Una cartera de mentira para probar (ej: /fantasma compra btc 200)",
     "herencia": "Lo que tienes y dónde, para tu familia, sin claves",
@@ -605,6 +606,11 @@ EJEMPLOS = {
         ("/pienso btc 500", "lo que hay ahora, y mañana te pregunto otra vez"),
         ("/pienso", "lo que te estás pensando"),
         ("/pienso btc no", "olvidarlo"),
+    ],
+    "rezagada": [
+        ("/rezagada eth btc 10", "si ethereum va un 10% peor que bitcoin en 7 días"),
+        ("/rezagada", "las que tienes puestas"),
+        ("/rezagada eth btc no", "quitarla"),
     ],
     "cada": [
         ("/cada viernes 20:00 /cartera", "cada viernes, tu cartera sin pedirla"),

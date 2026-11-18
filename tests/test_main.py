@@ -11579,3 +11579,51 @@ def test_cada_manda_el_comando_una_vez(config, enviados):
 
     assert len(enviados) == 2  # la confirmación y una sola ayuda
     assert "/status" in enviados[1]
+
+
+def _precio_de_hace_7_dias(config, coin_id, precio):
+    _precio_de(config, coin_id, precio, 7 * 24 * 60)
+
+
+def test_rezagada_avisa_una_vez(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    config = replace(
+        config, watchlist=[Watch("bitcoin", percent=50), Watch("ethereum", percent=50)]
+    )
+    main.atender(config, _mensaje("/rezagada eth btc 10"))
+    _precio_de_hace_7_dias(config, "bitcoin", 60000.0)
+    _precio_de_hace_7_dias(config, "ethereum", 4000.0)
+    _precio(monkeypatch, {"bitcoin": 66000.0, "ethereum": 3600.0})  # +10% y -10%
+
+    estado, _ = main.ejecutar_ciclo(
+        config, {"bitcoin": "%66000.0", "ethereum": "%3600.0"}
+    )
+    main.ejecutar_ciclo(config, estado)
+
+    assert "te aviso si <b>ethereum</b> va un 10% peor" in enviados[0]
+    assert len(enviados) == 2
+    assert "<b>Ethereum</b> se queda atrás" in enviados[1]
+    assert "<b>-18.2%</b>" in enviados[1]
+
+
+def test_rezagada_de_una_que_no_vigilas(config, enviados):
+    main.atender(config, _mensaje("/rezagada sol btc 10"))
+
+    assert "No guardo el precio de <b>solana</b>" in enviados[0]
+    assert database.get_rezagadas(config.database_path) == []
+
+
+def test_rezagada_lista_y_quita(config, enviados):
+    from dataclasses import replace
+
+    config = replace(
+        config, watchlist=[Watch("bitcoin", percent=5), Watch("ethereum", percent=5)]
+    )
+    main.atender(config, _mensaje("/rezagada eth btc 10"))
+    main.atender(config, _mensaje("/rezagada"))
+    main.atender(config, _mensaje("/rezagada eth btc no"))
+
+    assert "Ethereum</b> contra Bitcoin" in enviados[1]
+    assert "ya no comparo" in enviados[2]
+    assert database.get_rezagadas(config.database_path) == []

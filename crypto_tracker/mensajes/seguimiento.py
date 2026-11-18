@@ -24,6 +24,8 @@ from ..pienso import SUBIDON, Pienso
 from ..prediccion import Marcador, Prediccion
 from ..puntuales import CARTERA, Puntual, ejemplo, progreso
 from ..recordar import Recordatorio
+from ..rezagada import EJEMPLO as EJEMPLO_REZAGADA
+from ..rezagada import Rezagada
 from ..stop import Stop
 from ..telegram import escape
 from .base import (
@@ -554,6 +556,33 @@ def formatear_programados(lista: list[Programado]) -> str:
         lineas.append(f"<code>{p.numero}</code>  {p.cuando}: {escape(p.comando)}")
     lineas.append(f"\nPara quitar uno: /cada quitar {lista[0].numero}")
     return "\n".join(lineas)
+
+
+def formatear_rezagadas(lista: list[Rezagada]) -> str:
+    """Respuesta de /rezagada a secas."""
+    if not lista:
+        return f"No vigilas ninguna así. Por ejemplo: {EJEMPLO_REZAGADA}"
+    lineas = ["🐢 <b>Te aviso si se quedan atrás</b>", ""]
+    for r in lista:
+        lineas.append(
+            f"<b>{_nombre(r.coin_id)}</b> contra {_nombre(r.contra)}: "
+            f"{_pct(r.porcentaje)}% peor en 7 días"
+        )
+    primera = lista[0]
+    lineas.append(f"\nPara quitar una: /rezagada {primera.coin_id} {primera.contra} no")
+    return "\n".join(lineas)
+
+
+def formatear_aviso_rezagada(
+    r: Rezagada, dif: float, propia: float, contra: float
+) -> str:
+    """Cuando una lleva la semana haciéndolo mucho peor que la otra."""
+    una, otra = _nombre(r.coin_id), _nombre(r.contra)
+    return (
+        f"🐢 <b>{una}</b> se queda atrás: en 7 días va un "
+        f"<b>{dif:+.1f}%</b> frente a {otra}\n"
+        f"<i>{una} {propia:+.1f}% · {otra} {contra:+.1f}%</i>"
+    )
 
 
 def _stop_quien(s: Stop) -> tuple[str, str, str]:

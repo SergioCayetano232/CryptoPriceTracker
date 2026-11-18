@@ -193,6 +193,7 @@ from crypto_tracker import (
     rellenar,
     rentabilidad,
     reparto,
+    rezagada,
     riesgo,
     rolex,
     rsi,
@@ -394,6 +395,7 @@ def ejecutar_ciclo(
     revisar_bajon(config, valor, calladas)
     revisar_concentracion(config, precios, calladas)
     revisar_equilibrio(config, precios, calladas)
+    revisar_rezagadas(config, precios)
     revisar_rsi(config, vigiladas, calladas)
     revisar_cruces(config, vigiladas, calladas)
     revisar_estables(config, list(precios), calladas)
@@ -1760,6 +1762,7 @@ COMANDOS: dict[str, Callable[[Config, str], Respuesta]] = {
     "alerta": lambda c, a: _crear_alerta(c, a),
     "recordar": lambda c, a: _recordar(c, a),
     "cada": lambda c, a: _cada(c, a),
+    "rezagada": lambda c, a: _rezagada(c, a),
     "pienso": lambda c, a: _pienso(c, a),
     "prediccion": lambda c, a: _prediccion(c, a),
     "fantasma": lambda c, a: _fantasma(c, a),
@@ -2891,6 +2894,77 @@ def _crear_pareja(
     return alerts.con_fuente(
         alerts.formatear_pareja(arriba, abajo, precio, config.vs_currency)
     )
+
+
+def _rezagada(config: Config, argumento: str) -> str:
+    if not argumento:
+        return alerts.formatear_rezagadas(database.get_rezagadas(config.database_path))
+    try:
+        coin_id, contra, pct = rezagada.interpretar(argumento)
+    except rezagada.RezagadaError as e:
+        return telegram.escape(str(e))
+    una, otra = (f"<b>{telegram.escape(c)}</b>" for c in (coin_id, contra))
+    if pct is None:
+        if database.quitar_rezagada(config.database_path, coin_id, contra):
+            return f"Hecho, ya no comparo {una} con {otra}."
+        return "No tenías esa. Mira /rezagada"
+
+    # Solo guardo el histórico de estas: sin él no hay semana con la que comparar.
+    config = _con_cambios(config)
+    con_historico = {w.coin_id for w in config.watchlist} | {
+        p.coin_id for p in config.cartera
+    }
+    fuera = [c for c in (coin_id, contra) if c not in con_historico]
+    if fuera:
+        return (
+            f"No guardo el precio de <b>{telegram.escape(fuera[0])}</b>. Vigílala "
+            f"antes: /vigilar {telegram.escape(fuera[0])} 5%"
+        )
+    database.guardar_rezagada(
+        config.database_path, rezagada.Rezagada(coin_id, contra, pct)
+    )
+    return f"🐢 Hecho: te aviso si {una} va un {pct:g}% peor que {otra} en 7 días."
+
+
+def revisar_rezagadas(config: Config, precios: dict[str, float]) -> None:
+    """Las de /rezagada: una semana de una contra la de la otra."""
+    if _silenciado(config):
+        return
+    try:
+        lista = database.get_rezagadas(config.database_path)
+    except database.DatabaseError as e:
+        logger.error("No se pudieron leer las de /rezagada: %s", e)
+        return
+    for r in lista:
+        ahora, contra = precios.get(r.coin_id), precios.get(r.contra)
+        try:
+            antes = database.get_price_at(
+                config.database_path, r.coin_id, rezagada.HORAS
+            )
+            contra_antes = database.get_price_at(
+                config.database_path, r.contra, rezagada.HORAS
+            )
+        except database.DatabaseError as e:
+            logger.error("Sin histórico para /rezagada: %s", e)
+            return
+        # Sin una semana guardada no hay con qué comparar todavía.
+        if not (ahora and contra and antes and contra_antes):
+            continue
+
+        dif = rezagada.diferencia(ahora, antes, contra, contra_antes)
+        avisar, avisada = rezagada.toca(r, dif)
+        if avisar and not telegram.send_message(
+            config.telegram_token,
+            config.telegram_chat_id,
+            alerts.formatear_aviso_rezagada(
+                r, dif, (ahora / antes - 1) * 100, (contra / contra_antes - 1) * 100
+            ),
+            sin_sonido=_sin_sonido(config),
+        ):
+            logger.error("No se pudo avisar de que %s se queda atrás", r.coin_id)
+            continue
+        if avisada != r.avisada:
+            database.guardar_rezagada(config.database_path, replace(r, avisada=avisada))
 
 
 def _cada(config: Config, argumento: str) -> str:
