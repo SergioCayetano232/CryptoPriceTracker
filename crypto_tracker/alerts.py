@@ -303,6 +303,7 @@ from .mensajes.seguimiento import (
     formatear_piensos,
     formatear_prediccion,
     formatear_predicciones,
+    formatear_programados,
     formatear_puntual,
     formatear_puntuales,
     formatear_quitadas,

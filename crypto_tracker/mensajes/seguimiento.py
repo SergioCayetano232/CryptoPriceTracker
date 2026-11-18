@@ -2,6 +2,8 @@
 
 from datetime import date, datetime, time
 
+from ..cada import EJEMPLO as EJEMPLO_CADA
+from ..cada import Programado
 from ..calma import VENTANA as VENTANA_CALMA
 from ..calma import Calma
 from ..condicion import Condicion
@@ -541,6 +543,17 @@ def formatear_pareja_quitada(quitadas: list[Puntual], currency: str) -> str:
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
     precios = " y ".join(f"{simbolo}{_num(a.objetivo)}" for a in quitadas)
     return f"🔗 Quito la otra de la pareja, la de {precios}."
+
+
+def formatear_programados(lista: list[Programado]) -> str:
+    """Respuesta de /cada a secas."""
+    if not lista:
+        return f"No tienes nada programado. Por ejemplo: {escape(EJEMPLO_CADA)}"
+    lineas = ["⏰ <b>Lo que te mando solo</b>", ""]
+    for p in lista:
+        lineas.append(f"<code>{p.numero}</code>  {p.cuando}: {escape(p.comando)}")
+    lineas.append(f"\nPara quitar uno: /cada quitar {lista[0].numero}")
+    return "\n".join(lineas)
 
 
 def _stop_quien(s: Stop) -> tuple[str, str, str]:

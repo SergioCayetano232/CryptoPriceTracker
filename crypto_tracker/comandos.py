@@ -49,6 +49,7 @@ COMANDOS = {
     "deposito": "Tu cartera contra un depósito (ej: /deposito 3%)",
     "inflacion": "Si tu cartera le gana a la subida de precios en España",
     "recordar": "Avísame cada semana de mi compra (ej: /recordar lunes 50 btc)",
+    "cada": "Mándame un comando solo (ej: /cada viernes 20:00 /cartera)",
     "pienso": "Antes de comprar, 24 h para pensarlo (ej: /pienso btc 500)",
     "fantasma": "Una cartera de mentira para probar (ej: /fantasma compra btc 200)",
     "herencia": "Lo que tienes y dónde, para tu familia, sin claves",
@@ -604,6 +605,12 @@ EJEMPLOS = {
         ("/pienso btc 500", "lo que hay ahora, y mañana te pregunto otra vez"),
         ("/pienso", "lo que te estás pensando"),
         ("/pienso btc no", "olvidarlo"),
+    ],
+    "cada": [
+        ("/cada viernes 20:00 /cartera", "cada viernes, tu cartera sin pedirla"),
+        ("/cada dia 9:00 /precio btc", "todos los días"),
+        ("/cada", "lo que tienes programado"),
+        ("/cada quitar 1", "quitar el número 1"),
     ],
     "recordar": [
         ("/recordar lunes 50 btc", "cada lunes, con un botón para apuntarla"),

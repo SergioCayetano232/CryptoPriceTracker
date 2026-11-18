@@ -8,6 +8,9 @@ from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
 
 from .avisados import Aviso
+from .cada import Programado
+from .cada import a_texto as texto_cada
+from .cada import de_texto as leer_cada
 from .condicion import Condicion
 from .condicion import leer as leer_condicion
 from .config import Posicion
@@ -989,6 +992,38 @@ def quitar_recordatorio(db_path: str, coin_id: str) -> bool:
     with _connect(db_path) as conn:
         cursor = conn.execute(
             "DELETE FROM ajustes WHERE clave = ?", (f"recordar:{coin_id}",)
+        )
+    return cursor.rowcount > 0
+
+
+def guardar_programado(db_path: str, p: Programado) -> None:
+    with _connect(db_path) as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (f"cada:{p.numero}", texto_cada(p)),
+        )
+
+
+def get_programados(db_path: str) -> list[Programado]:
+    with _connect(db_path) as conn:
+        filas = conn.execute(
+            "SELECT clave, valor FROM ajustes WHERE clave LIKE 'cada:%'"
+        ).fetchall()
+
+    lista = []
+    for fila in filas:
+        p = leer_cada(int(fila["clave"].removeprefix("cada:")), fila["valor"])
+        if p is None:
+            logger.warning("Un /cada que no se entiende: %r", fila["valor"])
+            continue
+        lista.append(p)
+    return sorted(lista, key=lambda p: p.numero)
+
+
+def quitar_programado(db_path: str, numero: int) -> bool:
+    with _connect(db_path) as conn:
+        cursor = conn.execute(
+            "DELETE FROM ajustes WHERE clave = ?", (f"cada:{numero}",)
         )
     return cursor.rowcount > 0
 

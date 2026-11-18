@@ -11548,3 +11548,34 @@ def test_sin_coingecko_ni_binance_sigue_el_error(config, enviados, monkeypatch):
     assert estado == {"bitcoin": "%60000.0"}
     assert "CoinGecko" in error
     assert enviados == []
+
+
+def test_cada_programa_lista_y_quita(config, enviados):
+    main.atender(config, _mensaje("/cada viernes 20:00 /status"))
+    main.atender(config, _mensaje("/cada dia 9:00 /ayuda"))
+    main.atender(config, _mensaje("/cada"))
+
+    assert "cada viernes a las 20:00 te mando /status" in enviados[0]
+    assert "cada viernes a las 20:00: /status" in enviados[2]
+    assert "cada día a las 09:00: /ayuda" in enviados[2]
+
+    main.atender(config, _mensaje("/cada quitar 1"))
+    assert [p.numero for p in database.get_programados(config.database_path)] == [2]
+
+
+def test_cada_con_un_comando_que_no_existe(config, enviados):
+    main.atender(config, _mensaje("/cada dia 9:00 /inventado"))
+
+    assert "No conozco /inventado" in enviados[0]
+    assert database.get_programados(config.database_path) == []
+
+
+def test_cada_manda_el_comando_una_vez(config, enviados):
+    main.atender(config, _mensaje("/cada dia 9:00 /ayuda"))
+    nueve = datetime(2026, 11, 20, 9, 10).astimezone()
+
+    main.programados(config, nueve)
+    main.programados(config, nueve)
+
+    assert len(enviados) == 2  # la confirmación y una sola ayuda
+    assert "/status" in enviados[1]

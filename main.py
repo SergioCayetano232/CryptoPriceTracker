@@ -48,6 +48,7 @@ from crypto_tracker import (
     bollinger,
     botones,
     brusco,
+    cada,
     cafe,
     caida,
     calendario,
@@ -1323,6 +1324,7 @@ def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:
             resumen_anual(config)
             aviso_compensar(config)
             recordatorios(config)
+            programados(config)
             pensados(config)
             cerrar_predicciones(config)
             copia_semanal(config)
@@ -1757,6 +1759,7 @@ COMANDOS: dict[str, Callable[[Config, str], Respuesta]] = {
     "historico": lambda c, a: _historico(c, a),
     "alerta": lambda c, a: _crear_alerta(c, a),
     "recordar": lambda c, a: _recordar(c, a),
+    "cada": lambda c, a: _cada(c, a),
     "pienso": lambda c, a: _pienso(c, a),
     "prediccion": lambda c, a: _prediccion(c, a),
     "fantasma": lambda c, a: _fantasma(c, a),
@@ -2888,6 +2891,65 @@ def _crear_pareja(
     return alerts.con_fuente(
         alerts.formatear_pareja(arriba, abajo, precio, config.vs_currency)
     )
+
+
+def _cada(config: Config, argumento: str) -> str:
+    lista = database.get_programados(config.database_path)
+    if not argumento:
+        return alerts.formatear_programados(lista)
+    try:
+        numero = cada.para_quitar(argumento)
+        if numero is None:
+            dia, hora, comando = cada.interpretar(argumento)
+    except cada.CadaError as e:
+        return telegram.escape(str(e))
+
+    if numero is not None:
+        if database.quitar_programado(config.database_path, numero):
+            return f"Hecho, quitado el {numero}."
+        return "No tienes ninguno con ese número. Mira /cada"
+
+    nombre, _ = comandos.interpretar(comando)
+    if nombre not in COMANDOS:
+        return f"No conozco {telegram.escape(comando.split()[0])}. Mira /ayuda"
+    if len(lista) >= cada.MAXIMO:
+        return f"Ya tienes {cada.MAXIMO}, quita alguno antes: /cada"
+
+    numero = max((p.numero for p in lista), default=0) + 1
+    p = cada.Programado(numero, dia, hora, comando)
+    database.guardar_programado(config.database_path, p)
+    logger.info("Programado %d: %s %s", numero, p.cuando, comando)
+    return (
+        f"⏰ Hecho: {p.cuando} te mando {telegram.escape(comando)}.\n"
+        f"Para quitarlo: /cada quitar {numero}"
+    )
+
+
+def programados(config: Config, ahora: datetime | None = None) -> None:
+    """Los de /cada que tocan ahora, como si los hubieras escrito tú."""
+    ahora = ahora or datetime.now().astimezone()
+    if _silenciado(config):
+        return
+    try:
+        tocan = [
+            p
+            for p in database.get_programados(config.database_path)
+            if cada.toca(p, ahora)
+        ]
+    except database.DatabaseError as e:
+        logger.error("No se pudieron leer los de /cada: %s", e)
+        return
+    for p in tocan:
+        # Apuntado antes de mandarlo: si el comando revienta, que no se repita
+        # en cada vuelta hasta pasadas las dos horas.
+        database.guardar_programado(
+            config.database_path, replace(p, ultimo=ahora.date())
+        )
+        logger.info("Toca el /cada %d: %s", p.numero, p.comando)
+        try:
+            contestar(config, p.comando)
+        except Exception:
+            logger.exception("Error con el /cada %d", p.numero)
 
 
 def _recordar(config: Config, argumento: str) -> str:
