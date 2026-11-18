@@ -8,6 +8,7 @@ import pytest
 
 import main
 from crypto_tracker import (
+    binance,
     bola,
     caraocruz,
     coingecko,
@@ -100,6 +101,12 @@ def sin_cambios_de_coingecko(monkeypatch):
 def sin_maximos_de_verdad(monkeypatch):
     """Cada aviso los pide; sin esto los tests de avisos irian a CoinGecko."""
     monkeypatch.setattr(coingecko, "maximos", lambda ids, cur: {})
+
+
+@pytest.fixture(autouse=True)
+def sin_binance_de_verdad(monkeypatch):
+    """Si CoinGecko falla en un test, el ciclo tiraria de Binance por internet."""
+    monkeypatch.setattr(binance, "precios", lambda ids, cur: {})
 
 
 def _mensaje(texto, chat=123, hace=0):
@@ -11310,3 +11317,67 @@ def test_herencia_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/herencia"))
 
     assert "No tienes nada en la cartera" in enviados[0]
+
+
+def _coingecko_caido(monkeypatch):
+    def falla(ids, cur):
+        raise coingecko.CoinGeckoError("Sin conexion con CoinGecko")
+
+    monkeypatch.setattr(coingecko, "get_prices", falla)
+
+
+def test_sin_coingecko_avisa_con_binance(config, enviados, monkeypatch):
+    _coingecko_caido(monkeypatch)
+    monkeypatch.setattr(binance, "precios", lambda ids, cur: {"bitcoin": 70000.0})
+
+    estado, error = main.ejecutar_ciclo(config, {"bitcoin": "%60000.0"})
+
+    assert error is None
+    assert estado["bitcoin"] != "%60000.0"
+    [aviso] = enviados
+    assert binance.FUENTE in aviso
+    assert "CoinGecko</a>" not in aviso
+    # Y se guarda en el histórico como cualquier otro precio.
+    assert database.get_price_at(config.database_path, "bitcoin", 0) is not None
+
+
+def test_con_binance_no_usa_la_variacion_vieja(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "_cambios", {"bitcoin": 42.0})
+    monkeypatch.setattr(coingecko, "_volumenes", {"bitcoin": 1e9})
+    _coingecko_caido(monkeypatch)
+    monkeypatch.setattr(binance, "precios", lambda ids, cur: {"bitcoin": 70000.0})
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%60000.0"})
+
+    assert coingecko.cambio_24h("bitcoin") is None
+    assert coingecko.volumenes(["bitcoin"]) == {}
+    assert "42" not in enviados[0]
+
+
+def test_con_binance_no_dice_que_coingecko_no_la_conoce(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    con_dos = replace(
+        config, watchlist=[Watch("bitcoin", percent=5), Watch("kaspa", step=1)]
+    )
+    _coingecko_caido(monkeypatch)
+    monkeypatch.setattr(binance, "precios", lambda ids, cur: {"bitcoin": 70000.0})
+
+    main.ejecutar_ciclo(con_dos, {"bitcoin": "%60000.0"}, sin_precio=set())
+
+    assert not any("kaspa" in t for t in enviados)
+
+
+def test_sin_coingecko_ni_binance_sigue_el_error(config, enviados, monkeypatch):
+    _coingecko_caido(monkeypatch)
+
+    def tampoco(ids, cur):
+        raise binance.BinanceError("Binance tampoco contesta")
+
+    monkeypatch.setattr(binance, "precios", tampoco)
+
+    estado, error = main.ejecutar_ciclo(config, {"bitcoin": "%60000.0"})
+
+    assert estado == {"bitcoin": "%60000.0"}
+    assert "CoinGecko" in error
+    assert enviados == []

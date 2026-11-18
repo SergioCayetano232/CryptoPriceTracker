@@ -823,6 +823,12 @@ Le estás pidiendo precios demasiado rápido. Lo reintenta solo un par de veces,
 así que si aparece de vez en cuando puedes ignorarlo. Si sale continuamente,
 pon una `COINGECKO_API_KEY` o sube `CHECK_INTERVAL`.
 
+**El aviso dice "Precios de Binance"**
+CoinGecko no contestaba y el bot ha tirado de Binance para no dejarte sin
+aviso. Solo vale con `VS_CURRENCY` en `eur` o `usd` y con las criptos
+conocidas (`btc`, `eth`, `sol`...). Las estables y las raras esperan a que
+vuelva CoinGecko.
+
 **Me avisa demasiado**
 El paso es muy pequeño. Con `bitcoin:100` te avisa continuamente; prueba con
 `bitcoin:1000` o más. Con porcentajes, sube del `%2` al `%5`.
@@ -835,6 +841,7 @@ El paso es muy pequeño. Con `bitcoin:100` te avisa continuamente; prueba con
 crypto_tracker/
   config.py      lee el .env
   coingecko.py   consulta los precios
+  binance.py     precios de respaldo por si CoinGecko no contesta
   comisionred.py lo que cuesta mover bitcoin, de mempool.space, para /comisionred
   funding.py     lo que se pagan los de futuros en Binance, para /funding
   direccion.py   vigila direcciones de bitcoin en mempool.space, para /direccion

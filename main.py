@@ -42,6 +42,7 @@ from crypto_tracker import (
     ballena,
     bici,
     bigmac,
+    binance,
     boda,
     bola,
     bollinger,
@@ -288,17 +289,22 @@ def ejecutar_ciclo(
     extra = [p.coin_id for p in (*pendientes, *config.cartera)]
     extra = [c for c in extra if c not in coin_ids and c != puntuales.CARTERA]
 
+    todas = coin_ids + list(dict.fromkeys(extra))
+    respaldo = False
     try:
-        precios = coingecko.get_prices(
-            coin_ids + list(dict.fromkeys(extra)), config.vs_currency
-        )
+        precios = coingecko.get_prices(todas, config.vs_currency)
     except coingecko.CoinGeckoError as e:
         logger.error("No se pudieron consultar los precios: %s", e)
-        return estado, str(e)
+        precios = _precios_de_binance(todas, config.vs_currency)
+        if not precios:
+            return estado, str(e)
+        respaldo = True
 
-    avisar_sin_precio(
-        config, coin_ids, precios, set() if sin_precio is None else sin_precio
-    )
+    # Con los de Binance faltarán las que no tiene, pero CoinGecko sí las conoce.
+    if not respaldo:
+        avisar_sin_precio(
+            config, coin_ids, precios, set() if sin_precio is None else sin_precio
+        )
 
     if not precios:
         logger.warning("La consulta no devolvio ningun precio")
@@ -409,7 +415,11 @@ def ejecutar_ciclo(
 
     # Todo en un mensaje: si cruzan tres a la vez, tres notificaciones
     # seguidas molestan y encima Telegram empieza a cortar el ritmo.
-    texto = alerts.con_fuente(alerts.formatear_varios(avisos, config.vs_currency))
+    texto = alerts.formatear_varios(avisos, config.vs_currency)
+    if respaldo:
+        texto = f"{texto}\n\n{binance.FUENTE}"
+    else:
+        texto = alerts.con_fuente(texto)
     cruzadas = ", ".join(f"{a.coin_id} {a.estado}" for a in avisos)
 
     if telegram.send_message(
@@ -612,6 +622,20 @@ def _borrar_puntuales(config: Config, hechas: list[puntuales.Puntual]) -> None:
         except database.DatabaseError as e:
             # Volvera a avisar el siguiente ciclo. Mejor repetido que perdido.
             logger.error("No se pudo borrar la alerta %d: %s", p.id, e)
+
+
+def _precios_de_binance(coin_ids: list[str], vs_currency: str) -> dict[str, float]:
+    """El plan B cuando CoinGecko no contesta, para no quedarse sin avisos."""
+    try:
+        precios = binance.precios(coin_ids, vs_currency)
+    except binance.BinanceError as e:
+        logger.error("%s", e)
+        return {}
+    if precios:
+        # Lo de la última consulta buena ya es viejo; sin él se mira el histórico.
+        coingecko.olvidar_24h()
+        logger.warning("Tiro de los precios de Binance para: %s", ", ".join(precios))
+    return precios
 
 
 def avisar_sin_precio(

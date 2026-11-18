@@ -165,6 +165,12 @@ def precio_usd(coin_id: str) -> float | None:
     return _usd.get(coin_id)
 
 
+def olvidar_24h() -> None:
+    """Borra la variación y el volumen de la última vez, que ya serían viejos."""
+    _cambios.clear()
+    _volumenes.clear()
+
+
 def tomar_consultas() -> int:
     """Las peticiones hechas desde la ultima llamada, y pone la cuenta a cero."""
     global _hechas
