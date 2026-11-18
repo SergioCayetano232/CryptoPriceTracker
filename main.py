@@ -375,6 +375,7 @@ def ejecutar_ciclo(
     calladas = _calladas(config)
     revisar_bajon(config, valor, calladas)
     revisar_concentracion(config, precios, calladas)
+    revisar_equilibrio(config, precios, calladas)
     revisar_rsi(config, vigiladas, calladas)
     revisar_cruces(config, vigiladas, calladas)
     revisar_estables(config, list(precios), calladas)
@@ -900,6 +901,45 @@ def revisar_concentracion(
         database.guardar_concentracion(config.database_path, nuevo)
     except database.DatabaseError as e:
         logger.error("No se pudo apuntar el aviso de concentración: %s", e)
+
+
+def revisar_equilibrio(
+    config: Config, precios: dict[str, float], calladas: set[str]
+) -> None:
+    """Avisa una vez cuando una que estaba en pérdidas vuelve a lo que costó."""
+    if not config.cartera or _silenciado(config):
+        return
+    valores, _ = cartera.valorar(list(config.cartera), precios)
+    criptos = equilibrio.calcular(valores).criptos
+    if not criptos:
+        return
+    try:
+        esperando = database.esperando_equilibrio(config.database_path)
+    except database.DatabaseError as e:
+        logger.error("No se pudo mirar quién estaba en pérdidas: %s", e)
+        return
+
+    for e in criptos:
+        if e.coin_id in calladas:
+            continue
+        antes = e.coin_id in esperando
+        avisar, sigue = equilibrio.vuelta(e, antes)
+        if avisar and not telegram.send_message(
+            config.telegram_token,
+            config.telegram_chat_id,
+            alerts.formatear_vuelta(e, config.vs_currency),
+            sin_sonido=_sin_sonido(config),
+        ):
+            # Sin apuntarlo, lo vuelve a intentar el siguiente ciclo.
+            logger.error("No se pudo avisar de que %s vuelve a su coste", e.coin_id)
+            continue
+        if avisar:
+            logger.info("%s vuelve a su precio medio, %s", e.coin_id, e.medio)
+        if sigue != antes:
+            try:
+                database.guardar_equilibrio(config.database_path, e.coin_id, sigue)
+            except database.DatabaseError as err:
+                logger.error("No se pudo apuntar el coste de %s: %s", e.coin_id, err)
 
 
 def revisar_estables(config: Config, coin_ids: list[str], calladas: set[str]) -> None:

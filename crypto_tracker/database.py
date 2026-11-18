@@ -771,6 +771,26 @@ def guardar_estable(db_path: str, coin_id: str, fuera: bool) -> None:
         )
 
 
+def esperando_equilibrio(db_path: str) -> set[str]:
+    """Las que estaban en pérdidas, para avisar cuando vuelvan a lo que costaron."""
+    with _connect(db_path) as conn:
+        filas = conn.execute(
+            "SELECT clave FROM ajustes WHERE clave LIKE 'equilibrio:%'"
+        ).fetchall()
+    return {f["clave"].removeprefix("equilibrio:") for f in filas}
+
+
+def guardar_equilibrio(db_path: str, coin_id: str, esperando: bool) -> None:
+    clave = f"equilibrio:{coin_id}"
+    with _connect(db_path) as conn:
+        if not esperando:
+            conn.execute("DELETE FROM ajustes WHERE clave = ?", (clave,))
+            return
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, '1')", (clave,)
+        )
+
+
 def limite_compras(db_path: str) -> float | None:
     with _connect(db_path) as conn:
         fila = conn.execute(

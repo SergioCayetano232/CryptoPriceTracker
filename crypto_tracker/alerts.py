@@ -51,6 +51,7 @@ from .mensajes.analisis import (
     formatear_sube,
     formatear_tarjeta,
     formatear_verdes,
+    formatear_vuelta,
 )
 from .mensajes.avisos import (
     Alert,

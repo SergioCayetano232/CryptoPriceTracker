@@ -18,7 +18,7 @@ from ..direccion import VER as VER_DIRECCION
 from ..direccion import Saldo, Vigilada, a_btc
 from ..doble import Cartera as CarteraDoble
 from ..dominancia import Dominancia
-from ..equilibrio import Cartera
+from ..equilibrio import Cartera, Equilibrio
 from ..estacional import MESES as MESES_ESTACIONAL
 from ..estacional import POCOS_AÑOS, Estacional
 from ..estocastico import ALTO as ALTO_ESTOCASTICO
@@ -1278,6 +1278,16 @@ def formatear_horas(
     if cara - barata < 0.5:
         texto += "\n<i>La diferencia es pequeña: no lo tomes como una regla.</i>"
     return texto
+
+
+def formatear_vuelta(e: Equilibrio, currency: str) -> str:
+    """Aviso de que una que perdía ya vale lo que te costó."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(e.coin_id.replace("-", " ").title())
+    return (
+        f"🟢 <b>{nombre}</b> vuelve a lo que te costó, {simbolo}{_num(e.medio)}\n"
+        f"Ahora está a <b>{simbolo}{_num(e.precio)}</b>. Ya no pierdes con ella."
+    )
 
 
 def formatear_equilibrio(c: Cartera, currency: str) -> str:

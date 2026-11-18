@@ -4,6 +4,10 @@ from dataclasses import dataclass
 
 from .cartera import Valor
 
+# Hasta perder esto no cuenta como estar en pérdidas. Si no, rondando el precio
+# medio te llegaría el aviso cada dos por tres.
+MARGEN = 5.0
+
 
 @dataclass(frozen=True)
 class Equilibrio:
@@ -39,3 +43,10 @@ def calcular(valores: list[Valor]) -> Cartera:
     if criptos and not sin_coste and valor:
         total = (sum(v.invertido for v in valores) / valor - 1) * 100
     return Cartera(criptos, total, sin_coste)
+
+
+def vuelta(e: Equilibrio, esperando: bool) -> tuple[bool, bool]:
+    """(toca avisar, sigue esperando). Empieza a esperar al perder un MARGEN %."""
+    if e.precio >= e.medio:
+        return esperando, False
+    return False, esperando or e.precio <= e.medio * (1 - MARGEN / 100)

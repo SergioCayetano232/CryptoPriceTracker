@@ -2128,6 +2128,30 @@ def test_quitar_una_de_la_pareja_deja_la_otra_normal(config, enviados, monkeypat
     assert database.get_puntuales(config.database_path, "eur") == []
 
 
+def test_avisa_una_vez_al_volver_a_lo_que_costo(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    config = replace(config, cartera=(Posicion("solana", 5.0, 1000.0),))  # a 200
+    estado = {"bitcoin": "%63000.0"}
+    for precio in (150.0, 190.0, 205.0, 210.0):
+        _precio(monkeypatch, {"bitcoin": 63000.0, "solana": precio})
+        estado, _ = main.ejecutar_ciclo(config, estado)
+
+    assert len(enviados) == 1
+    assert "<b>Solana</b> vuelve a lo que te costó, €200,00" in enviados[0]
+
+
+def test_no_avisa_si_nunca_estuvo_en_perdidas(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    config = replace(config, cartera=(Posicion("solana", 5.0, 1000.0),))
+    _precio(monkeypatch, {"bitcoin": 63000.0, "solana": 205.0})
+
+    main.ejecutar_ciclo(config, {"bitcoin": "%63000.0"})
+
+    assert enviados == []
+
+
 def test_la_alerta_no_salta_antes_de_tiempo(config, enviados, monkeypatch):
     database.crear_puntual(config.database_path, "bitcoin", 70000, True, "eur")
     _precio(monkeypatch, {"bitcoin": 69000.0})

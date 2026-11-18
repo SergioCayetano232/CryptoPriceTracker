@@ -2,9 +2,9 @@
 
 import pytest
 
-from crypto_tracker.alerts import formatear_equilibrio
+from crypto_tracker.alerts import formatear_equilibrio, formatear_vuelta
 from crypto_tracker.cartera import Valor
-from crypto_tracker.equilibrio import Cartera, Equilibrio, calcular
+from crypto_tracker.equilibrio import Cartera, Equilibrio, calcular, vuelta
 
 
 def test_cuanto_le_falta_a_cada_una():
@@ -62,3 +62,28 @@ def test_formatear_todo_en_ganancias():
 
     assert "Todo junto vas ganando: aguanta una bajada del <b>10.71%</b>" in texto
     assert "no sé lo que te costó" not in texto
+
+
+# --- el aviso de que vuelve a lo que costó ---
+
+
+@pytest.mark.parametrize(
+    "precio, esperando, sale",
+    [
+        (96.0, False, (False, False)),  # pierde un 4%: todavía no cuenta
+        (95.0, False, (False, True)),  # pierde un 5%: ya espera
+        (99.0, True, (False, True)),  # recuperando, sin llegar
+        (100.0, True, (True, False)),  # llega: aviso, y deja de esperar
+        (130.0, True, (True, False)),  # se pasó entre ciclo y ciclo, vale igual
+        (110.0, False, (False, False)),  # ganando sin haber perdido: nada
+    ],
+)
+def test_vuelta(precio, esperando, sale):
+    assert vuelta(Equilibrio("solana", precio, 100.0), esperando) == sale
+
+
+def test_formatear_vuelta():
+    texto = formatear_vuelta(Equilibrio("solana", 201.5, 200.0), "eur")
+
+    assert "<b>Solana</b> vuelve a lo que te costó, €200,00" in texto
+    assert "<b>€201,50</b>" in texto
