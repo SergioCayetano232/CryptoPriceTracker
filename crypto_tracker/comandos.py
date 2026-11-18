@@ -573,6 +573,7 @@ EJEMPLOS = {
         ("/alerta bitcoin 60000 o 80000", "la que llegue antes, y quito la otra"),
         ("/alerta bitcoin 70000 vender la mitad", "con una nota para el aviso"),
         ("/alerta cartera 5000", "con lo que vale tu cartera entera"),
+        ("/alerta eth/btc 0.05", "cuando un ethereum valga eso en bitcoin"),
         ("/alerta bitcoin", "sin precio, te digo a cuánto está"),
     ],
     "stop": [

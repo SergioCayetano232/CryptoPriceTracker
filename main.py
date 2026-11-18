@@ -26,6 +26,7 @@ from crypto_tracker import (
     airpods,
     ajustes,
     aleatoria,
+    alertaratio,
     alerts,
     alquiler,
     aniversario,
@@ -289,6 +290,7 @@ def ejecutar_ciclo(
     # Las de /alerta y la cartera pueden ser de criptos que no vigilas. Van en
     # la misma consulta, y asi la cartera tiene historico para su grafica.
     extra = [p.coin_id for p in (*pendientes, *config.cartera)]
+    extra += alertaratio.criptos(_alertas_ratio(config))
     extra = [c for c in extra if c not in coin_ids and c != puntuales.CARTERA]
 
     todas = coin_ids + list(dict.fromkeys(extra))
@@ -396,6 +398,7 @@ def ejecutar_ciclo(
     revisar_concentracion(config, precios, calladas)
     revisar_equilibrio(config, precios, calladas)
     revisar_rezagadas(config, precios)
+    revisar_alertas_ratio(config, precios, calladas)
     revisar_rsi(config, vigiladas, calladas)
     revisar_cruces(config, vigiladas, calladas)
     revisar_estables(config, list(precios), calladas)
@@ -1974,6 +1977,10 @@ def _alertas(config: Config) -> str | comandos.ConBotones:
     )
     if precios:
         texto = alerts.con_fuente(texto)
+    de_ratio = _alertas_ratio(config)
+    if de_ratio:
+        lista = alerts.formatear_alertas_ratio(de_ratio)
+        texto = f"{texto}\n\n{lista}" if pendientes else lista
     if not pendientes:
         return texto
     return comandos.ConBotones(texto, botones.para_alertas(pendientes))
@@ -2765,6 +2772,8 @@ def _vsbolsa(config: Config, argumento: str) -> str:
 
 
 def _crear_alerta(config: Config, argumento: str) -> str:
+    if alertaratio.es_ratio(argumento):
+        return _alerta_ratio(config, argumento)
     try:
         argumento, cond = condicion.separar(argumento)
     except condicion.CondicionError as e:
@@ -2894,6 +2903,71 @@ def _crear_pareja(
     return alerts.con_fuente(
         alerts.formatear_pareja(arriba, abajo, precio, config.vs_currency)
     )
+
+
+def _alertas_ratio(config: Config) -> list[alertaratio.AlertaRatio]:
+    try:
+        return database.get_alertas_ratio(config.database_path)
+    except database.DatabaseError as e:
+        logger.error("No se pudieron leer las alertas de ratio: %s", e)
+        return []
+
+
+def _alerta_ratio(config: Config, argumento: str) -> str:
+    try:
+        coin_id, contra, texto = alertaratio.interpretar(argumento)
+        if alertaratio.es_quitar(texto):
+            if database.quitar_alerta_ratio(config.database_path, coin_id, contra):
+                return "Hecho, quitada."
+            return "No tenías esa. Mira /alertas"
+        valor = alertaratio.objetivo(texto) if texto else None
+    except alertaratio.AlertaRatioError as e:
+        return telegram.escape(str(e))
+
+    try:
+        precios = coingecko.get_prices([coin_id, contra], config.vs_currency)
+    except coingecko.CoinGeckoError as e:
+        return f"No he podido mirar el precio ahora mismo: {telegram.escape(str(e))}"
+    falta = next((c for c in (coin_id, contra) if not precios.get(c)), None)
+    if falta:
+        return (
+            f"No encuentro <b>{telegram.escape(falta)}</b> en CoinGecko. "
+            f"Prueba con /buscar {telegram.escape(falta)}"
+        )
+    ahora = precios[coin_id] / precios[contra]
+    if valor is None:
+        return alerts.formatear_ratio_ahora(coin_id, contra, ahora)
+
+    try:
+        a = alertaratio.crear(coin_id, contra, valor, ahora)
+    except alertaratio.AlertaRatioError as e:
+        return telegram.escape(str(e))
+    # Una por pareja: si ya había, la nueva la pisa.
+    database.guardar_alerta_ratio(config.database_path, a)
+    return alerts.formatear_alerta_ratio(a, ahora)
+
+
+def revisar_alertas_ratio(
+    config: Config, precios: dict[str, float], calladas: set[str]
+) -> None:
+    """Las de /alerta eth/btc: saltan una vez y se borran."""
+    if _silenciado(config):
+        return
+    for a in _alertas_ratio(config):
+        if a.coin_id in calladas or a.contra in calladas:
+            continue
+        una, otra = precios.get(a.coin_id), precios.get(a.contra)
+        if not (una and otra) or not alertaratio.cumplida(a, una / otra):
+            continue
+        if not telegram.send_message(
+            config.telegram_token,
+            config.telegram_chat_id,
+            alerts.formatear_aviso_ratio(a, una / otra),
+            sin_sonido=_sin_sonido(config),
+        ):
+            logger.error("No se pudo avisar del ratio %s/%s", a.coin_id, a.contra)
+            continue
+        database.quitar_alerta_ratio(config.database_path, a.coin_id, a.contra)
 
 
 def _rezagada(config: Config, argumento: str) -> str:

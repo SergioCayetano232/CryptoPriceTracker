@@ -7,6 +7,7 @@ from dataclasses import replace
 from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
 
+from .alertaratio import AlertaRatio
 from .avisados import Aviso
 from .cada import Programado
 from .cada import a_texto as texto_cada
@@ -1058,6 +1059,38 @@ def quitar_rezagada(db_path: str, coin_id: str, contra: str) -> bool:
     with _connect(db_path) as conn:
         cursor = conn.execute(
             "DELETE FROM ajustes WHERE clave = ?", (f"rezagada:{coin_id}:{contra}",)
+        )
+    return cursor.rowcount > 0
+
+
+def guardar_alerta_ratio(db_path: str, a: AlertaRatio) -> None:
+    with _connect(db_path) as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (f"ratio:{a.coin_id}:{a.contra}", f"{a.objetivo!r}|{int(a.sube)}"),
+        )
+
+
+def get_alertas_ratio(db_path: str) -> list[AlertaRatio]:
+    with _connect(db_path) as conn:
+        filas = conn.execute(
+            "SELECT clave, valor FROM ajustes WHERE clave LIKE 'ratio:%' ORDER BY clave"
+        ).fetchall()
+    lista = []
+    for f in filas:
+        try:
+            _, coin_id, contra = f["clave"].split(":")
+            objetivo, sube = f["valor"].split("|")
+            lista.append(AlertaRatio(coin_id, contra, float(objetivo), sube == "1"))
+        except ValueError:
+            logger.warning("Una alerta de ratio que no se entiende: %r", f["valor"])
+    return lista
+
+
+def quitar_alerta_ratio(db_path: str, coin_id: str, contra: str) -> bool:
+    with _connect(db_path) as conn:
+        cursor = conn.execute(
+            "DELETE FROM ajustes WHERE clave = ?", (f"ratio:{coin_id}:{contra}",)
         )
     return cursor.rowcount > 0
 

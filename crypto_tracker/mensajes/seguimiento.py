@@ -2,6 +2,7 @@
 
 from datetime import date, datetime, time
 
+from ..alertaratio import AlertaRatio
 from ..cada import EJEMPLO as EJEMPLO_CADA
 from ..cada import Programado
 from ..calma import VENTANA as VENTANA_CALMA
@@ -582,6 +583,52 @@ def formatear_aviso_rezagada(
         f"🐢 <b>{una}</b> se queda atrás: en 7 días va un "
         f"<b>{dif:+.1f}%</b> frente a {otra}\n"
         f"<i>{una} {propia:+.1f}% · {otra} {contra:+.1f}%</i>"
+    )
+
+
+def _en(a: AlertaRatio) -> str:
+    flecha = "🔺" if a.sube else "🔻"
+    return f"1 <b>{_nombre(a.coin_id)}</b> {flecha} {_num(a.objetivo)}"
+
+
+def formatear_alerta_ratio(a: AlertaRatio, ahora: float) -> str:
+    """Respuesta al poner una /alerta eth/btc."""
+    otra = _nombre(a.contra)
+    return (
+        f"⚖️ Hecho: te aviso cuando 1 <b>{_nombre(a.coin_id)}</b> "
+        f"{'suba' if a.sube else 'baje'} a {_num(a.objetivo)} {otra}.\n"
+        f"Ahora vale {_num(ahora)} {otra}.\n"
+        f"Para quitarla: /alerta {escape(a.coin_id)}/{escape(a.contra)} no"
+    )
+
+
+def formatear_ratio_ahora(coin_id: str, contra: str, ahora: float) -> str:
+    """/alerta eth/btc sin número: a cuánto está, para saber qué poner."""
+    return (
+        f"⚖️ 1 <b>{_nombre(coin_id)}</b> vale ahora {_num(ahora)} {_nombre(contra)}.\n"
+        f"Ponle un número detrás: /alerta {escape(coin_id)}/{escape(contra)} "
+        f"{_num(ahora * 1.1)}"
+    )
+
+
+def formatear_alertas_ratio(lista: list[AlertaRatio]) -> str:
+    """Debajo de /alertas, las de una cripto en otra."""
+    lineas = ["⚖️ <b>De una en otra</b>", ""]
+    lineas += [f"{_en(a)} {_nombre(a.contra)}" for a in lista]
+    primera = lista[0]
+    lineas.append(
+        f"\nPara quitar una: /alerta {escape(primera.coin_id)}/"
+        f"{escape(primera.contra)} no"
+    )
+    return "\n".join(lineas)
+
+
+def formatear_aviso_ratio(a: AlertaRatio, ahora: float) -> str:
+    una, otra = _nombre(a.coin_id), _nombre(a.contra)
+    verbo = "ha subido" if a.sube else "ha bajado"
+    return (
+        f"⚖️ <b>{una}</b> {verbo} a <b>{_num(ahora)}</b> {otra}\n"
+        f"<i>Tu alerta era de {_num(a.objetivo)}. Ya la he quitado.</i>"
     )
 
 
