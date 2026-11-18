@@ -2098,6 +2098,22 @@ def test_la_pareja_sin_saltar_se_quedan_las_dos(config, enviados, monkeypatch):
     assert len(database.get_puntuales(config.database_path, "eur")) == 2
 
 
+def test_alertas_dice_cuales_van_en_pareja(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 70000.0})
+    main.atender(config, _mensaje("/alerta bitcoin 60000 o 80000"))
+    main.atender(config, _mensaje("/alerta bitcoin 90000"))
+    main.atender(config, _mensaje("/alertas"))
+
+    assert enviados[-1].count("🔗") == 2
+    assert "va con la 2: si salta una, quito la otra" in enviados[-1]
+    assert "va con la 1:" in enviados[-1]
+
+    main.atender(config, _mensaje("/quitar 1"))
+    main.atender(config, _mensaje("/alertas"))
+
+    assert "🔗" not in enviados[-1]
+
+
 def test_quitar_una_de_la_pareja_deja_la_otra_normal(config, enviados, monkeypatch):
     _precio(monkeypatch, {"bitcoin": 70000.0})
     main.atender(config, _mensaje("/alerta bitcoin 60000 o 80000"))

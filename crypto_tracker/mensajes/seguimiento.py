@@ -678,6 +678,7 @@ def formatear_puntuales(
     currency: str,
     precios: dict[str, float] | None = None,
     ahora: datetime | None = None,
+    parejas: dict[int, int] | None = None,
 ) -> str:
     """Respuesta de /alertas. Con precios, dice cuanto le falta a cada una."""
     if not alertas:
@@ -685,6 +686,7 @@ def formatear_puntuales(
 
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
     lineas = ["🎯 <b>Tus alertas</b>", ""]
+    puestas = {a.id for a in alertas}
     for a in alertas:
         nombre = (
             "Tu cartera"
@@ -707,6 +709,12 @@ def formatear_puntuales(
             lineas.append(f"      🕐 <i>puesta {puesta}</i>")
         if a.condicion:
             lineas.append(f"      🔗 si {texto_condicion(a.condicion)}")
+        otra = (parejas or {}).get(a.id)
+        # Si quitaste la otra a mano, esta ya va sola aunque quede la fila.
+        if otra in puestas:
+            lineas.append(
+                f"      🔗 <i>va con la {otra}: si salta una, quito la otra</i>"
+            )
         if a.nota:
             lineas.append(f"      📝 {escape(a.nota)}")
     lineas.append(f"\nPara quitar una: /quitar {alertas[0].id}")
