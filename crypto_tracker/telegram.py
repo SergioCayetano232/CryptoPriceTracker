@@ -25,6 +25,9 @@ TIMEOUT_ARCHIVO = 120
 
 # Telegram corta los mensajes mas largos que esto.
 MAX_LENGTH = 4096
+# Lo que pase de aquí se parte en varios, pero sin inundar el chat: a partir
+# del quinto se corta como antes.
+MAX_TROZOS = 5
 
 # Como en CoinGecko: tres intentos esperando 2s y luego 4s. Un corte corto de
 # red ya no nos hace perder el aviso.
@@ -57,20 +60,27 @@ def send_message(
         logger.warning("Mensaje vacio, no se envia nada")
         return False
 
-    text = _recortar(text, MAX_LENGTH)
+    trozos = _partir(text, MAX_LENGTH, MAX_TROZOS)
+    for i, trozo in enumerate(trozos):
+        payload = {
+            "chat_id": chat_id,
+            "text": trozo,
+            "parse_mode": "HTML",
+            # Sin previsualizaciones de enlaces, ensucian el aviso.
+            "disable_web_page_preview": True,
+            # Llega igual, pero sin sonar ni vibrar.
+            "disable_notification": sin_sonido,
+        }
+        # Los botones al final, debajo de lo último que lees.
+        if botones and i == len(trozos) - 1:
+            payload["reply_markup"] = _teclado(botones)
+        if not _mandar(token, chat_id, payload):
+            return False
+    return True
 
-    payload = {
-        "chat_id": chat_id,
-        "text": text,
-        "parse_mode": "HTML",
-        # Sin previsualizaciones de enlaces, ensucian el aviso.
-        "disable_web_page_preview": True,
-        # Llega igual, pero sin sonar ni vibrar.
-        "disable_notification": sin_sonido,
-    }
-    if botones:
-        payload["reply_markup"] = _teclado(botones)
 
+def _mandar(token: str, chat_id: str, payload: dict) -> bool:
+    """Un mensaje con sus reintentos."""
     espera = ESPERA_INICIAL
     for intento in range(1, INTENTOS + 1):
         ok, reintentar, pide = _enviar(token, payload)
@@ -131,6 +141,20 @@ def _teclado(botones: list[list[tuple[str, str]]]) -> dict:
             for fila in botones
         ]
     }
+
+
+def _partir(text: str, limite: int, max_trozos: int) -> list[str]:
+    """Reparte un texto largo en mensajes que quepan, cortando por saltos de línea."""
+    trozos = []
+    resto = text
+    while len(resto) > limite and len(trozos) < max_trozos - 1:
+        corte = resto.rfind("\n", 0, limite)
+        if corte <= 0:
+            corte = limite
+        trozos.append(resto[:corte])
+        resto = resto[corte:].lstrip("\n")
+    trozos.append(_recortar(resto, limite))
+    return [t for t in trozos if t.strip()]
 
 
 def _recortar(text: str, limite: int) -> str:

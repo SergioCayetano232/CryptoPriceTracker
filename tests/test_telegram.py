@@ -248,13 +248,13 @@ def _etiquetas_cerradas(texto):
     )
 
 
-def test_corte_no_deja_etiquetas_abiertas(monkeypatch):
+def test_lo_largo_llega_entero_en_varios(monkeypatch):
     from crypto_tracker.alerts import Alert, con_fuente, formatear_varios
 
-    enviado = {}
+    enviados = []
 
     def capturar(url, json=None, timeout=None):
-        enviado.update(json)
+        enviados.append(json["text"])
         return RespuestaFalsa()
 
     monkeypatch.setattr(requests, "post", capturar)
@@ -263,11 +263,67 @@ def test_corte_no_deja_etiquetas_abiertas(monkeypatch):
     texto = con_fuente(formatear_varios(muchos, "eur"))
     assert len(texto) > telegram.MAX_LENGTH
 
-    telegram.send_message("token", "123", texto)
+    assert telegram.send_message("token", "123", texto) is True
 
-    assert len(enviado["text"]) <= telegram.MAX_LENGTH
-    assert enviado["text"].endswith("[...cortado]")
-    assert _etiquetas_cerradas(enviado["text"])
+    assert len(enviados) > 1
+    for trozo in enviados:
+        assert len(trozo) <= telegram.MAX_LENGTH
+        assert _etiquetas_cerradas(trozo)
+    junto = "\n".join(enviados)
+    assert "[...cortado]" not in junto
+    assert all(f"Cripto {i}" in junto for i in (0, 100, 199))
+
+
+def test_mas_de_cinco_trozos_se_corta(monkeypatch):
+    enviados = []
+
+    def capturar(url, json=None, timeout=None):
+        enviados.append(json["text"])
+        return RespuestaFalsa()
+
+    monkeypatch.setattr(requests, "post", capturar)
+    enorme = "\n".join(f"<b>Linea {i}</b> con algo de texto" for i in range(5000))
+
+    telegram.send_message("token", "123", enorme)
+
+    assert len(enviados) == telegram.MAX_TROZOS
+    assert enviados[-1].endswith("[...cortado]")
+
+
+def test_los_botones_van_en_el_ultimo(monkeypatch):
+    enviados = []
+
+    def capturar(url, json=None, timeout=None):
+        enviados.append(json)
+        return RespuestaFalsa()
+
+    monkeypatch.setattr(requests, "post", capturar)
+    largo = "\n".join("una linea cualquiera" for _ in range(400))
+
+    telegram.send_message("token", "123", largo, botones=[[("Vale", "/ok")]])
+
+    assert len(enviados) > 1
+    assert all("reply_markup" not in e for e in enviados[:-1])
+    assert "reply_markup" in enviados[-1]
+
+
+def test_si_falla_un_trozo_para(monkeypatch):
+    enviados = []
+
+    def capturar(url, json=None, timeout=None):
+        enviados.append(json)
+        return RespuestaFalsa(400, {"ok": False, "description": "Bad Request"})
+
+    monkeypatch.setattr(requests, "post", capturar)
+    largo = "\n".join("una linea cualquiera" for _ in range(400))
+
+    assert telegram.send_message("token", "123", largo) is False
+    assert len(enviados) == 1
+
+
+def test_partir_corta_por_saltos_de_linea():
+    assert telegram._partir("aaa\nbbb\nccc", 8, 5) == ["aaa\nbbb", "ccc"]
+    assert telegram._partir("corto", 100, 5) == ["corto"]
 
 
 def test_corte_del_pie_de_foto(monkeypatch):
