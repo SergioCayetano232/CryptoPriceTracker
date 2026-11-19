@@ -11677,3 +11677,120 @@ def test_equivale_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/equivale cafe"))
 
     assert "PORTFOLIO" in enviados[0]
+
+
+# --- /importar ---
+
+CSV_BINANCE = (
+    '"Date(UTC)","Pair","Side","Price","Executed","Amount","Fee"\n'
+    '"2024-05-02 08:00:00","BTCEUR","SELL","60000","0.001BTC","60EUR","0.06EUR"\n'
+    '"2024-03-01 10:15:22","BTCEUR","BUY","50000","0.002BTC","100EUR","0.1EUR"\n'
+    '"2024-03-02 09:00:00","ETHBTC","BUY","0.05","1ETH","0.05BTC","0"\n'
+)
+
+
+@pytest.fixture
+def con_csv(monkeypatch):
+    """Lo que bajaría de Telegram al mandar el archivo."""
+    monkeypatch.setattr(main, "_importacion", None)
+    monkeypatch.setattr(
+        telegram, "descargar", lambda token, file_id: CSV_BINANCE.encode()
+    )
+
+
+def _archivo(nombre="binance.csv"):
+    mensaje = _mensaje("")
+    mensaje["document"] = {"file_id": "abc", "file_name": nombre, "file_size": 300}
+    return mensaje
+
+
+def test_importar_enseña_antes_de_apuntar(config, enviados, con_csv):
+    main.atender(config, _archivo())
+
+    texto = enviados[0]
+    assert "🟢 1 compras · 🔴 1 ventas" in texto
+    assert "Del 01/03/2024 al 02/05/2024" in texto
+    assert "1 saltadas: en BTC, no en EUR" in texto
+    assert "contarían dos veces" in texto
+    assert database.get_movimientos(config.database_path) == []
+
+
+def test_importar_si_las_apunta_con_su_fecha(config, enviados, con_csv):
+    main.atender(config, _archivo())
+    main.atender(config, _mensaje("/importar si"))
+
+    assert enviados[1].startswith("✅ Apuntadas 2 operaciones de Binance")
+    venta, compra = database.get_movimientos(config.database_path)
+    assert compra.cuando == datetime(2024, 3, 1, 10, 15, 22, tzinfo=timezone.utc)
+    assert (compra.tipo, compra.cantidad, compra.coste) == ("compra", 0.002, 100.1)
+    assert compra.nota == "Binance"
+    assert (venta.tipo, venta.coste) == ("venta", 59.94)
+    (queda,) = main._con_cambios(config).cartera
+    assert queda.cantidad == pytest.approx(0.001)
+
+
+def test_importar_dos_veces_no_repite(config, enviados, con_csv):
+    main.atender(config, _archivo())
+    main.atender(config, _mensaje("/importar si"))
+    main.atender(config, _archivo())
+
+    assert "No hay nada nuevo que apuntar." in enviados[2]
+    assert "2 ya estaban apuntadas" in enviados[2]
+    assert len(database.get_movimientos(config.database_path)) == 2
+
+
+def test_importar_no_las_mete_antes_de_lo_apuntado(config, enviados, con_csv):
+    main.atender(config, _mensaje("/compra bitcoin 0.01 500"))
+    main.atender(config, _archivo())
+
+    assert "No hay nada nuevo que apuntar." in enviados[1]
+    assert "2 son de antes de tu último movimiento" in enviados[1]
+
+
+def test_importar_cancelar(config, enviados, con_csv):
+    main.atender(config, _archivo())
+    main.atender(config, _mensaje("/importar no"))
+    main.atender(config, _mensaje("/importar si"))
+
+    assert enviados[1] == "Vale, no apunto nada."
+    assert enviados[2].startswith("No tengo nada pendiente")
+    assert database.get_movimientos(config.database_path) == []
+
+
+def test_importar_venta_sin_cripto(config, enviados, monkeypatch, con_csv):
+    solo_venta = "\n".join(CSV_BINANCE.splitlines()[:2])
+    monkeypatch.setattr(telegram, "descargar", lambda t, f: solo_venta.encode())
+
+    main.atender(config, _archivo())
+    main.atender(config, _mensaje("/importar si"))
+
+    assert "1 venta sin apuntar" in enviados[1]
+    assert database.get_movimientos(config.database_path) == []
+
+
+def test_importar_archivo_que_no_es_csv(config, enviados, con_csv):
+    main.atender(config, _archivo("foto.jpg"))
+
+    assert enviados[0] == "Solo sé leer el CSV de Binance. Mira /importar"
+
+
+def test_importar_csv_que_no_es_de_binance(config, enviados, monkeypatch, con_csv):
+    monkeypatch.setattr(telegram, "descargar", lambda t, f: b"a,b\n1,2\n")
+
+    main.atender(config, _archivo())
+
+    assert enviados[0].startswith("No parece el historial de operaciones")
+
+
+def test_importar_si_no_se_puede_bajar(config, enviados, monkeypatch, con_csv):
+    monkeypatch.setattr(telegram, "descargar", lambda t, f: None)
+
+    main.atender(config, _archivo())
+
+    assert enviados[0] == "No he podido bajar el archivo. Prueba otra vez."
+
+
+def test_importar_a_secas_explica_como(config, enviados):
+    main.atender(config, _mensaje("/importar"))
+
+    assert "Historial de operaciones" in enviados[0]

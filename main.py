@@ -129,6 +129,7 @@ from crypto_tracker import (
     hotel,
     hoy,
     hubiera,
+    importar,
     impuestos,
     inflacion,
     iphone,
@@ -265,6 +266,11 @@ ANTIGUEDAD_MAXIMA = 10 * 60
 
 # El del bucle en marcha, para que /bot sepa como va. None fuera de --loop.
 _pulso: salud.Pulso | None = None
+# Lo leído del último CSV, a la espera de que pulses Importar. Si se reinicia
+# el bot se pierde, pero basta con volver a mandarlo.
+_importacion: list[importar.Operacion] | None = None
+# Un historial de años de Binance no llega ni a 1 MB.
+MAX_CSV = 5 * 1024 * 1024
 
 
 def configurar_logs(verbose: bool = False) -> None:
@@ -1441,8 +1447,126 @@ def atender(config: Config, mensaje: dict) -> None:
         logger.info("Comando antiguo, no lo contesto: %s", texto)
         return
 
+    if mensaje.get("document"):
+        recibir_archivo(config, mensaje["document"])
+        return
+
     logger.info("Comando recibido: %s", texto)
     contestar(config, texto)
+
+
+def recibir_archivo(config: Config, documento: dict) -> None:
+    """Un archivo en el chat: solo sé qué hacer con el CSV de Binance."""
+    nombre = documento.get("file_name") or ""
+    logger.info("Archivo recibido: %s", nombre)
+    contenido = None
+    if not nombre.lower().endswith(".csv"):
+        respuesta = "Solo sé leer el CSV de Binance. Mira /importar"
+    elif (documento.get("file_size") or 0) > MAX_CSV:
+        respuesta = "Ese CSV es demasiado grande. Mira /importar"
+    else:
+        contenido = telegram.descargar(config.telegram_token, documento["file_id"])
+        respuesta = "No he podido bajar el archivo. Prueba otra vez."
+
+    if contenido is not None:
+        try:
+            respuesta = _preparar_importacion(
+                config, contenido.decode("utf-8-sig", errors="replace")
+            )
+        except database.DatabaseError as e:
+            logger.error("Error de la base de datos leyendo el CSV: %s", e)
+            respuesta = "⚠️ Algo ha fallado con la base de datos. Mira el log."
+
+    teclado = None
+    if isinstance(respuesta, comandos.ConBotones):
+        respuesta, teclado = respuesta.texto, respuesta.botones
+    telegram.send_message(
+        config.telegram_token, config.telegram_chat_id, respuesta, botones=teclado
+    )
+
+
+def _preparar_importacion(config: Config, texto: str) -> str | comandos.ConBotones:
+    global _importacion
+    try:
+        lectura = importar.leer_binance(texto, config.vs_currency)
+    except importar.ImportarError as e:
+        return telegram.escape(str(e))
+
+    ultimo = database.ultimo_movimiento(config.database_path)
+    nuevas, repetidas, viejas = [], 0, 0
+    for op in lectura.operaciones:
+        if database.ya_apuntado(
+            config.database_path, op.coin_id, op.tipo, op.cantidad, op.cuando
+        ):
+            repetidas += 1
+        elif ultimo is not None and op.cuando < ultimo:
+            viejas += 1
+        else:
+            nuevas.append(op)
+
+    _importacion = nuevas or None
+    texto = alerts.formatear_importacion(
+        nuevas,
+        lectura.saltadas,
+        lectura.sin_comision,
+        repetidas,
+        viejas,
+        ultimo,
+        config.vs_currency,
+    )
+    if not nuevas:
+        return texto
+    return comandos.ConBotones(
+        texto, [[("📥 Importar", "/importar si"), ("✖️ Cancelar", "/importar no")]]
+    )
+
+
+def _comando_importar(config: Config, argumento: str) -> str:
+    global _importacion
+    orden = argumento.strip().lower()
+    if orden == "no":
+        _importacion = None
+        return "Vale, no apunto nada."
+    if orden != "si":
+        return IMPORTAR_AYUDA
+    if not _importacion:
+        return "No tengo nada pendiente. Mándame primero el CSV de Binance."
+
+    pendientes, _importacion = _importacion, None
+    apuntadas = fallidas = 0
+    for op in pendientes:
+        antes = movimientos.buscar(_con_cambios(config).cartera, op.coin_id)
+        try:
+            if op.tipo == "compra":
+                ahora = movimientos.comprar(antes, op.coin_id, op.cantidad, op.coste)
+            else:
+                ahora = movimientos.vender(antes, op.coin_id, op.cantidad)
+        except movimientos.MovimientoError:
+            fallidas += 1
+            continue
+        database.apuntar_movimiento(
+            config.database_path,
+            op.coin_id,
+            op.tipo,
+            op.cantidad,
+            op.coste,
+            antes,
+            ahora,
+            "Binance",
+            op.comision,
+            cuando=op.cuando,
+        )
+        apuntadas += 1
+    logger.info("Importadas %d de Binance, %d sin apuntar", apuntadas, fallidas)
+    return alerts.formatear_importada(apuntadas, fallidas)
+
+
+IMPORTAR_AYUDA = (
+    "📥 <b>Importar de Binance</b>\n"
+    "1. En Binance: Órdenes → Historial de operaciones → Exportar\n"
+    "2. Mándame aquí el CSV como archivo\n"
+    "3. Te digo lo que he leído y, si te cuadra, pulsas Importar"
+)
 
 
 def atender_boton(config: Config, boton: dict) -> None:
@@ -1747,6 +1871,7 @@ COMANDOS: dict[str, Callable[[Config, str], Respuesta]] = {
     "riesgo": _con_cartera(lambda c, a: _riesgo(c)),
     "rebalanceo": _con_cartera(lambda c, a: _rebalanceo(c, a)),
     "compra": lambda c, a: _comprar(c, a),
+    "importar": _comando_importar,
     "venta": lambda c, a: _vender(c, a),
     "recompensa": lambda c, a: _recompensa(c, a),
     "corregir": lambda c, a: _corregir(c, a),

@@ -1446,11 +1446,13 @@ def apuntar_movimiento(
     ahora: Posicion | None,
     nota: str | None = None,
     comision: float | None = None,
+    cuando: datetime | None = None,
 ) -> int:
     """Guarda como queda la cripto y el movimiento. Devuelve su numero."""
+    # cuando solo lo pasa /importar, con la fecha de Binance
+    cuando = (cuando or datetime.now(timezone.utc)).isoformat(timespec="seconds")
     # En la misma transaccion: si uno se guardara sin el otro, deshacer
     # pondria la cripto como estaba antes de algo que no llego a pasar.
-    cuando = datetime.now(timezone.utc).isoformat(timespec="seconds")
     with _connect(db_path) as conn:
         _escribir_posicion(conn, coin_id, ahora)
         cursor = conn.execute(
@@ -1470,6 +1472,28 @@ def apuntar_movimiento(
             ),
         )
     return cursor.lastrowid
+
+
+def ultimo_movimiento(db_path: str) -> datetime | None:
+    """La fecha del último apuntado, o None si no hay ninguno."""
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT created_at FROM movimientos ORDER BY id DESC LIMIT 1"
+        ).fetchone()
+    return datetime.fromisoformat(fila["created_at"]) if fila else None
+
+
+def ya_apuntado(
+    db_path: str, coin_id: str, tipo: str, cantidad: float, cuando: datetime
+) -> bool:
+    """Si ya está, para no meter dos veces el mismo CSV."""
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT 1 FROM movimientos WHERE coin_id = ? AND tipo = ? "
+            "AND created_at = ? AND abs(cantidad - ?) < 1e-12",
+            (coin_id, tipo, cuando.isoformat(timespec="seconds"), cantidad),
+        ).fetchone()
+    return fila is not None
 
 
 def get_movimientos(

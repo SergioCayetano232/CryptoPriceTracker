@@ -22,6 +22,7 @@ from ..ganancias import Ganancias
 from ..hodl import Hodl
 from ..hoy import Hoy
 from ..hoy import mejor_y_peor as extremos_hoy
+from ..importar import Operacion
 from ..impuestos import Impuestos
 from ..inflacion import Inflacion
 from ..mercado import grande
@@ -1593,3 +1594,67 @@ def formatear_deshecho(m: Movimiento, currency: str) -> str:
     if m.antes.invertido is not None:
         texto += f", que te costaron {simbolo}{_num(m.antes.invertido)}"
     return texto + ". Mira /cartera"
+
+
+def formatear_importacion(
+    nuevas: list[Operacion],
+    saltadas: dict[str, int],
+    sin_comision: int,
+    repetidas: int,
+    viejas: int,
+    ultimo: datetime | None,
+    currency: str,
+) -> str:
+    """Lo que hay en el CSV antes de apuntarlo, para que digas sí o no."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    texto = ["📥 <b>Lo que he leído del CSV de Binance</b>"]
+    if nuevas:
+        compras = [o for o in nuevas if o.tipo == "compra"]
+        ventas = [o for o in nuevas if o.tipo == "venta"]
+        criptos = sorted({o.coin_id for o in nuevas})
+        texto.append(f"🟢 {len(compras)} compras · 🔴 {len(ventas)} ventas")
+        texto.append(", ".join(_nombre(c) for c in criptos))
+        texto.append(f"Del {nuevas[0].cuando:%d/%m/%Y} al {nuevas[-1].cuando:%d/%m/%Y}")
+        texto.append(
+            f"Metiste {simbolo}{_num(sum(o.coste for o in compras))}"
+            f" y sacaste {simbolo}{_num(sum(o.coste for o in ventas))}"
+        )
+    else:
+        texto.append("No hay nada nuevo que apuntar.")
+
+    notas = []
+    if repetidas:
+        notas.append(f"{repetidas} ya estaban apuntadas, no las repito")
+    if viejas:
+        # FIFO y Hacienda van por orden de apunte: meterlas detrás las liaría
+        notas.append(
+            f"{viejas} son de antes de tu último movimiento "
+            f"({ultimo:%d/%m/%Y}) y no las meto: desordenarían las cuentas"
+        )
+    for motivo, cuantas in saltadas.items():
+        notas.append(f"{cuantas} saltadas: {escape(motivo)}")
+    if sin_comision:
+        notas.append(f"{sin_comision} pagaron la comisión en BNB, van sin ella")
+    if notas:
+        texto.append("")
+        texto.extend(f"• {n}" for n in notas)
+
+    if nuevas:
+        texto.append(
+            "\n⚠️ Se suman a lo que ya tienes. Si ya estaban en tu PORTFOLIO "
+            "o las apuntaste con /compra, contarían dos veces."
+        )
+    return "\n".join(texto)
+
+
+def formatear_importada(apuntadas: int, fallidas: int) -> str:
+    """Respuesta al pulsar Importar."""
+    texto = [
+        f"✅ Apuntadas {apuntadas} operaciones de Binance. Míralas en /movimientos"
+    ]
+    if fallidas:
+        texto.append(
+            f"⚠️ {fallidas} {'ventas' if fallidas > 1 else 'venta'} sin apuntar: "
+            "vendías más de lo que tenías apuntado"
+        )
+    return "\n".join(texto)

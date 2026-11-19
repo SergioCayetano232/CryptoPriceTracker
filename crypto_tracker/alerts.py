@@ -129,6 +129,8 @@ from .mensajes.cartera import (
     formatear_historico,
     formatear_hodl,
     formatear_hoy,
+    formatear_importacion,
+    formatear_importada,
     formatear_impuestos,
     formatear_inflacion,
     formatear_modelo721,

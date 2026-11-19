@@ -15,6 +15,8 @@ COMMANDS_URL = "https://api.telegram.org/bot{token}/setMyCommands"
 PHOTO_URL = "https://api.telegram.org/bot{token}/sendPhoto"
 DOCUMENT_URL = "https://api.telegram.org/bot{token}/sendDocument"
 ANSWER_URL = "https://api.telegram.org/bot{token}/answerCallbackQuery"
+GETFILE_URL = "https://api.telegram.org/bot{token}/getFile"
+FILE_URL = "https://api.telegram.org/file/bot{token}/{ruta}"
 
 # El pie de una foto admite mucho menos que un mensaje.
 MAX_CAPTION = 1024
@@ -231,6 +233,31 @@ def send_document(
         "el archivo",
         timeout=TIMEOUT_ARCHIVO,
     )
+
+
+def descargar(token: str, file_id: str) -> bytes | None:
+    """Lo que te han mandado al chat, como el CSV de /importar. None si falla."""
+    # Primero hay que pedir dónde está; el file_id solo no vale para bajarlo.
+    try:
+        data = requests.get(
+            GETFILE_URL.format(token=token),
+            params={"file_id": file_id},
+            timeout=TIMEOUT,
+        ).json()
+        ruta = data["result"]["file_path"] if data.get("ok") else None
+        if not ruta:
+            logger.error("Telegram no da el archivo: %s", data.get("description"))
+            return None
+        response = requests.get(
+            FILE_URL.format(token=token, ruta=ruta), timeout=TIMEOUT_ARCHIVO
+        )
+    except (requests.RequestException, ValueError, KeyError, TypeError) as e:
+        logger.error("No se pudo bajar el archivo: %s", e)
+        return None
+    if response.status_code != 200:
+        logger.error("No se pudo bajar el archivo: HTTP %s", response.status_code)
+        return None
+    return response.content
 
 
 def _mandar_archivo(

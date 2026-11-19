@@ -511,3 +511,49 @@ def test_429_con_espera_larga_lo_deja(monkeypatch, sin_esperas):
     assert telegram.send_message("token", "123", "hola") is False
     assert len(post.llamadas) == 1
     assert sin_esperas == []
+
+
+# --- bajar archivos ---
+
+
+class ArchivoFalso:
+    def __init__(self, status=200, contenido=b""):
+        self.status_code = status
+        self.content = contenido
+
+
+def test_descargar_un_archivo(monkeypatch):
+    pedidos = []
+
+    def capturar(url, params=None, timeout=None):
+        pedidos.append(url)
+        if "getFile" in url:
+            return RespuestaFalsa(data={"ok": True, "result": {"file_path": "d/a.csv"}})
+        return ArchivoFalso(contenido=b"hola")
+
+    monkeypatch.setattr(requests, "get", capturar)
+
+    assert telegram.descargar("token", "abc") == b"hola"
+    assert pedidos[1] == "https://api.telegram.org/file/bottoken/d/a.csv"
+
+
+@pytest.mark.parametrize(
+    "respuesta",
+    [
+        RespuestaFalsa(data={"ok": False, "description": "file is too big"}),
+        RespuestaFalsa(data={"ok": True, "result": {}}),
+    ],
+)
+def test_descargar_si_telegram_no_lo_da(monkeypatch, respuesta):
+    monkeypatch.setattr(requests, "get", lambda *a, **k: respuesta)
+
+    assert telegram.descargar("token", "abc") is None
+
+
+def test_descargar_sin_red(monkeypatch):
+    def sin_red(*a, **k):
+        raise requests.ConnectionError()
+
+    monkeypatch.setattr(requests, "get", sin_red)
+
+    assert telegram.descargar("token", "abc") is None

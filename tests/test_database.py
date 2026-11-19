@@ -976,3 +976,20 @@ def test_stops_al_quitar_la_alerta_no_queda_nada(db):
     database.guardar_stop(db, a.id, -10.0)
     database.borrar_puntual(db, a.id)
     assert database.stops(db) == {}
+
+
+def test_movimiento_con_su_fecha_y_si_ya_esta(db):
+    cuando = datetime(2024, 3, 1, 10, 15, 22, tzinfo=timezone.utc)
+    assert database.ultimo_movimiento(db) is None
+    assert not database.ya_apuntado(db, "bitcoin", "compra", 0.002, cuando)
+
+    ahora = Posicion("bitcoin", 0.002, 100)
+    database.apuntar_movimiento(
+        db, "bitcoin", "compra", 0.002, 100, None, ahora, cuando=cuando
+    )
+
+    assert database.get_movimientos(db)[0].cuando == cuando
+    assert database.ultimo_movimiento(db) == cuando
+    assert database.ya_apuntado(db, "bitcoin", "compra", 0.002, cuando)
+    assert not database.ya_apuntado(db, "bitcoin", "venta", 0.002, cuando)
+    assert not database.ya_apuntado(db, "bitcoin", "compra", 0.003, cuando)
