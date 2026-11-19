@@ -3382,6 +3382,22 @@ def test_el_bucle_deja_su_pulso_para_bot(config, enviados, monkeypatch):
     assert main._pulso.ultimo_bien is not None
 
 
+def test_el_bucle_pone_el_menu_corto(config, enviados, monkeypatch):
+    puestos = []
+    monkeypatch.setattr(telegram, "set_commands", lambda t, c: puestos.append(c))
+    monkeypatch.setattr(main, "ejecutar_ciclo", lambda c, e, s: (e, None))
+    monkeypatch.setattr(main, "apuntar_consultas", lambda c: None)
+
+    def corta(*a):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(main, "esperar_escuchando", corta)
+    with pytest.raises(KeyboardInterrupt):
+        main.ejecutar_bucle(config, {})
+
+    assert puestos == [comandos.MENU]
+
+
 def _arrancar_bucle(config, monkeypatch):
     """Arranca --loop y lo corta tras el primer ciclo."""
     monkeypatch.setattr(telegram, "set_commands", lambda *a: True)

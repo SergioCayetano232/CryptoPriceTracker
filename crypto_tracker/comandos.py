@@ -214,6 +214,20 @@ COMANDOS = {
     "ayuda": "Lo que sé hacer",
 }
 
+# Telegram no deja meter más de 100 en el menú y con todos lo rechaza entero.
+# Pongo los de diario; el resto se escriben igual y salen en /ayuda.
+MENU = {
+    nombre: COMANDOS[nombre]
+    for nombre in (
+        "status", "precio", "hoy", "resumen", "cartera", "reparto", "semana",
+        "mes", "anual", "compra", "venta", "movimientos", "deshacer",
+        "ganancias", "rentabilidad", "impuestos", "alerta", "alertas", "quitar",
+        "stop", "vigilar", "dejar", "historico", "comparar", "convertir", "rsi",
+        "miedo", "mercado", "top", "buscar", "exportar", "backup", "mute",
+        "unmute", "ajustes", "bot", "ayuda",
+    )
+}  # fmt: skip
+
 # /start lo manda Telegram solo la primera vez que abres el chat.
 ALIAS = {
     "legado": "herencia",

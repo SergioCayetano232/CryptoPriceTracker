@@ -6,6 +6,7 @@ from crypto_tracker.comandos import (
     AYUDA,
     COMANDOS,
     EJEMPLOS,
+    MENU,
     NO_ENTIENDO,
     ayuda,
     interpretar,
@@ -64,6 +65,13 @@ def test_lo_que_no_es_comando(texto):
 )
 def test_criptos_a_secas_son_precio(texto, esperado):
     assert interpretar(texto) == esperado
+
+
+def test_el_menu_cabe_en_telegram():
+    # con más de 100 Telegram da BOT_COMMANDS_TOO_MUCH y deja el menú vacío
+    assert len(MENU) <= 100
+    assert set(MENU) <= set(COMANDOS)
+    assert "ayuda" in MENU
 
 
 def test_la_ayuda_lista_todos_los_comandos():

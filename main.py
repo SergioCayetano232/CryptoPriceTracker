@@ -1314,7 +1314,7 @@ def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:
     sin_precio: set[str] = set()
     offset = None
 
-    if not telegram.set_commands(config.telegram_token, comandos.COMANDOS):
+    if not telegram.set_commands(config.telegram_token, comandos.MENU):
         logger.warning("No se pudo poner el menu de comandos en Telegram")
     avisar_encendido(config)
 
