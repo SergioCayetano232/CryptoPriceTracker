@@ -31,6 +31,7 @@ from ..concierto import Concierto
 from ..croquetas import PRECIO as PRECIO_CROQUETAS
 from ..croquetas import Croquetas
 from ..emoji import cara as cara_emoji
+from ..equivale import COSAS as COSAS_EQUIVALE
 from ..futbol import PRECIO as PRECIO_FUTBOL
 from ..futbol import Futbol
 from ..gasolina import DEPOSITO, Gasolina
@@ -91,6 +92,7 @@ from ..switch import PRECIO as PRECIO_SWITCH
 from ..switch import Switch
 from ..taxi import PRECIO as PRECIO_TAXI
 from ..taxi import Taxi
+from ..telegram import escape
 from ..tesla import PRECIO as PRECIO_TESLA
 from ..tesla import Tesla
 from ..tiempo import parte as parte_tiempo
@@ -122,6 +124,18 @@ def formatear_lambo(lambo: Lambo, currency: str) -> str:
     texto.append(f"Para {siguiente} te faltan {simbolo}{_num(lambo.falta)}")
     precio = f"{PRECIO_LAMBO:,}".replace(",", ".")
     texto.append(f"<i>A unos {simbolo}{precio} cada uno</i>")
+    return "\n".join(texto)
+
+
+def formatear_equivale(pedido: str = "") -> str:
+    """Lo que sale con /equivale a secas o con algo que no tengo."""
+    texto = []
+    if pedido.strip():
+        texto.append(f"No tengo «{escape(pedido.strip())}» 🤷")
+    texto.append("🧮 <b>¿En qué quieres ver tu cartera?</b>")
+    texto.append("Escribe /equivale y una de estas:")
+    texto.append(", ".join(COSAS_EQUIVALE))
+    texto.append("\nEj: <code>/equivale cañas</code>")
     return "\n".join(texto)
 
 

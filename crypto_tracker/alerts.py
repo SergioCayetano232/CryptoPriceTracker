@@ -167,6 +167,7 @@ from .mensajes.comparaciones import (
     formatear_concierto,
     formatear_croquetas,
     formatear_emoji,
+    formatear_equivale,
     formatear_futbol,
     formatear_gasolina,
     formatear_gimnasio,

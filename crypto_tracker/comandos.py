@@ -125,6 +125,7 @@ COMANDOS = {
     "mundo": "Lo que le tocaría a cada persona si se repartieran todos los bitcoin",
     "millonario": "Cuánto necesitas para tener un millón (ej: /millonario eth)",
     "sat": "Lo que vale un satoshi y cuántos te dan 1, 10 y 100",
+    "equivale": "Tu cartera en cafés, cañas, iPhones... (ej: /equivale kebab)",
     "lambo": "Cuántos Lamborghinis te da tu cartera",
     "enletras": "Lo que vale tu cartera, escrito en letras como en un cheque",
     "ballena": "Qué bicho eres según tus bitcoin: gamba, pulpo, tiburón, ballena…",
@@ -223,8 +224,8 @@ MENU = {
         "mes", "anual", "compra", "venta", "movimientos", "deshacer",
         "ganancias", "rentabilidad", "impuestos", "alerta", "alertas", "quitar",
         "stop", "vigilar", "dejar", "historico", "comparar", "convertir", "rsi",
-        "miedo", "mercado", "top", "buscar", "exportar", "backup", "mute",
-        "unmute", "ajustes", "bot", "ayuda",
+        "miedo", "mercado", "top", "equivale", "buscar", "exportar", "backup",
+        "mute", "unmute", "ajustes", "bot", "ayuda",
     )
 }  # fmt: skip
 

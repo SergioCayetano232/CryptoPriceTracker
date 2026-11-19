@@ -11643,3 +11643,37 @@ def test_rezagada_lista_y_quita(config, enviados):
     assert "Ethereum</b> contra Bitcoin" in enviados[1]
     assert "ya no comparo" in enviados[2]
     assert database.get_rezagadas(config.database_path) == []
+
+
+def test_equivale_da_lo_mismo_que_el_suelto(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    config = replace(config, cartera=(Posicion("bitcoin", 0.01),))
+    _precio_de(config, "bitcoin", 100000.0, 5)
+
+    main.atender(config, _mensaje("/equivale kebabs"))
+    main.atender(config, _mensaje("/kebab"))
+
+    assert "Te da para <b>166 kebabs</b>" in enviados[0]
+    assert enviados[0] == enviados[1]
+
+
+def test_equivale_a_secas_dice_las_que_hay(config, enviados):
+    main.atender(config, _mensaje("/equivale"))
+
+    assert "¿En qué quieres ver tu cartera?" in enviados[0]
+    assert "kebab" in enviados[0]
+    assert "No tengo" not in enviados[0]
+
+
+def test_equivale_de_algo_que_no_tengo(config, enviados):
+    main.atender(config, _mensaje("/equivale <b>yate"))
+
+    assert enviados[0].startswith("No tengo «&lt;b&gt;yate» 🤷")
+
+
+def test_equivale_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/equivale cafe"))
+
+    assert "PORTFOLIO" in enviados[0]

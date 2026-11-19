@@ -100,6 +100,7 @@ from crypto_tracker import (
     emocion,
     emoji,
     equilibrio,
+    equivale,
     escalera,
     estables,
     estacional,
@@ -1874,6 +1875,7 @@ COMANDOS: dict[str, Callable[[Config, str], Respuesta]] = {
     "correlacion": lambda c, a: _correlacion(c, a),
     "halving": lambda c, a: alerts.formatear_halving(halving.calcular(date.today())),
     "pizza": lambda c, a: _pizza(c),
+    "equivale": lambda c, a: _equivale(c, a),
     "mundo": lambda c, a: _mundo(c),
     "lambo": lambda c, a: _lambo(c),
     "enletras": _comando_enletras,
@@ -4804,6 +4806,13 @@ def _ballena(config: Config) -> str:
     cartera = _con_cambios(config).cartera
     tienes = sum(p.cantidad for p in cartera if p.coin_id == "bitcoin")
     return alerts.formatear_ballena(ballena.Ballena(tienes))
+
+
+def _equivale(config: Config, argumento: str) -> Respuesta:
+    cosa = equivale.elegir(argumento)
+    if cosa is None:
+        return alerts.formatear_equivale(argumento)
+    return COMANDOS[cosa](config, "")
 
 
 def _cafe(config: Config) -> str:
