@@ -20,49 +20,35 @@ from dataclasses import replace
 from datetime import date, datetime, timedelta, timezone
 
 from crypto_tracker import (
-    aceite,
     adios,
     adivina,
-    airpods,
     ajustes,
     aleatoria,
     alertaratio,
     alerts,
-    alquiler,
     aniversario,
     anual,
     apodo,
     apy,
     arrepentido,
-    ave,
     avisados,
     avisorsi,
     backtest,
     backup,
     bajon,
-    ballena,
-    bici,
-    bigmac,
     binance,
-    boda,
     bola,
     bollinger,
     botones,
     brusco,
     cada,
-    cafe,
     caida,
     calendario,
     callar,
     calma,
-    cana,
     caraocruz,
-    carnet,
     cartera,
     chiste,
-    churros,
-    cine,
-    coche,
     coingecko,
     comandos,
     comision,
@@ -72,7 +58,6 @@ from crypto_tracker import (
     compensar,
     compras,
     concentracion,
-    concierto,
     condicion,
     consejo,
     contexto,
@@ -80,7 +65,6 @@ from crypto_tracker import (
     copia,
     corregir,
     correlacion,
-    croquetas,
     cruce,
     cuando,
     cumple,
@@ -98,9 +82,7 @@ from crypto_tracker import (
     doble,
     dominancia,
     emocion,
-    emoji,
     equilibrio,
-    equivale,
     escalera,
     estables,
     estacional,
@@ -114,66 +96,41 @@ from crypto_tracker import (
     fifo,
     frase,
     funding,
-    futbol,
     futuro,
     galleta,
     ganancias,
-    gasolina,
-    gimnasio,
     grafica,
     halving,
     herencia,
     hodl,
     horas,
     horoscopo,
-    hotel,
     hoy,
     hubiera,
     importar,
     impuestos,
     inflacion,
-    iphone,
-    jamon,
-    kebab,
-    lambo,
-    libro,
     limite,
-    loteria,
-    luz,
-    macbook,
     macd,
     maximo,
     media,
     mejor,
     mensual,
-    menu,
     merge,
     mes,
     meta,
-    metro,
     miedo,
-    millonario,
     mitad,
     modelo721,
     moneda,
     movimientos,
-    mundo,
-    navidad,
-    netflix,
-    nochevieja,
     nota,
     objetivo,
-    oro,
-    paella,
-    pan,
     pelotazo,
-    peluqueria,
     perdido,
     periodo,
     permuta,
     pienso,
-    piso,
-    pizza,
     plan,
     posicion,
     ppt,
@@ -181,7 +138,6 @@ from crypto_tracker import (
     primera,
     promediar,
     proximo,
-    ps5,
     puntuales,
     quieta,
     quiz,
@@ -198,61 +154,56 @@ from crypto_tracker import (
     reparto,
     rezagada,
     riesgo,
-    rolex,
     rsi,
     ruido,
     salud,
-    sat,
     semanal,
     sesgo,
     sharpe,
     simbolos,
     sivendo,
-    sofa,
     soporte,
-    spotify,
     stop,
     sube,
-    sueldo,
-    supermercado,
-    switch,
     tarjeta,
     tarot,
-    taxi,
     telegram,
-    tesla,
     timing,
     top,
-    tortilla,
     verdes,
     version,
-    videojuego,
     vigiladas,
     volatilidad,
     volumen,
     vsbolsa,
     vsbtc,
-    vuelo,
     whitepaper,
-    zapatillas,
 )
 from crypto_tracker.config import (
     Config,
     ConfigError,
-    Posicion,
     load_config,
     minutos_mute,
 )
 from crypto_tracker.mercado import Mercado
 from crypto_tracker.precio import en_sats
+from crypto_tracker.respuestas import comparaciones
+from crypto_tracker.respuestas.base import (
+    SIN_CARTERA,
+    Respuesta,
+    _con_cambios,
+    _consultar,
+    _precio_o_pedirlo,
+    _precios_guardados,
+    _valor_guardado,
+    _variacion,
+)
 
 logger = logging.getLogger("crypto_tracker")
 
 # Si el ciclo falla estas veces seguidas, algo va mal de verdad y paramos.
 MAX_FALLOS = 10
 
-# Con cuanto tiempo atras se compara el precio en el resumen.
-HORAS_RESUMEN = 24
 
 # Una cartera se mira a mas largo plazo que un precio suelto.
 HORAS_CARTERA = 7 * 24
@@ -569,38 +520,6 @@ def _calladas(config: Config) -> set[str]:
         # Mejor algun aviso de mas que quedarse sin ninguno.
         logger.error("No se pudo leer que criptos estan calladas: %s", e)
         return set()
-
-
-def _con_cambios(config: Config) -> Config:
-    """La config de verdad: el .env mas lo que cambias por Telegram."""
-    try:
-        cambios = database.get_cambios(config.database_path)
-    except database.DatabaseError as e:
-        logger.error("No se pudieron leer los cambios de /vigilar: %s", e)
-        cambios = {}
-    if cambios:
-        config = replace(
-            config, watchlist=vigiladas.combinar(config.watchlist, cambios)
-        )
-
-    try:
-        de_cartera = database.get_cambios_cartera(config.database_path)
-    except database.DatabaseError as e:
-        logger.error("No se pudieron leer las compras y ventas: %s", e)
-        de_cartera = {}
-    if de_cartera:
-        config = replace(
-            config, cartera=movimientos.combinar(config.cartera, de_cartera)
-        )
-
-    try:
-        cambiada, hora = database.hora_resumen(config.database_path)
-    except database.DatabaseError as e:
-        logger.error("No se pudo leer la hora del resumen: %s", e)
-        cambiada = False
-    if cambiada:
-        config = replace(config, resumen_diario=hora)
-    return config
 
 
 def _olvidar_cambiadas(config: Config, estado: dict[str, str]) -> dict[str, str]:
@@ -1629,15 +1548,6 @@ def contestar(config: Config, texto: str) -> None:
     )
 
 
-Respuesta = str | comandos.Foto | comandos.Archivo | comandos.ConBotones
-
-SIN_CARTERA = (
-    "No tienes cartera puesta. Apunta lo que tienes con "
-    "/compra bitcoin 0.016 1000, o añade al .env algo como:\n"
-    "<code>PORTFOLIO=bitcoin:0.016:1000</code>"
-)
-
-
 def responder(config: Config, nombre: str, argumento: str) -> Respuesta:
     """El texto con el que se contesta a cada comando."""
     hacer = COMANDOS.get(nombre)
@@ -1822,20 +1732,6 @@ def _comando_ppt(config: Config, argumento: str) -> Respuesta:
     return alerts.formatear_ppt(tuya, del_bot, ppt.resultado(tuya, del_bot))
 
 
-def _comando_enletras(config: Config, argumento: str) -> Respuesta:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_enletras(valor, config.vs_currency)
-
-
-def _comando_sat(config: Config, argumento: str) -> Respuesta:
-    precio = _precio_o_pedirlo(config, "bitcoin")
-    if isinstance(precio, str):
-        return precio
-    return alerts.formatear_sat(sat.Sat(precio), config.vs_currency)
-
-
 def _comando_copia(config: Config, argumento: str) -> Respuesta:
     actual = _con_cambios(config)
     return alerts.formatear_copia(
@@ -1999,63 +1895,6 @@ COMANDOS: dict[str, Callable[[Config, str], Respuesta]] = {
     "dia": lambda c, a: _dia(c, a),
     "correlacion": lambda c, a: _correlacion(c, a),
     "halving": lambda c, a: alerts.formatear_halving(halving.calcular(date.today())),
-    "pizza": lambda c, a: _pizza(c),
-    "equivale": lambda c, a: _equivale(c, a),
-    "mundo": lambda c, a: _mundo(c),
-    "lambo": lambda c, a: _lambo(c),
-    "enletras": _comando_enletras,
-    "ballena": lambda c, a: _ballena(c),
-    "cafe": lambda c, a: _cafe(c),
-    "sueldo": lambda c, a: _sueldo(c),
-    "gasolina": lambda c, a: _gasolina(c),
-    "bigmac": lambda c, a: _bigmac(c),
-    "iphone": lambda c, a: _iphone(c),
-    "alquiler": lambda c, a: _alquiler(c),
-    "oro": lambda c, a: _oro(c),
-    "netflix": lambda c, a: _netflix(c),
-    "ps5": lambda c, a: _ps5(c),
-    "tesla": lambda c, a: _tesla(c),
-    "spotify": lambda c, a: _spotify(c),
-    "cana": lambda c, a: _cana(c),
-    "switch": lambda c, a: _switch(c),
-    "cine": lambda c, a: _cine(c),
-    "gimnasio": lambda c, a: _gimnasio(c),
-    "vuelo": lambda c, a: _vuelo(c),
-    "super": lambda c, a: _super(c),
-    "kebab": lambda c, a: _kebab(c),
-    "metro": lambda c, a: _metro(c),
-    "luz": lambda c, a: _luz(c),
-    "libro": lambda c, a: _libro(c),
-    "concierto": lambda c, a: _concierto(c),
-    "airpods": lambda c, a: _airpods(c),
-    "zapatillas": lambda c, a: _zapatillas(c),
-    "ave": lambda c, a: _ave(c),
-    "menu": lambda c, a: _menu(c),
-    "hotel": lambda c, a: _hotel(c),
-    "peluqueria": lambda c, a: _peluqueria(c),
-    "macbook": lambda c, a: _macbook(c),
-    "bici": lambda c, a: _bici(c),
-    "churros": lambda c, a: _churros(c),
-    "loteria": lambda c, a: _loteria(c),
-    "piso": lambda c, a: _piso(c),
-    "futbol": lambda c, a: _futbol(c),
-    "taxi": lambda c, a: _taxi(c),
-    "tortilla": lambda c, a: _tortilla(c),
-    "videojuego": lambda c, a: _videojuego(c),
-    "sofa": lambda c, a: _sofa(c),
-    "coche": lambda c, a: _coche(c),
-    "boda": lambda c, a: _boda(c),
-    "jamon": lambda c, a: _jamon(c),
-    "aceite": lambda c, a: _aceite(c),
-    "paella": lambda c, a: _paella(c),
-    "croquetas": lambda c, a: _croquetas(c),
-    "pan": lambda c, a: _pan(c),
-    "rolex": lambda c, a: _rolex(c),
-    "emoji": lambda c, a: _emoji(c),
-    "tiempo": lambda c, a: _tiempo(c),
-    "carnet": lambda c, a: _carnet(c),
-    "nochevieja": lambda c, a: _nochevieja(c),
-    "navidad": lambda c, a: _navidad(c),
     "cumple": lambda c, a: alerts.formatear_cumple(cumple.Cumple(date.today())),
     "whitepaper": lambda c, a: alerts.formatear_whitepaper(
         whitepaper.Whitepaper(date.today())
@@ -2063,12 +1902,11 @@ COMANDOS: dict[str, Callable[[Config, str], Respuesta]] = {
     "merge": lambda c, a: alerts.formatear_merge(merge.Merge(date.today())),
     "ethereum": lambda c, a: alerts.formatear_ethereum(ethereum.Ethereum(date.today())),
     "adios": lambda c, a: alerts.formatear_adios(adios.Adios(date.today())),
-    "millonario": lambda c, a: _millonario(c, a),
-    "sat": _comando_sat,
     "ajustes": lambda c, a: ajustes.mensaje(_con_cambios(c)),
     "copia": _comando_copia,
     "media": lambda c, a: _media(c, a),
     "buscar": _comando_buscar,
+    **comparaciones.COMANDOS,
 }
 
 
@@ -4879,21 +4717,6 @@ def _cuando(config: Config, argumento: str) -> str:
     return alerts.formatear_cuando(coin_id, resultado, config.vs_currency)
 
 
-def _precio_o_pedirlo(config: Config, coin_id: str) -> float | str:
-    """El último guardado y, si no hay, una consulta. Un str es el error."""
-    precio = database.get_last_price(config.database_path, coin_id)
-    if precio:
-        return precio
-    # Si no la vigilas no la tengo guardada: una consulta y listo.
-    try:
-        precio = coingecko.get_prices([coin_id], config.vs_currency).get(coin_id)
-    except coingecko.CoinGeckoError as e:
-        return f"No he podido mirar el precio ahora mismo: {telegram.escape(str(e))}"
-    if not precio:
-        return alerts.formatear_no_encuentro([coin_id])
-    return precio
-
-
 def _adivina(config: Config, argumento: str) -> str:
     try:
         coin_id, dicho = adivina.interpretar(argumento)
@@ -4904,489 +4727,6 @@ def _adivina(config: Config, argumento: str) -> str:
         return precio
     intento = adivina.Intento(coin_id, dicho, precio)
     return alerts.formatear_adivina(intento, config.vs_currency)
-
-
-def _pizza(config: Config) -> str:
-    precio = _precio_o_pedirlo(config, "bitcoin")
-    if isinstance(precio, str):
-        return precio
-    return alerts.formatear_pizza(pizza.Pizza(precio, date.today()), config.vs_currency)
-
-
-def _mundo(config: Config) -> str:
-    precio = _precio_o_pedirlo(config, "bitcoin")
-    if isinstance(precio, str):
-        return precio
-    return alerts.formatear_mundo(mundo.Mundo(precio), config.vs_currency)
-
-
-def _lambo(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_lambo(lambo.Lambo(valor), config.vs_currency)
-
-
-def _ballena(config: Config) -> str:
-    cartera = _con_cambios(config).cartera
-    tienes = sum(p.cantidad for p in cartera if p.coin_id == "bitcoin")
-    return alerts.formatear_ballena(ballena.Ballena(tienes))
-
-
-def _equivale(config: Config, argumento: str) -> Respuesta:
-    cosa = equivale.elegir(argumento)
-    if cosa is None:
-        return alerts.formatear_equivale(argumento)
-    return COMANDOS[cosa](config, "")
-
-
-def _cafe(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_cafe(cafe.Cafe(valor), config.vs_currency)
-
-
-def _iphone(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_iphone(iphone.Iphone(valor), config.vs_currency)
-
-
-def _alquiler(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_alquiler(alquiler.Alquiler(valor), config.vs_currency)
-
-
-def _oro(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    onza = _precio_o_pedirlo(config, oro.COIN_ID)
-    if isinstance(onza, str):
-        return onza
-    return alerts.formatear_oro(oro.Oro(valor, onza), config.vs_currency)
-
-
-def _netflix(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_netflix(netflix.Netflix(valor), config.vs_currency)
-
-
-def _ps5(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_ps5(ps5.Ps5(valor), config.vs_currency)
-
-
-def _tesla(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_tesla(tesla.Tesla(valor), config.vs_currency)
-
-
-def _spotify(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_spotify(spotify.Spotify(valor), config.vs_currency)
-
-
-def _cana(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_cana(cana.Cana(valor), config.vs_currency)
-
-
-def _switch(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_switch(switch.Switch(valor), config.vs_currency)
-
-
-def _cine(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_cine(cine.Cine(valor), config.vs_currency)
-
-
-def _gimnasio(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_gimnasio(gimnasio.Gimnasio(valor), config.vs_currency)
-
-
-def _vuelo(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_vuelo(vuelo.Vuelo(valor), config.vs_currency)
-
-
-def _super(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_super(supermercado.Super(valor), config.vs_currency)
-
-
-def _kebab(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_kebab(kebab.Kebab(valor), config.vs_currency)
-
-
-def _metro(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_metro(metro.Metro(valor), config.vs_currency)
-
-
-def _luz(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_luz(luz.Luz(valor), config.vs_currency)
-
-
-def _libro(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_libro(libro.Libro(valor), config.vs_currency)
-
-
-def _concierto(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_concierto(concierto.Concierto(valor), config.vs_currency)
-
-
-def _airpods(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_airpods(airpods.Airpods(valor), config.vs_currency)
-
-
-def _zapatillas(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    z = zapatillas.Zapatillas(valor)
-    return alerts.formatear_zapatillas(z, config.vs_currency)
-
-
-def _ave(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_ave(ave.Ave(valor), config.vs_currency)
-
-
-def _menu(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_menu(menu.Menu(valor), config.vs_currency)
-
-
-def _hotel(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_hotel(hotel.Hotel(valor), config.vs_currency)
-
-
-def _peluqueria(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    p = peluqueria.Peluqueria(valor)
-    return alerts.formatear_peluqueria(p, config.vs_currency)
-
-
-def _macbook(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_macbook(macbook.Macbook(valor), config.vs_currency)
-
-
-def _bici(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_bici(bici.Bici(valor), config.vs_currency)
-
-
-def _churros(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_churros(churros.Churros(valor), config.vs_currency)
-
-
-def _loteria(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    decimos = loteria.Loteria(valor, date.today())
-    return alerts.formatear_loteria(decimos, config.vs_currency)
-
-
-def _piso(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_piso(piso.Piso(valor), config.vs_currency)
-
-
-def _futbol(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_futbol(futbol.Futbol(valor), config.vs_currency)
-
-
-def _taxi(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_taxi(taxi.Taxi(valor), config.vs_currency)
-
-
-def _tortilla(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_tortilla(tortilla.Tortilla(valor), config.vs_currency)
-
-
-def _videojuego(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_videojuego(videojuego.Videojuego(valor), config.vs_currency)
-
-
-def _sofa(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_sofa(sofa.Sofa(valor), config.vs_currency)
-
-
-def _carnet(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_carnet(carnet.Carnet(valor), config.vs_currency)
-
-
-def _boda(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_boda(boda.Boda(valor), config.vs_currency)
-
-
-def _jamon(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_jamon(jamon.Jamon(valor), config.vs_currency)
-
-
-def _aceite(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_aceite(aceite.Aceite(valor), config.vs_currency)
-
-
-def _paella(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_paella(paella.Paella(valor), config.vs_currency)
-
-
-def _croquetas(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_croquetas(croquetas.Croquetas(valor), config.vs_currency)
-
-
-def _pan(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_pan(pan.Pan(valor), config.vs_currency)
-
-
-def _rolex(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_rolex(rolex.Rolex(valor), config.vs_currency)
-
-
-def _emoji(config: Config) -> str | comandos.ConBotones:
-    cambio = _cambio_cartera(config)
-    if isinstance(cambio, str):
-        return cambio
-    return comandos.ConBotones(
-        alerts.formatear_emoji(cambio), botones.actualizar("/emoji")
-    )
-
-
-def _tiempo(config: Config) -> str | comandos.ConBotones:
-    cambio = _cambio_cartera(config)
-    if isinstance(cambio, str):
-        return cambio
-    return comandos.ConBotones(
-        alerts.formatear_tiempo(cambio), botones.actualizar("/tiempo")
-    )
-
-
-def _cambio_cartera(config: Config) -> float | str:
-    """Lo que ha cambiado la cartera en 24 h, en %. Un str es el error."""
-    config = _con_cambios(config)
-    if not config.cartera:
-        return SIN_CARTERA
-
-    precios = _consultar(config, [p.coin_id for p in config.cartera])
-    if precios is None:
-        return "No he podido consultar los precios. Prueba en un rato."
-    valores, faltan = cartera.valorar(list(config.cartera), precios)
-    if faltan:
-        return (
-            "Ahora mismo no tengo el precio de todo lo que tienes. Prueba en un rato."
-        )
-
-    pares = []
-    for v in valores:
-        variacion = _variacion(config, v.coin_id, precios[v.coin_id])
-        # Sin la de una, la cara sería de otra cartera: mejor no ponerla.
-        if variacion is None:
-            nombre = telegram.escape(v.coin_id.replace("-", " ").title())
-            return f"No sé cómo iba {nombre} hace 24 h. Prueba en un rato."
-        pares.append((v.valor, variacion))
-
-    cambio = emoji.cambio(pares)
-    if cambio is None:
-        return "Tu cartera ahora mismo no vale nada, así que no hay nada que mirar."
-    return cambio
-
-
-def _coche(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_coche(coche.Coche(valor), config.vs_currency)
-
-
-def _nochevieja(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    n = nochevieja.Nochevieja(valor, date.today())
-    return alerts.formatear_nochevieja(n, config.vs_currency)
-
-
-def _navidad(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    n = navidad.Navidad(valor, date.today())
-    return alerts.formatear_navidad(n, config.vs_currency)
-
-
-def _bigmac(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_bigmac(bigmac.BigMac(valor), config.vs_currency)
-
-
-def _gasolina(config: Config) -> str:
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_gasolina(gasolina.Gasolina(valor), config.vs_currency)
-
-
-def _sueldo(config: Config) -> str:
-    # El SMI es en euros: con la cartera en dólares saldría una cuenta sin sentido.
-    if config.vs_currency != "eur":
-        return (
-            "El salario mínimo va en euros. "
-            "Solo funciona con <code>VS_CURRENCY=eur</code>."
-        )
-    valor = _valor_guardado(config)
-    if isinstance(valor, str):
-        return valor
-    return alerts.formatear_sueldo(sueldo.Sueldo(valor))
-
-
-def _valor_guardado(config: Config) -> float | str:
-    """Lo que vale la cartera, con lo guardado si lo hay. Si no se puede, el porqué."""
-    posiciones = list(_con_cambios(config).cartera)
-    if not posiciones:
-        return SIN_CARTERA
-    precios = _precios_guardados(config, posiciones)
-    valor = cartera.valor_total(posiciones, precios)
-    if valor is None:
-        return "No he podido consultar los precios. Prueba en un rato."
-    return valor
-
-
-def _precios_guardados(config: Config, posiciones: list[Posicion]) -> dict[str, float]:
-    """Los últimos guardados y, de lo que falte, una consulta."""
-    precios = {}
-    for p in posiciones:
-        precio = database.get_last_price(config.database_path, p.coin_id)
-        if precio:
-            precios[p.coin_id] = precio
-    faltan = [p.coin_id for p in posiciones if p.coin_id not in precios]
-    if faltan:
-        precios.update(_consultar(config, faltan) or {})
-    return precios
-
-
-def _millonario(config: Config, argumento: str) -> str:
-    coin_ids = simbolos.varias(argumento) or ["bitcoin"]
-    if len(coin_ids) > 1:
-        return "De una en una. Por ejemplo: /millonario eth"
-    coin_id = coin_ids[0]
-    precio = _precio_o_pedirlo(config, coin_id)
-    if isinstance(precio, str):
-        return precio
-
-    tienes = next(
-        (p.cantidad for p in _con_cambios(config).cartera if p.coin_id == coin_id),
-        None,
-    )
-    unidad = simbolos.de_id(coin_id) or coin_id.replace("-", " ").title()
-    return alerts.formatear_millonario(
-        coin_id, unidad, millonario.Millonario(precio, tienes), config.vs_currency
-    )
 
 
 def _redondo(config: Config, argumento: str) -> str:
@@ -6934,48 +6274,6 @@ def _bloque_cartera(
     if con_sats and bitcoin and any(v.coin_id != "bitcoin" for v in valores):
         sats = suma.valor / bitcoin * alerts.POR_BTC
     return alerts.formatear_cartera(valores, suma, faltan, config.vs_currency, sats)
-
-
-def _consultar(config: Config, coin_ids: list[str]) -> dict[str, float] | None:
-    """Pide los precios y los guarda. None si no hay ninguno."""
-    try:
-        precios = coingecko.get_prices(coin_ids, config.vs_currency)
-    except coingecko.CoinGeckoError as e:
-        logger.error("No se pudieron consultar los precios: %s", e)
-        return None
-
-    if not precios:
-        logger.error("La consulta no devolvio ningun precio")
-        return None
-
-    # Aprovechamos la consulta para guardarla, asi el resumen tambien
-    # alimenta el historico con el que se compara la proxima vez.
-    try:
-        database.save_prices(config.database_path, precios, config.vs_currency)
-    except database.DatabaseError as e:
-        logger.error("No se pudo guardar en la base de datos: %s", e)
-
-    return precios
-
-
-def _variacion(config: Config, coin_id: str, precio: float) -> float | None:
-    """Cuanto ha variado en porcentaje desde hace HORAS_RESUMEN horas."""
-    # La de CoinGecko vale aunque el bot lleve poco funcionando o haya estado
-    # apagado. El historico propio queda de reserva.
-    cambio = coingecko.cambio_24h(coin_id)
-    if cambio is not None:
-        return cambio
-
-    try:
-        antes = database.get_price_at(config.database_path, coin_id, HORAS_RESUMEN)
-    except database.DatabaseError as e:
-        logger.warning("No se pudo leer el historico de %s: %s", coin_id, e)
-        return None
-
-    if not antes:
-        return None
-
-    return (precio - antes) / antes * 100
 
 
 def mostrar_historico(config: Config, coin_id: str, limite: int = 20) -> int:
