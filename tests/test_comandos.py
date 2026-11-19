@@ -12,6 +12,7 @@ from crypto_tracker.comandos import (
     interpretar,
     no_entiendo,
 )
+from crypto_tracker.equivale import COSAS
 
 
 @pytest.mark.parametrize(
@@ -75,8 +76,15 @@ def test_el_menu_cabe_en_telegram():
 
 
 def test_la_ayuda_lista_todos_los_comandos():
-    for nombre in COMANDOS:
+    for nombre in set(COMANDOS) - set(COSAS):
         assert f"/{nombre}" in AYUDA
+
+
+def test_la_ayuda_junta_las_de_equivale():
+    assert "/equivale — " in AYUDA
+    assert "\n/kebab — " not in AYUDA
+    # sueltas siguen teniendo su ayuda
+    assert ayuda("kebab") == f"<b>/kebab</b> — {COMANDOS['kebab']}"
 
 
 @pytest.mark.parametrize(

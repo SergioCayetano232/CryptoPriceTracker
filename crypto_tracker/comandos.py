@@ -4,7 +4,7 @@ import difflib
 import html
 from dataclasses import dataclass
 
-from . import lenguaje, simbolos
+from . import equivale, lenguaje, simbolos
 
 # Lo que sale en el menu de Telegram al escribir "/".
 COMANDOS = {
@@ -564,9 +564,14 @@ ALIAS = {
     "paper": "whitepaper",
 }
 
+# Las de /equivale no salen una a una: eran 48 líneas de "cuántos X te da".
 AYUDA = (
     "🤖 <b>Esto es lo que sé hacer</b>\n\n"
-    + "\n".join(f"/{nombre} — {texto}" for nombre, texto in COMANDOS.items())
+    + "\n".join(
+        f"/{nombre} — {texto}"
+        for nombre, texto in COMANDOS.items()
+        if nombre not in equivale.COSAS
+    )
     + "\n\nCon ejemplos de uno: /ayuda alerta"
     + "\nTambién sin barra: «avísame si btc baja de 60000», «cuánto vale eth», "
     "«cómo va mi cartera» o «cállate 2 horas»."
