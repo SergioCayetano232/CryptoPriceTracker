@@ -18,6 +18,11 @@ dev = [
     "ruff==0.16.5",
 ]
 
+# Sin esto setuptools ve data/ y windows/ como paquetes y no instala nada.
+[tool.setuptools]
+packages = ["crypto_tracker", "crypto_tracker.mensajes"]
+py-modules = ["main"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"

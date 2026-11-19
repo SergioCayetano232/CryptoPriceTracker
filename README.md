@@ -1,5 +1,7 @@
 # CryptoPriceTracker
 
+[![Tests](https://github.com/SergioCayetano232/CryptoPriceTracker/actions/workflows/tests.yml/badge.svg)](https://github.com/SergioCayetano232/CryptoPriceTracker/actions/workflows/tests.yml)
+
 Te avisa por Telegram cuando el precio de una cripto sube o baja de cierto punto.
 
 Consulta los precios cada pocos minutos, los va guardando y te manda un mensaje
@@ -1049,6 +1051,8 @@ pip install -e ".[dev]"
 pytest
 ruff check .
 ```
+
+En GitHub se pasan solos en cada push, con Python 3.10 y 3.14.
 
 Hecho con Python, SQLite, matplotlib, la API de CoinGecko y la de Telegram.
 
