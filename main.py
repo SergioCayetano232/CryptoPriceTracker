@@ -8,6 +8,7 @@ Uso:
     python main.py --mute 2h          calla los avisos durante dos horas
     python main.py --unmute           vuelve a avisar
     python main.py --history bitcoin  muestra el historico guardado
+    python main.py --panel            abre el panel web en el navegador
 """
 
 import argparse
@@ -19,6 +20,7 @@ from collections.abc import Callable
 from dataclasses import replace
 from datetime import date, datetime, timedelta, timezone
 from functools import partial
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from crypto_tracker import (
     adios,
@@ -128,6 +130,8 @@ from crypto_tracker import (
     movimientos,
     nota,
     objetivo,
+    panel,
+    panel_html,
     pelotazo,
     perdido,
     periodo,
@@ -6428,6 +6432,107 @@ def _imprimir_resumen(precios: list[float], currency: str) -> None:
         print(f"  Variacion en el tramo mostrado: {variacion:+.2f}%")
 
 
+def datos_panel(config: Config) -> panel.Panel:
+    """Lo que sale en el panel, todo de la base de datos: no gasta consultas."""
+    config = _con_cambios(config)
+    posiciones = list(config.cartera)
+    pendientes = database.get_puntuales(config.database_path, config.vs_currency)
+    ids = [p.coin_id for p in posiciones] + [w.coin_id for w in config.watchlist]
+    ids += [a.coin_id for a in pendientes if a.coin_id != puntuales.CARTERA]
+    ids = list(dict.fromkeys(ids))
+
+    precios, antes = {}, {}
+    for coin_id in ids:
+        precio = database.get_last_price(config.database_path, coin_id)
+        if precio is not None:
+            precios[coin_id] = precio
+        hace_un_dia = database.get_price_at(config.database_path, coin_id, 24)
+        if hace_un_dia is not None:
+            antes[coin_id] = hace_un_dia
+
+    lineas: dict[str, list[float]] = {}
+    for _, coin_id, precio in database.get_series(
+        config.database_path, ids, 24, config.vs_currency
+    ):
+        lineas.setdefault(coin_id, []).append(precio)
+
+    filas, faltan = panel.filas_cartera(posiciones, precios, antes, lineas)
+    serie = cartera.serie_valor(
+        posiciones,
+        database.get_series(
+            config.database_path,
+            [p.coin_id for p in posiciones],
+            24 * 7,
+            config.vs_currency,
+        ),
+    )
+    vigiladas_ = [
+        panel.Vigilada(
+            w.coin_id,
+            w,
+            precios.get(w.coin_id),
+            panel.cambio(precios.get(w.coin_id), antes.get(w.coin_id)),
+            panel.muestrear(lineas.get(w.coin_id, []), panel.PUNTOS_MINI),
+        )
+        for w in config.watchlist
+    ]
+    return panel.Panel(
+        config.vs_currency,
+        filas,
+        vigiladas_,
+        panel.alertas(pendientes, precios, cartera.valor_total(posiciones, precios)),
+        serie,
+        database.ultimo_guardado(config.database_path),
+        faltan,
+        panel.total_antes(posiciones, antes),
+    )
+
+
+def pagina_panel(config: Config) -> str:
+    datos = datos_panel(config)
+    ahora = datetime.now(timezone.utc)
+    return panel_html.pagina(
+        datos, ahora, panel.parado(datos.actualizado, ahora, config.check_interval)
+    )
+
+
+def servir_panel(config: Config, puerto: int) -> int:
+    """El panel en http://127.0.0.1:puerto hasta que lo pares con Ctrl+C."""
+
+    class Atender(BaseHTTPRequestHandler):
+        def do_GET(self) -> None:
+            if self.path.split("?")[0] != "/":
+                self.send_error(404)
+                return
+            try:
+                cuerpo = pagina_panel(config).encode()
+            except database.DatabaseError as e:
+                logger.error("No se pudo montar el panel: %s", e)
+                self.send_error(500, "No se pudo leer la base de datos")
+                return
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(cuerpo)
+
+        def log_message(self, formato: str, *args) -> None:
+            logger.debug("Panel: " + formato, *args)
+
+    # Solo en este ordenador: el panel enseña tu cartera y no pide contraseña.
+    try:
+        servidor = HTTPServer(("127.0.0.1", puerto), Atender)
+    except OSError as e:
+        logger.error("No se pudo abrir el panel en el puerto %d: %s", puerto, e)
+        return 1
+    logger.info("Panel en http://127.0.0.1:%d (Ctrl+C para pararlo)", puerto)
+    try:
+        servidor.serve_forever()
+    finally:
+        servidor.server_close()
+    return 0
+
+
 def buscar_id(texto: str) -> int:
     """Imprime los ids de CoinGecko que encajan con lo que buscas."""
     try:
@@ -6481,6 +6586,14 @@ def main() -> int:
         metavar="TEXTO",
         help="busca el id de CoinGecko de una cripto (ej: btc) y sale",
     )
+    parser.add_argument(
+        "--panel",
+        nargs="?",
+        const=8000,
+        type=int,
+        metavar="PUERTO",
+        help="abre el panel web en http://127.0.0.1:8000 (u otro puerto)",
+    )
     parser.add_argument("-v", "--verbose", action="store_true", help="logs detallados")
     args = parser.parse_args()
 
@@ -6507,6 +6620,9 @@ def main() -> int:
 
     if args.history:
         return mostrar_historico(config, args.history)
+
+    if args.panel:
+        return servir_panel(config, args.panel)
 
     if args.mute:
         return silenciar(config, args.mute)

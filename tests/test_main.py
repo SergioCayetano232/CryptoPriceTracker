@@ -11855,3 +11855,68 @@ def test_avisos_sueltos_van_con_el_de_precio(concentrada, enviados, monkeypatch)
     assert "vuelve a lo que te costó" in mensaje
     # Antes de la línea de la fuente, que va siempre al final.
     assert mensaje.index("⚖️") < mensaje.index("Price data by")
+
+
+# --- panel web ---
+
+
+def test_panel_con_lo_guardado(config, monkeypatch):
+    from dataclasses import replace
+
+    from crypto_tracker.config import parse_cartera
+
+    def sin_red(*a, **k):
+        raise AssertionError("el panel no debe consultar CoinGecko")
+
+    monkeypatch.setattr(coingecko, "get_prices", sin_red)
+    con_cartera = replace(config, cartera=parse_cartera("bitcoin:0.1:5000"))
+    database.save_prices(config.database_path, {"bitcoin": 60000.0}, "eur")
+    database.crear_puntual(config.database_path, "bitcoin", 70000.0, True, "eur")
+
+    datos = main.datos_panel(con_cartera)
+
+    assert datos.total == 6000.0
+    assert datos.ganancia == 1000.0
+    assert [v.coin_id for v in datos.vigiladas] == ["bitcoin"]
+    assert datos.alertas[0].precio == 60000.0
+    assert datos.actualizado is not None
+
+
+def test_panel_recien_instalado(config):
+    html = main.pagina_panel(config)
+
+    assert "Sin cartera" in html
+    assert "todavía sin precios" in html
+
+
+def test_panel_se_sirve_por_http(config, monkeypatch):
+    import threading
+    import urllib.error
+    import urllib.request
+    from http.server import HTTPServer
+
+    hecho = threading.Event()
+    servidor = {}
+
+    # En un puerto libre cualquiera, para no chocar con nada.
+    class EnPuertoLibre(HTTPServer):
+        def __init__(self, direccion, atender):
+            super().__init__(("127.0.0.1", 0), atender)
+            servidor["este"] = self
+            hecho.set()
+
+    monkeypatch.setattr(main, "HTTPServer", EnPuertoLibre)
+    hilo = threading.Thread(target=main.servir_panel, args=(config, 0))
+    hilo.start()
+    hecho.wait(5)
+    base = f"http://127.0.0.1:{servidor['este'].server_address[1]}"
+    try:
+        with urllib.request.urlopen(base + "/") as r:
+            assert r.status == 200
+            assert "CryptoPriceTracker" in r.read().decode()
+        with pytest.raises(urllib.error.HTTPError) as e:
+            urllib.request.urlopen(base + "/otra")
+        assert e.value.code == 404
+    finally:
+        servidor["este"].shutdown()
+        hilo.join()
