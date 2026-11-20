@@ -733,6 +733,20 @@ python main.py --history bitcoin
 Lista los últimos precios guardados y, debajo, un gráfico de una línea con la
 forma que ha tenido, más el máximo, el mínimo, la media y cuánto ha variado.
 
+**Verlo todo en el navegador:**
+```
+python main.py --panel
+```
+Abre <http://127.0.0.1:8000> y verás la cartera, una gráfica de los últimos 7
+días, lo que vigilas y las alertas que tienes puestas, ordenadas por lo poco que
+les falta. Se actualiza sola cada minuto. Para usar otro puerto:
+`--panel 9000`.
+
+Solo lee lo que el bot ya ha guardado, así que no gasta consultas a CoinGecko y
+puede estar abierto a la vez que `--loop`. Si el bot lleva un rato sin guardar
+precios, el panel te lo dice arriba. Solo se abre desde el mismo ordenador:
+enseña tu cartera y no pide contraseña.
+
 La primera vez que lo lanzas no te avisa de nada, solo apunta los precios.
 Necesita saber dónde estaban antes para saber si han cruzado algo.
 
@@ -993,6 +1007,8 @@ crypto_tracker/
   proximo.py     a qué precio salta el siguiente aviso
   cartera.py     cuánto vale lo que tienes
   grafica.py     las imágenes de /historico y /cartera
+  panel.py       los datos del panel web de --panel
+  panel_html.py  la página del panel
   media.py       las medias de 7, 30 y 90 días, para /media
   racha.py       los días seguidos subiendo o bajando, para /racha
   verdes.py      los días que sube y los que baja, para /verdes
