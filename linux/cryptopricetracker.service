@@ -1,0 +1,25 @@
+# Plantilla: instalar.sh le pone tu usuario y la carpeta, y la copia a systemd.
+
+[Unit]
+Description=CryptoPriceTracker, avisos de precios por Telegram
+# Sin red el primer ciclo falla seguro.
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__USUARIO__
+WorkingDirectory=__CARPETA__
+ExecStart=__CARPETA__/.venv/bin/python main.py --loop
+# Si se cae, vuelve en 30 s. Es lo que en Windows hace revisar.bat cada 15 min.
+Restart=always
+RestartSec=30
+# Como un Ctrl+C: sale por donde siempre y no a mitad de guardar.
+KillSignal=SIGINT
+# Sin esto los logs llegan a journalctl a trozos y con retraso.
+Environment=PYTHONUNBUFFERED=1
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

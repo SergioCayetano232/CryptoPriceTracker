@@ -783,6 +783,41 @@ Todo lo que va haciendo queda apuntado en `data/tracker.log`.
 
 ---
 
+## Dejarlo funcionando siempre en un servidor Linux
+
+Vale para cualquier VPS con systemd (Ubuntu, Debian, Fedora...). Copia la
+carpeta al servidor **sin** `.venv`, que está hecha para el otro ordenador, y
+**con** el `.env` (es un archivo oculto, a veces no se copia solo). Luego, desde
+la carpeta y con tu usuario normal, no como root:
+
+```
+bash linux/instalar.sh
+```
+
+Prepara el entorno, te manda el mensaje de prueba y, si llega, deja el bot como
+servicio: arranca solo al encender el servidor y, si se cae, vuelve a los 30
+segundos. Te pide la contraseña de `sudo` para lo de systemd. Si quieres ver
+antes lo que va a instalar, `bash linux/instalar.sh --mostrar`.
+
+| Para | Escribe |
+|---|---|
+| Ver si está funcionando | `systemctl status cryptopricetracker` |
+| Ver lo que va haciendo | `journalctl -u cryptopricetracker -f` |
+| Reiniciarlo tras cambiar el `.env` | `sudo systemctl restart cryptopricetracker` |
+| Quitarlo | `bash linux/quitar.sh` |
+
+Los logs van al registro del sistema (`journalctl`), no a `data/tracker.log`.
+
+**El panel desde tu ordenador:** el panel solo escucha en el propio servidor.
+Lánzalo allí con `.venv/bin/python main.py --panel` y, en tu ordenador, abre un
+túnel:
+```
+ssh -L 8000:127.0.0.1:8000 tu-usuario@tu-servidor
+```
+Con el túnel abierto, entra en <http://127.0.0.1:8000>. Nadie más puede verlo.
+
+---
+
 ## Otras opciones del `.env`
 
 | Opción | Qué hace | Por defecto |
@@ -1059,7 +1094,8 @@ crypto_tracker/
   lenguaje.py    frases sin barra, como "avísame si btc baja de 60000"
 main.py          junta todo
 tests/           los tests
-windows/         para dejarlo corriendo en un servidor
+windows/         para dejarlo corriendo en un servidor Windows
+linux/           lo mismo en un servidor Linux, con systemd
 ```
 
 Pasar los tests y el linter (instala las versiones fijadas en `pyproject.toml`):
