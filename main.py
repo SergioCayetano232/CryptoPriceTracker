@@ -18,6 +18,7 @@ import time
 from collections.abc import Callable
 from dataclasses import replace
 from datetime import date, datetime, timedelta, timezone
+from functools import partial
 
 from crypto_tracker import (
     adios,
@@ -41,6 +42,7 @@ from crypto_tracker import (
     bollinger,
     botones,
     brusco,
+    buzon,
     cada,
     caida,
     calendario,
@@ -352,24 +354,27 @@ def ejecutar_ciclo(
 
     # Como con el /mute de todas: las de /alerta no se borran y saltan al volver.
     calladas = _calladas(config)
-    revisar_bajon(config, valor, calladas)
-    revisar_concentracion(config, precios, calladas)
-    revisar_equilibrio(config, precios, calladas)
-    revisar_rezagadas(config, precios)
-    revisar_alertas_ratio(config, precios, calladas)
-    revisar_rsi(config, vigiladas, calladas)
-    revisar_cruces(config, vigiladas, calladas)
-    revisar_estables(config, list(precios), calladas)
-    revisar_volumen(config, vigiladas, calladas)
-    revisar_calma(config, vigiladas, calladas)
-    revisar_721(config, valor, calladas)
-    revisar_direcciones(config, precios.get("bitcoin"))
+    # Si saltan cinco a la vez, mejor un mensaje que cinco notificaciones.
+    sueltos = buzon.Buzon()
+    revisar_bajon(config, valor, calladas, sueltos)
+    revisar_concentracion(config, precios, calladas, sueltos)
+    revisar_equilibrio(config, precios, calladas, sueltos)
+    revisar_rezagadas(config, precios, sueltos)
+    revisar_alertas_ratio(config, precios, calladas, sueltos)
+    revisar_rsi(config, vigiladas, calladas, sueltos)
+    revisar_cruces(config, vigiladas, calladas, sueltos)
+    revisar_estables(config, list(precios), calladas, sueltos)
+    revisar_volumen(config, vigiladas, calladas, sueltos)
+    revisar_calma(config, vigiladas, calladas, sueltos)
+    revisar_721(config, valor, calladas, sueltos)
+    revisar_direcciones(config, precios.get("bitcoin"), sueltos)
     if calladas:
         avisos = [a for a in avisos if a.coin_id not in calladas]
         hechas = [p for p in hechas if p.coin_id not in calladas]
 
     if not avisos:
         logger.info("Ningun umbral cruzado")
+        _mandar_sueltos(config, sueltos)
         return estado_nuevo, None
 
     # Silenciado: el estado ya se guardo, asi que al volver no llega de golpe
@@ -382,6 +387,7 @@ def ejecutar_ciclo(
             callado.astimezone().strftime("%H:%M"),
             ", ".join(a.coin_id for a in avisos),
         )
+        _mandar_sueltos(config, sueltos)
         return estado_nuevo, None
 
     maximos = _maximos_avisos(config, avisos)
@@ -401,6 +407,8 @@ def ejecutar_ciclo(
     quitadas = _de_pareja(config, pendientes, hechas)
     if quitadas:
         texto += "\n\n" + alerts.formatear_pareja_quitada(quitadas, config.vs_currency)
+    if not sueltos.vacio():
+        texto += "\n\n" + "\n\n".join(sueltos.textos)
     if respaldo:
         texto = f"{texto}\n\n{binance.FUENTE}"
     else:
@@ -417,12 +425,27 @@ def ejecutar_ciclo(
         logger.info("Aviso enviado (%d): %s", len(avisos), cruzadas)
         _borrar_puntuales(config, hechas + quitadas)
         _apuntar_avisos(config, avisos)
+        sueltos.llegaron()
     else:
         # Ni con los reintentos ha salido y el estado ya cambio. El siguiente
         # cruce volvera a avisar; las de /alerta siguen ahi.
         logger.error("No se pudo avisar de: %s", cruzadas)
 
     return estado_nuevo, None
+
+
+def _mandar_sueltos(config: Config, sueltos: buzon.Buzon) -> None:
+    def mandar(texto: str) -> bool:
+        return telegram.send_message(
+            config.telegram_token,
+            config.telegram_chat_id,
+            texto,
+            sin_sonido=_sin_sonido(config),
+        )
+
+    if not sueltos.entregar(mandar):
+        # Nada se ha apuntado como avisado, así que salta otra vez el siguiente ciclo.
+        logger.error("No se pudieron mandar %d avisos", len(sueltos.textos))
 
 
 def _con_condicion(
@@ -783,8 +806,34 @@ def seguir_stops(
     return salen
 
 
-def revisar_bajon(config: Config, valor: float | None, calladas: set[str]) -> None:
-    """Avisa si la cartera ha caído CAIDA_CARTERA desde su récord. Va aparte."""
+def _avisar(
+    config: Config,
+    texto: str,
+    sueltos: buzon.Buzon | None,
+    al_llegar: Callable[[], None],
+) -> bool:
+    """Lo manda ya o, dentro del ciclo, lo deja para el mensaje del final."""
+    if sueltos is not None:
+        sueltos.echar(texto, al_llegar)
+        return True
+    if not telegram.send_message(
+        config.telegram_token,
+        config.telegram_chat_id,
+        texto,
+        sin_sonido=_sin_sonido(config),
+    ):
+        return False
+    al_llegar()
+    return True
+
+
+def revisar_bajon(
+    config: Config,
+    valor: float | None,
+    calladas: set[str],
+    sueltos: buzon.Buzon | None = None,
+) -> None:
+    """Avisa si la cartera ha caído CAIDA_CARTERA desde su récord."""
     if config.caida_cartera is None or valor is None:
         return
     # Callado no se apunta: si sigue igual de abajo, avisa al volver.
@@ -817,24 +866,23 @@ def revisar_bajon(config: Config, valor: float | None, calladas: set[str]) -> No
     texto = alerts.formatear_bajon(
         resultado, escalon, config.caida_cartera, config.vs_currency
     )
-    if not telegram.send_message(
-        config.telegram_token,
-        config.telegram_chat_id,
-        texto,
-        sin_sonido=_sin_sonido(config),
-    ):
-        logger.error("No se pudo avisar de la caída de la cartera")
-        return
 
-    logger.info("Aviso de caída de la cartera: %.2f%%", resultado.caida)
-    try:
-        database.guardar_bajon(config.database_path, resultado.cuando, escalon)
-    except database.DatabaseError as e:
-        logger.error("No se pudo apuntar el aviso de caída de la cartera: %s", e)
+    def apuntar() -> None:
+        logger.info("Aviso de caída de la cartera: %.2f%%", resultado.caida)
+        try:
+            database.guardar_bajon(config.database_path, resultado.cuando, escalon)
+        except database.DatabaseError as e:
+            logger.error("No se pudo apuntar el aviso de caída de la cartera: %s", e)
+
+    if not _avisar(config, texto, sueltos, apuntar):
+        logger.error("No se pudo avisar de la caída de la cartera")
 
 
 def revisar_concentracion(
-    config: Config, precios: dict[str, float], calladas: set[str]
+    config: Config,
+    precios: dict[str, float],
+    calladas: set[str],
+    sueltos: buzon.Buzon | None = None,
 ) -> None:
     """Avisa una vez si una cripto pasa de CONCENTRACION de la cartera."""
     if config.concentracion is None or not config.cartera:
@@ -852,31 +900,32 @@ def revisar_concentracion(
         logger.error("No se pudo leer el aviso de concentración: %s", e)
         return
 
+    def apuntar(nuevo: str | None) -> None:
+        if nuevo == avisado:
+            return
+        try:
+            database.guardar_concentracion(config.database_path, nuevo)
+        except database.DatabaseError as e:
+            logger.error("No se pudo apuntar el aviso de concentración: %s", e)
+
     c = concentracion.mayor(valores)
     if not concentracion.toca(c, config.concentracion, avisado):
-        nuevo = concentracion.sigue(c, config.concentracion, avisado)
-    elif telegram.send_message(
-        config.telegram_token,
-        config.telegram_chat_id,
-        alerts.formatear_concentracion(c),
-        sin_sonido=_sin_sonido(config),
-    ):
-        logger.info("Aviso de concentración: %s es el %.1f%%", c.coin_id, c.peso)
-        nuevo = c.coin_id
-    else:
-        logger.error("No se pudo avisar de la concentración de la cartera")
+        apuntar(concentracion.sigue(c, config.concentracion, avisado))
         return
 
-    if nuevo == avisado:
-        return
-    try:
-        database.guardar_concentracion(config.database_path, nuevo)
-    except database.DatabaseError as e:
-        logger.error("No se pudo apuntar el aviso de concentración: %s", e)
+    def avisada() -> None:
+        logger.info("Aviso de concentración: %s es el %.1f%%", c.coin_id, c.peso)
+        apuntar(c.coin_id)
+
+    if not _avisar(config, alerts.formatear_concentracion(c), sueltos, avisada):
+        logger.error("No se pudo avisar de la concentración de la cartera")
 
 
 def revisar_equilibrio(
-    config: Config, precios: dict[str, float], calladas: set[str]
+    config: Config,
+    precios: dict[str, float],
+    calladas: set[str],
+    sueltos: buzon.Buzon | None = None,
 ) -> None:
     """Avisa una vez cuando una que estaba en pérdidas vuelve a lo que costó."""
     if not config.cartera or _silenciado(config):
@@ -891,30 +940,41 @@ def revisar_equilibrio(
         logger.error("No se pudo mirar quién estaba en pérdidas: %s", e)
         return
 
+    def apuntar(e: equilibrio.Equilibrio, antes: bool, sigue: bool) -> None:
+        if sigue == antes:
+            return
+        try:
+            database.guardar_equilibrio(config.database_path, e.coin_id, sigue)
+        except database.DatabaseError as err:
+            logger.error("No se pudo apuntar el coste de %s: %s", e.coin_id, err)
+
+    def avisada(e: equilibrio.Equilibrio, antes: bool, sigue: bool) -> None:
+        logger.info("%s vuelve a su precio medio, %s", e.coin_id, e.medio)
+        apuntar(e, antes, sigue)
+
     for e in criptos:
         if e.coin_id in calladas:
             continue
         antes = e.coin_id in esperando
         avisar, sigue = equilibrio.vuelta(e, antes)
-        if avisar and not telegram.send_message(
-            config.telegram_token,
-            config.telegram_chat_id,
+        if not avisar:
+            apuntar(e, antes, sigue)
+        elif not _avisar(
+            config,
             alerts.formatear_vuelta(e, config.vs_currency),
-            sin_sonido=_sin_sonido(config),
+            sueltos,
+            partial(avisada, e, antes, sigue),
         ):
             # Sin apuntarlo, lo vuelve a intentar el siguiente ciclo.
             logger.error("No se pudo avisar de que %s vuelve a su coste", e.coin_id)
-            continue
-        if avisar:
-            logger.info("%s vuelve a su precio medio, %s", e.coin_id, e.medio)
-        if sigue != antes:
-            try:
-                database.guardar_equilibrio(config.database_path, e.coin_id, sigue)
-            except database.DatabaseError as err:
-                logger.error("No se pudo apuntar el coste de %s: %s", e.coin_id, err)
 
 
-def revisar_estables(config: Config, coin_ids: list[str], calladas: set[str]) -> None:
+def revisar_estables(
+    config: Config,
+    coin_ids: list[str],
+    calladas: set[str],
+    sueltos: buzon.Buzon | None = None,
+) -> None:
     """Avisa una vez si una estable que tienes o vigilas se sale de su dólar."""
     if _silenciado(config):
         return
@@ -932,26 +992,32 @@ def revisar_estables(config: Config, coin_ids: list[str], calladas: set[str]) ->
         logger.error("No se pudo leer el aviso de las estables: %s", e)
         return
 
-    salen, vuelven = estables.revisar(precios_usd, avisadas)
-    for d in salen + vuelven:
-        fuera = d in salen
-        # Si no llega, no se apunta y lo intenta el siguiente ciclo.
-        if not telegram.send_message(
-            config.telegram_token,
-            config.telegram_chat_id,
-            alerts.formatear_estable(d, vuelve=not fuera),
-            sin_sonido=_sin_sonido(config),
-        ):
-            logger.error("No se pudo avisar de %s", d.simbolo)
-            continue
+    def apuntar(d: estables.Desvio, fuera: bool) -> None:
         logger.info("%s a $%.4f", d.simbolo, d.precio)
         try:
             database.guardar_estable(config.database_path, d.coin_id, fuera)
         except database.DatabaseError as e:
             logger.error("No se pudo apuntar el aviso de %s: %s", d.simbolo, e)
 
+    salen, vuelven = estables.revisar(precios_usd, avisadas)
+    for d in salen + vuelven:
+        fuera = d in salen
+        # Si no llega, no se apunta y lo intenta el siguiente ciclo.
+        if not _avisar(
+            config,
+            alerts.formatear_estable(d, vuelve=not fuera),
+            sueltos,
+            partial(apuntar, d, fuera),
+        ):
+            logger.error("No se pudo avisar de %s", d.simbolo)
 
-def revisar_721(config: Config, valor: float | None, calladas: set[str]) -> None:
+
+def revisar_721(
+    config: Config,
+    valor: float | None,
+    calladas: set[str],
+    sueltos: buzon.Buzon | None = None,
+) -> None:
     """Avisa una vez al año cuando la cartera pasa del límite del modelo 721."""
     if not config.aviso_721 or valor is None:
         return
@@ -967,27 +1033,38 @@ def revisar_721(config: Config, valor: float | None, calladas: set[str]) -> None
     if not modelo721.toca_avisar(valor, avisado, hoy):
         return
 
-    if not telegram.send_message(
-        config.telegram_token,
-        config.telegram_chat_id,
-        alerts.formatear_aviso_721(valor, hoy),
-        sin_sonido=_sin_sonido(config),
-    ):
+    def apuntar() -> None:
+        logger.info("Aviso del modelo 721: la cartera vale %.2f", valor)
+        try:
+            database.guardar_resumen(config.database_path, hoy, database.AVISO_721)
+        except database.DatabaseError as e:
+            logger.error("No se pudo apuntar el aviso del modelo 721: %s", e)
+
+    if not _avisar(config, alerts.formatear_aviso_721(valor, hoy), sueltos, apuntar):
         logger.error("No se pudo avisar del modelo 721")
-        return
-    logger.info("Aviso del modelo 721: la cartera vale %.2f", valor)
-    try:
-        database.guardar_resumen(config.database_path, hoy, database.AVISO_721)
-    except database.DatabaseError as e:
-        logger.error("No se pudo apuntar el aviso del modelo 721: %s", e)
 
 
 def revisar_calma(
-    config: Config, vigiladas: dict[str, float], calladas: set[str]
+    config: Config,
+    vigiladas: dict[str, float],
+    calladas: set[str],
+    sueltos: buzon.Buzon | None = None,
 ) -> None:
     """Avisa una vez cuando una que vigilas lleva una semana mucho más quieta."""
     if not config.aviso_calma or _silenciado(config):
         return
+
+    def apuntar(coin_id: str, avisada: bool, nueva: bool) -> None:
+        if nueva == avisada:
+            return
+        try:
+            database.guardar_calma_avisada(config.database_path, coin_id, nueva)
+        except database.DatabaseError as e:
+            logger.error("No se pudo apuntar la calma de %s: %s", coin_id, e)
+
+    def avisada_ya(coin_id: str, r: calma.Calma, avisada: bool, nueva: bool) -> None:
+        logger.info("Calma en %s: %.1f%% en una semana", coin_id, r.rango)
+        apuntar(coin_id, avisada, nueva)
 
     for coin_id in vigiladas:
         if coin_id in calladas:
@@ -1001,24 +1078,17 @@ def revisar_calma(
         if resultado is None:
             continue
 
-        if calma.toca(resultado, avisada):
-            if not telegram.send_message(
-                config.telegram_token,
-                config.telegram_chat_id,
-                alerts.formatear_aviso_calma(coin_id, resultado, config.vs_currency),
-                sin_sonido=_sin_sonido(config),
-            ):
-                # Sin apuntarlo, lo vuelve a intentar el siguiente ciclo.
-                logger.error("No se pudo avisar de la calma de %s", coin_id)
-                continue
-            logger.info("Calma en %s: %.1f%% en una semana", coin_id, resultado.rango)
-
         nueva = calma.sigue(resultado, avisada)
-        if nueva != avisada:
-            try:
-                database.guardar_calma_avisada(config.database_path, coin_id, nueva)
-            except database.DatabaseError as e:
-                logger.error("No se pudo apuntar la calma de %s: %s", coin_id, e)
+        if not calma.toca(resultado, avisada):
+            apuntar(coin_id, avisada, nueva)
+        elif not _avisar(
+            config,
+            alerts.formatear_aviso_calma(coin_id, resultado, config.vs_currency),
+            sueltos,
+            partial(avisada_ya, coin_id, resultado, avisada, nueva),
+        ):
+            # Sin apuntarlo, lo vuelve a intentar el siguiente ciclo.
+            logger.error("No se pudo avisar de la calma de %s", coin_id)
 
 
 def _calma_de(config: Config, coin_id: str) -> calma.Calma | None:
@@ -1039,11 +1109,26 @@ def _calma(config: Config, argumento: str) -> str:
 
 
 def revisar_volumen(
-    config: Config, vigiladas: dict[str, float], calladas: set[str]
+    config: Config,
+    vigiladas: dict[str, float],
+    calladas: set[str],
+    sueltos: buzon.Buzon | None = None,
 ) -> None:
     """Avisa una vez cuando una que vigilas mueve el triple de lo normal."""
     if not config.aviso_volumen or _silenciado(config):
         return
+
+    def apuntar(coin_id: str, avisado: bool, nuevo: bool) -> None:
+        if nuevo == avisado:
+            return
+        try:
+            database.guardar_volumen_avisado(config.database_path, coin_id, nuevo)
+        except database.DatabaseError as e:
+            logger.error("No se pudo apuntar el volumen de %s: %s", coin_id, e)
+
+    def avisado_ya(v: volumen.Volumen, avisado: bool, nuevo: bool) -> None:
+        logger.info("Volumen raro en %s: %.1f veces", v.coin_id, v.veces)
+        apuntar(v.coin_id, avisado, nuevo)
 
     ahora = datetime.now(timezone.utc)
     for coin_id, actual in coingecko.volumenes(list(vigiladas)).items():
@@ -1065,33 +1150,40 @@ def revisar_volumen(
             coin_id, actual, normal, vigiladas[coin_id], coingecko.cambio_24h(coin_id)
         )
 
-        if volumen.toca(v, avisado):
-            if not telegram.send_message(
-                config.telegram_token,
-                config.telegram_chat_id,
-                alerts.formatear_volumen(v, config.vs_currency),
-                sin_sonido=_sin_sonido(config),
-            ):
-                # Sin apuntarlo, lo vuelve a intentar el siguiente ciclo.
-                logger.error("No se pudo avisar del volumen de %s", coin_id)
-                continue
-            logger.info("Volumen raro en %s: %.1f veces", coin_id, v.veces)
-
         nuevo = volumen.sigue(v, avisado)
-        if nuevo == avisado:
-            continue
-        try:
-            database.guardar_volumen_avisado(config.database_path, coin_id, nuevo)
-        except database.DatabaseError as e:
-            logger.error("No se pudo apuntar el volumen de %s: %s", coin_id, e)
+        if not volumen.toca(v, avisado):
+            apuntar(coin_id, avisado, nuevo)
+        elif not _avisar(
+            config,
+            alerts.formatear_volumen(v, config.vs_currency),
+            sueltos,
+            partial(avisado_ya, v, avisado, nuevo),
+        ):
+            # Sin apuntarlo, lo vuelve a intentar el siguiente ciclo.
+            logger.error("No se pudo avisar del volumen de %s", coin_id)
 
 
 def revisar_cruces(
-    config: Config, vigiladas: dict[str, float], calladas: set[str]
+    config: Config,
+    vigiladas: dict[str, float],
+    calladas: set[str],
+    sueltos: buzon.Buzon | None = None,
 ) -> None:
     """Avisa cuando la media de 50 días de una que vigilas cruza la de 200."""
     if not config.aviso_cruce or _silenciado(config):
         return
+
+    def apuntar(coin_id: str, avisado: str | None, nuevo: str | None) -> None:
+        if nuevo is None or nuevo == avisado:
+            return
+        try:
+            database.guardar_lado_cruce(config.database_path, coin_id, nuevo)
+        except database.DatabaseError as e:
+            logger.error("No se pudo apuntar el cruce de %s: %s", coin_id, e)
+
+    def avisado_ya(c: cruce.Cruce, avisado: str | None, nuevo: str | None) -> None:
+        logger.info("Cruce de medias: %s %s", c.coin_id, c.lado)
+        apuntar(c.coin_id, avisado, nuevo)
 
     ahora = datetime.now(timezone.utc)
     for coin_id, precio in vigiladas.items():
@@ -1112,28 +1204,22 @@ def revisar_cruces(
         if c is None:
             continue
 
-        if cruce.toca(c, avisado):
-            if not telegram.send_message(
-                config.telegram_token,
-                config.telegram_chat_id,
-                alerts.formatear_cruce(c, config.vs_currency),
-                sin_sonido=_sin_sonido(config),
-            ):
-                # Sin apuntarlo, lo vuelve a intentar el siguiente ciclo.
-                logger.error("No se pudo avisar del cruce de %s", coin_id)
-                continue
-            logger.info("Cruce de medias: %s %s", coin_id, c.lado)
-
         nuevo = cruce.apuntar(c, avisado)
-        if nuevo is None or nuevo == avisado:
-            continue
-        try:
-            database.guardar_lado_cruce(config.database_path, coin_id, nuevo)
-        except database.DatabaseError as e:
-            logger.error("No se pudo apuntar el cruce de %s: %s", coin_id, e)
+        if not cruce.toca(c, avisado):
+            apuntar(coin_id, avisado, nuevo)
+        elif not _avisar(
+            config,
+            alerts.formatear_cruce(c, config.vs_currency),
+            sueltos,
+            partial(avisado_ya, c, avisado, nuevo),
+        ):
+            # Sin apuntarlo, lo vuelve a intentar el siguiente ciclo.
+            logger.error("No se pudo avisar del cruce de %s", coin_id)
 
 
-def revisar_direcciones(config: Config, precio_btc: float | None) -> None:
+def revisar_direcciones(
+    config: Config, precio_btc: float | None, sueltos: buzon.Buzon | None = None
+) -> None:
     """Avisa cuando entra o sale algo de una de /direccion."""
     if _silenciado(config):
         return
@@ -1142,6 +1228,16 @@ def revisar_direcciones(config: Config, precio_btc: float | None) -> None:
     except database.DatabaseError as e:
         logger.error("No se pudieron leer las direcciones: %s", e)
         return
+
+    def apuntar(v: direccion.Vigilada, saldo: direccion.Saldo, cambio: int) -> None:
+        logger.info("Se ha movido la dirección %s: %+d sats", v.nombre, cambio)
+        nueva = direccion.Vigilada(v.direccion, v.nombre, saldo.sats, saldo.txs)
+        try:
+            database.guardar_direccion(
+                config.database_path, v.direccion, nueva.guardar()
+            )
+        except database.DatabaseError as e:
+            logger.error("No se pudo apuntar la dirección %s: %s", v.nombre, e)
 
     for v in vigiladas:
         try:
@@ -1153,34 +1249,39 @@ def revisar_direcciones(config: Config, precio_btc: float | None) -> None:
         if cambio is None:
             continue
 
-        if not telegram.send_message(
-            config.telegram_token,
-            config.telegram_chat_id,
+        if not _avisar(
+            config,
             alerts.formatear_movimiento_direccion(
                 v, cambio, saldo, precio_btc, config.vs_currency
             ),
-            sin_sonido=_sin_sonido(config),
+            sueltos,
+            partial(apuntar, v, saldo, cambio),
         ):
             # Sin apuntarlo, lo vuelve a intentar el siguiente ciclo.
             logger.error("No se pudo avisar de que se movió %s", v.nombre)
-            continue
-        logger.info("Se ha movido la dirección %s: %+d sats", v.nombre, cambio)
-
-        nueva = direccion.Vigilada(v.direccion, v.nombre, saldo.sats, saldo.txs)
-        try:
-            database.guardar_direccion(
-                config.database_path, v.direccion, nueva.guardar()
-            )
-        except database.DatabaseError as e:
-            logger.error("No se pudo apuntar la dirección %s: %s", v.nombre, e)
 
 
 def revisar_rsi(
-    config: Config, vigiladas: dict[str, float], calladas: set[str]
+    config: Config,
+    vigiladas: dict[str, float],
+    calladas: set[str],
+    sueltos: buzon.Buzon | None = None,
 ) -> None:
     """Avisa una vez cuando una que vigilas entra en sobrecompra o sobreventa."""
     if not config.aviso_rsi or _silenciado(config):
         return
+
+    def apuntar(coin_id: str, avisado: str | None, nueva: str | None) -> None:
+        if nueva == avisado:
+            return
+        try:
+            database.guardar_zona_rsi(config.database_path, coin_id, nueva)
+        except database.DatabaseError as e:
+            logger.error("No se pudo apuntar el aviso de RSI de %s: %s", coin_id, e)
+
+    def avisado_ya(coin_id: str, r: rsi.Rsi, avisado: str | None, zona: str) -> None:
+        logger.info("Aviso de RSI: %s en %.0f", coin_id, r.valor)
+        apuntar(coin_id, avisado, zona)
 
     ahora = datetime.now(timezone.utc)
     for coin_id, precio in vigiladas.items():
@@ -1202,25 +1303,14 @@ def revisar_rsi(
 
         zona = avisorsi.toca(resultado.valor, avisado)
         if zona is None:
-            nueva = avisorsi.sigue(resultado.valor, avisado)
-        elif telegram.send_message(
-            config.telegram_token,
-            config.telegram_chat_id,
+            apuntar(coin_id, avisado, avisorsi.sigue(resultado.valor, avisado))
+        elif not _avisar(
+            config,
             alerts.formatear_aviso_rsi(coin_id, resultado, config.vs_currency),
-            sin_sonido=_sin_sonido(config),
+            sueltos,
+            partial(avisado_ya, coin_id, resultado, avisado, zona),
         ):
-            logger.info("Aviso de RSI: %s en %.0f", coin_id, resultado.valor)
-            nueva = zona
-        else:
             logger.error("No se pudo avisar del RSI de %s", coin_id)
-            continue
-
-        if nueva == avisado:
-            continue
-        try:
-            database.guardar_zona_rsi(config.database_path, coin_id, nueva)
-        except database.DatabaseError as e:
-            logger.error("No se pudo apuntar el aviso de RSI de %s: %s", coin_id, e)
 
 
 def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:
@@ -2913,7 +3003,10 @@ def _alerta_ratio(config: Config, argumento: str) -> str:
 
 
 def revisar_alertas_ratio(
-    config: Config, precios: dict[str, float], calladas: set[str]
+    config: Config,
+    precios: dict[str, float],
+    calladas: set[str],
+    sueltos: buzon.Buzon | None = None,
 ) -> None:
     """Las de /alerta eth/btc: saltan una vez y se borran."""
     if _silenciado(config):
@@ -2924,15 +3017,15 @@ def revisar_alertas_ratio(
         una, otra = precios.get(a.coin_id), precios.get(a.contra)
         if not (una and otra) or not alertaratio.cumplida(a, una / otra):
             continue
-        if not telegram.send_message(
-            config.telegram_token,
-            config.telegram_chat_id,
+        if not _avisar(
+            config,
             alerts.formatear_aviso_ratio(a, una / otra),
-            sin_sonido=_sin_sonido(config),
+            sueltos,
+            partial(
+                database.quitar_alerta_ratio, config.database_path, a.coin_id, a.contra
+            ),
         ):
             logger.error("No se pudo avisar del ratio %s/%s", a.coin_id, a.contra)
-            continue
-        database.quitar_alerta_ratio(config.database_path, a.coin_id, a.contra)
 
 
 def _rezagada(config: Config, argumento: str) -> str:
@@ -2965,10 +3058,17 @@ def _rezagada(config: Config, argumento: str) -> str:
     return f"🐢 Hecho: te aviso si {una} va un {pct:g}% peor que {otra} en 7 días."
 
 
-def revisar_rezagadas(config: Config, precios: dict[str, float]) -> None:
+def revisar_rezagadas(
+    config: Config, precios: dict[str, float], sueltos: buzon.Buzon | None = None
+) -> None:
     """Las de /rezagada: una semana de una contra la de la otra."""
     if _silenciado(config):
         return
+
+    def apuntar(r: rezagada.Rezagada, avisada: bool) -> None:
+        if avisada != r.avisada:
+            database.guardar_rezagada(config.database_path, replace(r, avisada=avisada))
+
     try:
         lista = database.get_rezagadas(config.database_path)
     except database.DatabaseError as e:
@@ -2992,18 +3092,17 @@ def revisar_rezagadas(config: Config, precios: dict[str, float]) -> None:
 
         dif = rezagada.diferencia(ahora, antes, contra, contra_antes)
         avisar, avisada = rezagada.toca(r, dif)
-        if avisar and not telegram.send_message(
-            config.telegram_token,
-            config.telegram_chat_id,
+        if not avisar:
+            apuntar(r, avisada)
+        elif not _avisar(
+            config,
             alerts.formatear_aviso_rezagada(
                 r, dif, (ahora / antes - 1) * 100, (contra / contra_antes - 1) * 100
             ),
-            sin_sonido=_sin_sonido(config),
+            sueltos,
+            partial(apuntar, r, avisada),
         ):
             logger.error("No se pudo avisar de que %s se queda atrás", r.coin_id)
-            continue
-        if avisada != r.avisada:
-            database.guardar_rezagada(config.database_path, replace(r, avisada=avisada))
 
 
 def _cada(config: Config, argumento: str) -> str:

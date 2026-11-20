@@ -9652,7 +9652,8 @@ def concentrada(con_semana):
 
 
 def _avisos_concentracion(enviados):
-    return [t for t in enviados if t.startswith("⚖️")]
+    # Puede ir junto con otros avisos del ciclo, no siempre al principio.
+    return [t for t in enviados if "⚖️" in t]
 
 
 def test_concentracion_avisa_una_vez(concentrada, enviados, monkeypatch):
@@ -11794,3 +11795,63 @@ def test_importar_a_secas_explica_como(config, enviados):
     main.atender(config, _mensaje("/importar"))
 
     assert "Historial de operaciones" in enviados[0]
+
+
+# --- avisos sueltos juntos ---
+
+
+def _baja_y_vuelve(concentrada, monkeypatch):
+    # Al volver a 66.000 saltan dos: la concentración y que vuelve a lo que costó.
+    for btc in (66000.0, 15000.0, 66000.0):
+        _precio(monkeypatch, {"bitcoin": btc, "solana": 100.0})
+        main.ejecutar_ciclo(concentrada, {})
+
+
+def test_avisos_sueltos_del_ciclo_van_en_un_mensaje(concentrada, enviados, monkeypatch):
+    _baja_y_vuelve(concentrada, monkeypatch)
+
+    ultimo = enviados[-1]
+    assert ultimo.startswith("<b>2 avisos</b>")
+    assert "⚖️ <b>Bitcoin ya es el 87%" in ultimo
+    assert "vuelve a lo que te costó" in ultimo
+
+
+def test_si_no_llega_el_mensaje_junto_salta_otra_vez(concentrada, monkeypatch):
+    enviados = []
+    funciona = [True]
+    monkeypatch.setattr(
+        telegram,
+        "send_message",
+        lambda t, c, texto, **kw: funciona[0] and (enviados.append(texto) or True),
+    )
+
+    for btc in (66000.0, 15000.0):
+        _precio(monkeypatch, {"bitcoin": btc, "solana": 100.0})
+        main.ejecutar_ciclo(concentrada, {})
+    funciona[0] = False
+    _precio(monkeypatch, {"bitcoin": 66000.0, "solana": 100.0})
+    main.ejecutar_ciclo(concentrada, {})
+    antes = len(enviados)
+
+    funciona[0] = True
+    main.ejecutar_ciclo(concentrada, {})
+
+    assert len(enviados) == antes + 1
+    assert enviados[-1].startswith("<b>2 avisos</b>")
+
+
+def test_avisos_sueltos_van_con_el_de_precio(concentrada, enviados, monkeypatch):
+    for btc in (66000.0, 15000.0):
+        _precio(monkeypatch, {"bitcoin": btc, "solana": 100.0})
+        main.ejecutar_ciclo(concentrada, {})
+    enviados.clear()
+
+    _precio(monkeypatch, {"bitcoin": 66000.0, "solana": 100.0})
+    # Con BTC vigilado al 5%, de 15.000 a 66.000 también cruza el de precio.
+    main.ejecutar_ciclo(concentrada, {"bitcoin": "%15000.0"})
+
+    [mensaje] = enviados
+    assert "⚖️" in mensaje
+    assert "vuelve a lo que te costó" in mensaje
+    # Antes de la línea de la fuente, que va siempre al final.
+    assert mensaje.index("⚖️") < mensaje.index("Price data by")
