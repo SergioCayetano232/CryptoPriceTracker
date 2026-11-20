@@ -101,3 +101,12 @@ def test_vigiladas_con_su_regla():
 def test_siempre_lleva_lo_de_coingecko():
     # El plan gratis pide citarles junto a los datos.
     assert "Price data by CoinGecko" in pagina(_panel(), AHORA, parado=False)
+
+
+def test_la_version_es_la_del_pyproject():
+    # Antes salía la de __init__.py, que se quedó en 0.1.0.
+    from crypto_tracker import version
+
+    assert f"CryptoPriceTracker {version.numero()} ·" in pagina(
+        _panel(), AHORA, parado=False
+    )

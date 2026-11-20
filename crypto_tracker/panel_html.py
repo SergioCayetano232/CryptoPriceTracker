@@ -3,7 +3,7 @@
 from datetime import datetime
 from html import escape
 
-from . import __version__
+from . import version
 from .mensajes.base import SIMBOLOS, _num, describir
 from .panel import PUNTOS_GRAFICA, Alerta, Fila, Panel, Vigilada, hace, muestrear, trazo
 
@@ -277,7 +277,7 @@ def pagina(p: Panel, ahora: datetime, parado: bool) -> str:
 <body>
 <main class="panel">{contenido}</main>
 <footer class="pie">
-  CryptoPriceTracker {escape(__version__)} · se actualiza sola cada minuto ·
+  CryptoPriceTracker {escape(version.numero() or "")} · se actualiza sola cada minuto ·
   <a href="https://www.coingecko.com">Price data by CoinGecko</a>
 </footer>
 <script>{JS}</script>
