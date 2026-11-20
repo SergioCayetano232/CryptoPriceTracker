@@ -205,6 +205,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/ganancias` | Lo que has ganado o perdido de verdad con lo que ya vendiste |
 | `/arrepentido` | Lo que valdría hoy lo que vendiste contra lo que te dieron, cripto a cripto, para saber si hiciste bien en vender. Gasta una consulta |
 | `/impuestos` | Lo que le tocaría a Hacienda de lo que ganaste vendiendo este año, tramo a tramo (19, 21, 23, 27 y 30 %). `/impuestos 2025`, el año que digas. Va con FIFO, como Hacienda: lo primero que compraste es lo primero que vendes (lo del `PORTFOLIO` del `.env` cuenta como lo más viejo). Por eso puede no coincidir con `/ganancias`, que va con precio medio. Es orientativo |
+| `/impuestos 2025 csv` | Te manda un CSV con cada venta de ese año: fecha, cripto, cantidad, valor de transmisión (lo que te dieron, sin la comisión), valor de adquisición (lo que costó, con FIFO y las comisiones de compra) y la ganancia, con el total al final. Es lo que pide la Renta en las ganancias por transmisión de monedas virtuales. Sin año, el de este. Las ventas sin precio van sin cifras y fuera del total |
 | `/comisiones` | Lo que llevas pagado en comisiones, en dinero y en % de lo que moviste, por año y por cripto. `/comisiones 2025`, solo ese año. Cuentan las que pones con `com` en `/compra` y `/venta`; las apuntadas antes de esta versión no guardaban la comisión aparte y no salen. También `/fees` |
 | `/sivendo btc 0.5` | Lo que te darían, lo que le sacarías y lo que le tocaría a Hacienda, contando lo que ya llevas ganado este año. No apunta nada. También `/sivendo btc todo` y `/sivendo btc 0.5 @80000`, a ese precio |
 | `/permuta btc eth 0.01` | Lo que le tocaría a Hacienda si cambias una cripto por otra: en España cuenta como venderla, aunque no veas un euro. Te dice cuánta te darían de la otra, lo que le sacarías y a qué precio contará la nueva cuando la vendas. No apunta nada. También `/permuta btc eth todo` y con `com 0.1%` al final, la comisión. También `/swap` |
@@ -1029,6 +1030,7 @@ crypto_tracker/
   arrepentido.py lo que valdría hoy lo vendido, para /arrepentido
   corregir.py    rehacer los movimientos al cambiar uno, para /corregir
   impuestos.py   los tramos del IRPF, para /impuestos
+  renta.py       cada venta con FIFO en un CSV, para /impuestos csv
   fifo.py        qué costó lo vendido, contando primero lo más viejo
   permuta.py     lo que pagas a Hacienda al cambiar una cripto por otra, para /permuta
   sivendo.py     lo que ganarías y pagarías antes de vender, para /sivendo

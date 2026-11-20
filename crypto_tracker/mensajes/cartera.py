@@ -1323,6 +1323,7 @@ def formatear_impuestos(i: Impuestos, currency: str, recibido: float = 0.0) -> s
         "es lo primero que vendes), y /ganancias con precio medio: pueden no "
         "coincidir.</i>"
     )
+    lineas.append(f"📄 Venta a venta, para la Renta: /impuestos {i.año} csv")
     return "\n".join(lineas)
 
 

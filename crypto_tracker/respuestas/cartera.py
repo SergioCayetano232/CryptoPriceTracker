@@ -49,6 +49,7 @@ from .. import (
     promediar,
     rebalanceo,
     record,
+    renta,
     rentabilidad,
     reparto,
     riesgo,
@@ -270,16 +271,46 @@ def _arrepentido(config: Config) -> str:
     return alerts.formatear_arrepentido(resultado, config.vs_currency)
 
 
-def _impuestos(config: Config, argumento: str) -> str:
+def _impuestos(config: Config, argumento: str) -> str | comandos.Archivo:
+    argumento, csv = renta.pide_csv(argumento)
     try:
         año = impuestos.interpretar(argumento, date.today().year)
     except impuestos.ImpuestosError as e:
         return telegram.escape(str(e))
     todos = database.get_movimientos(config.database_path, None)
+    if csv:
+        return _renta(config, todos, año)
     return alerts.formatear_impuestos(
         impuestos.calcular(todos, año),
         config.vs_currency,
         impuestos.recompensas_de(todos, año),
+    )
+
+
+def _renta(
+    config: Config, todos: list[movimientos.Movimiento], año: int
+) -> str | comandos.Archivo:
+    ventas = renta.ventas(todos, año)
+    if not ventas:
+        return f"En {año} no has vendido nada, así que no hay nada que declarar."
+    cuantas = "1 venta" if len(ventas) == 1 else f"{len(ventas)} ventas"
+    pie = [
+        f"🏛️ {cuantas} de {año}, con FIFO como Hacienda",
+        "<i>Para la Renta, en ganancias por transmisión de monedas virtuales. "
+        "Las comisiones ya van dentro. Es orientativo.</i>",
+    ]
+    if any(v.ganancia is None for v in ventas):
+        pie.append("<i>Las que no tienen precio van sin cifras y fuera del total.</i>")
+    if config.vs_currency.lower() != "eur":
+        pie.append(
+            f"<i>Ojo: va en {config.vs_currency.upper()}, "
+            "y Hacienda lo quiere en euros.</i>"
+        )
+    return comandos.Archivo(
+        renta.a_csv(ventas, config.vs_currency),
+        renta.nombre(año),
+        "\n".join(pie),
+        "No he podido mandarte el archivo. Prueba en un rato.",
     )
 
 

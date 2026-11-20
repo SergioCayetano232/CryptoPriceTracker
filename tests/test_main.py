@@ -11927,3 +11927,48 @@ def test_panel_se_sirve_por_http(config, monkeypatch):
     finally:
         servidor["este"].shutdown()
         hilo.join()
+
+
+# --- /impuestos csv ---
+
+
+def test_impuestos_csv_para_la_renta(config, enviados, archivos, monkeypatch):
+    from datetime import date
+
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
+    _precio(monkeypatch, {})
+    # Lo del .env (0,02 a 1000) es lo más viejo: FIFO vende eso primero.
+    main.atender(config, _mensaje("/compra bitcoin 0.01 800"))
+    main.atender(config, _mensaje("/venta bitcoin 0.01 900 com 1"))
+    enviados.clear()
+    año = date.today().year
+
+    main.atender(config, _mensaje(f"/impuestos {año} csv"))
+
+    contenido, nombre, pie = archivos[0]
+    filas = [f.split(";") for f in contenido.decode("utf-8-sig").splitlines()]
+    assert filas[1][1:6] == ["bitcoin", "0,01", "899", "500", "399"]
+    assert filas[2][:6] == ["total", "", "", "899", "500", "399"]
+    assert nombre == f"renta-{año}.csv"
+    assert f"1 venta de {año}" in pie
+    assert enviados == []
+
+
+def test_impuestos_csv_sin_ventas(config, enviados, archivos):
+    main.atender(config, _mensaje("/impuestos csv"))
+
+    assert archivos == []
+    assert "no has vendido nada" in enviados[0]
+
+
+def test_impuestos_normal_dice_lo_del_csv(config, enviados, monkeypatch):
+    from datetime import date
+
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
+    _precio(monkeypatch, {})
+    main.atender(config, _mensaje("/venta bitcoin 0.01 900"))
+    enviados.clear()
+
+    main.atender(config, _mensaje("/impuestos"))
+
+    assert f"/impuestos {date.today().year} csv" in enviados[0]

@@ -764,6 +764,7 @@ EJEMPLOS = {
     "impuestos": [
         ("/impuestos", "lo de este año, por tramos"),
         ("/impuestos 2025", "el año que digas"),
+        ("/impuestos 2025 csv", "cada venta en un archivo, para la Renta"),
     ],
     "sivendo": [
         ("/sivendo btc 0.005", "al precio de ahora"),
