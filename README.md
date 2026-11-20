@@ -298,6 +298,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/mitad` | Al revés que `/doble`: a qué precio perderías la mitad de lo que metiste en cada cripto y cuánto puede bajar hasta ahí, la que menos aguanta primero. Solo con las que dicen lo que te costaron |
 | `/exportar bitcoin 30d` | Te manda un CSV con los precios guardados (sin tramo, 30 días) |
 | `/exportar movimientos` | Te manda un CSV con todas tus compras y ventas, lo que ganaste en cada venta y tus notas |
+| `/importar` | Apunta de golpe tus compras y ventas de Binance o de Kraken. Mándale al bot el CSV como archivo: el de Binance sale en Órdenes → Historial de operaciones → Exportar; el de Kraken, exportando las operaciones (Trades), y si llega en un .zip, vale el trades.csv de dentro. Te dice lo que ha leído y lo que se salta (lo que no es contra tu moneda, lo de margen, las criptos que no conoce) y solo apunta al pulsar Importar. Cada una lleva el exchange en la nota y la comisión dentro del importe. No apunta lo que ya tenías apuntado ni lo anterior a tu último movimiento |
 | `/backup` | Te manda un zip con la base de datos entera: precios, compras, ventas y alertas. También `/respaldo` |
 | `/rellenar btc 90d` | Baja de CoinGecko los precios pasados que no tiene, para que `/rsi`, `/media`, `/racha` y compañía funcionen sin esperar semanas. Solo mete lo que falta, así que se puede repetir. Sin tramo, todo lo que quepa en `HISTORY_DAYS` (hasta un año); a secas, las que vigilas. Hasta 90 días viene un precio por hora y con más, uno al día. Gasta una consulta por cripto |
 | `/mercado` | Lo que vale todo el mercado cripto, cómo va en 24 h y qué parte es de Bitcoin, Ethereum y las estables |
@@ -911,6 +912,7 @@ crypto_tracker/
   ratio.py       lo que vale una cripto en otra, para /ratio
   convertir.py   entiende lo que le pides a /convertir
   exportar.py    los CSV de /exportar, de precios y de movimientos
+  importar.py    lee el CSV de Binance o de Kraken, para /importar
   rellenar.py    qué precios pasados faltan, para /rellenar
   hubiera.py     entiende lo que le pides a /si
   objetivo.py    lo que valdría tu cartera, para /objetivo

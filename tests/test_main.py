@@ -11779,7 +11779,7 @@ def test_importar_venta_sin_cripto(config, enviados, monkeypatch, con_csv):
 def test_importar_archivo_que_no_es_csv(config, enviados, con_csv):
     main.atender(config, _archivo("foto.jpg"))
 
-    assert enviados[0] == "Solo sé leer el CSV de Binance. Mira /importar"
+    assert enviados[0] == "Solo sé leer el CSV de Binance o de Kraken. Mira /importar"
 
 
 def test_importar_csv_que_no_es_de_binance(config, enviados, monkeypatch, con_csv):
@@ -11972,3 +11972,27 @@ def test_impuestos_normal_dice_lo_del_csv(config, enviados, monkeypatch):
     main.atender(config, _mensaje("/impuestos"))
 
     assert f"/impuestos {date.today().year} csv" in enviados[0]
+
+
+CSV_KRAKEN = (
+    '"txid","ordertxid","pair","time","type","ordertype","price","cost","fee",'
+    '"vol","margin","misc","ledgers"\n'
+    '"T2","O2","XXBTZEUR","2024-05-02 08:00:00.1234","sell","limit","60000.0",'
+    '"60.00","0.16","0.00100000","0.00000","","L3,L4"\n'
+    '"T1","O1","XXBTZEUR","2024-03-01 10:15:22.5000","buy","market","50000.0",'
+    '"100.00","0.26","0.00200000","0.00000","","L1,L2"\n'
+)
+
+
+def test_importar_de_kraken(config, enviados, monkeypatch, con_csv):
+    monkeypatch.setattr(telegram, "descargar", lambda t, f: CSV_KRAKEN.encode())
+
+    main.atender(config, _archivo("trades.csv"))
+    assert "Lo que he leído del CSV de Kraken" in enviados[0]
+    main.atender(config, _mensaje("/importar si"))
+
+    assert enviados[1].startswith("✅ Apuntadas 2 operaciones de Kraken")
+    venta, compra = database.get_movimientos(config.database_path)
+    assert compra.cuando == datetime(2024, 3, 1, 10, 15, 22, tzinfo=timezone.utc)
+    assert (compra.cantidad, compra.coste, compra.nota) == (0.002, 100.26, "Kraken")
+    assert (venta.cantidad, venta.coste, venta.nota) == (0.001, 59.84, "Kraken")

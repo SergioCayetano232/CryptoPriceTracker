@@ -960,12 +960,12 @@ def atender(config: Config, mensaje: dict) -> None:
 
 
 def recibir_archivo(config: Config, documento: dict) -> None:
-    """Un archivo en el chat: solo sé qué hacer con el CSV de Binance."""
+    """Un archivo en el chat: solo sé qué hacer con el CSV de Binance o de Kraken."""
     nombre = documento.get("file_name") or ""
     logger.info("Archivo recibido: %s", nombre)
     contenido = None
     if not nombre.lower().endswith(".csv"):
-        respuesta = "Solo sé leer el CSV de Binance. Mira /importar"
+        respuesta = "Solo sé leer el CSV de Binance o de Kraken. Mira /importar"
     elif (documento.get("file_size") or 0) > MAX_CSV:
         respuesta = "Ese CSV es demasiado grande. Mira /importar"
     else:
@@ -992,7 +992,7 @@ def recibir_archivo(config: Config, documento: dict) -> None:
 def _preparar_importacion(config: Config, texto: str) -> str | comandos.ConBotones:
     global _importacion
     try:
-        lectura = importar.leer_binance(texto, config.vs_currency)
+        lectura = importar.leer(texto, config.vs_currency)
     except importar.ImportarError as e:
         return telegram.escape(str(e))
 
@@ -1017,6 +1017,7 @@ def _preparar_importacion(config: Config, texto: str) -> str | comandos.ConBoton
         viejas,
         ultimo,
         config.vs_currency,
+        lectura.origen,
     )
     if not nuevas:
         return texto
@@ -1034,7 +1035,7 @@ def _comando_importar(config: Config, argumento: str) -> str:
     if orden != "si":
         return IMPORTAR_AYUDA
     if not _importacion:
-        return "No tengo nada pendiente. Mándame primero el CSV de Binance."
+        return "No tengo nada pendiente. Mándame primero el CSV de Binance o de Kraken."
 
     pendientes, _importacion = _importacion, None
     apuntadas = fallidas = 0
@@ -1056,18 +1057,21 @@ def _comando_importar(config: Config, argumento: str) -> str:
             op.coste,
             antes,
             ahora,
-            "Binance",
+            op.origen,
             op.comision,
             cuando=op.cuando,
         )
         apuntadas += 1
-    logger.info("Importadas %d de Binance, %d sin apuntar", apuntadas, fallidas)
-    return alerts.formatear_importada(apuntadas, fallidas)
+    origen = pendientes[0].origen
+    logger.info("Importadas %d de %s, %d sin apuntar", apuntadas, origen, fallidas)
+    return alerts.formatear_importada(apuntadas, fallidas, origen)
 
 
 IMPORTAR_AYUDA = (
-    "📥 <b>Importar de Binance</b>\n"
-    "1. En Binance: Órdenes → Historial de operaciones → Exportar\n"
+    "📥 <b>Importar de Binance o de Kraken</b>\n"
+    "1. En Binance: Órdenes → Historial de operaciones → Exportar. "
+    "En Kraken: exporta las operaciones (Trades) en CSV; si llega en un .zip, "
+    "el que vale es el trades.csv de dentro\n"
     "2. Mándame aquí el CSV como archivo\n"
     "3. Te digo lo que he leído y, si te cuadra, pulsas Importar"
 )

@@ -1605,10 +1605,11 @@ def formatear_importacion(
     viejas: int,
     ultimo: datetime | None,
     currency: str,
+    origen: str = "Binance",
 ) -> str:
     """Lo que hay en el CSV antes de apuntarlo, para que digas sí o no."""
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
-    texto = ["📥 <b>Lo que he leído del CSV de Binance</b>"]
+    texto = [f"📥 <b>Lo que he leído del CSV de {origen}</b>"]
     if nuevas:
         compras = [o for o in nuevas if o.tipo == "compra"]
         ventas = [o for o in nuevas if o.tipo == "venta"]
@@ -1648,10 +1649,10 @@ def formatear_importacion(
     return "\n".join(texto)
 
 
-def formatear_importada(apuntadas: int, fallidas: int) -> str:
+def formatear_importada(apuntadas: int, fallidas: int, origen: str = "Binance") -> str:
     """Respuesta al pulsar Importar."""
     texto = [
-        f"✅ Apuntadas {apuntadas} operaciones de Binance. Míralas en /movimientos"
+        f"✅ Apuntadas {apuntadas} operaciones de {origen}. Míralas en /movimientos"
     ]
     if fallidas:
         texto.append(

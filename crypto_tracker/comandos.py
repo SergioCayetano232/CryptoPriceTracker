@@ -26,7 +26,7 @@ COMANDOS = {
     "anual": "Cómo va tu cartera este año, o tu resumen de uno (ej: /anual 2025)",
     "compra": "Apuntar una compra en la cartera (ej: /compra bitcoin 0.01 600)",
     "venta": "Apuntar una venta (ej: /venta bitcoin 0.005 350 o todo)",
-    "importar": "Apuntar tus compras y ventas del CSV de Binance",
+    "importar": "Apuntar tus compras y ventas del CSV de Binance o Kraken",
     "recompensa": "Apuntar staking o un airdrop (ej: /recompensa eth 0.02)",
     "movimientos": "Tus últimas compras y ventas (ej: /movimientos btc)",
     "compras": "Tu mejor y tu peor compra (ej: /compras o /compras btc)",
