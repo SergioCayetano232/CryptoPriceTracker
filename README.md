@@ -1092,7 +1092,19 @@ crypto_tracker/
   cuota.py       cuenta las consultas a CoinGecko
   comandos.py    entiende lo que le escribes
   lenguaje.py    frases sin barra, como "avísame si btc baja de 60000"
-main.py          junta todo
+  respuestas/    lo que contesta a cada comando, por temas
+    base.py          lo que comparten todos
+    mercado.py       /precio, /top, /miedo, /dominancia...
+    analisis.py      /rsi, /macd, /soporte, /racha...
+    cartera.py       /compra, /venta, /impuestos, /rentabilidad...
+    alertas.py       /alerta, /vigilar, /stop, /escalera...
+    resumenes.py     el resumen del día, la semana, el mes y el año
+    recordatorios.py /recordar, /pienso y /prediccion
+    revisiones.py    los avisos del ciclo aparte de los de precio
+    comparaciones.py /equivale y los «cuántos X te da tu cartera»
+    datos.py         /exportar, /backup y /rellenar
+    ratos.py         /horoscopo, /bola, /quiz...
+main.py          el ciclo, el bucle de Telegram y la lista de comandos
 tests/           los tests
 windows/         para dejarlo corriendo en un servidor Windows
 linux/           lo mismo en un servidor Linux, con systemd
