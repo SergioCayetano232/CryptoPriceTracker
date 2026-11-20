@@ -13,10 +13,13 @@ from .. import (
     database,
     diario,
     direccion,
+    miedo,
     movimientos,
     puntuales,
+    rsi,
     telegram,
     vigiladas,
+    volatilidad,
 )
 from ..config import Config, Posicion
 
@@ -190,3 +193,24 @@ def _puntuales(config: Config) -> list[puntuales.Puntual]:
     except database.DatabaseError as e:
         logger.error("No se pudieron leer las alertas de /alerta: %s", e)
         return []
+
+
+def _indicador(config: Config, indicador: str, coin_id: str) -> float | None:
+    """El miedo de hoy o el RSI de esa cripto. None si no se puede saber."""
+    if indicador == "miedo":
+        try:
+            lista = miedo.pedir()
+        except miedo.MiedoError as e:
+            logger.warning("Alerta con miedo sin comprobar: %s", e)
+            return None
+        return lista[0].valor if lista else None
+
+    try:
+        serie = database.get_serie(
+            config.database_path, coin_id, rsi.HORAS, config.vs_currency
+        )
+    except database.DatabaseError as e:
+        logger.warning("Alerta con RSI sin comprobar: %s", e)
+        return None
+    resultado = rsi.calcular(volatilidad.por_dias(serie))
+    return resultado.valor if resultado else None

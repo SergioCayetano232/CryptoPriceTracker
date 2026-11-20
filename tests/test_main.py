@@ -11204,7 +11204,7 @@ def test_prediccion_se_cambia_pero_no_a_ultima_hora(config, enviados, monkeypatc
 
     # A menos de un día del domingo, el cierre nuevo ya es el siguiente.
     monkeypatch.setattr(
-        main.prediccion, "cierre", lambda ahora: p.cierre + timedelta(days=7)
+        "crypto_tracker.prediccion.cierre", lambda ahora: p.cierre + timedelta(days=7)
     )
     main.atender(config, _mensaje("/prediccion btc 66000"))
 
