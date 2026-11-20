@@ -25,7 +25,6 @@ from crypto_tracker import (
     ajustes,
     alertaratio,
     alerts,
-    backup,
     binance,
     botones,
     brusco,
@@ -47,21 +46,16 @@ from crypto_tracker import (
     database,
     dato,
     diario,
-    emocion,
     ethereum,
     excusa,
-    exportar,
     extremos,
-    fantasma,
     frase,
     galleta,
     grafica,
     halving,
-    herencia,
     importar,
     maximo,
     merge,
-    miedo,
     movimientos,
     panel,
     panel_html,
@@ -69,9 +63,7 @@ from crypto_tracker import (
     periodo,
     puntuales,
     refran,
-    rellenar,
     salud,
-    sesgo,
     simbolos,
     stop,
     tarot,
@@ -134,7 +126,6 @@ from crypto_tracker.respuestas.base import (
     Respuesta,
     _alertas_ratio,
     _con_cambios,
-    _consultar,
     _indicador,
     _puntuales,
     _silenciado,
@@ -154,8 +145,12 @@ from crypto_tracker.respuestas.cartera import (
     _deposito,
     _deshacer,
     _doble,
+    _emocion,
+    _emociones,
     _equilibrio,
+    _fantasma,
     _ganancias,
+    _herencia,
     _hodl,
     _impuestos,
     _inflacion,
@@ -177,12 +172,18 @@ from crypto_tracker.respuestas.cartera import (
     _rentabilidad,
     _reparto,
     _riesgo,
+    _sesgo,
     _sivendo,
     _tarjeta,
     _timing,
     _vender,
     _vsbolsa,
     _vsbtc,
+)
+from crypto_tracker.respuestas.datos import (
+    _backup,
+    _exportar,
+    _rellenar,
 )
 from crypto_tracker.respuestas.mercado import (
     _aleatoria,
@@ -1489,260 +1490,6 @@ def programados(config: Config, ahora: datetime | None = None) -> None:
             contestar(config, p.comando)
         except Exception:
             logger.exception("Error con el /cada %d", p.numero)
-
-
-def _herencia(config: Config, argumento: str) -> str | comandos.Archivo:
-    try:
-        orden = herencia.interpretar(argumento)
-    except herencia.HerenciaError as e:
-        return telegram.escape(str(e))
-
-    if orden[0] == "nota":
-        database.guardar_herencia(
-            config.database_path, database.NOTA_HERENCIA, orden[1]
-        )
-        if orden[1] is None:
-            return "Hecho, quitada la nota."
-        return "📝 Apuntada la nota. Sale en /herencia, debajo de lo que tienes."
-    if orden[0] == "donde":
-        coin_id, texto = orden[1], orden[2]
-        database.guardar_herencia(config.database_path, coin_id, texto)
-        nombre = telegram.escape(coin_id)
-        if texto is None:
-            return f"Hecho, ya no digo dónde está <b>{nombre}</b>."
-        return f"📍 Apuntado dónde está <b>{nombre}</b>. Míralo con /herencia"
-
-    cartera = list(_con_cambios(config).cartera)
-    if not cartera:
-        return (
-            "No tienes nada en la cartera. Apunta lo que tienes con /compra "
-            "bitcoin 0.016 1000 y luego dónde está con /herencia btc Ledger"
-        )
-    donde, nota = database.get_herencia(config.database_path)
-    precios = _consultar(config, [p.coin_id for p in cartera]) or {}
-    lista = herencia.lineas(cartera, precios, donde)
-    hoy = date.today()
-    papel = alerts.documento_herencia(lista, nota, hoy, config.vs_currency)
-    return comandos.Archivo(
-        papel.encode(),
-        herencia.nombre_archivo(hoy),
-        alerts.pie_herencia(lista, hoy),
-        f"<pre>{telegram.escape(papel)}</pre>",
-    )
-
-
-def _emocion(config: Config, argumento: str) -> str:
-    try:
-        numero, cual = emocion.interpretar(argumento)
-    except emocion.EmocionError as e:
-        return telegram.escape(str(e))
-    if not database.apuntar_emocion(config.database_path, numero, cual):
-        return f"No tengo ningún movimiento con el número {numero}. Mira /movimientos"
-    icono = emocion.EMOCIONES[cual][0]
-    return (
-        f"{icono} Apuntado: la {numero} fue con {emocion.en_frase(cual)}. Cuando "
-        "haya unas cuantas, /emociones te dice con cuál te va mejor"
-    )
-
-
-def _emociones(config: Config) -> str:
-    todos = database.get_movimientos(config.database_path, None)
-    if not any(m.emocion for m in todos):
-        return (
-            "Aún no has dicho con qué ánimo compras o vendes. Al apuntar una /compra "
-            "o /venta salen unos botones; para las de antes: /emocion 12 miedo "
-            "(el número sale en /movimientos)"
-        )
-    ids = list(dict.fromkeys(m.coin_id for m in todos if m.emocion))
-    # Sin precios sale igual, solo que sin cómo van.
-    precios = _consultar(config, ids) or {}
-    texto = alerts.formatear_emociones(emocion.calcular(todos, precios))
-    return alerts.con_fuente(texto) if precios else texto
-
-
-def _fantasma(config: Config, argumento: str) -> str:
-    try:
-        orden = fantasma.interpretar(argumento)
-    except fantasma.FantasmaError as e:
-        return telegram.escape(str(e))
-    f = database.get_fantasma(config.database_path)
-
-    if orden[0] == "ver" and f is None:
-        return (
-            "👻 Aún no tienes cartera fantasma. Tienes 1.000 de mentira para "
-            "probar: /fantasma compra btc 200. Para empezar con otra cifra: "
-            "/fantasma reinicia 5000"
-        )
-    if orden[0] == "ver":
-        ids = [*f.posiciones, fantasma.BITCOIN]
-        precios = _consultar(config, list(dict.fromkeys(ids))) or {}
-        return alerts.con_fuente(
-            alerts.formatear_fantasma(f, precios, config.vs_currency)
-        )
-
-    coin_id = fantasma.BITCOIN if orden[0] == "reinicia" else orden[1]
-    try:
-        precios = coingecko.get_prices(
-            list(dict.fromkeys([coin_id, fantasma.BITCOIN])), config.vs_currency
-        )
-    except coingecko.CoinGeckoError as e:
-        return f"No he podido consultar el precio: {telegram.escape(str(e))}"
-    ahora = datetime.now(timezone.utc)
-
-    if orden[0] == "reinicia":
-        nueva = fantasma.nueva(orden[1], ahora, precios.get(fantasma.BITCOIN))
-        database.guardar_fantasma(config.database_path, nueva)
-        return alerts.formatear_fantasma_nueva(orden[1], config.vs_currency)
-
-    precio = precios.get(coin_id)
-    if precio is None:
-        return (
-            f"No encuentro <b>{telegram.escape(coin_id)}</b> en CoinGecko. "
-            f"Prueba con /buscar {telegram.escape(coin_id)}"
-        )
-    f = f or fantasma.nueva(fantasma.INICIAL, ahora, precios.get(fantasma.BITCOIN))
-    try:
-        if orden[0] == "compra":
-            f = fantasma.comprar(f, coin_id, orden[2], precio)
-            euros = orden[2]
-        else:
-            f, euros = fantasma.vender(f, coin_id, orden[2], precio)
-    except fantasma.FantasmaError as e:
-        return telegram.escape(str(e))
-
-    database.guardar_fantasma(config.database_path, f)
-    return alerts.con_fuente(
-        alerts.formatear_operacion_fantasma(
-            orden[0] == "compra", coin_id, euros, precio, f, config.vs_currency
-        )
-    )
-
-
-def _sesgo(config: Config) -> str:
-    todos = database.get_movimientos(config.database_path, None)
-    if not todos:
-        return (
-            "No has apuntado ninguna compra ni venta por aquí, y lo del PORTFOLIO "
-            f"del .env no lleva fecha. Apúntalas así: {movimientos.EJEMPLO_COMPRA}"
-        )
-    hoy = datetime.now(timezone.utc).date()
-    try:
-        indices = miedo.historico(sesgo.dias_hacia_atras(todos, hoy))
-    except miedo.MiedoError as e:
-        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
-
-    # Sin precios de hoy sale igual, solo que sin el «hoy» de cada grupo.
-    precios = _consultar(config, list({m.coin_id for m in todos})) or {}
-    resultado = sesgo.calcular(todos, indices, precios)
-    if resultado.compras is None and resultado.ventas is None:
-        return (
-            "alternative.me no tiene el índice de los días de tus compras y ventas. "
-            "Prueba en un rato"
-        )
-    texto = alerts.formatear_sesgo(resultado)
-    return alerts.con_fuente(texto) if precios else texto
-
-
-def _backup(config: Config) -> str | comandos.Archivo:
-    try:
-        contenido = backup.crear(config.database_path)
-    except (database.DatabaseError, OSError) as e:
-        logger.error("No se pudo hacer la copia: %s", e)
-        return backup.FALLO
-    if len(contenido) > backup.MAX_BYTES:
-        return backup.GRANDE
-
-    hoy = date.today()
-    return comandos.Archivo(
-        contenido, backup.nombre(hoy), backup.pie(hoy), backup.FALLO
-    )
-
-
-def _rellenar(config: Config, argumento: str) -> str:
-    try:
-        coin_ids, dias = rellenar.interpretar(argumento, config.history_days)
-    except rellenar.RellenarError as e:
-        return telegram.escape(str(e))
-
-    if not coin_ids:
-        vigiladas = _con_cambios(config).watchlist
-        coin_ids = [w.coin_id for w in vigiladas][: simbolos.MAX_VARIAS]
-    if not coin_ids:
-        return f"¿De cuál? Por ejemplo: {rellenar.EJEMPLO}"
-    if len(coin_ids) > simbolos.MAX_VARIAS:
-        return f"Como mucho {simbolos.MAX_VARIAS} a la vez."
-
-    hechos, fallos = [], []
-    for coin_id in coin_ids:
-        try:
-            bajados = coingecko.historico(coin_id, dias, config.vs_currency)
-        except coingecko.CoinGeckoError as e:
-            fallos.append((coin_id, str(e)))
-            continue
-        if not bajados:
-            fallos.append((coin_id, "CoinGecko no tiene precios suyos"))
-            continue
-
-        serie = database.get_serie(
-            config.database_path, coin_id, dias * 24 + 1, config.vs_currency
-        )
-        nuevos = rellenar.faltan(bajados, [cuando for cuando, _ in serie])
-        database.guardar_serie(
-            config.database_path, coin_id, nuevos, config.vs_currency
-        )
-        desde = nuevos[0][0] if nuevos else None
-        hechos.append(rellenar.Relleno(coin_id, len(nuevos), desde))
-
-    return alerts.con_fuente(alerts.formatear_rellenar(hechos, fallos, dias))
-
-
-def _exportar_movimientos(config: Config) -> str | comandos.Archivo:
-    lista = database.get_movimientos(config.database_path, None)
-    if not lista:
-        return (
-            "Todavía no has apuntado ninguna compra ni venta. "
-            "Se hace con /compra y /venta"
-        )
-
-    cuantos = "1 movimiento" if len(lista) == 1 else f"{len(lista)} movimientos"
-    return comandos.Archivo(
-        exportar.movimientos_a_csv(lista, config.vs_currency),
-        exportar.nombre_movimientos(date.today()),
-        f"📄 {cuantos}, del más antiguo al más nuevo\n"
-        "<i>Solo lo apuntado con /compra y /venta, no el PORTFOLIO del .env</i>",
-        "No he podido mandarte el archivo. Prueba en un rato.",
-    )
-
-
-def _exportar(config: Config, argumento: str) -> str | comandos.Archivo:
-    try:
-        if exportar.pide_movimientos(argumento):
-            return _exportar_movimientos(config)
-        coin_id, horas = exportar.interpretar(argumento)
-    except periodo.PeriodoError as e:
-        return telegram.escape(str(e))
-
-    serie = database.get_serie(config.database_path, coin_id, horas, config.vs_currency)
-    nombre = telegram.escape(coin_id)
-    if not serie:
-        return (
-            f"No tengo precios de <b>{nombre}</b> ({periodo.nombre(horas)}). "
-            f"Si no das con el nombre, prueba con /buscar {nombre}"
-        )
-
-    pie = f"📄 {len(serie)} precios de <b>{nombre}</b>, {periodo.nombre(horas)}"
-    primero = serie[0][0]
-    if periodo.falta_principio(primero, datetime.now(timezone.utc), horas):
-        pie += (
-            f"\n<i>Solo los tengo desde el {primero.astimezone():%d/%m a las %H:%M}</i>"
-        )
-
-    return comandos.Archivo(
-        exportar.a_csv(serie, config.vs_currency),
-        exportar.nombre_archivo(coin_id, horas, date.today()),
-        alerts.con_fuente(pie),
-        "No he podido mandarte el archivo. Prueba en un rato.",
-    )
 
 
 def _historico(config: Config, argumento: str) -> str | comandos.Foto:

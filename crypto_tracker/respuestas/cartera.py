@@ -21,15 +21,19 @@ from .. import (
     database,
     deposito,
     doble,
+    emocion,
     equilibrio,
+    fantasma,
     fifo,
     ganancias,
     grafica,
+    herencia,
     hodl,
     impuestos,
     inflacion,
     limite,
     meta,
+    miedo,
     mitad,
     modelo721,
     moneda,
@@ -48,6 +52,7 @@ from .. import (
     rentabilidad,
     reparto,
     riesgo,
+    sesgo,
     simbolos,
     sivendo,
     tarjeta,
@@ -1218,3 +1223,155 @@ def _bloque_cartera(
     if con_sats and bitcoin and any(v.coin_id != "bitcoin" for v in valores):
         sats = suma.valor / bitcoin * alerts.POR_BTC
     return alerts.formatear_cartera(valores, suma, faltan, config.vs_currency, sats)
+
+
+def _herencia(config: Config, argumento: str) -> str | comandos.Archivo:
+    try:
+        orden = herencia.interpretar(argumento)
+    except herencia.HerenciaError as e:
+        return telegram.escape(str(e))
+
+    if orden[0] == "nota":
+        database.guardar_herencia(
+            config.database_path, database.NOTA_HERENCIA, orden[1]
+        )
+        if orden[1] is None:
+            return "Hecho, quitada la nota."
+        return "📝 Apuntada la nota. Sale en /herencia, debajo de lo que tienes."
+    if orden[0] == "donde":
+        coin_id, texto = orden[1], orden[2]
+        database.guardar_herencia(config.database_path, coin_id, texto)
+        nombre = telegram.escape(coin_id)
+        if texto is None:
+            return f"Hecho, ya no digo dónde está <b>{nombre}</b>."
+        return f"📍 Apuntado dónde está <b>{nombre}</b>. Míralo con /herencia"
+
+    cartera = list(_con_cambios(config).cartera)
+    if not cartera:
+        return (
+            "No tienes nada en la cartera. Apunta lo que tienes con /compra "
+            "bitcoin 0.016 1000 y luego dónde está con /herencia btc Ledger"
+        )
+    donde, nota = database.get_herencia(config.database_path)
+    precios = _consultar(config, [p.coin_id for p in cartera]) or {}
+    lista = herencia.lineas(cartera, precios, donde)
+    hoy = date.today()
+    papel = alerts.documento_herencia(lista, nota, hoy, config.vs_currency)
+    return comandos.Archivo(
+        papel.encode(),
+        herencia.nombre_archivo(hoy),
+        alerts.pie_herencia(lista, hoy),
+        f"<pre>{telegram.escape(papel)}</pre>",
+    )
+
+
+def _emocion(config: Config, argumento: str) -> str:
+    try:
+        numero, cual = emocion.interpretar(argumento)
+    except emocion.EmocionError as e:
+        return telegram.escape(str(e))
+    if not database.apuntar_emocion(config.database_path, numero, cual):
+        return f"No tengo ningún movimiento con el número {numero}. Mira /movimientos"
+    icono = emocion.EMOCIONES[cual][0]
+    return (
+        f"{icono} Apuntado: la {numero} fue con {emocion.en_frase(cual)}. Cuando "
+        "haya unas cuantas, /emociones te dice con cuál te va mejor"
+    )
+
+
+def _emociones(config: Config) -> str:
+    todos = database.get_movimientos(config.database_path, None)
+    if not any(m.emocion for m in todos):
+        return (
+            "Aún no has dicho con qué ánimo compras o vendes. Al apuntar una /compra "
+            "o /venta salen unos botones; para las de antes: /emocion 12 miedo "
+            "(el número sale en /movimientos)"
+        )
+    ids = list(dict.fromkeys(m.coin_id for m in todos if m.emocion))
+    # Sin precios sale igual, solo que sin cómo van.
+    precios = _consultar(config, ids) or {}
+    texto = alerts.formatear_emociones(emocion.calcular(todos, precios))
+    return alerts.con_fuente(texto) if precios else texto
+
+
+def _fantasma(config: Config, argumento: str) -> str:
+    try:
+        orden = fantasma.interpretar(argumento)
+    except fantasma.FantasmaError as e:
+        return telegram.escape(str(e))
+    f = database.get_fantasma(config.database_path)
+
+    if orden[0] == "ver" and f is None:
+        return (
+            "👻 Aún no tienes cartera fantasma. Tienes 1.000 de mentira para "
+            "probar: /fantasma compra btc 200. Para empezar con otra cifra: "
+            "/fantasma reinicia 5000"
+        )
+    if orden[0] == "ver":
+        ids = [*f.posiciones, fantasma.BITCOIN]
+        precios = _consultar(config, list(dict.fromkeys(ids))) or {}
+        return alerts.con_fuente(
+            alerts.formatear_fantasma(f, precios, config.vs_currency)
+        )
+
+    coin_id = fantasma.BITCOIN if orden[0] == "reinicia" else orden[1]
+    try:
+        precios = coingecko.get_prices(
+            list(dict.fromkeys([coin_id, fantasma.BITCOIN])), config.vs_currency
+        )
+    except coingecko.CoinGeckoError as e:
+        return f"No he podido consultar el precio: {telegram.escape(str(e))}"
+    ahora = datetime.now(timezone.utc)
+
+    if orden[0] == "reinicia":
+        nueva = fantasma.nueva(orden[1], ahora, precios.get(fantasma.BITCOIN))
+        database.guardar_fantasma(config.database_path, nueva)
+        return alerts.formatear_fantasma_nueva(orden[1], config.vs_currency)
+
+    precio = precios.get(coin_id)
+    if precio is None:
+        return (
+            f"No encuentro <b>{telegram.escape(coin_id)}</b> en CoinGecko. "
+            f"Prueba con /buscar {telegram.escape(coin_id)}"
+        )
+    f = f or fantasma.nueva(fantasma.INICIAL, ahora, precios.get(fantasma.BITCOIN))
+    try:
+        if orden[0] == "compra":
+            f = fantasma.comprar(f, coin_id, orden[2], precio)
+            euros = orden[2]
+        else:
+            f, euros = fantasma.vender(f, coin_id, orden[2], precio)
+    except fantasma.FantasmaError as e:
+        return telegram.escape(str(e))
+
+    database.guardar_fantasma(config.database_path, f)
+    return alerts.con_fuente(
+        alerts.formatear_operacion_fantasma(
+            orden[0] == "compra", coin_id, euros, precio, f, config.vs_currency
+        )
+    )
+
+
+def _sesgo(config: Config) -> str:
+    todos = database.get_movimientos(config.database_path, None)
+    if not todos:
+        return (
+            "No has apuntado ninguna compra ni venta por aquí, y lo del PORTFOLIO "
+            f"del .env no lleva fecha. Apúntalas así: {movimientos.EJEMPLO_COMPRA}"
+        )
+    hoy = datetime.now(timezone.utc).date()
+    try:
+        indices = miedo.historico(sesgo.dias_hacia_atras(todos, hoy))
+    except miedo.MiedoError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+
+    # Sin precios de hoy sale igual, solo que sin el «hoy» de cada grupo.
+    precios = _consultar(config, list({m.coin_id for m in todos})) or {}
+    resultado = sesgo.calcular(todos, indices, precios)
+    if resultado.compras is None and resultado.ventas is None:
+        return (
+            "alternative.me no tiene el índice de los días de tus compras y ventas. "
+            "Prueba en un rato"
+        )
+    texto = alerts.formatear_sesgo(resultado)
+    return alerts.con_fuente(texto) if precios else texto
