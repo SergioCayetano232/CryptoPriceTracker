@@ -412,7 +412,7 @@ def ejecutar_ciclo(
     revisar_volumen(config, vigiladas, calladas, sueltos)
     revisar_calma(config, vigiladas, calladas, sueltos)
     revisar_721(config, valor, calladas, sueltos)
-    revisar_direcciones(config, precios.get("bitcoin"), sueltos)
+    revisar_direcciones(config, precios, sueltos)
     if calladas:
         avisos = [a for a in avisos if a.coin_id not in calladas]
         hechas = [p for p in hechas if p.coin_id not in calladas]

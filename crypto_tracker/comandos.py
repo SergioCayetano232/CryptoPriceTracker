@@ -203,7 +203,7 @@ COMANDOS = {
     "miedo": "El índice de miedo y codicia del mercado",
     "sesgo": "Si compras con miedo o con codicia, y cómo te ha ido",
     "comisionred": "Lo que cuesta ahora mover bitcoin y si está barato",
-    "direccion": "Vigila una dirección de bitcoin y te avisa si se mueve",
+    "direccion": "Vigila una dirección de bitcoin o ethereum y avisa si se mueve",
     "funding": "Si los de futuros apuestan a que sube o baja (ej: /funding btc)",
     "buscar": "Encuentra el id de una cripto (ej: /buscar btc)",
     "copia": "Lo que vigilo y tu cartera, listo para pegar en el .env",
@@ -815,6 +815,7 @@ EJEMPLOS = {
     ],
     "direccion": [
         ("/direccion bc1q... frío", "la vigila con ese nombre y avisa si se mueve"),
+        ("/direccion 0x... ledger", "lo mismo con una de ethereum"),
         ("/direccion", "las que vigilo, con lo que tiene cada una"),
         ("/direccion quitar frío", "deja de vigilarla"),
     ],

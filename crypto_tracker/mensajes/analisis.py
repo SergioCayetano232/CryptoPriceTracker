@@ -14,8 +14,7 @@ from ..diames import POCOS_MESES as POCOS_MESES_DIAMES
 from ..diames import DiasMes
 from ..diasemana import DiasSemana
 from ..direccion import EJEMPLO as EJEMPLO_DIRECCION
-from ..direccion import VER as VER_DIRECCION
-from ..direccion import Saldo, Vigilada, a_btc
+from ..direccion import Saldo, Vigilada, a_moneda, coin_id, es_eth, ver
 from ..doble import Cartera as CarteraDoble
 from ..dominancia import Dominancia
 from ..equilibrio import Cartera, Equilibrio
@@ -795,13 +794,18 @@ def formatear_diasemana(
     return texto
 
 
-def _btc(sats: int, precio: float | None, currency: str) -> str:
-    """'0,05 BTC (€3.200,00)'. Sin precio, solo los BTC."""
-    btc = f"{a_btc(abs(sats)):.8f}".rstrip("0").rstrip(".").replace(".", ",")
+def _saldo(
+    direccion: str, unidades: int, precios: dict[str, float], currency: str
+) -> str:
+    """'0,05 BTC (€3.200,00)' o '1,5 ETH (...)'. Sin precio, solo la cantidad."""
+    cantidad = a_moneda(direccion, abs(unidades))
+    sigla = "ETH" if es_eth(direccion) else "BTC"
+    texto = f"{cantidad:.8f}".rstrip("0").rstrip(".").replace(".", ",")
+    precio = precios.get(coin_id(direccion))
     if not precio:
-        return f"{btc} BTC"
+        return f"{texto} {sigla}"
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
-    return f"{btc} BTC ({simbolo}{_num(a_btc(abs(sats)) * precio)})"
+    return f"{texto} {sigla} ({simbolo}{_num(cantidad * precio)})"
 
 
 def _corta(direccion: str) -> str:
@@ -809,7 +813,7 @@ def _corta(direccion: str) -> str:
 
 
 def formatear_direcciones(
-    lista: list[Vigilada], precio: float | None, currency: str
+    lista: list[Vigilada], precios: dict[str, float], currency: str
 ) -> str:
     """/direccion a secas."""
     if not lista:
@@ -819,43 +823,62 @@ def formatear_direcciones(
         )
     texto = ["👀 <b>Las direcciones que vigilo</b>", ""]
     for v in lista:
+        saldo = _saldo(v.direccion, v.sats, precios, currency)
         texto.append(
-            f"• <b>{escape(v.nombre)}</b>: {_btc(v.sats, precio, currency)} · "
-            f'<a href="{VER_DIRECCION.format(v.direccion)}">{_corta(v.direccion)}</a>'
+            f"• <b>{escape(v.nombre)}</b>: {saldo} · "
+            f'<a href="{ver(v.direccion)[0]}">{_corta(v.direccion)}</a>'
         )
-    if len(lista) > 1:
-        total = sum(v.sats for v in lista)
-        texto += ["", f"Entre todas: <b>{_btc(total, precio, currency)}</b>"]
+    # BTC y ETH no se suman: cada red con su total.
+    for red in (False, True):
+        de_esta = [v for v in lista if es_eth(v.direccion) is red]
+        if len(de_esta) > 1:
+            total = sum(v.sats for v in de_esta)
+            una = de_esta[0].direccion
+            texto += [
+                "",
+                f"Entre todas: <b>{_saldo(una, total, precios, currency)}</b>",
+            ]
+    # En ethereum el nodo da el saldo ya confirmado; tarda unos 12 segundos más.
+    sin_confirmar = (
+        " En bitcoin, sin esperar a que se confirme."
+        if any(not es_eth(v.direccion) for v in lista)
+        else ""
+    )
     texto += [
         "",
-        "<i>Te aviso en cuanto entre o salga algo, sin esperar a que se "
-        "confirme. Para dejar de vigilar una: /direccion quitar nombre</i>",
+        f"<i>Te aviso en cuanto entre o salga algo.{sin_confirmar} "
+        "Para dejar de vigilar una: /direccion quitar nombre</i>",
     ]
     return "\n".join(texto)
 
 
-def formatear_direccion_nueva(v: Vigilada, precio: float | None, currency: str) -> str:
+def formatear_direccion_nueva(
+    v: Vigilada, precios: dict[str, float], currency: str
+) -> str:
     return (
         f"👀 Vigilo <b>{escape(v.nombre)}</b>: ahora tiene "
-        f"{_btc(v.sats, precio, currency)}. Te aviso en cuanto se mueva"
+        f"{_saldo(v.direccion, v.sats, precios, currency)}. Te aviso en cuanto se mueva"
     )
 
 
 def formatear_movimiento_direccion(
-    v: Vigilada, cambio: int, ahora: Saldo, precio: float | None, currency: str
+    v: Vigilada, cambio: int, ahora: Saldo, precios: dict[str, float], currency: str
 ) -> str:
     """El aviso de cuando una de /direccion se mueve. v es como estaba antes."""
     texto = [f"🔔 <b>Se ha movido {escape(v.nombre)}</b>"]
     if cambio > 0:
-        texto.append(f"📥 Han entrado <b>{_btc(cambio, precio, currency)}</b>")
+        cuanto = _saldo(v.direccion, cambio, precios, currency)
+        texto.append(f"📥 Han entrado <b>{cuanto}</b>")
     elif cambio < 0:
-        texto.append(f"📤 Han salido <b>{_btc(cambio, precio, currency)}</b>")
+        cuanto = _saldo(v.direccion, cambio, precios, currency)
+        texto.append(f"📤 Han salido <b>{cuanto}</b>")
     else:
         texto.append("Ha tenido movimiento, pero el saldo sigue igual")
+    enlace, web = ver(v.direccion)
     texto += [
-        f"Ahora tiene {_btc(ahora.sats, precio, currency)}",
+        f"Ahora tiene {_saldo(v.direccion, ahora.sats, precios, currency)}",
         "",
-        f'<a href="{VER_DIRECCION.format(v.direccion)}">Verlo en mempool.space</a>',
+        f'<a href="{enlace}">Verlo en {web}</a>',
     ]
     return "\n".join(texto)
 

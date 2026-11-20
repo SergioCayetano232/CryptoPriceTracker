@@ -219,11 +219,20 @@ def _comisionred(config: Config) -> str | comandos.ConBotones:
     return comandos.ConBotones(texto, botones.actualizar("/comisionred"))
 
 
-def _precio_btc(config: Config) -> float | None:
-    precio = database.get_last_price(config.database_path, "bitcoin")
-    if precio is None:
-        precio = (_consultar(config, ["bitcoin"]) or {}).get("bitcoin")
-    return precio
+def _precios_de(
+    config: Config, vigiladas: list[direccion.Vigilada]
+) -> dict[str, float]:
+    """El precio de cada cripto que sale en la lista: lo guardado y, si no, lo pido."""
+    precios, faltan = {}, []
+    for c in dict.fromkeys(direccion.coin_id(v.direccion) for v in vigiladas):
+        precio = database.get_last_price(config.database_path, c)
+        if precio is None:
+            faltan.append(c)
+        else:
+            precios[c] = precio
+    if faltan:
+        precios.update(_consultar(config, faltan) or {})
+    return precios
 
 
 def _direccion(config: Config, argumento: str) -> str:
@@ -252,7 +261,7 @@ def _direccion(config: Config, argumento: str) -> str:
                 logger.warning("No se pudo mirar %s: %s", v.direccion, e)
             al_dia.append(v)
         return alerts.formatear_direcciones(
-            al_dia, _precio_btc(config) if al_dia else None, config.vs_currency
+            al_dia, _precios_de(config, al_dia), config.vs_currency
         )
 
     ya = direccion.buscar(vigiladas, cual)
@@ -273,7 +282,7 @@ def _direccion(config: Config, argumento: str) -> str:
     nueva = direccion.Vigilada(cual, nombre, saldo.sats, saldo.txs)
     database.guardar_direccion(config.database_path, cual, nueva.guardar())
     return alerts.formatear_direccion_nueva(
-        nueva, _precio_btc(config), config.vs_currency
+        nueva, _precios_de(config, [nueva]), config.vs_currency
     )
 
 

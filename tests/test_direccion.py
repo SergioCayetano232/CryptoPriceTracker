@@ -174,7 +174,7 @@ def test_formatear_lista():
         Vigilada(BC1, "frío", 50_000_000, 3),
         Vigilada(LEGACY, "satoshi", 5_000, 1),
     ]
-    texto = formatear_direcciones(lista, 80000.0, "eur")
+    texto = formatear_direcciones(lista, {"bitcoin": 80000.0}, "eur")
 
     assert "👀 <b>Las direcciones que vigilo</b>" in texto
     assert "• <b>frío</b>: 0,5 BTC (€40.000,00)" in texto
@@ -185,11 +185,11 @@ def test_formatear_lista():
 
 
 def test_formatear_lista_vacia():
-    assert "No vigilo ninguna" in formatear_direcciones([], None, "eur")
+    assert "No vigilo ninguna" in formatear_direcciones([], {}, "eur")
 
 
 def test_formatear_nueva_sin_precio():
-    texto = formatear_direccion_nueva(Vigilada(BC1, "<frío>", 0, 0), None, "eur")
+    texto = formatear_direccion_nueva(Vigilada(BC1, "<frío>", 0, 0), {}, "eur")
     assert texto.startswith("👀 Vigilo <b>&lt;frío&gt;</b>: ahora tiene 0 BTC.")
 
 
@@ -206,10 +206,137 @@ def test_formatear_movimiento(cambio, linea):
         Vigilada(BC1, "frío", 50_000_000, 3),
         cambio,
         Saldo(60_000_000, 4),
-        80000.0,
+        {"bitcoin": 80000.0},
         "eur",
     )
 
     assert "🔔 <b>Se ha movido frío</b>" in texto
     assert linea in texto
     assert "Ahora tiene 0,6 BTC (€48.000,00)" in texto
+
+
+# --- ethereum ---
+
+ETH = "0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae"
+ETH_MIXTA = "0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe"
+
+
+def test_interpretar_eth_en_minusculas():
+    assert interpretar(f"{ETH_MIXTA} fundación") == ("añadir", ETH, "fundación")
+
+
+def test_eth_corta_no_vale():
+    with pytest.raises(DireccionError, match="ni de ethereum"):
+        interpretar("0xde0b295669a9fd93d5f28d9ec85e40f4cb697ba")
+
+
+def test_de_que_red_es():
+    assert direccion.coin_id(ETH) == "ethereum"
+    assert direccion.coin_id(BC1) == "bitcoin"
+    assert direccion.ver(ETH) == (f"https://etherscan.io/address/{ETH}", "etherscan.io")
+    assert direccion.ver(BC1)[1] == "mempool.space"
+
+
+def test_a_moneda():
+    assert direccion.a_moneda(ETH, 2 * 10**18) == 2.0
+    assert direccion.a_moneda(BC1, 50_000_000) == 0.5
+
+
+@pytest.mark.parametrize(
+    "datos, wei",
+    [
+        ({"jsonrpc": "2.0", "id": 1, "result": "0x1bc16d674ec80000"}, 2 * 10**18),
+        ({"result": "0x0"}, 0),
+        ({"error": {"code": -32602, "message": "invalid argument"}}, None),
+        ({"result": "nada"}, None),
+        ([], None),
+    ],
+)
+def test_leer_eth(datos, wei):
+    assert direccion.leer_eth(datos) == wei
+
+
+def test_pedir_eth(monkeypatch):
+    def post(url, json, **k):
+        assert url == "https://ethereum-rpc.publicnode.com"
+        assert json["method"] == "eth_getBalance"
+        assert json["params"] == [ETH, "latest"]
+        return _Respuesta({"result": "0xde0b6b3a7640000"})
+
+    monkeypatch.setattr(requests, "post", post)
+
+    assert direccion.pedir(ETH) == Saldo(10**18, 0)
+
+
+def test_pedir_eth_falla(monkeypatch):
+    monkeypatch.setattr(
+        requests, "post", lambda url, **k: _Respuesta({"error": {"code": 1}})
+    )
+
+    with pytest.raises(DireccionError, match="no entiendo"):
+        direccion.pedir(ETH)
+
+
+def test_pedir_eth_sin_red(monkeypatch):
+    def post(url, **k):
+        raise requests.ConnectionError("caída")
+
+    monkeypatch.setattr(requests, "post", post)
+
+    with pytest.raises(DireccionError, match="no contesta"):
+        direccion.pedir(ETH)
+
+
+def test_movida_eth_por_el_saldo():
+    antes = Vigilada(ETH, "f", 10**18, 0)
+
+    assert movida(antes, Saldo(10**18, 0)) is None
+    assert movida(antes, Saldo(3 * 10**18, 0)) == 2 * 10**18
+    assert movida(antes, Saldo(0, 0)) == -(10**18)
+
+
+def test_guardar_y_cargar_eth_sin_perder_wei():
+    v = Vigilada(ETH, "f", 14156924268674340757215, 0)
+
+    assert cargar(ETH, v.guardar()) == v
+
+
+def test_formatear_movimiento_eth():
+    texto = formatear_movimiento_direccion(
+        Vigilada(ETH, "fundación", 10**18, 0),
+        -(5 * 10**17),
+        Saldo(5 * 10**17, 0),
+        {"ethereum": 3000.0},
+        "eur",
+    )
+
+    assert "📤 Han salido <b>0,5 ETH (€1.500,00)</b>" in texto
+    assert "Ahora tiene 0,5 ETH (€1.500,00)" in texto
+    assert (
+        f'<a href="https://etherscan.io/address/{ETH}">Verlo en etherscan.io</a>'
+        in texto
+    )
+
+
+def test_lista_con_las_dos_redes_no_las_suma():
+    lista = [
+        Vigilada(BC1, "frío", 50_000_000, 3),
+        Vigilada(LEGACY, "viejo", 50_000_000, 1),
+        Vigilada(ETH, "fundación", 2 * 10**18, 0),
+    ]
+
+    texto = formatear_direcciones(lista, {"bitcoin": 80000.0}, "eur")
+
+    assert "fundación</b>: 2 ETH ·" in texto  # sin precio de ethereum, sin euros
+    assert "Entre todas: <b>1 BTC (€80.000,00)</b>" in texto
+    assert texto.count("Entre todas") == 1
+
+
+def test_lo_de_sin_confirmar_solo_si_hay_de_bitcoin():
+    solo_eth = formatear_direcciones([Vigilada(ETH, "f", 0, 0)], {}, "eur")
+    con_btc = formatear_direcciones(
+        [Vigilada(ETH, "f", 0, 0), Vigilada(BC1, "frío", 0, 0)], {}, "eur"
+    )
+
+    assert "sin esperar a que se confirme" not in solo_eth
+    assert "En bitcoin, sin esperar a que se confirme." in con_btc

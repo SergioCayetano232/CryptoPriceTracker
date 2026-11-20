@@ -4396,8 +4396,8 @@ def test_revisar_direcciones_avisa_una_vez(config, enviados, monkeypatch):
     _vigilando(config)
     _saldo(monkeypatch, 40_000_000, 4)
 
-    main.revisar_direcciones(config, 80000.0)
-    main.revisar_direcciones(config, 80000.0)
+    main.revisar_direcciones(config, {"bitcoin": 80000.0})
+    main.revisar_direcciones(config, {"bitcoin": 80000.0})
 
     assert len(enviados) == 1
     assert "🔔 <b>Se ha movido frío</b>" in enviados[0]
@@ -4408,7 +4408,7 @@ def test_revisar_direcciones_quieta(config, enviados, monkeypatch):
     _vigilando(config)
     _saldo(monkeypatch, 50_000_000, 3)
 
-    main.revisar_direcciones(config, 80000.0)
+    main.revisar_direcciones(config, {"bitcoin": 80000.0})
 
     assert enviados == []
 
@@ -4418,7 +4418,7 @@ def test_revisar_direcciones_si_falla_telegram_lo_reintenta(config, monkeypatch)
     _saldo(monkeypatch, 60_000_000, 4)
     monkeypatch.setattr(telegram, "send_message", lambda *a, **kw: False)
 
-    main.revisar_direcciones(config, 80000.0)
+    main.revisar_direcciones(config, {"bitcoin": 80000.0})
 
     guardada = database.direcciones(config.database_path)[BC1]
     assert direccion.cargar(BC1, guardada).txs == 3
@@ -4433,7 +4433,7 @@ def test_revisar_direcciones_callado_espera(config, enviados, monkeypatch):
         lambda c: datetime.now(timezone.utc) + timedelta(hours=1),
     )
 
-    main.revisar_direcciones(config, 80000.0)
+    main.revisar_direcciones(config, {"bitcoin": 80000.0})
 
     assert enviados == []
     guardada = database.direcciones(config.database_path)[BC1]
@@ -4448,7 +4448,7 @@ def test_revisar_direcciones_sin_mempool_sigue(config, enviados, monkeypatch):
 
     monkeypatch.setattr(direccion, "pedir", pedir)
 
-    main.revisar_direcciones(config, 80000.0)
+    main.revisar_direcciones(config, {"bitcoin": 80000.0})
 
     assert enviados == []
 

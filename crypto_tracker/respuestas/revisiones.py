@@ -442,7 +442,7 @@ def revisar_cruces(
 
 
 def revisar_direcciones(
-    config: Config, precio_btc: float | None, sueltos: buzon.Buzon | None = None
+    config: Config, precios: dict[str, float], sueltos: buzon.Buzon | None = None
 ) -> None:
     """Avisa cuando entra o sale algo de una de /direccion."""
     if _silenciado(config):
@@ -476,7 +476,7 @@ def revisar_direcciones(
         if not _avisar(
             config,
             alerts.formatear_movimiento_direccion(
-                v, cambio, saldo, precio_btc, config.vs_currency
+                v, cambio, saldo, precios, config.vs_currency
             ),
             sueltos,
             partial(apuntar, v, saldo, cambio),

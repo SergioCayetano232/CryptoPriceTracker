@@ -6,13 +6,13 @@ todo lo que ya hacía alerts.algo siga funcionando igual.
 
 from .mensajes.analisis import (
     MAX_PERDIDO,
-    _btc,
     _corta,
     _cripto,
     _pct2,
     _recuperacion,
     _redondo_alerta,
     _rsi_antes,
+    _saldo,
     formatear_backtest,
     formatear_bollinger,
     formatear_caida,
