@@ -850,6 +850,7 @@ crypto_tracker/
   database.py    guarda el histórico
   telegram.py    manda los mensajes
   botones.py     los botones de debajo de los avisos
+  buzon.py       junta los avisos del mismo ciclo en un mensaje
   alerts.py      decide cuándo avisar y escribe los avisos
   brusco.py      los movimientos bruscos
   extremos.py    los máximos y mínimos de los últimos días
