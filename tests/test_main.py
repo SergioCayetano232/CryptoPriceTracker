@@ -34,7 +34,7 @@ from crypto_tracker import (
 from crypto_tracker.config import Config, Posicion, Watch
 from crypto_tracker.precio import Precio
 from crypto_tracker.respuestas import cartera as respuestas_cartera
-from crypto_tracker.respuestas import revisiones
+from crypto_tracker.respuestas import resumenes, revisiones
 
 
 @pytest.fixture
@@ -1163,7 +1163,7 @@ def test_resumen_con_cartera(config, monkeypatch):
         config, cartera=parse_cartera("bitcoin:0.016:1000,solana:7:1000")
     )
 
-    texto = main.montar_resumen(con_cartera)
+    texto = resumenes.montar_resumen(con_cartera)
 
     assert pedidas == ["bitcoin", "solana"]
     assert "Tu cartera" in texto
@@ -1175,7 +1175,7 @@ def test_resumen_con_cartera(config, monkeypatch):
 def test_resumen_sin_cartera_como_antes(config, monkeypatch):
     monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 1.0})
 
-    assert "cartera" not in main.montar_resumen(config)
+    assert "cartera" not in resumenes.montar_resumen(config)
 
 
 # --- buscar ---
@@ -5251,7 +5251,7 @@ def test_recien_instalado_el_resumen_ya_lleva_las_24h(config, monkeypatch):
     _precio(monkeypatch, {"bitcoin": 66000.0})
     monkeypatch.setattr(coingecko, "_cambios", {"bitcoin": -1.5})
 
-    texto = main.montar_resumen(config)
+    texto = resumenes.montar_resumen(config)
 
     assert "sin histórico" not in texto
     assert "🔻 -1.50%" in texto

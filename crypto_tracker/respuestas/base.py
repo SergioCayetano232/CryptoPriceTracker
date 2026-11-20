@@ -14,6 +14,7 @@ from .. import (
     diario,
     direccion,
     movimientos,
+    puntuales,
     telegram,
     vigiladas,
 )
@@ -181,3 +182,11 @@ def _direcciones_guardadas(config: Config) -> list[direccion.Vigilada]:
     guardadas = database.direcciones(config.database_path)
     lista = [direccion.cargar(d, v) for d, v in guardadas.items()]
     return [v for v in lista if v is not None]
+
+
+def _puntuales(config: Config) -> list[puntuales.Puntual]:
+    try:
+        return database.get_puntuales(config.database_path, config.vs_currency)
+    except database.DatabaseError as e:
+        logger.error("No se pudieron leer las alertas de /alerta: %s", e)
+        return []
