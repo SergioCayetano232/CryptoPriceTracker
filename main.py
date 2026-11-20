@@ -22,13 +22,11 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from crypto_tracker import (
     adios,
-    adivina,
     ajustes,
     alertaratio,
     alerts,
     backup,
     binance,
-    bola,
     botones,
     brusco,
     buzon,
@@ -60,7 +58,6 @@ from crypto_tracker import (
     grafica,
     halving,
     herencia,
-    horoscopo,
     importar,
     maximo,
     merge,
@@ -70,9 +67,7 @@ from crypto_tracker import (
     panel_html,
     perdido,
     periodo,
-    ppt,
     puntuales,
-    quiz,
     refran,
     rellenar,
     salud,
@@ -141,7 +136,6 @@ from crypto_tracker.respuestas.base import (
     _con_cambios,
     _consultar,
     _indicador,
-    _precio_o_pedirlo,
     _puntuales,
     _silenciado,
     _sin_sonido,
@@ -208,6 +202,13 @@ from crypto_tracker.respuestas.mercado import (
     _top,
     _ultimo,
     foto_dominancia,
+)
+from crypto_tracker.respuestas.ratos import (
+    _adivina,
+    _comando_bola,
+    _comando_horoscopo,
+    _comando_ppt,
+    _comando_quiz,
 )
 from crypto_tracker.respuestas.recordatorios import (
     _pienso,
@@ -1233,38 +1234,6 @@ def _comando_bot(config: Config, argumento: str) -> Respuesta:
     )
 
 
-def _comando_horoscopo(config: Config, argumento: str) -> Respuesta:
-    try:
-        signo = horoscopo.interpretar(argumento)
-    except horoscopo.HoroscopoError as e:
-        return telegram.escape(str(e))
-    return alerts.formatear_horoscopo(horoscopo.leer(signo, date.today()))
-
-
-def _comando_bola(config: Config, argumento: str) -> Respuesta:
-    try:
-        pregunta = bola.interpretar(argumento)
-    except bola.BolaError as e:
-        return telegram.escape(str(e))
-    return alerts.formatear_bola(pregunta, bola.agitar())
-
-
-def _comando_quiz(config: Config, argumento: str) -> Respuesta:
-    elegida = quiz.interpretar(argumento)
-    if elegida is None:
-        return comandos.ConBotones(*alerts.formatear_quiz(quiz.sacar()))
-    return comandos.ConBotones(*alerts.formatear_respuesta_quiz(*elegida))
-
-
-def _comando_ppt(config: Config, argumento: str) -> Respuesta:
-    try:
-        tuya = ppt.interpretar(argumento)
-    except ppt.PptError as e:
-        return telegram.escape(str(e))
-    del_bot = ppt.sacar()
-    return alerts.formatear_ppt(tuya, del_bot, ppt.resultado(tuya, del_bot))
-
-
 def _comando_copia(config: Config, argumento: str) -> Respuesta:
     actual = _con_cambios(config)
     return alerts.formatear_copia(
@@ -1725,18 +1694,6 @@ def _rellenar(config: Config, argumento: str) -> str:
         hechos.append(rellenar.Relleno(coin_id, len(nuevos), desde))
 
     return alerts.con_fuente(alerts.formatear_rellenar(hechos, fallos, dias))
-
-
-def _adivina(config: Config, argumento: str) -> str:
-    try:
-        coin_id, dicho = adivina.interpretar(argumento)
-    except adivina.AdivinaError as e:
-        return telegram.escape(str(e))
-    precio = _precio_o_pedirlo(config, coin_id)
-    if isinstance(precio, str):
-        return precio
-    intento = adivina.Intento(coin_id, dicho, precio)
-    return alerts.formatear_adivina(intento, config.vs_currency)
 
 
 def _exportar_movimientos(config: Config) -> str | comandos.Archivo:
