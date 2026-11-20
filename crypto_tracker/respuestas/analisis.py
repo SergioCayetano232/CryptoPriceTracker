@@ -52,9 +52,7 @@ from .base import (
     _con_cambios,
     _valor_guardado,
 )
-from .revisiones import (
-    _calma_de,
-)
+from .revisiones import _calma_de
 
 logger = logging.getLogger("crypto_tracker")
 

@@ -26,9 +26,7 @@ from .. import (
     telegram,
     top,
 )
-from ..config import (
-    Config,
-)
+from ..config import Config
 from ..mercado import Mercado
 from ..precio import en_sats
 from .base import (

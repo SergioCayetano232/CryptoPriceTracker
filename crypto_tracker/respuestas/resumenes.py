@@ -26,9 +26,7 @@ from .. import (
     semanal,
     telegram,
 )
-from ..config import (
-    Config,
-)
+from ..config import Config
 from .base import (
     SIN_CARTERA,
     Respuesta,

@@ -16,9 +16,7 @@ from .. import (
     recordar,
     telegram,
 )
-from ..config import (
-    Config,
-)
+from ..config import Config
 from .base import _con_cambios, _indicador, _silenciado
 
 logger = logging.getLogger("crypto_tracker")

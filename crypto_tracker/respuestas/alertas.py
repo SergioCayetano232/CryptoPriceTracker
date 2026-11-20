@@ -22,9 +22,7 @@ from .. import (
     telegram,
     vigiladas,
 )
-from ..config import (
-    Config,
-)
+from ..config import Config
 from .base import (
     Respuesta,
     _alertas_ratio,
