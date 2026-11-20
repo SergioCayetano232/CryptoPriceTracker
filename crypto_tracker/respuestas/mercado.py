@@ -1,0 +1,525 @@
+"""Precios y mercado: lo que vale una cripto, el top, el miedo, la dominancia..."""
+
+import logging
+from datetime import date, datetime, timezone
+
+from .. import (
+    aleatoria,
+    alerts,
+    avisados,
+    botones,
+    cartera,
+    coingecko,
+    comandos,
+    comisionred,
+    convertir,
+    database,
+    dia,
+    direccion,
+    dominancia,
+    funding,
+    hoy,
+    miedo,
+    moneda,
+    redondo,
+    simbolos,
+    telegram,
+    top,
+)
+from ..config import (
+    Config,
+)
+from ..mercado import Mercado
+from ..precio import en_sats
+from .base import (
+    _con_cambios,
+    _consultar,
+    _direcciones_guardadas,
+    _variacion,
+)
+
+logger = logging.getLogger("crypto_tracker")
+
+
+def _precio(config: Config, argumento: str) -> str | comandos.ConBotones:
+    comando = f"/precio {argumento}".strip()
+    argumento, otra = moneda.separar(argumento)
+    currency = otra or config.vs_currency
+    # Lo guardado y lo que te costó la cartera van en la del .env: no se mezclan.
+    otra = currency != config.vs_currency
+    coin_ids = simbolos.varias(argumento)
+    if not argumento:
+        # A secas, las que vigilas. Si son muchas, las primeras, que no caben.
+        vigiladas = _con_cambios(config).watchlist
+        coin_ids = [w.coin_id for w in vigiladas][: simbolos.MAX_VARIAS]
+    if not coin_ids:
+        return "¿De cuál? Por ejemplo: /precio solana o /precio btc eth sol"
+    if len(coin_ids) > simbolos.MAX_VARIAS:
+        return f"Como mucho {simbolos.MAX_VARIAS} a la vez."
+
+    # Con una sola, bitcoin va en la misma consulta para dar lo que vale en sats.
+    pedir = coin_ids
+    if len(coin_ids) == 1 and coin_ids[0] != "bitcoin":
+        pedir = [*coin_ids, "bitcoin"]
+    try:
+        precios = coingecko.precios_semana(pedir, currency)
+    except coingecko.CoinGeckoError as e:
+        return f"No he podido mirar el precio ahora mismo: {telegram.escape(str(e))}"
+
+    lineas = []
+    for c in coin_ids:
+        p = precios.get(c)
+        if p is None:
+            continue
+        en_24h = p.en_24h
+        if en_24h is None and not otra:
+            en_24h = _variacion(config, c, p.precio)
+        lineas.append((c, p.precio, en_24h, p.en_7d))
+    en_1h = {c: p.en_1h for c, p in precios.items()}
+    faltan = [c for c in coin_ids if c not in precios]
+    if not lineas:
+        return alerts.formatear_no_encuentro(faltan)
+
+    if len(coin_ids) == 1:
+        coin_id, precio, en_24h, en_7d = lineas[0]
+        # Va en la moneda del .env, pero la forma de la línea es la misma.
+        serie = database.get_serie(
+            config.database_path, coin_id, 24, config.vs_currency
+        )
+        dia = [p for _, p in serie]
+        bitcoin = precios.get("bitcoin")
+        p = precios[coin_id]
+        # leer() ya deja los dos o ninguno.
+        rango_24h = (p.minimo_24h, p.maximo_24h) if p.maximo_24h else None
+        emitido = (p.emitido, p.tope) if p.tope else None
+        texto = alerts.con_fuente(
+            alerts.formatear_precio(
+                coin_id,
+                precio,
+                en_24h,
+                currency,
+                en_7d,
+                en_1h.get(coin_id),
+                None
+                if otra
+                else cartera.de(list(_con_cambios(config).cartera), coin_id, precio),
+                dia,
+                precios[coin_id].volumen,
+                precios[coin_id].puesto,
+                en_sats(coin_id, precio, bitcoin.precio if bitcoin else None),
+                rango_24h,
+                emitido,
+                p.maximo,
+                en_30d=p.en_30d,
+                capitalizacion=p.capitalizacion,
+            )
+        )
+        teclado = botones.para_precio(coin_id, grafica=len(dia) >= 2)
+        return comandos.ConBotones(texto, teclado) if teclado else texto
+    texto = alerts.con_fuente(alerts.formatear_precios(lineas, faltan, currency))
+    # Con diez ids largos no cabe en el boton, y entonces va sin el.
+    if len(comando.encode()) > botones.MAX_DATOS:
+        return texto
+    return comandos.ConBotones(texto, botones.actualizar(comando))
+
+
+def _ath(config: Config, argumento: str) -> str:
+    coin_ids = simbolos.varias(argumento)
+    if not argumento:
+        vigiladas = _con_cambios(config).watchlist
+        coin_ids = [w.coin_id for w in vigiladas][: simbolos.MAX_VARIAS]
+    if not coin_ids:
+        return "¿De cuál? Por ejemplo: /ath bitcoin o /ath btc eth sol"
+    if len(coin_ids) > simbolos.MAX_VARIAS:
+        return f"Como mucho {simbolos.MAX_VARIAS} a la vez."
+
+    try:
+        maximos = coingecko.maximos(coin_ids, config.vs_currency)
+    except coingecko.CoinGeckoError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+
+    encontrados = [maximos[c] for c in coin_ids if c in maximos]
+    faltan = [c for c in coin_ids if c not in maximos]
+    if not encontrados:
+        return alerts.formatear_no_encuentro(faltan)
+
+    ahora = datetime.now(timezone.utc)
+    if len(coin_ids) == 1:
+        return alerts.con_fuente(
+            alerts.formatear_maximo(encontrados[0], config.vs_currency, ahora)
+        )
+    return alerts.con_fuente(
+        alerts.formatear_maximos(encontrados, faltan, config.vs_currency, ahora)
+    )
+
+
+def _tendencias(config: Config) -> str | comandos.ConBotones:
+    try:
+        lista = coingecko.tendencias_hoy(config.vs_currency)
+    except coingecko.CoinGeckoError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+
+    texto = alerts.formatear_tendencias(lista)
+    if not lista:
+        return texto
+    return comandos.ConBotones(alerts.con_fuente(texto), botones.para_tendencias(lista))
+
+
+def _top(config: Config) -> str | comandos.ConBotones:
+    try:
+        lista = coingecko.top_hoy(config.vs_currency)
+    except coingecko.CoinGeckoError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+
+    suben, bajan = top.separar(lista)
+    texto = alerts.formatear_top(suben, bajan, config.vs_currency)
+    if not suben and not bajan:
+        return texto
+    return comandos.ConBotones(alerts.con_fuente(texto), botones.actualizar("/top"))
+
+
+def _ultimo(config: Config) -> str:
+    vigiladas = [w.coin_id for w in _con_cambios(config).watchlist]
+    if not vigiladas:
+        return "No vigilas ninguna. Añade una con /vigilar"
+    lista = avisados.juntar(
+        vigiladas,
+        database.ultimos_avisos(config.database_path),
+        {c: database.get_last_price(config.database_path, c) for c in vigiladas},
+    )
+    return alerts.formatear_ultimo(lista, config.vs_currency)
+
+
+def _aleatoria(config: Config) -> str | comandos.ConBotones:
+    try:
+        lista = coingecko.top_hoy(config.vs_currency)
+    except coingecko.CoinGeckoError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+
+    vigiladas = {w.coin_id for w in _con_cambios(config).watchlist}
+    elegida = aleatoria.elegir(lista, vigiladas)
+    if elegida is None:
+        return "CoinGecko no me ha dado la lista ahora mismo. Prueba en un rato."
+    puesto, m = elegida
+    texto = alerts.formatear_aleatoria(puesto, m, config.vs_currency)
+    return comandos.ConBotones(texto, botones.para_aleatoria(m.coin_id))
+
+
+def _comisionred(config: Config) -> str | comandos.ConBotones:
+    try:
+        ahora, semana = comisionred.pedir()
+    except comisionred.ComisionRedError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+
+    datos = comisionred.leer(ahora, semana)
+    precio = database.get_last_price(config.database_path, "bitcoin")
+    if precio is None:
+        precio = (_consultar(config, ["bitcoin"]) or {}).get("bitcoin")
+    texto = alerts.formatear_comisionred(datos, precio, config.vs_currency)
+    if datos is None:
+        return texto
+    return comandos.ConBotones(texto, botones.actualizar("/comisionred"))
+
+
+def _precio_btc(config: Config) -> float | None:
+    precio = database.get_last_price(config.database_path, "bitcoin")
+    if precio is None:
+        precio = (_consultar(config, ["bitcoin"]) or {}).get("bitcoin")
+    return precio
+
+
+def _direccion(config: Config, argumento: str) -> str:
+    try:
+        que, cual, nombre = direccion.interpretar(argumento)
+    except direccion.DireccionError as e:
+        return telegram.escape(str(e))
+    vigiladas = _direcciones_guardadas(config)
+
+    if que == "quitar":
+        v = direccion.buscar(vigiladas, cual)
+        if v is None:
+            return f"No vigilo ninguna que se llame <b>{telegram.escape(cual)}</b>."
+        database.guardar_direccion(config.database_path, v.direccion, None)
+        return f"Ya no vigilo <b>{telegram.escape(v.nombre)}</b>."
+
+    if que == "ver":
+        # Con lo de ahora y no lo guardado, por si el bot no está en --loop. No se
+        # guarda: si se ha movido, el aviso del ciclo se perdería.
+        al_dia = []
+        for v in vigiladas:
+            try:
+                saldo = direccion.pedir(v.direccion)
+                v = direccion.Vigilada(v.direccion, v.nombre, saldo.sats, v.txs)
+            except direccion.DireccionError as e:
+                logger.warning("No se pudo mirar %s: %s", v.direccion, e)
+            al_dia.append(v)
+        return alerts.formatear_direcciones(
+            al_dia, _precio_btc(config) if al_dia else None, config.vs_currency
+        )
+
+    ya = direccion.buscar(vigiladas, cual)
+    if ya is not None:
+        return f"Ya la vigilo como <b>{telegram.escape(ya.nombre)}</b>."
+    if direccion.buscar(vigiladas, nombre) is not None:
+        return (
+            f"Ya tienes una llamada <b>{telegram.escape(nombre)}</b>. "
+            "Ponle otro nombre."
+        )
+    if len(vigiladas) >= direccion.MAXIMO:
+        return f"Como mucho vigilo {direccion.MAXIMO}. Quita alguna antes."
+    try:
+        saldo = direccion.pedir(cual)
+    except direccion.DireccionError as e:
+        return f"No he podido mirarla: {telegram.escape(str(e))}"
+
+    nueva = direccion.Vigilada(cual, nombre, saldo.sats, saldo.txs)
+    database.guardar_direccion(config.database_path, cual, nueva.guardar())
+    return alerts.formatear_direccion_nueva(
+        nueva, _precio_btc(config), config.vs_currency
+    )
+
+
+def _funding(config: Config, argumento: str) -> str | comandos.ConBotones:
+    if len(argumento.split()) > 1:
+        return "De una en una. Por ejemplo: /funding btc"
+    if argumento:
+        coin_id = simbolos.a_id(argumento)
+    else:
+        vigiladas = _con_cambios(config).watchlist
+        if not vigiladas:
+            return "¿De cuál? Por ejemplo: /funding btc"
+        coin_id = vigiladas[0].coin_id
+
+    par = funding.par(coin_id, argumento)
+    try:
+        ahora, antes = funding.pedir(par)
+    except funding.FundingError as e:
+        if str(e) == "sin futuros":
+            return (
+                f"<b>{telegram.escape(coin_id)}</b> no tiene futuros en Binance. "
+                "Prueba con su símbolo, como /funding btc"
+            )
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+
+    resultado = funding.leer(par, ahora, antes)
+    if resultado is None:
+        return "Binance no me ha dado el funding. Prueba en un rato."
+    return comandos.ConBotones(
+        alerts.formatear_funding(resultado), botones.actualizar(f"/funding {coin_id}")
+    )
+
+
+def _miedo() -> str | comandos.ConBotones:
+    try:
+        lista = miedo.pedir()
+    except miedo.MiedoError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+
+    texto = alerts.formatear_miedo(lista)
+    if not lista:
+        return texto
+    return comandos.ConBotones(texto, botones.actualizar("/miedo"))
+
+
+def _mercado(config: Config) -> str | comandos.ConBotones:
+    try:
+        datos = coingecko.mercado_global(config.vs_currency)
+    except coingecko.CoinGeckoError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+
+    texto = alerts.formatear_mercado(datos, config.vs_currency)
+    if datos.total is None and datos.bitcoin is None:
+        return texto
+    return comandos.ConBotones(alerts.con_fuente(texto), botones.actualizar("/mercado"))
+
+
+def _dominancia(config: Config) -> str:
+    try:
+        datos = coingecko.mercado_global(config.vs_currency)
+    except coingecko.CoinGeckoError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+    if datos.bitcoin is None:
+        return "CoinGecko no ha dicho qué parte es de bitcoin. Prueba en un rato."
+
+    ahora = datetime.now(timezone.utc)
+    fotos = database.get_dominancia(config.database_path, dominancia.HORAS)
+    resultado = dominancia.calcular(datos, fotos, ahora)
+    # Ya que se ha consultado, que sirva de foto de hoy si no la había.
+    _guardar_foto(config, datos, ahora)
+    return alerts.con_fuente(alerts.formatear_dominancia(resultado))
+
+
+def foto_dominancia(config: Config) -> None:
+    """Una vez al día apunta qué parte del mercado es bitcoin. Gasta una consulta."""
+    ahora = datetime.now(timezone.utc)
+    try:
+        if not dominancia.toca_guardar(
+            database.ultima_dominancia(config.database_path), ahora
+        ):
+            return
+        datos = coingecko.mercado_global(config.vs_currency)
+    except (database.DatabaseError, coingecko.CoinGeckoError) as e:
+        # Si falla, lo intenta el siguiente ciclo: no es un aviso, no corre prisa.
+        logger.warning("No se pudo apuntar la dominancia: %s", e)
+        return
+    if datos.bitcoin is not None:
+        _guardar_foto(config, datos, ahora)
+
+
+def _guardar_foto(config: Config, datos: Mercado, ahora: datetime) -> None:
+    try:
+        ultima = database.ultima_dominancia(config.database_path)
+        if dominancia.toca_guardar(ultima, ahora):
+            database.guardar_dominancia(
+                config.database_path,
+                dominancia.Foto(ahora, datos.bitcoin, datos.ethereum, datos.estables),
+            )
+    except database.DatabaseError as e:
+        logger.warning("No se pudo apuntar la dominancia: %s", e)
+
+
+def _redondo(config: Config, argumento: str) -> str:
+    coin_ids = simbolos.varias(argumento)
+    if not argumento:
+        vigiladas = _con_cambios(config).watchlist
+        coin_ids = [w.coin_id for w in vigiladas][: simbolos.MAX_VARIAS]
+    if not coin_ids:
+        return "¿De cuál? Por ejemplo: /redondo bitcoin o /redondo btc eth"
+    if len(coin_ids) > simbolos.MAX_VARIAS:
+        return f"Como mucho {simbolos.MAX_VARIAS} a la vez."
+
+    redondos = []
+    for c in coin_ids:
+        precio = database.get_last_price(config.database_path, c)
+        if precio:
+            redondos.append((c, redondo.calcular(precio)))
+    if not redondos:
+        nombres = ", ".join(f"<b>{telegram.escape(c)}</b>" for c in coin_ids)
+        return (
+            f"No tengo precios guardados de {nombres}. Solo sé de las que "
+            "vigilo: míralas con /vigilar"
+        )
+    return alerts.formatear_redondo(redondos, config.vs_currency)
+
+
+def _dia(config: Config, argumento: str) -> str:
+    try:
+        coin_id, fecha = dia.interpretar(argumento, date.today())
+    except dia.DiaError as e:
+        return telegram.escape(str(e))
+    if not coin_id:
+        vigiladas = _con_cambios(config).watchlist
+        if not vigiladas:
+            return f"¿De cuál? Por ejemplo: {dia.EJEMPLO}"
+        coin_id = vigiladas[0].coin_id
+
+    serie = database.get_serie(
+        config.database_path, coin_id, dia.HORAS, config.vs_currency
+    )
+    resultado = dia.calcular(serie, fecha)
+    if resultado is not None:
+        return alerts.formatear_dia(coin_id, resultado, config.vs_currency)
+
+    nombre = telegram.escape(coin_id)
+    otro = dia.cercano(serie, fecha)
+    if otro is None:
+        return (
+            f"No tengo precios guardados de <b>{nombre}</b>. Solo sé de las que "
+            "vigilo: míralas con /vigilar"
+        )
+    return (
+        f"No tengo precios de <b>{nombre}</b> del {fecha:%d/%m/%Y}. El día más "
+        f"cercano que tengo es el {otro:%d/%m/%Y}: /dia {nombre} {otro:%d/%m/%Y}"
+    )
+
+
+def _hoy(config: Config, argumento: str) -> str | comandos.ConBotones:
+    coin_ids = simbolos.varias(argumento)
+    if not argumento:
+        coin_ids = [w.coin_id for w in _con_cambios(config).watchlist]
+    if not coin_ids:
+        return "¿De cuáles? Por ejemplo: /hoy o /hoy btc eth"
+    if len(coin_ids) > simbolos.MAX_VARIAS:
+        return f"Como mucho {simbolos.MAX_VARIAS} a la vez."
+
+    ahora = datetime.now(timezone.utc)
+    desde = hoy.medianoche(ahora)
+    # Una hora antes de las 00:00, para tener el último precio de ayer.
+    horas_atras = (ahora - desde).total_seconds() / 3600 + 1
+    lineas = []
+    ultimo = None
+    for c in coin_ids:
+        serie = database.get_serie(
+            config.database_path, c, horas_atras, config.vs_currency
+        )
+        lineas.append((c, hoy.calcular(serie, desde)))
+        if serie and (ultimo is None or serie[-1][0] > ultimo):
+            ultimo = serie[-1][0]
+
+    if all(h is None for _, h in lineas):
+        return (
+            "No tengo precios guardados de hoy. Solo sé de las que vigilo, y "
+            "mientras estoy encendido: míralas con /vigilar"
+        )
+    texto = alerts.formatear_hoy(lineas, config.vs_currency, ultimo)
+    comando = f"/hoy {argumento}".strip()
+    # Con muchas criptos escritas no cabe en el botón: va sin él.
+    if len(comando.encode()) > botones.MAX_DATOS:
+        return texto
+    return comandos.ConBotones(texto, botones.actualizar(comando))
+
+
+def _convertir(config: Config, argumento: str) -> str:
+    try:
+        conversion = convertir.interpretar(argumento, config.vs_currency)
+    except convertir.ConvertirError as e:
+        return telegram.escape(str(e))
+
+    coin_id = conversion.coin_id
+    # Las dos en la misma consulta, que gasta lo mismo que una.
+    pedidas = [coin_id, conversion.hacia] if conversion.hacia else [coin_id]
+    try:
+        precios = coingecko.get_prices(pedidas, config.vs_currency)
+    except coingecko.CoinGeckoError as e:
+        return f"No he podido mirar el precio ahora mismo: {telegram.escape(str(e))}"
+    for pedida in pedidas:
+        if not precios.get(pedida):
+            return (
+                f"No encuentro <b>{telegram.escape(pedida)}</b> en CoinGecko. "
+                f"Prueba con /buscar {telegram.escape(pedida)}"
+            )
+
+    precio = precios[coin_id]
+    if conversion.hacia:
+        precio_hacia = precios[conversion.hacia]
+        return alerts.con_fuente(
+            alerts.formatear_cambio(
+                conversion.cantidad,
+                coin_id,
+                conversion.entre(precio, precio_hacia),
+                conversion.hacia,
+                (precio, precio_hacia),
+                config.vs_currency,
+                conversion.sats,
+                conversion.hacia_sats,
+            )
+        )
+
+    resultado = conversion.resultado(precio)
+    dinero, cripto = (
+        (conversion.cantidad, resultado)
+        if conversion.desde_dinero
+        else (resultado, conversion.cantidad)
+    )
+    return alerts.con_fuente(
+        alerts.formatear_conversion(
+            dinero,
+            cripto,
+            coin_id,
+            precio,
+            conversion.desde_dinero,
+            config.vs_currency,
+            conversion.sats,
+            _variacion(config, coin_id, precio),
+        )
+    )
