@@ -16,6 +16,7 @@ from ..concentracion import Concentracion
 from ..config import Posicion
 from ..corregir import CANTIDAD, Correccion
 from ..cruce import ARRIBA, CORTA, LARGA, Cruce
+from ..cuenta_binance import Comparacion
 from ..deposito import Contra as ContraDeposito
 from ..estables import Desvio
 from ..ganancias import Ganancias
@@ -1660,3 +1661,54 @@ def formatear_importada(apuntadas: int, fallidas: int, origen: str = "Binance") 
             "vendías más de lo que tenías apuntado"
         )
     return "\n".join(texto)
+
+
+BINANCE_SIN_CLAVE = (
+    "🏦 <b>Binance contra lo apuntado</b>\n"
+    "Para mirarlo necesito una clave de solo lectura:\n"
+    "1. En Binance: Perfil → Gestión de API → Crear API\n"
+    "2. Déjale solo <b>Habilitar lectura</b>. Nada de trading ni retiradas\n"
+    "3. Pon la clave y el secreto en el .env, en BINANCE_API_KEY y "
+    "BINANCE_API_SECRET, y reinicia el bot"
+)
+
+
+def formatear_binance(c: Comparacion) -> str:
+    """Respuesta de /binance."""
+    if not c.diferencias and not c.desconocidas:
+        return "No tienes nada en Binance ni apuntado en la cartera."
+
+    lineas = ["🏦 <b>Binance contra lo apuntado</b>", ""]
+    cuadran = [d for d in c.diferencias if d.cuadra]
+    for d in c.diferencias:
+        if d.cuadra:
+            continue
+        nombre = f"<b>{_nombre(d.coin_id)}</b>"
+        if not d.apuntado:
+            lineas.append(
+                f"➕ {nombre}: {texto_cantidad(d.en_binance)} en Binance, sin apuntar"
+            )
+        elif not d.en_binance:
+            lineas.append(
+                f"➖ {nombre}: {texto_cantidad(d.apuntado)} apuntado, nada en Binance"
+            )
+        else:
+            mas = "más" if d.falta > 0 else "menos"
+            lineas.append(
+                f"↔️ {nombre}: {texto_cantidad(d.en_binance)} en Binance, "
+                f"{texto_cantidad(d.apuntado)} apuntado "
+                f"({texto_cantidad(abs(d.falta))} {mas} en Binance)"
+            )
+    if cuadran:
+        if len(lineas) > 2:
+            lineas.append("")
+        nombres = ", ".join(_nombre(d.coin_id) for d in cuadran)
+        lineas.append(f"✅ Cuadran: {nombres}")
+    if c.desconocidas:
+        lineas.append(f"❓ No sé qué es: {', '.join(c.desconocidas)}")
+    lineas.append(
+        "\n<i>Lo de menos en Binance puede estar en otro sitio. Solo miro el "
+        "spot y Simple Earn flexible: futuros o staking bloqueado no salen. "
+        "Lo que falte se apunta con /compra o /venta.</i>"
+    )
+    return "\n".join(lineas)

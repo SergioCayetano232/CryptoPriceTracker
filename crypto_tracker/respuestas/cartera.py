@@ -18,6 +18,7 @@ from .. import (
     compensar,
     compras,
     corregir,
+    cuenta_binance,
     database,
     deposito,
     doble,
@@ -269,6 +270,18 @@ def _arrepentido(config: Config) -> str:
             return "No he podido consultar los precios. Prueba en un rato."
     resultado = arrepentido.calcular(ventas, precios)
     return alerts.formatear_arrepentido(resultado, config.vs_currency)
+
+
+def _binance(config: Config, argumento: str) -> str:
+    acceso = cuenta_binance.claves()
+    if acceso is None:
+        return alerts.BINANCE_SIN_CLAVE
+    try:
+        saldos = cuenta_binance.pedir_saldos(*acceso)
+    except cuenta_binance.CuentaError as e:
+        return telegram.escape(str(e))
+    cartera = list(_con_cambios(config).cartera)
+    return alerts.formatear_binance(cuenta_binance.comparar(saldos, cartera))
 
 
 def _impuestos(config: Config, argumento: str) -> str | comandos.Archivo:

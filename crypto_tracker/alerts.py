@@ -100,6 +100,7 @@ from .mensajes.base import (
     sparkline,
 )
 from .mensajes.cartera import (
+    BINANCE_SIN_CLAVE,
     VEREDICTO_TIMING,
     _compra_corta,
     _compra_timing,
@@ -113,6 +114,7 @@ from .mensajes.cartera import (
     formatear_aviso_721,
     formatear_aviso_rsi,
     formatear_bajon,
+    formatear_binance,
     formatear_calendario,
     formatear_cartera,
     formatear_comisiones,

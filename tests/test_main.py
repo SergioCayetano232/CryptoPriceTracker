@@ -11996,3 +11996,50 @@ def test_importar_de_kraken(config, enviados, monkeypatch, con_csv):
     assert compra.cuando == datetime(2024, 3, 1, 10, 15, 22, tzinfo=timezone.utc)
     assert (compra.cantidad, compra.coste, compra.nota) == (0.002, 100.26, "Kraken")
     assert (venta.cantidad, venta.coste, venta.nota) == (0.001, 59.84, "Kraken")
+
+
+# --- /binance ---
+
+
+def test_binance_sin_clave_explica_como_crearla(config, enviados, monkeypatch):
+    monkeypatch.delenv("BINANCE_API_KEY", raising=False)
+    monkeypatch.delenv("BINANCE_API_SECRET", raising=False)
+
+    main.atender(config, _mensaje("/binance"))
+
+    assert "Habilitar lectura" in enviados[0]
+    assert "BINANCE_API_SECRET" in enviados[0]
+
+
+def test_binance_compara_y_no_enseña_el_secreto(config, enviados, monkeypatch, caplog):
+    import logging
+
+    import requests
+
+    monkeypatch.setenv("BINANCE_API_KEY", "CLAVE-DE-PRUEBA")
+    monkeypatch.setenv("BINANCE_API_SECRET", "SECRETO-QUE-NO-SALE")
+    config = _con_cartera(config, Posicion("bitcoin", 0.2, 5000))
+
+    class Respuesta:
+        status_code = 200
+
+        def json(self):
+            return {
+                "balances": [
+                    {"asset": "BTC", "free": "0.15", "locked": "0"},
+                    {"asset": "ETH", "free": "1", "locked": "0"},
+                ]
+            }
+
+    monkeypatch.setattr(requests, "get", lambda url, **k: Respuesta())
+
+    with caplog.at_level(logging.DEBUG):
+        main.atender(config, _mensaje("/binance"))
+
+    texto = enviados[0]
+    assert (
+        "<b>Bitcoin</b>: 0,15 en Binance, 0,2 apuntado (0,05 menos en Binance)" in texto
+    )
+    assert "➕ <b>Ethereum</b>: 1 en Binance, sin apuntar" in texto
+    assert "SECRETO-QUE-NO-SALE" not in texto
+    assert "SECRETO-QUE-NO-SALE" not in caplog.text

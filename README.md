@@ -299,6 +299,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/exportar bitcoin 30d` | Te manda un CSV con los precios guardados (sin tramo, 30 días) |
 | `/exportar movimientos` | Te manda un CSV con todas tus compras y ventas, lo que ganaste en cada venta y tus notas |
 | `/importar` | Apunta de golpe tus compras y ventas de Binance o de Kraken. Mándale al bot el CSV como archivo: el de Binance sale en Órdenes → Historial de operaciones → Exportar; el de Kraken, exportando las operaciones (Trades), y si llega en un .zip, vale el trades.csv de dentro. Te dice lo que ha leído y lo que se salta (lo que no es contra tu moneda, lo de margen, las criptos que no conoce) y solo apunta al pulsar Importar. Cada una lleva el exchange en la nota y la comisión dentro del importe. No apunta lo que ya tenías apuntado ni lo anterior a tu último movimiento |
+| `/binance` | Lo que tienes de verdad en Binance contra lo apuntado en el bot: lo que está sin apuntar, lo que está apuntado y no aparece (puede estar en otro sitio) y lo que cuadra. Cuenta lo bloqueado en órdenes y Simple Earn flexible; futuros y staking bloqueado no. Necesita una clave de **solo lectura** en `BINANCE_API_KEY` y `BINANCE_API_SECRET` del `.env` (sin ella, te explica cómo crearla). El bot solo lee y nunca enseña la clave |
 | `/backup` | Te manda un zip con la base de datos entera: precios, compras, ventas y alertas. También `/respaldo` |
 | `/rellenar btc 90d` | Baja de CoinGecko los precios pasados que no tiene, para que `/rsi`, `/media`, `/racha` y compañía funcionen sin esperar semanas. Solo mete lo que falta, así que se puede repetir. Sin tramo, todo lo que quepa en `HISTORY_DAYS` (hasta un año); a secas, las que vigilas. Hasta 90 días viene un precio por hora y con más, uno al día. Gasta una consulta por cripto |
 | `/mercado` | Lo que vale todo el mercado cripto, cómo va en 24 h y qué parte es de Bitcoin, Ethereum y las estables |
@@ -826,6 +827,7 @@ Con el túnel abierto, entra en <http://127.0.0.1:8000>. Nadie más puede verlo.
 | Opción | Qué hace | Por defecto |
 |---|---|---|
 | `COINGECKO_API_KEY` | Clave gratuita de CoinGecko (ver arriba) | vacío |
+| `BINANCE_API_KEY` y `BINANCE_API_SECRET` | Clave de Binance de solo lectura, para `/binance` | vacío |
 | `VS_CURRENCY` | Moneda de los precios (`usd`, `eur`, `gbp`) | `eur` |
 | `CHECK_INTERVAL` | Segundos entre consulta y consulta | `330` (5 min y medio) |
 | `HISTORY_DAYS` | Días de histórico que se guardan | `90` |
@@ -913,6 +915,7 @@ crypto_tracker/
   convertir.py   entiende lo que le pides a /convertir
   exportar.py    los CSV de /exportar, de precios y de movimientos
   importar.py    lee el CSV de Binance o de Kraken, para /importar
+  cuenta_binance.py  tus saldos de Binance con una clave de lectura, para /binance
   rellenar.py    qué precios pasados faltan, para /rellenar
   hubiera.py     entiende lo que le pides a /si
   objetivo.py    lo que valdría tu cartera, para /objetivo
