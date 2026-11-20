@@ -33,6 +33,7 @@ from crypto_tracker import (
 )
 from crypto_tracker.config import Config, Posicion, Watch
 from crypto_tracker.precio import Precio
+from crypto_tracker.respuestas import revisiones
 
 
 @pytest.fixture
@@ -4426,7 +4427,9 @@ def test_revisar_direcciones_callado_espera(config, enviados, monkeypatch):
     _vigilando(config)
     _saldo(monkeypatch, 60_000_000, 4)
     monkeypatch.setattr(
-        main, "_silenciado", lambda c: datetime.now(timezone.utc) + timedelta(hours=1)
+        revisiones,
+        "_silenciado",
+        lambda c: datetime.now(timezone.utc) + timedelta(hours=1),
     )
 
     main.revisar_direcciones(config, 80000.0)
@@ -10107,6 +10110,8 @@ def _hoy_es(monkeypatch, dia):
             return dia
 
     monkeypatch.setattr(main, "date", Fecha)
+    # El aviso del ciclo vive en revisiones.py y mira la fecha por su cuenta.
+    monkeypatch.setattr(revisiones, "date", Fecha)
 
 
 def _precio_el_31(config, coin_id, precio, año=2025):

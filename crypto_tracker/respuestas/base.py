@@ -2,13 +2,17 @@
 
 import logging
 from dataclasses import replace
+from datetime import datetime
 
 from .. import (
+    alertaratio,
     alerts,
     cartera,
     coingecko,
     comandos,
     database,
+    diario,
+    direccion,
     movimientos,
     telegram,
     vigiladas,
@@ -144,3 +148,36 @@ def _variacion(config: Config, coin_id: str, precio: float) -> float | None:
         return None
 
     return (precio - antes) / antes * 100
+
+
+def _silenciado(config: Config) -> datetime | None:
+    """Hasta cuando estan callados los avisos, si es que lo estan."""
+    try:
+        return database.silenciado_hasta(config.database_path)
+    except database.DatabaseError as e:
+        # Si no podemos leerlo, mejor avisar de mas que quedarnos mudos.
+        logger.warning("No se pudo leer el silencio: %s", e)
+        return None
+
+
+def _sin_sonido(config: Config, ahora: datetime | None = None) -> bool:
+    """True si estamos en HORAS_TRANQUILAS: los avisos llegan, pero sin sonar."""
+    if config.horas_tranquilas is None:
+        return False
+
+    ahora = ahora or datetime.now().astimezone()
+    return diario.es_hora_tranquila(ahora.time(), *config.horas_tranquilas)
+
+
+def _alertas_ratio(config: Config) -> list[alertaratio.AlertaRatio]:
+    try:
+        return database.get_alertas_ratio(config.database_path)
+    except database.DatabaseError as e:
+        logger.error("No se pudieron leer las alertas de ratio: %s", e)
+        return []
+
+
+def _direcciones_guardadas(config: Config) -> list[direccion.Vigilada]:
+    guardadas = database.direcciones(config.database_path)
+    lista = [direccion.cargar(d, v) for d, v in guardadas.items()]
+    return [v for v in lista if v is not None]
