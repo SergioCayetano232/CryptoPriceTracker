@@ -153,6 +153,9 @@ python main.py --loop
 ```
 Se queda mirando los precios cada cinco minutos y medio. Para pararlo, `Ctrl+C`.
 
+La primera vez que lo lanzas no te avisa de nada, solo apunta los precios.
+Necesita saber dónde estaban antes para saber si han cruzado algo.
+
 Al arrancar te manda un 🟢 *Encendido* con lo que vigila, cuántas alertas tienes
 puestas y, si llevaba un rato parado, desde cuándo. Así sabes si el servidor se
 ha reiniciado.
@@ -746,9 +749,6 @@ Solo lee lo que el bot ya ha guardado, así que no gasta consultas a CoinGecko y
 puede estar abierto a la vez que `--loop`. Si el bot lleva un rato sin guardar
 precios, el panel te lo dice arriba. Solo se abre desde el mismo ordenador:
 enseña tu cartera y no pide contraseña.
-
-La primera vez que lo lanzas no te avisa de nada, solo apunta los precios.
-Necesita saber dónde estaban antes para saber si han cruzado algo.
 
 ---
 
