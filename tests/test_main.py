@@ -33,6 +33,7 @@ from crypto_tracker import (
 )
 from crypto_tracker.config import Config, Posicion, Watch
 from crypto_tracker.precio import Precio
+from crypto_tracker.respuestas import cartera as respuestas_cartera
 from crypto_tracker.respuestas import revisiones
 
 
@@ -10110,8 +10111,9 @@ def _hoy_es(monkeypatch, dia):
             return dia
 
     monkeypatch.setattr(main, "date", Fecha)
-    # El aviso del ciclo vive en revisiones.py y mira la fecha por su cuenta.
+    # El aviso del ciclo y el comando miran la fecha cada uno en su módulo.
     monkeypatch.setattr(revisiones, "date", Fecha)
+    monkeypatch.setattr(respuestas_cartera, "date", Fecha)
 
 
 def _precio_el_31(config, coin_id, precio, año=2025):
