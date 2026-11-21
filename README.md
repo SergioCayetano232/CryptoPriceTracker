@@ -405,6 +405,8 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/consultas` | Cuántas consultas a CoinGecko llevas este mes |
 | `/bot` | Si sigue funcionando: desde cuándo está encendido, cuándo fue el último ciclo y las consultas del mes. También con `/ping` |
 | `/version` | Qué versión del bot está corriendo y, si lo bajaste con git, de qué día es el último cambio. También `/versión` |
+| `/invitar` | Un código para que otra persona use tu bot con sus propias cosas: te lo da como `/start CÓDIGO` y esa persona se lo escribe al bot por privado. Vale una vez y caduca en 24 h. Hasta 10 invitados |
+| `/usuarios` | A quién has invitado y desde cuándo, con un ✖ para quitarlo (`/expulsar`). Lo suyo no se borra, por si vuelve |
 | `/mute` | Te pregunta cuánto tiempo callarse, con botones: 1 h, 4 h o hasta las 8:00 (si ya está callado, o tienes alguna cripto callada, te dice hasta cuándo) |
 | `/mute 2h` | Calla los avisos ese rato, con un botón para deshacerlo |
 | `/mute hasta 8:00` | Calla los avisos hasta esa hora (si ya ha pasado, la de mañana) |
@@ -945,6 +947,7 @@ crypto_tracker/
   funding.py     lo que se pagan los de futuros en Binance, para /funding
   direccion.py   vigila direcciones de bitcoin (mempool.space) y ethereum, para /direccion
   database.py    guarda el histórico
+  usuarios.py    los invitados de /invitar, cada uno con su archivo
   telegram.py    manda los mensajes
   botones.py     los botones de debajo de los avisos
   buzon.py       junta los avisos del mismo ciclo en un mensaje

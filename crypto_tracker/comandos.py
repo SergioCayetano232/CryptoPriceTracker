@@ -211,6 +211,9 @@ COMANDOS = {
     "copia": "Lo que vigilo y tu cartera, listo para pegar en el .env",
     "ajustes": "Lo que tienes puesto: moneda, horas tranquilas, avisos...",
     "consultas": "Cuántas consultas a CoinGecko llevas este mes",
+    "invitar": "Un código para que otra persona use el bot con sus cosas",
+    "usuarios": "A quién has invitado, con un botón para quitarlo",
+    "expulsar": "Quita a un invitado (mejor desde /usuarios)",
     "mute": "Callar los avisos un rato (ej: /mute 2h o /mute bitcoin hasta 8:00)",
     "unmute": "Volver a avisar",
     "bot": "Si sigo funcionando: desde cuándo y el último ciclo",
@@ -246,6 +249,7 @@ ALIAS = {
     "apuesta": "prediccion",
     "momento": "timing",
     "start": "ayuda",
+    "invitados": "usuarios",
     "help": "ayuda",
     "history": "historico",
     "search": "buscar",
@@ -828,6 +832,9 @@ EJEMPLOS = {
     "spread": [
         ("/spread btc eth", "lo que da cada uno de esas y cuánto se separan"),
         ("/spread", "a secas, las que vigilo"),
+    ],
+    "invitar": [
+        ("/invitar", "un código de un solo uso que caduca en 24 h"),
     ],
     "funding": [
         ("/funding btc", "lo que pagan los de futuros de bitcoin y si está apalancado"),

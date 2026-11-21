@@ -1020,3 +1020,45 @@ def test_movimiento_con_su_fecha_y_si_ya_esta(db):
     assert database.ya_apuntado(db, "bitcoin", "compra", 0.002, cuando)
     assert not database.ya_apuntado(db, "bitcoin", "venta", 0.002, cuando)
     assert not database.ya_apuntado(db, "bitcoin", "compra", 0.003, cuando)
+
+
+# --- invitados ---
+
+
+def test_invitacion_de_un_solo_uso(db):
+    from datetime import datetime, timedelta, timezone
+
+    ahora = datetime(2026, 11, 21, 12, tzinfo=timezone.utc)
+    database.guardar_invitacion(db, "ABCD2345", ahora + timedelta(hours=24))
+
+    assert not database.canjear_invitacion(db, "ZZZZ2345", ahora)
+    assert database.canjear_invitacion(db, "ABCD2345", ahora)
+    assert not database.canjear_invitacion(db, "ABCD2345", ahora)  # ya gastado
+
+
+def test_invitacion_caducada(db):
+    from datetime import datetime, timedelta, timezone
+
+    ahora = datetime(2026, 11, 21, 12, tzinfo=timezone.utc)
+    database.guardar_invitacion(db, "ABCD2345", ahora + timedelta(hours=24))
+
+    assert not database.canjear_invitacion(db, "ABCD2345", ahora + timedelta(days=2))
+
+
+def test_invitados(db):
+    from datetime import datetime, timezone
+
+    from crypto_tracker.usuarios import Invitado
+
+    alta = datetime(2026, 11, 21, 12, tzinfo=timezone.utc)
+    database.guardar_invitado(db, Invitado("555", "Ana", alta))
+    database.guardar_invitado(db, Invitado("777", None, alta))
+
+    assert database.es_invitado(db, "555")
+    assert not database.es_invitado(db, "999")
+    assert [i.chat_id for i in database.get_invitados(db)] == ["555", "777"]
+    assert database.get_invitados(db)[0] == Invitado("555", "Ana", alta)
+
+    assert database.quitar_invitado(db, "555")
+    assert not database.quitar_invitado(db, "555")
+    assert not database.es_invitado(db, "555")

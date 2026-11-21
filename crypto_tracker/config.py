@@ -77,6 +77,8 @@ class Config:
     aviso_calma: bool = False
     copia_semanal: bool = False
     aviso_721: bool = False
+    # True si es alguien a quien invitaste: con su archivo y sin tus claves.
+    invitado: bool = False
 
 
 def _require(name: str) -> str:

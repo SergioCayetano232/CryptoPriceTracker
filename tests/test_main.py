@@ -12273,3 +12273,141 @@ def test_spread_en_libras_no(config, enviados):
     main.atender(replace(config, vs_currency="gbp"), _mensaje("/spread btc"))
 
     assert "euros o en dólares" in enviados[0]
+
+
+# --- invitados ---
+
+
+@pytest.fixture
+def a_quien(monkeypatch):
+    """[(chat, texto)] de todo lo que se manda, para ver a quién llega cada cosa."""
+    lista = []
+    monkeypatch.setattr(
+        telegram,
+        "send_message",
+        lambda token, chat, texto, **kw: lista.append((str(chat), texto)) or True,
+    )
+    return lista
+
+
+def _de(chat, texto, tipo="private", nombre="Ana"):
+    m = _mensaje(texto, chat=chat)
+    m["chat"]["type"] = tipo
+    m["from"] = {"id": chat, "first_name": nombre}
+    return m
+
+
+def _invitar(config, a_quien):
+    main.atender(config, _mensaje("/invitar"))
+    return a_quien[-1][1].split("<code>/start ")[1].split("</code>")[0]
+
+
+def test_invitar_y_entrar(config, a_quien):
+    codigo = _invitar(config, a_quien)
+
+    main.atender(config, _de(555, f"/start {codigo.lower()}"))
+
+    assert a_quien[-2][0] == "555" and "¡Dentro!" in a_quien[-2][1]
+    assert a_quien[-1][0] == "123" and "<b>Ana</b> ha entrado" in a_quien[-1][1]
+    assert database.es_invitado(config.database_path, "555")
+    import os
+
+    assert os.path.exists(os.path.join(os.path.dirname(config.database_path),
+                                       "usuarios", "555.db"))  # fmt: skip
+
+
+def test_el_codigo_se_gasta(config, a_quien):
+    codigo = _invitar(config, a_quien)
+    main.atender(config, _de(555, f"/start {codigo}"))
+
+    main.atender(config, _de(777, f"/start {codigo}"))
+
+    assert a_quien[-1][0] == "777"
+    assert "no vale" in a_quien[-1][1]
+    assert not database.es_invitado(config.database_path, "777")
+
+
+def test_sin_codigo_ni_contesto(config, a_quien):
+    main.atender(config, _de(777, "/start"))
+    main.atender(config, _de(777, "hola"))
+    main.atender(config, _de(777, "/precio btc"))
+
+    assert a_quien == []
+
+
+def test_desde_un_grupo_no(config, a_quien):
+    codigo = _invitar(config, a_quien)
+
+    main.atender(config, _de(-100999, f"/start {codigo}", tipo="supergroup"))
+
+    assert "por privado" in a_quien[-1][1]
+    assert database.get_invitados(config.database_path) == []
+
+
+def test_cada_uno_con_sus_cosas(config, a_quien, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 60000.0, "solana": 150.0})
+    codigo = _invitar(config, a_quien)
+    main.atender(config, _de(555, f"/start {codigo}"))
+
+    main.atender(config, _de(555, "/vigilar solana %5"))
+    main.atender(config, _de(555, "/vigilar"))
+    main.atender(config, _mensaje("/vigilar"))
+
+    suyo, tuyo = a_quien[-2], a_quien[-1]
+    assert suyo[0] == "555" and "Solana" in suyo[1] and "Bitcoin" not in suyo[1]
+    assert tuyo[0] == "123" and "Bitcoin" in tuyo[1] and "Solana" not in tuyo[1]
+
+
+def test_el_invitado_no_usa_lo_tuyo(config, a_quien):
+    codigo = _invitar(config, a_quien)
+    main.atender(config, _de(555, f"/start {codigo}"))
+
+    for orden in ("/binance", "/consultas", "/invitar", "/usuarios", "/expulsar 123"):
+        main.atender(config, _de(555, orden))
+        assert a_quien[-1] == ("555", "Eso solo lo puede usar quien lleva el bot.")
+
+
+def test_usuarios_y_expulsar(config, a_quien, monkeypatch):
+    mandados = []
+    codigo = _invitar(config, a_quien)
+    main.atender(config, _de(555, f"/start {codigo}"))
+
+    monkeypatch.setattr(
+        telegram,
+        "send_message",
+        lambda token, chat, texto, **kw: mandados.append((chat, texto, kw)) or True,
+    )
+    main.atender(config, _mensaje("/usuarios"))
+    assert "Ana" in mandados[0][1]
+    assert mandados[0][2]["botones"] == [[("✖ Ana", "/expulsar 555")]]
+
+    main.atender_boton(config, _boton("/expulsar 555"))
+    assert mandados[1][0] == "555" and "Ya no puedes" in mandados[1][1]
+    assert "Fuera" in mandados[2][1]
+
+    mandados.clear()
+    main.atender(config, _de(555, "/precio btc"))
+    assert mandados == []
+
+
+def test_lleno_no_gasta_el_codigo(config, a_quien, monkeypatch):
+    from crypto_tracker import usuarios
+
+    codigo = _invitar(config, a_quien)
+    monkeypatch.setattr(usuarios, "MAX_INVITADOS", 0)
+
+    main.atender(config, _de(555, f"/start {codigo}"))
+    assert "lo máximo" in a_quien[-1][1]
+
+    monkeypatch.setattr(usuarios, "MAX_INVITADOS", 10)
+    main.atender(config, _de(555, f"/start {codigo}"))
+    assert "¡Dentro!" in a_quien[-2][1]
+
+
+def test_invitar_lleno(config, a_quien, monkeypatch):
+    from crypto_tracker import usuarios
+
+    monkeypatch.setattr(usuarios, "MAX_INVITADOS", 0)
+    main.atender(config, _mensaje("/invitar"))
+
+    assert "lo máximo" in a_quien[-1][1]

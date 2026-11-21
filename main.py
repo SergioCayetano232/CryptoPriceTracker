@@ -70,6 +70,7 @@ from crypto_tracker import (
     stop,
     tarot,
     telegram,
+    usuarios,
     version,
     whitepaper,
 )
@@ -947,17 +948,18 @@ def esperar_escuchando(config: Config, segundos: int, offset: int | None) -> int
 
 
 def atender(config: Config, mensaje: dict) -> None:
-    """Contesta un mensaje de Telegram, si viene de tu chat."""
+    """Contesta un mensaje de Telegram, si viene de ti o de alguien invitado."""
     chat = str(mensaje.get("chat", {}).get("id", ""))
-    if chat != config.telegram_chat_id:
-        # Cualquiera puede dar con el bot y escribirle; solo te hace caso a ti.
-        logger.warning("Mensaje de un chat que no es el tuyo (%s), lo ignoro", chat)
-        return
-
     texto = mensaje.get("text") or ""
     if time.time() - mensaje.get("date", 0) > ANTIGUEDAD_MAXIMA:
         logger.info("Comando antiguo, no lo contesto: %s", texto)
         return
+
+    quien = _quien(config, chat)
+    if quien is None:
+        entrar(config, mensaje)
+        return
+    config = quien
 
     if mensaje.get("document"):
         recibir_archivo(config, mensaje["document"])
@@ -1085,15 +1087,89 @@ IMPORTAR_AYUDA = (
 )
 
 
+def _quien(config: Config, chat: str) -> Config | None:
+    """Tu config si eres tú, la suya si es un invitado y None si no es nadie."""
+    if chat == config.telegram_chat_id:
+        return config
+    if config.invitado or not usuarios.es_chat(chat):
+        return None
+    try:
+        if not database.es_invitado(config.database_path, chat):
+            return None
+        suya = usuarios.config_de(config, chat)
+        # Siempre: si una versión nueva añade columnas, también van a la suya.
+        database.init_db(suya.database_path)
+    except database.DatabaseError as e:
+        logger.error("No se pudo mirar si %s está invitado: %s", chat, e)
+        return None
+    return suya
+
+
+def entrar(config: Config, mensaje: dict) -> None:
+    """Alguien que no es nadie. Solo le hago caso si trae un código de /invitar."""
+    chat = str(mensaje.get("chat", {}).get("id", ""))
+    partes = (mensaje.get("text") or "").split()
+    es_start = bool(partes) and partes[0].split("@")[0].lower() == "/start"
+    codigo = usuarios.leer_codigo(partes[1]) if es_start and len(partes) == 2 else None
+    # Cualquiera puede dar con el bot y escribirle; sin código, ni le contesto.
+    if codigo is None or not usuarios.es_chat(chat):
+        logger.warning("Mensaje de un chat que no es de nadie (%s), lo ignoro", chat)
+        return
+
+    def decir(texto: str) -> None:
+        telegram.send_message(config.telegram_token, chat, texto)
+
+    # En un grupo lo que vigilara uno le llegaría a todos los demás.
+    if mensaje.get("chat", {}).get("type") != "private":
+        decir("Para entrar, escríbeme por privado.")
+        return
+
+    ahora = datetime.now(timezone.utc)
+    try:
+        # Antes que el código: si no cabe, que no se le gaste.
+        usuarios.comprobar_hueco(len(database.get_invitados(config.database_path)))
+        if not database.canjear_invitacion(config.database_path, codigo, ahora):
+            decir("Ese código no vale o ya ha caducado. Pide otro a quien te invitó.")
+            return
+        nombre = usuarios.nombre(mensaje.get("from") or {})
+        database.guardar_invitado(
+            config.database_path, usuarios.Invitado(chat, nombre, ahora)
+        )
+        database.init_db(usuarios.archivo(config, chat))
+    except usuarios.UsuarioError as e:
+        decir(telegram.escape(str(e)))
+        return
+    except database.DatabaseError as e:
+        logger.error("No se pudo dar de alta a %s: %s", chat, e)
+        decir("Algo ha fallado al apuntarte. Prueba en un rato.")
+        return
+
+    logger.info("Nuevo invitado: %s (%s)", chat, nombre)
+    decir(
+        "👋 <b>¡Dentro!</b> Lo que vigiles y tu cartera son solo tuyos: "
+        "nadie más los ve.\n\n"
+        "Para empezar, dime qué vigilar: /vigilar bitcoin %5\n"
+        "Todo lo que sé hacer: /ayuda"
+    )
+    telegram.send_message(
+        config.telegram_token,
+        config.telegram_chat_id,
+        f"👋 <b>{telegram.escape(nombre or chat)}</b> ha entrado con tu invitación. "
+        "Lo ves en /usuarios",
+    )
+
+
 def atender_boton(config: Config, boton: dict) -> None:
     """Un boton de debajo de un aviso. Lleva dentro el comando que hace."""
     # Hay que contestarlo aunque no sea tuyo, o se queda dando vueltas.
     telegram.answer_callback(config.telegram_token, boton.get("id", ""))
 
     chat = str((boton.get("message") or {}).get("chat", {}).get("id", ""))
-    if chat != config.telegram_chat_id:
-        logger.warning("Boton de un chat que no es el tuyo (%s), lo ignoro", chat)
+    quien = _quien(config, chat)
+    if quien is None:
+        logger.warning("Boton de un chat que no es de nadie (%s), lo ignoro", chat)
         return
+    config = quien
 
     # Sin mirar la antigüedad: un aviso de ayer sigue teniendo sus botones.
     texto = boton.get("data") or ""
@@ -1143,7 +1219,10 @@ def contestar(config: Config, texto: str) -> None:
     orden = comandos.interpretar(texto)
 
     try:
-        respuesta = responder(config, *orden) if orden else comandos.NO_ENTIENDO
+        if orden and config.invitado and orden[0] in usuarios.SOLO_DUEÑO:
+            respuesta = usuarios.SOLO_TUYO
+        else:
+            respuesta = responder(config, *orden) if orden else comandos.NO_ENTIENDO
     except database.DatabaseError as e:
         logger.error("Error de la base de datos contestando '%s': %s", texto, e)
         respuesta = "⚠️ Algo ha fallado con la base de datos. Mira el log."
@@ -1280,6 +1359,59 @@ def _comando_consultas(config: Config, argumento: str) -> Respuesta:
     return cuota.mensaje_estado(total, ahora)
 
 
+def _comando_invitar(config: Config, argumento: str) -> Respuesta:
+    try:
+        usuarios.comprobar_hueco(len(database.get_invitados(config.database_path)))
+    except usuarios.UsuarioError:
+        return (
+            f"Ya tienes {usuarios.MAX_INVITADOS} invitados, que es lo máximo. "
+            "Quita a alguien con /usuarios"
+        )
+    codigo = usuarios.codigo()
+    database.guardar_invitacion(
+        config.database_path,
+        codigo,
+        usuarios.caducidad(datetime.now(timezone.utc)),
+    )
+    return (
+        "🎟 Pásale esto a quien quieras invitar, que me lo escriba por privado:\n\n"
+        f"<code>/start {codigo}</code>\n\n"
+        "<i>Vale una vez y caduca en 24 h. Tendrá su propia cartera y sus avisos, "
+        "y no verá nada tuyo.</i>"
+    )
+
+
+def _comando_usuarios(config: Config, argumento: str) -> Respuesta:
+    invitados = database.get_invitados(config.database_path)
+    if not invitados:
+        return "No has invitado a nadie. Para hacerlo, /invitar"
+    lineas = [f"👥 <b>Tus invitados</b> ({len(invitados)}/{usuarios.MAX_INVITADOS})"]
+    for i in invitados:
+        nombre = telegram.escape(i.nombre or i.chat_id)
+        lineas.append(f"• {nombre} <i>desde el {i.alta.astimezone():%d/%m/%Y}</i>")
+    teclado = [
+        [(f"✖ {i.nombre or i.chat_id}", f"/expulsar {i.chat_id}")] for i in invitados
+    ]
+    return comandos.ConBotones("\n".join(lineas), teclado)
+
+
+def _comando_expulsar(config: Config, argumento: str) -> Respuesta:
+    chat = argumento.strip()
+    if not usuarios.es_chat(chat):
+        return "¿A quién? Pulsa su ✖ en /usuarios"
+    if not database.quitar_invitado(config.database_path, chat):
+        return "No tengo a nadie invitado con ese número."
+    telegram.send_message(
+        config.telegram_token, chat, "Ya no puedes usar este bot. ¡Gracias por pasarte!"
+    )
+    # No lo borro: si lo vuelves a invitar, recupera sus cosas.
+    return (
+        "Fuera. Ya no le contesto ni le aviso de nada. Sus datos siguen en "
+        f"<code>{telegram.escape(usuarios.archivo(config, chat))}</code> por si "
+        "vuelve; si no, bórralo."
+    )
+
+
 def _comando_bot(config: Config, argumento: str) -> Respuesta:
     if _pulso is None:
         return "Esto solo lo sé con el bot vigilando (--loop)."
@@ -1367,6 +1499,9 @@ COMANDOS: dict[str, Callable[[Config, str], Respuesta]] = {
     "alertas": lambda c, a: _alertas(c),
     "quitar": _comando_quitar,
     "consultas": _comando_consultas,
+    "invitar": _comando_invitar,
+    "usuarios": _comando_usuarios,
+    "expulsar": _comando_expulsar,
     "bot": _comando_bot,
     "precio": lambda c, a: _precio(c, a),
     "convertir": lambda c, a: _convertir(c, a),

@@ -27,6 +27,7 @@ from .prediccion import Prediccion
 from .puntuales import Puntual
 from .recordar import Recordatorio, a_texto, de_texto
 from .rezagada import Rezagada
+from .usuarios import Invitado
 
 logger = logging.getLogger(__name__)
 
@@ -130,6 +131,20 @@ CREATE TABLE IF NOT EXISTS dominancia (
     bitcoin    REAL NOT NULL,
     ethereum   REAL,
     estables   REAL
+);
+
+-- La gente a la que has invitado. Sus cosas van en data/usuarios/<chat>.db;
+-- estas dos tablas solo están en la tuya.
+CREATE TABLE IF NOT EXISTS invitados (
+    chat_id  TEXT PRIMARY KEY,
+    nombre   TEXT,
+    alta_at  TEXT NOT NULL
+);
+
+-- Los códigos de /invitar que aún no ha usado nadie.
+CREATE TABLE IF NOT EXISTS invitaciones (
+    codigo     TEXT PRIMARY KEY,
+    caduca_at  TEXT NOT NULL
 );
 """
 
@@ -1677,3 +1692,61 @@ def get_history(db_path: str, coin_id: str, limit: int = 50) -> list[sqlite3.Row
             "WHERE coin_id = ? ORDER BY created_at DESC, id DESC LIMIT ?",
             (coin_id, limit),
         ).fetchall()
+
+
+def guardar_invitacion(db_path: str, codigo: str, caduca: datetime) -> None:
+    with _connect(db_path) as conn:
+        conn.execute(
+            "INSERT INTO invitaciones (codigo, caduca_at) VALUES (?, ?)",
+            (codigo, caduca.isoformat(timespec="seconds")),
+        )
+
+
+def canjear_invitacion(db_path: str, codigo: str, ahora: datetime) -> bool:
+    """True si el código valía. Se gasta al usarlo, y de paso tiro los caducados."""
+    momento = ahora.isoformat(timespec="seconds")
+    with _connect(db_path) as conn:
+        borrado = conn.execute(
+            "DELETE FROM invitaciones WHERE codigo = ? AND caduca_at > ?",
+            (codigo, momento),
+        ).rowcount
+        conn.execute("DELETE FROM invitaciones WHERE caduca_at <= ?", (momento,))
+    return borrado > 0
+
+
+def guardar_invitado(db_path: str, invitado: Invitado) -> None:
+    with _connect(db_path) as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO invitados (chat_id, nombre, alta_at) "
+            "VALUES (?, ?, ?)",
+            (
+                invitado.chat_id,
+                invitado.nombre,
+                invitado.alta.isoformat(timespec="seconds"),
+            ),
+        )
+
+
+def get_invitados(db_path: str) -> list[Invitado]:
+    with _connect(db_path) as conn:
+        filas = conn.execute(
+            "SELECT chat_id, nombre, alta_at FROM invitados ORDER BY alta_at"
+        ).fetchall()
+    return [
+        Invitado(f["chat_id"], f["nombre"], datetime.fromisoformat(f["alta_at"]))
+        for f in filas
+    ]
+
+
+def es_invitado(db_path: str, chat_id: str) -> bool:
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT 1 FROM invitados WHERE chat_id = ?", (chat_id,)
+        ).fetchone()
+    return fila is not None
+
+
+def quitar_invitado(db_path: str, chat_id: str) -> bool:
+    with _connect(db_path) as conn:
+        cursor = conn.execute("DELETE FROM invitados WHERE chat_id = ?", (chat_id,))
+    return cursor.rowcount > 0
