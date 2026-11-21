@@ -7,6 +7,7 @@ from .. import (
     aleatoria,
     alerts,
     avisados,
+    binance,
     botones,
     cartera,
     coingecko,
@@ -23,6 +24,7 @@ from .. import (
     moneda,
     redondo,
     simbolos,
+    spread,
     telegram,
     top,
 )
@@ -314,6 +316,42 @@ def _funding(config: Config, argumento: str) -> str | comandos.ConBotones:
     return comandos.ConBotones(
         alerts.formatear_funding(resultado), botones.actualizar(f"/funding {coin_id}")
     )
+
+
+def _spread(config: Config, argumento: str) -> str | comandos.ConBotones:
+    try:
+        coin_ids = spread.interpretar(argumento)
+    except spread.SpreadError as e:
+        return telegram.escape(str(e))
+    if not coin_ids:
+        vigiladas = _con_cambios(config).watchlist
+        coin_ids = [w.coin_id for w in vigiladas][: simbolos.MAX_VARIAS]
+    if not coin_ids:
+        return f"¿De cuáles? Por ejemplo: {spread.EJEMPLO}"
+    if config.vs_currency not in binance.MONEDAS:
+        return "Binance solo me da precios en euros o en dólares."
+
+    # Los dos de ahora y no lo guardado: si no, la diferencia sería de minutos.
+    try:
+        de_coingecko = coingecko.get_prices(coin_ids, config.vs_currency)
+    except coingecko.CoinGeckoError as e:
+        return f"CoinGecko no contesta ahora mismo: {telegram.escape(str(e))}"
+    try:
+        de_binance = binance.precios(coin_ids, config.vs_currency)
+    except binance.BinanceError as e:
+        return f"Binance no contesta ahora mismo: {telegram.escape(str(e))}"
+
+    filas, sueltas = spread.calcular(coin_ids, de_coingecko, de_binance)
+    if not filas:
+        return "No he podido comparar ninguna. " + "; ".join(
+            f"{c}: {spread.por_que_no(c)}" for c in sueltas
+        )
+    texto = alerts.con_fuente(spread.texto(filas, sueltas, config.vs_currency))
+    # Con lo que escribiste y no con los ids, que «avalanche-2» ocupa mucho.
+    orden = f"/spread {argumento}".strip()
+    if len(orden.encode()) > botones.MAX_DATOS:
+        return texto
+    return comandos.ConBotones(texto, botones.actualizar(orden))
 
 
 def _miedo() -> str | comandos.ConBotones:

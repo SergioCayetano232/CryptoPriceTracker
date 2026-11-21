@@ -395,6 +395,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/miedo` | El índice de miedo y codicia del mercado (0 pánico, 100 euforia), con el de ayer y el de hace una semana. Viene de alternative.me y no gasta consultas de CoinGecko |
 | `/sesgo` | Con qué humor del mercado compras y vendes: cuántas de tus compras y ventas fueron con miedo extremo, miedo, neutral, codicia o codicia extrema (el índice de alternative.me del día de cada una), y cómo van hoy las compras de cada grupo. Te dice si sueles comprar con codicia o vender con miedo, a partir de tres. Solo cuenta las de `/compra` y `/venta`, que llevan fecha. También `/humor` |
 | `/comisionred` | Lo que cuesta ahora mover bitcoin, con prisa y sin ella, en dinero y en sat/vB, para un envío normal de una entrada y dos salidas. Te dice si está barata, normal o cara comparada con lo normal de la semana. Viene de mempool.space y no gasta consultas de CoinGecko. También `/mempool` |
+| `/spread btc eth` | El precio de ahora en CoinGecko y en Binance, uno al lado del otro, y cuánto se separan (la que más, arriba). Con ⚠️ si pasa del 3%, que suele ser un dato malo: con esas el bot no te avisa hasta que cuadran. A secas, las que vigilas. Gasta una consulta. Solo en euros o dólares |
 | `/funding btc` | Lo que pagan cada 8 horas en los futuros de Binance los que apuestan a que sube a los que apuestan a que baja, la media de la semana y un nivel: de "muchos apostando a que baja" a "muy apalancado al alza", que es cuando suelen venir las caídas bruscas. A secas, la primera que vigilo. No gasta consultas de CoinGecko. También `/financiacion` |
 | `/direccion bc1q... frío` | Vigila esa dirección de bitcoin con ese nombre y, mientras está en `--loop`, te avisa en cuanto entra o sale algo, sin esperar a que se confirme: cuánto, en BTC y en dinero, y con cuánto se queda. Sirve para tu monedero frío o para seguir a una ballena. Hasta 10. `/direccion` a secas, las que vigilo con lo que tiene cada una; `/direccion quitar frío`, deja de vigilarla. Las mira en mempool.space, así que ellos ven qué direcciones consultas. También `/monedero` |
 | `/direccion 0x... ledger` | Lo mismo con una de ethereum (las que empiezan por `0x`). Avisa cuando cambia su saldo en ETH, ya confirmado, unos segundos después del bloque. Solo mira el ETH, no los tokens como USDT. La consulta va a un nodo público (publicnode.com), que ve qué direcciones miras, y el enlace a etherscan.io. Para que el aviso lleve su valor en dinero, vigila también ethereum o tenla en la cartera |
@@ -905,6 +906,7 @@ crypto_tracker/
   coingecko.py   consulta los precios
   binance.py     precios de respaldo por si CoinGecko no contesta
   comisionred.py lo que cuesta mover bitcoin, de mempool.space, para /comisionred
+  spread.py      CoinGecko contra Binance, para /spread
   funding.py     lo que se pagan los de futuros en Binance, para /funding
   direccion.py   vigila direcciones de bitcoin (mempool.space) y ethereum, para /direccion
   database.py    guarda el histórico

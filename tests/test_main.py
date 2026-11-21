@@ -12201,3 +12201,75 @@ def test_salvo_sin_silencio_no_hace_nada(config, enviados, monkeypatch):
 
     assert not any(t.startswith("🚨") for t in enviados)
     assert database.silencio_salvo(config.database_path) is None
+
+
+# --- /spread ---
+
+
+def test_spread(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 60000.0, "ethereum": 2000.0, "tether": 0.92})
+    monkeypatch.setattr(
+        binance, "precios", lambda ids, cur: {"bitcoin": 60060.0, "ethereum": 1900.0}
+    )
+
+    main.atender(config, _mensaje("/spread btc eth usdt"))
+
+    texto = enviados[0]
+    assert texto.index("Ethereum") < texto.index("Bitcoin")  # la más separada antes
+    assert "⚠️ <b>Ethereum</b>" in texto
+    assert "(+0,10%)" in texto
+    assert "➖ <b>Tether</b>: es una estable" in texto
+
+
+def test_spread_a_secas_las_que_vigilas(config, enviados, monkeypatch):
+    pedidas = _precio(monkeypatch, {"bitcoin": 60000.0})
+    monkeypatch.setattr(binance, "precios", lambda ids, cur: {"bitcoin": 60000.0})
+
+    main.atender(config, _mensaje("/spread"))
+
+    assert pedidas == [["bitcoin"]]
+    assert "(igual)" in enviados[0]
+
+
+def test_spread_boton_con_lo_que_escribiste(config, monkeypatch):
+    mandados = _con_botones(monkeypatch)
+    _precio(monkeypatch, {"bitcoin": 60000.0, "avalanche-2": 30.0})
+    monkeypatch.setattr(
+        binance, "precios", lambda ids, cur: {"bitcoin": 60000.0, "avalanche-2": 30.0}
+    )
+
+    main.atender(config, _mensaje("/spread btc avax"))
+
+    assert mandados[0][1] == [[("🔄 Actualizar", "/spread btc avax")]]
+
+
+def test_spread_con_muchas_va_sin_boton(config, enviados, monkeypatch):
+    nombres = "bitcoin ethereum solana cardano dogecoin litecoin chainlink polkadot"
+    precios = {c: 1.0 for c in nombres.split()}
+    _precio(monkeypatch, precios)
+    monkeypatch.setattr(binance, "precios", lambda ids, cur: precios)
+
+    main.atender(config, _mensaje(f"/spread {nombres}"))
+
+    assert "CoinGecko contra Binance" in enviados[0]
+
+
+def test_spread_si_binance_no_contesta(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+
+    def caido(ids, cur):
+        raise binance.BinanceError("sin red")
+
+    monkeypatch.setattr(binance, "precios", caido)
+
+    main.atender(config, _mensaje("/spread btc"))
+
+    assert "Binance no contesta ahora mismo" in enviados[0]
+
+
+def test_spread_en_libras_no(config, enviados):
+    from dataclasses import replace
+
+    main.atender(replace(config, vs_currency="gbp"), _mensaje("/spread btc"))
+
+    assert "euros o en dólares" in enviados[0]

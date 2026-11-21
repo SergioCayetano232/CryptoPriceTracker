@@ -206,6 +206,7 @@ COMANDOS = {
     "comisionred": "Lo que cuesta ahora mover bitcoin y si está barato",
     "direccion": "Vigila una dirección de bitcoin o ethereum y avisa si se mueve",
     "funding": "Si los de futuros apuestan a que sube o baja (ej: /funding btc)",
+    "spread": "El precio de CoinGecko contra el de Binance (ej: /spread btc eth)",
     "buscar": "Encuentra el id de una cripto (ej: /buscar btc)",
     "copia": "Lo que vigilo y tu cartera, listo para pegar en el .env",
     "ajustes": "Lo que tienes puesto: moneda, horas tranquilas, avisos...",
@@ -823,6 +824,10 @@ EJEMPLOS = {
     "estacional": [
         ("/estacional btc", "cada mes desde 2017, y si sube más de lo que baja"),
         ("/estacional", "a secas, la primera que vigilo"),
+    ],
+    "spread": [
+        ("/spread btc eth", "lo que da cada uno de esas y cuánto se separan"),
+        ("/spread", "a secas, las que vigilo"),
     ],
     "funding": [
         ("/funding btc", "lo que pagan los de futuros de bitcoin y si está apalancado"),
