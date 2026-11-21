@@ -58,6 +58,10 @@ Necesitas dos datos: el **token** del bot y tu **chat id**.
 **Importante:** busca el bot que acabas de crear y escríbele `/start`. Si no lo
 haces, Telegram no le deja mandarte mensajes.
 
+**Opcional, para mandar precios a otros chats:** escríbele `/setinline` a
+@BotFather, elige tu bot y pon un texto cualquiera (por ejemplo `btc eth`). Así
+puedes escribir `@tubot btc` en cualquier conversación.
+
 ---
 
 ## La clave de CoinGecko
@@ -180,6 +184,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/precio` | Sin decir cuál, todas las que vigilas |
 | `/precio btc usd` | En otra moneda solo esa vez (`eur`, `usd` o `gbp`; también `$` o `dólares`). Vale con varias y con `/precio usd` a secas. No sale lo tuyo de la cartera, que va en la moneda del `.env` |
 | `btc` o `btc eth` | Sin barra, lo mismo que `/precio`. Solo con las conocidas, para que un "hola" no se lo tome como una cripto |
+| `@tubot btc` | En cualquier chat, no solo en el del bot: te salen encima del teclado el precio y cómo va en 24 h, y al tocarlo se lo mandas a quien sea. A secas, las que vigilas. Hay que activarlo antes con `/setinline` en @BotFather. Sale de lo guardado y no gasta consultas, así que solo vale con las que vigilas. Solo te contesta a ti, y solo si `TELEGRAM_CHAT_ID` es tu chat (no un grupo) |
 | `avísame si btc baja de 60000` | Algunas frases también las entiende sin barra: «avísame cuando eth suba un 10%» es `/alerta eth +10%`, «avísame si btc baja de 60000 y el miedo está por debajo de 20» es `/alerta btc 60000 si miedo<20`, «cuánto vale sol» es `/precio sol`, «cómo va mi cartera» es `/cartera`, «cállate 2 horas» es `/mute 2h` y «qué sabes hacer» es `/ayuda`. Nunca apunta compras ni ventas así: si lo entendiera mal, te descuadraría la cartera |
 | `/ath bitcoin` | Su máximo histórico, cuándo fue y cuánto le falta para volver, y debajo su mínimo histórico y cuánto ha subido desde ahí (vale `/ath btc eth`, solo con el máximo, y a secas, las que vigilas) |
 | `/cartera` | Tu cartera: cuánto vale, cuánto ganas o pierdes, el total en sats y la gráfica de 7 días |

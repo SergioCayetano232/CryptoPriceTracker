@@ -392,6 +392,7 @@ def test_pide_tambien_los_botones_pulsados(monkeypatch):
     telegram.get_updates("token", None, 30)
 
     assert "callback_query" in pedido["allowed_updates"]
+    assert "inline_query" in pedido["allowed_updates"]
 
 
 def test_contestar_un_boton(monkeypatch):
@@ -557,3 +558,27 @@ def test_descargar_sin_red(monkeypatch):
     monkeypatch.setattr(requests, "get", sin_red)
 
     assert telegram.descargar("token", "abc") is None
+
+
+def test_contesta_la_consulta_inline(monkeypatch):
+    from crypto_tracker.inline import tarjeta
+
+    pedidos = []
+    monkeypatch.setattr(
+        requests,
+        "post",
+        lambda url, json, **k: pedidos.append((url, json)) or RespuestaFalsa(),
+    )
+
+    ok = telegram.answer_inline("T", "q1", [tarjeta("bitcoin", 63000, 1, "eur")], 30)
+
+    url, payload = pedidos[0]
+    assert ok
+    assert url.endswith("/answerInlineQuery")
+    assert payload["inline_query_id"] == "q1"
+    assert payload["cache_time"] == 30
+    assert payload["is_personal"] is True
+    resultado = payload["results"][0]
+    assert resultado["type"] == "article"
+    assert resultado["id"] == "bitcoin"
+    assert resultado["input_message_content"]["parse_mode"] == "HTML"

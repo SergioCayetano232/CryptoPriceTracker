@@ -54,6 +54,7 @@ from crypto_tracker import (
     grafica,
     halving,
     importar,
+    inline,
     maximo,
     merge,
     movimientos,
@@ -931,6 +932,8 @@ def esperar_escuchando(config: Config, segundos: int, offset: int | None) -> int
             try:
                 if "callback_query" in update:
                     atender_boton(config, update["callback_query"])
+                elif "inline_query" in update:
+                    atender_inline(config, update["inline_query"])
                 else:
                     atender(config, update.get("message") or {})
             except Exception:
@@ -1092,6 +1095,43 @@ def atender_boton(config: Config, boton: dict) -> None:
     texto = boton.get("data") or ""
     logger.info("Boton pulsado: %s", texto)
     contestar(config, texto)
+
+
+def atender_inline(config: Config, consulta: dict) -> None:
+    """@tubot btc desde cualquier chat. Solo con lo guardado: Telegram pregunta
+    con cada letra y eso, contra CoinGecko, se comería la cuota en un rato."""
+    quien = str((consulta.get("from") or {}).get("id", ""))
+    if quien != config.telegram_chat_id:
+        # Sin contestar: a otro ni le sale nada ni le cuesta nada al bot.
+        logger.warning("Consulta inline de alguien que no eres tú (%s)", quien)
+        return
+
+    config = _con_cambios(config)
+    ids = inline.criptos(
+        consulta.get("query") or "", [w.coin_id for w in config.watchlist]
+    )
+    ahora = datetime.now(timezone.utc)
+    tarjetas = []
+    try:
+        guardado = database.ultimo_guardado(config.database_path)
+        for coin_id in ids:
+            precio = database.get_last_price(config.database_path, coin_id)
+            if not precio:
+                continue
+            antes = database.get_price_at(config.database_path, coin_id, 24)
+            variacion = (precio - antes) / antes * 100 if antes else None
+            tarjetas.append(
+                inline.tarjeta(
+                    coin_id, precio, variacion, config.vs_currency, guardado, ahora
+                )
+            )
+    except database.DatabaseError as e:
+        logger.error("Error de la base de datos en una consulta inline: %s", e)
+        return
+
+    telegram.answer_inline(
+        config.telegram_token, consulta.get("id", ""), tarjetas, inline.CACHE
+    )
 
 
 def contestar(config: Config, texto: str) -> None:

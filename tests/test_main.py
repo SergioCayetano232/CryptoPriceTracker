@@ -12043,3 +12043,53 @@ def test_binance_compara_y_no_enseña_el_secreto(config, enviados, monkeypatch, 
     assert "➕ <b>Ethereum</b>: 1 en Binance, sin apuntar" in texto
     assert "SECRETO-QUE-NO-SALE" not in texto
     assert "SECRETO-QUE-NO-SALE" not in caplog.text
+
+
+def _inline(monkeypatch):
+    """Lo que el bot contestaría a una consulta inline, sin ir a Telegram."""
+    contestadas = []
+    monkeypatch.setattr(
+        telegram,
+        "answer_inline",
+        lambda token, qid, tarjetas, cache: contestadas.append((qid, tarjetas)),
+    )
+    # Si tirara de CoinGecko con cada letra, este test se enteraría.
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    return contestadas
+
+
+def test_inline_con_lo_guardado(config, monkeypatch):
+    contestadas = _inline(monkeypatch)
+    ayer = datetime.now(timezone.utc) - timedelta(hours=24, minutes=5)
+    database.guardar_serie(config.database_path, "bitcoin", [(ayer, 60000)], "eur")
+    database.save_prices(
+        config.database_path, {"bitcoin": 63000.0, "ethereum": 2500.0}, "eur"
+    )
+
+    main.atender_inline(config, {"id": "q9", "from": {"id": 123}, "query": "btc eth"})
+
+    qid, tarjetas = contestadas[0]
+    assert qid == "q9"
+    assert [t.coin_id for t in tarjetas] == ["bitcoin", "ethereum"]
+    assert tarjetas[0].texto == "💰 <b>Bitcoin</b>  €63.000,00\n🔺 +5.00% en 24 h"
+    assert tarjetas[1].descripcion.startswith("Sin datos de las últimas 24 h")
+
+
+def test_inline_vacia_son_las_vigiladas_y_salta_las_que_no_tengo(config, monkeypatch):
+    contestadas = _inline(monkeypatch)
+    database.save_prices(config.database_path, {"bitcoin": 63000.0}, "eur")
+
+    main.atender_inline(config, {"id": "q1", "from": {"id": 123}, "query": ""})
+    main.atender_inline(config, {"id": "q2", "from": {"id": 123}, "query": "sol"})
+
+    assert [t.coin_id for t in contestadas[0][1]] == ["bitcoin"]
+    assert contestadas[1][1] == []
+
+
+def test_inline_de_otro_no_contesta(config, monkeypatch):
+    contestadas = _inline(monkeypatch)
+    database.save_prices(config.database_path, {"bitcoin": 63000.0}, "eur")
+
+    main.atender_inline(config, {"id": "q1", "from": {"id": 999}, "query": "btc"})
+
+    assert contestadas == []

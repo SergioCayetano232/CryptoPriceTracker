@@ -15,6 +15,7 @@ COMMANDS_URL = "https://api.telegram.org/bot{token}/setMyCommands"
 PHOTO_URL = "https://api.telegram.org/bot{token}/sendPhoto"
 DOCUMENT_URL = "https://api.telegram.org/bot{token}/sendDocument"
 ANSWER_URL = "https://api.telegram.org/bot{token}/answerCallbackQuery"
+INLINE_URL = "https://api.telegram.org/bot{token}/answerInlineQuery"
 GETFILE_URL = "https://api.telegram.org/bot{token}/getFile"
 FILE_URL = "https://api.telegram.org/file/bot{token}/{ruta}"
 
@@ -303,7 +304,7 @@ def get_updates(token: str, offset: int | None, espera: int) -> list[dict]:
     """
     params = {
         "timeout": espera,
-        "allowed_updates": '["message", "callback_query"]',
+        "allowed_updates": '["message", "callback_query", "inline_query"]',
     }
     if offset is not None:
         params["offset"] = offset
@@ -331,6 +332,34 @@ def answer_callback(token: str, callback_id: str) -> bool:
             ANSWER_URL.format(token=token),
             json={"callback_query_id": callback_id},
             timeout=TIMEOUT,
+        )
+        return bool(response.json().get("ok"))
+    except (requests.RequestException, ValueError):
+        return False
+
+
+def answer_inline(token: str, query_id: str, tarjetas: list, cache: int) -> bool:
+    """Las opciones que salen encima del teclado al escribir @tubot btc."""
+    resultados = [
+        {
+            "type": "article",
+            "id": t.coin_id,
+            "title": t.titulo,
+            "description": t.descripcion,
+            "input_message_content": {"message_text": t.texto, "parse_mode": "HTML"},
+        }
+        for t in tarjetas
+    ]
+    # is_personal: lo que ve otro no tiene que salir de tu caché.
+    payload = {
+        "inline_query_id": query_id,
+        "results": resultados,
+        "cache_time": cache,
+        "is_personal": True,
+    }
+    try:
+        response = requests.post(
+            INLINE_URL.format(token=token), json=payload, timeout=TIMEOUT
         )
         return bool(response.json().get("ok"))
     except (requests.RequestException, ValueError):
