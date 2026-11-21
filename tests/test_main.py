@@ -3369,7 +3369,8 @@ def test_bot_cuenta_las_consultas_del_mes(config, enviados, monkeypatch):
 def test_el_bucle_deja_su_pulso_para_bot(config, enviados, monkeypatch):
     monkeypatch.setattr(main, "_pulso", None)
     monkeypatch.setattr(telegram, "set_commands", lambda *a: True)
-    monkeypatch.setattr(main, "ejecutar_ciclo", lambda c, e, s: (e, None))
+    monkeypatch.setattr(main, "ejecutar_ciclo", lambda c, e, s, p=None: (e, None))
+    monkeypatch.setattr(main, "pedir_precios", lambda *a: main.Pedidos({}))
     monkeypatch.setattr(main, "apuntar_consultas", lambda c: None)
 
     def corta(*a):
@@ -3387,7 +3388,8 @@ def test_el_bucle_deja_su_pulso_para_bot(config, enviados, monkeypatch):
 def test_el_bucle_pone_el_menu_corto(config, enviados, monkeypatch):
     puestos = []
     monkeypatch.setattr(telegram, "set_commands", lambda t, c: puestos.append(c))
-    monkeypatch.setattr(main, "ejecutar_ciclo", lambda c, e, s: (e, None))
+    monkeypatch.setattr(main, "ejecutar_ciclo", lambda c, e, s, p=None: (e, None))
+    monkeypatch.setattr(main, "pedir_precios", lambda *a: main.Pedidos({}))
     monkeypatch.setattr(main, "apuntar_consultas", lambda c: None)
 
     def corta(*a):
@@ -3403,7 +3405,8 @@ def test_el_bucle_pone_el_menu_corto(config, enviados, monkeypatch):
 def _arrancar_bucle(config, monkeypatch):
     """Arranca --loop y lo corta tras el primer ciclo."""
     monkeypatch.setattr(telegram, "set_commands", lambda *a: True)
-    monkeypatch.setattr(main, "ejecutar_ciclo", lambda c, e, s: (e, None))
+    monkeypatch.setattr(main, "ejecutar_ciclo", lambda c, e, s, p=None: (e, None))
+    monkeypatch.setattr(main, "pedir_precios", lambda *a: main.Pedidos({}))
     monkeypatch.setattr(main, "apuntar_consultas", lambda c: None)
 
     def corta(*a):
@@ -12411,3 +12414,93 @@ def test_invitar_lleno(config, a_quien, monkeypatch):
     main.atender(config, _mensaje("/invitar"))
 
     assert "lo máximo" in a_quien[-1][1]
+
+
+# --- el ciclo con invitados ---
+
+
+def _una_vuelta(config, monkeypatch):
+    """ejecutar_bucle hasta la primera espera, que es donde se corta."""
+    monkeypatch.setattr(telegram, "set_commands", lambda *a: True)
+    monkeypatch.setattr(main, "apuntar_consultas", lambda c: None)
+    monkeypatch.setattr(main, "avisar_encendido", lambda c: None)
+
+    def corta(*a):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(main, "esperar_escuchando", corta)
+    with pytest.raises(KeyboardInterrupt):
+        main.ejecutar_bucle(config, {})
+
+
+def _con_invitado(config, a_quien, chat=555):
+    codigo = _invitar(config, a_quien)
+    main.atender(config, _de(chat, f"/start {codigo}"))
+
+
+def test_el_ciclo_avisa_a_cada_uno_con_una_consulta(config, a_quien, monkeypatch):
+    pedidas = _precio(monkeypatch, {"bitcoin": 60000.0, "solana": 150.0})
+    _con_invitado(config, a_quien)
+    main.atender(config, _de(555, "/alerta solana 140"))
+    main.atender(config, _mensaje("/alerta bitcoin 55000"))
+    pedidas.clear()
+    a_quien.clear()
+
+    pedidas = _precio(monkeypatch, {"bitcoin": 50000.0, "solana": 130.0})
+    _una_vuelta(config, monkeypatch)
+
+    assert pedidas == [["bitcoin", "solana"]]  # una sola, con las de los dos
+    suyos = [t for c, t in a_quien if c == "555"]
+    tuyos = [t for c, t in a_quien if c == "123"]
+    assert any("Solana" in t for t in suyos)
+    assert not any("Bitcoin" in t for t in suyos)
+    assert any("Bitcoin" in t for t in tuyos)
+    assert not any("Solana" in t for t in tuyos)
+
+
+def test_el_invitado_sin_nada_no_pasa_ciclo(config, a_quien, monkeypatch):
+    pedidas = _precio(monkeypatch, {"bitcoin": 60000.0})
+    _con_invitado(config, a_quien)
+    pasados = []
+    original = main.ejecutar_ciclo
+    monkeypatch.setattr(
+        main,
+        "ejecutar_ciclo",
+        lambda c, *a: pasados.append(c.telegram_chat_id) or original(c, *a),
+    )
+
+    _una_vuelta(config, monkeypatch)
+
+    assert pasados == ["123"]
+    assert pedidas == [["bitcoin"]]
+
+
+def test_si_falla_lo_de_un_invitado_sigues_tu(config, a_quien, monkeypatch, caplog):
+    _precio(monkeypatch, {"bitcoin": 60000.0, "solana": 150.0})
+    _con_invitado(config, a_quien)
+    main.atender(config, _de(555, "/vigilar solana %5"))
+    original = main.ejecutar_ciclo
+
+    def rompe(c, *a):
+        if c.invitado:
+            raise RuntimeError("roto")
+        return original(c, *a)
+
+    monkeypatch.setattr(main, "ejecutar_ciclo", rompe)
+    _una_vuelta(config, monkeypatch)
+
+    assert "Error en el ciclo del invitado 555" in caplog.text
+    assert main._pulso.ultimo_bien is not None  # el tuyo fue bien
+
+
+def test_un_id_que_no_existe_no_se_pide_aparte(config, monkeypatch):
+    pedidas = _precio(monkeypatch, {"bitcoin": 60000.0})
+    pedidos = main.pedir_precios(["bitcoin", "no-existe"], "eur")
+    pedidas.clear()
+
+    from dataclasses import replace
+
+    con_rara = replace(config, watchlist=[Watch("bitcoin"), Watch("no-existe")])
+    main.ejecutar_ciclo(con_rara, {}, set(), pedidos)
+
+    assert pedidas == []

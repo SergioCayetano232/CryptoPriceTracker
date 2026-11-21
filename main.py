@@ -16,7 +16,7 @@ import logging
 import sys
 import time
 from collections.abc import Callable
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from datetime import date, datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
@@ -286,34 +286,77 @@ def configurar_logs(verbose: bool = False) -> None:
     )
 
 
-def ejecutar_ciclo(
-    config: Config, estado: dict[str, str], sin_precio: set[str] | None = None
-) -> tuple[dict[str, str], str | None]:
-    """Un ciclo completo: consultar, guardar, comparar y avisar.
+@dataclass(frozen=True)
+class Pedidos:
+    """Los precios de un ciclo, pedidos una vez para ti y todos los invitados."""
 
-    Devuelve el estado actualizado y, si no hubo precios, el porque. Si algo
-    falla, lo registra y devuelve el estado sin tocar para reintentar luego.
-    sin_precio son los ids de los que ya se aviso que no existen.
-    """
-    config = _con_cambios(config)
+    precios: dict[str, float]
+    # Lo pedido, no lo que llegó: un id que CoinGecko no conoce no vuelve y, si
+    # mirara lo que llegó, lo pediría otra vez aparte en cada ciclo.
+    pedidas: frozenset[str] = frozenset()
+    respaldo: bool = False  # True si son de Binance
+    error: str | None = None  # si no hay ni de CoinGecko ni de Binance
+
+
+def _todas(config: Config, pendientes: list[puntuales.Puntual]) -> list[str]:
+    """Lo que pide el ciclo: lo vigilado primero y luego lo demás."""
     coin_ids = [w.coin_id for w in config.watchlist]
-    pendientes = _caducar(config, _puntuales(config))
     # Las de /alerta y la cartera pueden ser de criptos que no vigilas. Van en
     # la misma consulta, y asi la cartera tiene historico para su grafica.
     extra = [p.coin_id for p in (*pendientes, *config.cartera)]
     extra += alertaratio.criptos(_alertas_ratio(config))
     extra = [c for c in extra if c not in coin_ids and c != puntuales.CARTERA]
+    return coin_ids + list(dict.fromkeys(extra))
 
-    todas = coin_ids + list(dict.fromkeys(extra))
-    respaldo = False
+
+def a_pedir(config: Config) -> list[str]:
+    """Las de _todas sin caducar nada, para juntar las de todos antes del ciclo."""
+    config = _con_cambios(config)
+    return _todas(config, _puntuales(config))
+
+
+def pedir_precios(todas: list[str], vs_currency: str) -> Pedidos:
+    pedidas = frozenset(todas)
     try:
-        precios = coingecko.get_prices(todas, config.vs_currency)
+        return Pedidos(coingecko.get_prices(todas, vs_currency), pedidas)
     except coingecko.CoinGeckoError as e:
         logger.error("No se pudieron consultar los precios: %s", e)
-        precios = _precios_de_binance(todas, config.vs_currency)
+        precios = _precios_de_binance(todas, vs_currency)
         if not precios:
-            return estado, str(e)
-        respaldo = True
+            return Pedidos({}, pedidas, error=str(e))
+        return Pedidos(precios, pedidas, respaldo=True)
+
+
+def ejecutar_ciclo(
+    config: Config,
+    estado: dict[str, str],
+    sin_precio: set[str] | None = None,
+    pedidos: Pedidos | None = None,
+) -> tuple[dict[str, str], str | None]:
+    """Un ciclo completo: consultar, guardar, comparar y avisar.
+
+    Devuelve el estado actualizado y, si no hubo precios, el porque. Si algo
+    falla, lo registra y devuelve el estado sin tocar para reintentar luego.
+    sin_precio son los ids de los que ya se aviso que no existen. pedidos, los
+    precios ya pedidos para todos; sin ellos, los pide él.
+    """
+    config = _con_cambios(config)
+    coin_ids = [w.coin_id for w in config.watchlist]
+    pendientes = _caducar(config, _puntuales(config))
+    todas = _todas(config, pendientes)
+
+    if pedidos is None:
+        pedidos = pedir_precios(todas, config.vs_currency)
+    elif not pedidos.error and (
+        faltan := [c for c in todas if c not in pedidos.pedidas]
+    ):
+        # Lo que se ha añadido entre que se juntaron y ahora: lo pido aparte.
+        extra = pedir_precios(faltan, config.vs_currency)
+        pedidos = replace(pedidos, precios={**pedidos.precios, **extra.precios})
+    if pedidos.error:
+        return estado, pedidos.error
+    precios = {c: pedidos.precios[c] for c in todas if c in pedidos.precios}
+    respaldo = pedidos.respaldo
 
     # Con los de Binance faltarán las que no tiene, pero CoinGecko sí las conoce.
     if not respaldo:
@@ -836,22 +879,24 @@ def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:
         logger.warning("No se pudo poner el menu de comandos en Telegram")
     avisar_encendido(config)
 
+    estados: dict[str, dict[str, str]] = {}
+    sin_precios: dict[str, set[str]] = {}
+
     while True:
         try:
-            estado, problema = ejecutar_ciclo(config, estado, sin_precio)
+            invitados = _invitados(config)
+            suyas = {c.telegram_chat_id: a_pedir(c) for c in invitados}
+            # Una sola consulta con las de todos: cada invitado no gasta otra.
+            todas = [*a_pedir(config), *(c for lista in suyas.values() for c in lista)]
+            pedidos = pedir_precios(list(dict.fromkeys(todas)), config.vs_currency)
+
+            estado, problema = ejecutar_ciclo(config, estado, sin_precio, pedidos)
             fallos = 0
-            fin_del_silencio(config)
-            resumen_diario(config)
-            resumen_semanal(config)
-            resumen_mensual(config)
-            resumen_anual(config)
-            aviso_compensar(config)
-            recordatorios(config)
-            programados(config)
-            pensados(config)
-            cerrar_predicciones(config)
-            copia_semanal(config)
+            for tarea in tareas():
+                tarea(config)
+            # Es del mercado, no de nadie: con la tuya basta.
             foto_dominancia(config)
+            ciclo_invitados(invitados, suyas, pedidos, estados, sin_precios)
         except KeyboardInterrupt:
             raise
         except Exception as e:
@@ -873,6 +918,69 @@ def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:
         # Aqui entran tambien las de los comandos de la espera anterior.
         apuntar_consultas(config)
         offset = esperar_escuchando(config, config.check_interval, offset)
+
+
+def tareas() -> tuple[Callable[[Config], None], ...]:
+    """Lo que se mira cada ciclo después de los avisos, igual para todos."""
+    # En una función: varias se definen más abajo en este archivo.
+    return (
+        fin_del_silencio,
+        resumen_diario,
+        resumen_semanal,
+        resumen_mensual,
+        resumen_anual,
+        aviso_compensar,
+        recordatorios,
+        programados,
+        pensados,
+        cerrar_predicciones,
+        copia_semanal,
+    )
+
+
+def _invitados(config: Config) -> list[Config]:
+    """La config de cada invitado, con su archivo listo."""
+    try:
+        lista = database.get_invitados(config.database_path)
+    except database.DatabaseError as e:
+        logger.error("No se pudieron leer los invitados: %s", e)
+        return []
+    configs = []
+    for invitado in lista:
+        suya = usuarios.config_de(config, invitado.chat_id)
+        try:
+            database.init_db(suya.database_path)
+        except database.DatabaseError as e:
+            logger.error("No se pudo abrir lo de %s: %s", invitado.chat_id, e)
+            continue
+        configs.append(suya)
+    return configs
+
+
+def ciclo_invitados(
+    invitados: list[Config],
+    suyas: dict[str, list[str]],
+    pedidos: "Pedidos",
+    estados: dict[str, dict[str, str]],
+    sin_precios: dict[str, set[str]],
+) -> None:
+    """El ciclo y las tareas de cada invitado, con los precios ya pedidos."""
+    for suya in invitados:
+        chat = suya.telegram_chat_id
+        # Sin nada que vigilar no hay avisos ni resúmenes que mandar.
+        if not suyas.get(chat):
+            continue
+        try:
+            if chat not in estados:
+                estados[chat] = database.load_state(suya.database_path)
+            estados[chat], _ = ejecutar_ciclo(
+                suya, estados[chat], sin_precios.setdefault(chat, set()), pedidos
+            )
+            for tarea in tareas():
+                tarea(suya)
+        except Exception:
+            # Que lo de uno no te deje sin avisos a ti ni a los demás.
+            logger.exception("Error en el ciclo del invitado %s", chat)
 
 
 def avisar_encendido(config: Config) -> None:
