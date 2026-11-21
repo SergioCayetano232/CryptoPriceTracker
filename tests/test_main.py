@@ -12504,3 +12504,37 @@ def test_un_id_que_no_existe_no_se_pide_aparte(config, monkeypatch):
     main.ejecutar_ciclo(con_rara, {}, set(), pedidos)
 
     assert pedidas == []
+
+
+def test_inline_del_invitado_con_lo_suyo(config, a_quien, monkeypatch):
+    from crypto_tracker import usuarios
+
+    _precio(monkeypatch, {"solana": 150.0})
+    _con_invitado(config, a_quien)
+    main.atender(config, _de(555, "/vigilar solana %5"))
+    database.save_prices(config.database_path, {"bitcoin": 63000.0}, "eur")
+    database.save_prices(usuarios.archivo(config, "555"), {"solana": 150.0}, "eur")
+    contestadas = _inline(monkeypatch)
+
+    main.atender_inline(config, {"id": "q1", "from": {"id": 555}, "query": ""})
+    main.atender_inline(config, {"id": "q2", "from": {"id": 555}, "query": "btc"})
+
+    assert [t.coin_id for t in contestadas[0][1]] == ["solana"]
+    assert contestadas[1][1] == []  # tu bitcoin no lo ve
+
+
+def test_la_ayuda_del_invitado_sin_lo_tuyo(config, a_quien):
+    _con_invitado(config, a_quien)
+
+    main.atender(config, _de(555, "/ayuda"))
+    suya = a_quien[-1][1]
+    main.atender(config, _mensaje("/ayuda"))
+    tuya = a_quien[-1][1]
+
+    for orden in ("/invitar", "/usuarios", "/expulsar", "/binance", "/consultas"):
+        assert f"\n{orden} — " not in suya
+        assert f"\n{orden} — " in tuya
+    assert "\n/precio — " in suya
+
+    main.atender(config, _de(555, "/ayuda invitar"))
+    assert a_quien[-1][1] == "Eso solo lo puede usar quien lleva el bot."

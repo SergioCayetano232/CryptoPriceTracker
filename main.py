@@ -1288,13 +1288,15 @@ def atender_boton(config: Config, boton: dict) -> None:
 def atender_inline(config: Config, consulta: dict) -> None:
     """@tubot btc desde cualquier chat. Solo con lo guardado: Telegram pregunta
     con cada letra y eso, contra CoinGecko, se comería la cuota en un rato."""
-    quien = str((consulta.get("from") or {}).get("id", ""))
-    if quien != config.telegram_chat_id:
+    # En privado tu chat y tu usuario son el mismo número.
+    de = str((consulta.get("from") or {}).get("id", ""))
+    quien = _quien(config, de)
+    if quien is None:
         # Sin contestar: a otro ni le sale nada ni le cuesta nada al bot.
-        logger.warning("Consulta inline de alguien que no eres tú (%s)", quien)
+        logger.warning("Consulta inline de alguien que no es de nadie (%s)", de)
         return
 
-    config = _con_cambios(config)
+    config = _con_cambios(quien)
     ids = inline.criptos(
         consulta.get("query") or "", [w.coin_id for w in config.watchlist]
     )
@@ -1558,7 +1560,9 @@ def _comando_buscar(config: Config, argumento: str) -> Respuesta:
 # Cada comando de Telegram y lo que hace. Las lambdas buscan la función al
 # llamarla, así los tests pueden cambiarlas con monkeypatch.
 COMANDOS: dict[str, Callable[[Config, str], Respuesta]] = {
-    "ayuda": lambda c, a: comandos.ayuda(a),
+    "ayuda": lambda c, a: comandos.ayuda(
+        a, usuarios.SOLO_DUEÑO if c.invitado else frozenset()
+    ),
     "status": _comando_status,
     "resumen": _comando_resumen,
     "mute": _comando_mute,

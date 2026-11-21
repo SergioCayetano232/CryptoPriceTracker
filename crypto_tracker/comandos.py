@@ -571,18 +571,23 @@ ALIAS = {
     "paper": "whitepaper",
 }
 
-# Las de /equivale no salen una a una: eran 48 líneas de "cuántos X te da".
-AYUDA = (
-    "🤖 <b>Esto es lo que sé hacer</b>\n\n"
-    + "\n".join(
-        f"/{nombre} — {texto}"
-        for nombre, texto in COMANDOS.items()
-        if nombre not in equivale.COSAS
+
+def _lista(ocultas: frozenset[str] = frozenset()) -> str:
+    # Las de /equivale no salen una a una: eran 48 líneas de "cuántos X te da".
+    return (
+        "🤖 <b>Esto es lo que sé hacer</b>\n\n"
+        + "\n".join(
+            f"/{nombre} — {texto}"
+            for nombre, texto in COMANDOS.items()
+            if nombre not in equivale.COSAS and nombre not in ocultas
+        )
+        + "\n\nCon ejemplos de uno: /ayuda alerta"
+        + "\nTambién sin barra: «avísame si btc baja de 60000», «cuánto vale eth», "
+        "«cómo va mi cartera» o «cállate 2 horas»."
     )
-    + "\n\nCon ejemplos de uno: /ayuda alerta"
-    + "\nTambién sin barra: «avísame si btc baja de 60000», «cuánto vale eth», "
-    "«cómo va mi cartera» o «cállate 2 horas»."
-)
+
+
+AYUDA = _lista()
 
 # Para /ayuda alerta. Solo los que tienen varias formas; el resto con su linea basta.
 EJEMPLOS = {
@@ -965,13 +970,18 @@ def no_entiendo(nombre: str, argumento: str = "") -> str:
     return f"No te entiendo. ¿Querías decir {sugerencia}?"
 
 
-def ayuda(argumento: str = "") -> str:
-    """/ayuda a secas, la lista. /ayuda alerta, ese con sus ejemplos."""
+def ayuda(argumento: str = "", ocultas: frozenset[str] = frozenset()) -> str:
+    """/ayuda a secas, la lista. /ayuda alerta, ese con sus ejemplos.
+
+    ocultas son los que no puede usar quien pregunta: a un invitado no le
+    enseño /invitar ni /binance."""
     if not argumento.strip():
-        return AYUDA
+        return _lista(ocultas) if ocultas else AYUDA
 
     pedido = argumento.split()[0].lstrip("/").lower()
     nombre = ALIAS.get(pedido, pedido)
+    if nombre in ocultas:
+        return "Eso solo lo puede usar quien lleva el bot."
     if nombre not in COMANDOS:
         parecidos = difflib.get_close_matches(
             nombre, [*COMANDOS, *ALIAS], n=1, cutoff=0.75
