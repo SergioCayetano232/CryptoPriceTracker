@@ -8,6 +8,7 @@ from .calendario import Mes, semanas
 from .mes import MESES
 from .periodo import nombre as nombre_periodo
 from .reparto import OTRAS, Trozo
+from .simbolos import de_id
 from .tarjeta import Tarjeta
 
 VERDE = "#16a34a"
@@ -156,6 +157,107 @@ def dibujar(
         color=color,
         ha="right",
     )
+
+    salida = io.BytesIO()
+    fig.savefig(salida, format="png", facecolor=FONDO)
+    return salida.getvalue()
+
+
+def dibujar_comparar(
+    lineas: list[tuple[str, list[tuple[datetime, float]]]], horas: float
+) -> bytes:
+    """/comparar: todas las series empezando en 100, de mejor a peor."""
+    try:
+        from matplotlib import dates as mdates
+        from matplotlib.figure import Figure
+        from matplotlib.ticker import FuncFormatter
+    except ImportError as e:
+        raise GraficaError(
+            "Falta matplotlib. Ejecuta: pip install -r requirements.txt"
+        ) from e
+
+    if not lineas or len(lineas) > len(PALETA):
+        raise GraficaError(f"Dibujo de 1 a {len(PALETA)} criptos")
+
+    valores = [v for _, serie in lineas for _, v in serie]
+    alto, bajo = max(valores + [100]), min(valores + [100])
+    margen = (alto - bajo) * 0.12 or 1
+
+    fig = Figure(figsize=(8, 4.5), dpi=150, facecolor=FONDO)
+    # A la derecha queda sitio para el nombre de cada una.
+    ax = fig.add_axes((0.09, 0.1, 0.68, 0.67))
+    ax.set_facecolor(FONDO)
+    ax.set_ylim(bajo - margen, alto + margen)
+    ax.axhline(100, color=SUAVE, linewidth=1, linestyle=(0, (4, 3)))
+
+    grosor = 2 if horas <= 48 else 1.4
+    finales = []
+    for (coin_id, serie), color in zip(lineas, PALETA, strict=False):
+        fechas = [f.astimezone() for f, _ in serie]
+        ax.plot(
+            fechas,
+            [v for _, v in serie],
+            color=color,
+            linewidth=grosor,
+            solid_capstyle="round",
+        )
+        ax.scatter(
+            [fechas[-1]],
+            [serie[-1][1]],
+            s=30,
+            color=color,
+            edgecolors=FONDO,
+            lw=1.5,
+            zorder=4,
+        )
+        finales.append((serie[-1][1], coin_id, color))
+
+    # Si dos acaban casi igual, sus nombres se pisarían: los separo un poco.
+    hueco = (alto - bajo + 2 * margen) * 0.075
+    finales.sort()
+    puestos: list[float] = []
+    for final, _, _ in finales:
+        puestos.append(max(final, puestos[-1] + hueco) if puestos else final)
+    # Si al empujar hacia arriba se salen, los bajo todos lo que sobre.
+    sobra = puestos[-1] - (alto + margen)
+    if sobra > 0:
+        puestos = [p - sobra for p in puestos]
+
+    for (final, coin_id, color), y in zip(finales, puestos, strict=True):
+        ax.annotate(
+            f"{_corto(coin_id)}  {final - 100:+.1f}%".replace(".", ","),
+            (1, y),
+            xycoords=("axes fraction", "data"),
+            xytext=(8, 0),
+            textcoords="offset points",
+            va="center",
+            fontsize=9,
+            weight="bold",
+            color=color,
+            annotation_clip=False,
+        )
+
+    for lado in ("top", "right", "left"):
+        ax.spines[lado].set_visible(False)
+    ax.spines["bottom"].set_color(REJILLA)
+    ax.grid(axis="y", color=REJILLA, linewidth=0.8)
+    ax.set_axisbelow(True)
+    ax.tick_params(colors=SUAVE, labelsize=8, length=0, pad=6)
+    # En el eje, lo que ha subido o bajado; el 100 de la base no le dice nada a nadie.
+    decimales = 1 if alto - bajo < 4 else 0
+    ax.yaxis.set_major_formatter(
+        FuncFormatter(lambda v, _: _pct_eje(v - 100, decimales))
+    )
+    ultima = lineas[0][1][-1][0].astimezone()
+    ax.xaxis.set_major_locator(mdates.AutoDateLocator(minticks=4, maxticks=7))
+    ax.xaxis.set_major_formatter(
+        mdates.DateFormatter(_formato_eje(horas), tz=ultima.tzinfo)
+    )
+    ax.margins(x=0.01)
+
+    fig.text(0.09, 0.89, "Cómo les ha ido", fontsize=16, weight="bold", color=TEXTO)
+    periodo = nombre_periodo(horas)
+    fig.text(0.09, 0.83, periodo[0].upper() + periodo[1:], fontsize=9, color=SUAVE)
 
     salida = io.BytesIO()
     fig.savefig(salida, format="png", facecolor=FONDO)
@@ -439,6 +541,20 @@ def _reparto_tarjeta(fig, trozos: list[Trozo]) -> None:
             fontsize=10,
             color=CLARO,
         )
+
+
+def _corto(coin_id: str) -> str:
+    """BTC, AVAX... A la derecha de la gráfica no cabe «Polygon Ecosystem Token»."""
+    nombre = de_id(coin_id) or coin_id.replace("-", " ").title()
+    return nombre if len(nombre) <= 12 else nombre[:11] + "…"
+
+
+def _pct_eje(valor: float, decimales: int) -> str:
+    texto = f"{valor:+.{decimales}f}".replace(".", ",")
+    # Sin esto el de en medio sale como «+0%» o «-0%».
+    if float(texto.replace(",", ".")) == 0:
+        return "0%"
+    return texto + "%"
 
 
 def _en_el_tramo(horas: float) -> str:

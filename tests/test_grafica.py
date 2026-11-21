@@ -145,3 +145,30 @@ def test_en_el_tramo(horas, sale):
     from crypto_tracker.grafica import _en_el_tramo
 
     assert _en_el_tramo(horas) == sale
+
+
+def test_comparar_nombres_cortos_y_el_cero_sin_signo():
+    from crypto_tracker.grafica import _corto, _pct_eje
+
+    assert _corto("avalanche-2") == "AVAX"
+    assert _corto("pepe") == "Pepe"
+    assert _corto("una-cripto-larguisima") == "Una Cripto …"
+    assert _pct_eje(0.0, 0) == "0%"
+    assert _pct_eje(-0.3, 0) == "0%"
+    assert _pct_eje(-0.3, 1) == "-0,3%"
+    assert _pct_eje(10, 0) == "+10%"
+
+
+def test_comparar_dibuja_y_rechaza_demasiadas():
+    from datetime import datetime, timedelta, timezone
+
+    from crypto_tracker.grafica import GraficaError, dibujar_comparar
+
+    ahora = datetime.now(timezone.utc)
+    serie = [(ahora - timedelta(hours=1), 100.0), (ahora, 105.0)]
+
+    assert dibujar_comparar([("bitcoin", serie)], 24).startswith(b"\x89PNG")
+    with pytest.raises(GraficaError):
+        dibujar_comparar([(f"c{i}", serie) for i in range(7)], 24)
+    with pytest.raises(GraficaError):
+        dibujar_comparar([], 24)

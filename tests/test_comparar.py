@@ -4,7 +4,13 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from crypto_tracker.comparar import Resultado, comparar, interpretar, media
+from crypto_tracker.comparar import (
+    Resultado,
+    comparar,
+    en_base_100,
+    interpretar,
+    media,
+)
 from crypto_tracker.periodo import PeriodoError
 
 AHORA = datetime(2026, 10, 8, 12, 0, tzinfo=timezone.utc)
@@ -89,3 +95,24 @@ def test_media():
     assert media(resultados) == pytest.approx(13.333, 0.001)
     assert media(resultados[:1]) is None
     assert media([]) is None
+
+
+def test_en_base_100_todas_empiezan_igual():
+    series = {"bitcoin": _serie(60000, 66000), "dogecoin": _serie(0.2, 0.15)}
+    resultados, _ = comparar(series, 168, AHORA)
+
+    lineas = en_base_100(series, resultados)
+
+    assert [c for c, _ in lineas] == ["bitcoin", "dogecoin"]  # de mejor a peor
+    (_, btc), (_, doge) = lineas
+    assert [round(v, 6) for _, v in btc] == [100, 110]
+    assert [round(v, 6) for _, v in doge] == [100, 75]
+    assert btc[0][0] == series["bitcoin"][0][0]  # las fechas no se tocan
+
+
+def test_en_base_100_salta_las_que_no_tienen_datos():
+    series = {"bitcoin": _serie(100, 120), "pepe": []}
+    resultados, sin_datos = comparar(series, 168, AHORA)
+
+    assert [c for c, _ in en_base_100(series, resultados)] == ["bitcoin"]
+    assert sin_datos == ["pepe"]

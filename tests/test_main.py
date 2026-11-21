@@ -4913,7 +4913,7 @@ def test_diames_mal_escrito(config, enviados):
     assert "/diames bitcoin 365d" in enviados[0]
 
 
-def test_comparar(config, enviados, monkeypatch):
+def test_comparar(config, sin_fotos_de_verdad, monkeypatch):
     monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
     for coin_id, antes, ahora in [
         ("bitcoin", 100.0, 110.0),
@@ -4926,7 +4926,8 @@ def test_comparar(config, enviados, monkeypatch):
 
     main.atender(config, _mensaje("/comparar btc eth sol ada pepe"))
 
-    texto = enviados[0]
+    png, texto = sin_fotos_de_verdad[0]
+    assert png.startswith(b"\x89PNG")
     assert "📊 <b>Cómo les ha ido</b> · <i>últimos 7 días</i>" in texto
     assert texto.index("Solana") < texto.index("Bitcoin") < texto.index("Ethereum")
     assert "🥇 <b>Solana</b>  🔺 +50.00%" in texto
@@ -4938,7 +4939,7 @@ def test_comparar(config, enviados, monkeypatch):
     assert "desde el" not in texto
 
 
-def test_comparar_a_secas_las_que_vigilas(config, enviados):
+def test_comparar_a_secas_las_que_vigilas(config, sin_fotos_de_verdad):
     _precio_de(config, "bitcoin", 100.0, 2 * 24 * 60)
     _precio_de(config, "bitcoin", 120.0, 5)
     _precio_de(config, "solana", 100.0, 2 * 24 * 60)  # no la vigila
@@ -4946,13 +4947,14 @@ def test_comparar_a_secas_las_que_vigilas(config, enviados):
 
     main.atender(config, _mensaje("/comparar 30d"))
 
-    assert "últimos 30 días" in enviados[0]
-    assert "🥇 <b>Bitcoin</b>  🔺 +20.00% <i>(desde el" in enviados[0]
-    assert "Solana" not in enviados[0]
-    assert "De media" not in enviados[0]  # con una sola no tiene sentido
+    _, texto = sin_fotos_de_verdad[0]
+    assert "últimos 30 días" in texto
+    assert "🥇 <b>Bitcoin</b>  🔺 +20.00% <i>(desde el" in texto
+    assert "Solana" not in texto
+    assert "De media" not in texto  # con una sola no tiene sentido
 
 
-def test_comparar_con_precios_viejos(config, enviados):
+def test_comparar_con_precios_viejos(config, sin_fotos_de_verdad):
     _precio_de(config, "bitcoin", 100.0, 20 * 24 * 60)
     _precio_de(config, "bitcoin", 120.0, 3 * 24 * 60)
     _precio_de(config, "solana", 100.0, 29 * 24 * 60)  # todo el tramo
@@ -4960,8 +4962,34 @@ def test_comparar_con_precios_viejos(config, enviados):
 
     main.atender(config, _mensaje("/comparar btc sol 30d"))
 
-    assert "+20.00% <i>(del " in enviados[0]
-    assert "-10.00% <i>(hasta el " in enviados[0]
+    _, texto = sin_fotos_de_verdad[0]
+    assert "+20.00% <i>(del " in texto
+    assert "-10.00% <i>(hasta el " in texto
+
+
+def test_comparar_con_muchas_va_sin_grafica(config, enviados, sin_fotos_de_verdad):
+    nombres = ["bitcoin", "ethereum", "solana", "cardano", "ripple", "tron", "litecoin"]
+    for coin_id in nombres:
+        _precio_de(config, coin_id, 100.0, 2 * 24 * 60)
+        _precio_de(config, coin_id, 110.0, 5)
+
+    main.atender(config, _mensaje("/comparar btc eth sol ada xrp trx ltc"))
+
+    assert sin_fotos_de_verdad == []
+    assert "7. <b>" in enviados[0]
+
+
+def test_comparar_si_falla_la_grafica_manda_el_texto(config, enviados, monkeypatch):
+    def rota(*a):
+        raise grafica.GraficaError("Falta matplotlib")
+
+    monkeypatch.setattr(grafica, "dibujar_comparar", rota)
+    _precio_de(config, "bitcoin", 100.0, 2 * 24 * 60)
+    _precio_de(config, "bitcoin", 120.0, 5)
+
+    main.atender(config, _mensaje("/comparar btc"))
+
+    assert "🥇 <b>Bitcoin</b>" in enviados[0]
 
 
 def test_comparar_sin_precios(config, enviados):

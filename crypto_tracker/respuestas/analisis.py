@@ -738,7 +738,7 @@ def _estacional(config: Config, argumento: str) -> str:
     return alerts.formatear_estacional(coin_id, resultado)
 
 
-def _comparar(config: Config, argumento: str) -> str:
+def _comparar(config: Config, argumento: str) -> str | comandos.Foto:
     try:
         coin_ids, horas = comparar.interpretar(argumento)
     except periodo.PeriodoError as e:
@@ -759,7 +759,15 @@ def _comparar(config: Config, argumento: str) -> str:
             f"No tengo precios guardados de ninguna ({periodo.nombre(horas)}). "
             "Solo sé de las que vigilo: míralas con /vigilar"
         )
-    return alerts.con_fuente(alerts.formatear_comparar(resultados, sin_datos, horas))
+    texto = alerts.con_fuente(alerts.formatear_comparar(resultados, sin_datos, horas))
+    if len(resultados) > comparar.MAX_GRAFICA:
+        return texto
+    try:
+        png = grafica.dibujar_comparar(comparar.en_base_100(series, resultados), horas)
+    except Exception as e:
+        logger.warning("Mando /comparar sin imagen: %s", e)
+        return texto
+    return comandos.Foto(png, texto, texto)
 
 
 def _quieta(config: Config) -> str | comandos.ConBotones:

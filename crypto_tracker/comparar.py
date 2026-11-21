@@ -11,6 +11,9 @@ POR_DEFECTO = 7 * 24
 # Mas que esto sin precios nuevos y es que el bot ha estado parado.
 VIEJO = timedelta(hours=1)
 
+# Con más líneas la gráfica es un plato de espaguetis y se acaban los colores.
+MAX_GRAFICA = 6
+
 
 @dataclass(frozen=True)
 class Resultado:
@@ -63,3 +66,16 @@ def media(resultados: list[Resultado]) -> float | None:
     if len(resultados) < 2:
         return None
     return sum(r.porcentaje for r in resultados) / len(resultados)
+
+
+def en_base_100(
+    series: dict[str, list[tuple[datetime, float]]], resultados: list[Resultado]
+) -> list[tuple[str, list[tuple[datetime, float]]]]:
+    """Cada serie empezando en 100, en el orden de resultados, para dibujarlas
+    juntas: un BTC de 60.000 y un DOGE de 0,15 no caben en el mismo eje."""
+    lineas = []
+    for r in resultados:
+        serie = series[r.coin_id]
+        base = serie[0][1]
+        lineas.append((r.coin_id, [(f, p / base * 100) for f, p in serie]))
+    return lineas
