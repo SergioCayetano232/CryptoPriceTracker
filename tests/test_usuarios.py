@@ -69,6 +69,7 @@ def test_config_de_un_invitado_empieza_vacia():
     assert c.database_path == "data/usuarios/555.db"
     assert c.watchlist == [] and c.cartera == ()
     assert c.invitado
+    assert c.archivo_dueño == "data/prices.db"
     assert c.vs_currency == "eur"  # lo demás, como el tuyo
     assert not CONFIG.invitado
 

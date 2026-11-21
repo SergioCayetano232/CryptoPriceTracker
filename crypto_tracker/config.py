@@ -79,6 +79,8 @@ class Config:
     aviso_721: bool = False
     # True si es alguien a quien invitaste: con su archivo y sin tus claves.
     invitado: bool = False
+    # En un invitado, tu archivo: lo del mercado (/dominancia) solo se guarda ahí.
+    archivo_dueño: str | None = None
 
 
 def _require(name: str) -> str:

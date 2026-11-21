@@ -69,6 +69,7 @@ def config_de(config: Config, chat_id: str) -> Config:
         watchlist=[],
         cartera=(),
         invitado=True,
+        archivo_dueño=config.database_path,
     )
 
 

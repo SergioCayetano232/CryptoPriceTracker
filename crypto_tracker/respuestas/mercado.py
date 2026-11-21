@@ -387,7 +387,7 @@ def _dominancia(config: Config) -> str:
         return "CoinGecko no ha dicho qué parte es de bitcoin. Prueba en un rato."
 
     ahora = datetime.now(timezone.utc)
-    fotos = database.get_dominancia(config.database_path, dominancia.HORAS)
+    fotos = database.get_dominancia(_del_mercado(config), dominancia.HORAS)
     resultado = dominancia.calcular(datos, fotos, ahora)
     # Ya que se ha consultado, que sirva de foto de hoy si no la había.
     _guardar_foto(config, datos, ahora)
@@ -411,12 +411,17 @@ def foto_dominancia(config: Config) -> None:
         _guardar_foto(config, datos, ahora)
 
 
+def _del_mercado(config: Config) -> str:
+    """Es del mercado, igual para todos: lo de un invitado va en tu archivo."""
+    return config.archivo_dueño or config.database_path
+
+
 def _guardar_foto(config: Config, datos: Mercado, ahora: datetime) -> None:
     try:
-        ultima = database.ultima_dominancia(config.database_path)
+        ultima = database.ultima_dominancia(_del_mercado(config))
         if dominancia.toca_guardar(ultima, ahora):
             database.guardar_dominancia(
-                config.database_path,
+                _del_mercado(config),
                 dominancia.Foto(ahora, datos.bitcoin, datos.ethereum, datos.estables),
             )
     except database.DatabaseError as e:

@@ -12538,3 +12538,22 @@ def test_la_ayuda_del_invitado_sin_lo_tuyo(config, a_quien):
 
     main.atender(config, _de(555, "/ayuda invitar"))
     assert a_quien[-1][1] == "Eso solo lo puede usar quien lleva el bot."
+
+
+def test_dominancia_del_invitado_con_tu_historico(config, a_quien, monkeypatch):
+    from crypto_tracker import usuarios
+    from crypto_tracker.dominancia import Foto
+
+    _con_invitado(config, a_quien)
+    hace_semana = datetime.now(timezone.utc) - timedelta(days=7)
+    database.guardar_dominancia(config.database_path, Foto(hace_semana, 56.0, 13, 6))
+    _mercado_global(monkeypatch, 58.0)
+
+    main.atender(config, _de(555, "/dominancia"))
+
+    assert a_quien[-1][0] == "555"
+    assert "🔺 +2,0 puntos en 7 días" in a_quien[-1][1]
+    # La foto de hoy también va a la tuya, no a la suya.
+    assert len(database.get_dominancia(config.database_path, 1)) == 1
+    suyo = usuarios.archivo(config, "555")
+    assert database.get_dominancia(suyo, 24 * 30) == []
