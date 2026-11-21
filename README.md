@@ -763,6 +763,41 @@ enseña tu cartera y no pide contraseña.
 
 ---
 
+## Dejarlo funcionando con Docker
+
+Si tienes Docker, no hace falta instalar Python ni preparar nada más. Con el
+`.env` ya rellenado (ver [Configuración](#configuración)):
+
+```
+docker compose up -d --build
+```
+
+Ya está: arranca solo cada vez que se enciende el ordenador y, si se cae,
+vuelve a arrancar. El histórico se guarda en un volumen de Docker, así que no se
+pierde al actualizar ni al borrar el contenedor.
+
+| Para | Escribe |
+|---|---|
+| Ver lo que va haciendo | `docker compose logs -f` |
+| Mandar el mensaje de prueba | `docker compose run --rm bot python main.py --test` |
+| Actualizar tras bajar cambios | `docker compose up -d --build` |
+| Pararlo | `docker compose down` |
+| Sacar una copia de la base de datos | `docker compose cp bot:/app/data/prices.db ./copia.db` |
+
+**La hora** va por la zona de Madrid. Si estás en otra, añade al `.env` algo
+como `TZ=America/Mexico_City`; si no, el resumen del día te llegaría a otra hora.
+
+**Si ya tenías el bot funcionando sin Docker** y quieres conservar el histórico,
+con el contenedor parado:
+```
+docker compose run --rm -v "$PWD/data:/viejo" bot cp /viejo/prices.db /app/data/prices.db
+```
+
+`DATABASE_PATH` del `.env` no cuenta aquí: dentro de Docker la base de datos va
+siempre en el volumen.
+
+---
+
 ## Dejarlo funcionando siempre en un servidor Windows
 
 En la carpeta `windows/` está todo lo necesario. Si es la primera vez,
@@ -1125,6 +1160,7 @@ main.py          el ciclo, el bucle de Telegram y la lista de comandos
 tests/           los tests
 windows/         para dejarlo corriendo en un servidor Windows
 linux/           lo mismo en un servidor Linux, con systemd
+Dockerfile       la imagen, y docker-compose.yml para arrancarla
 ```
 
 Pasar los tests y el linter (instala las versiones fijadas en `pyproject.toml`):

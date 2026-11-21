@@ -1,0 +1,15 @@
+services:
+  bot:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Dentro del contenedor va siempre aquí, ponga lo que ponga el .env.
+      DATABASE_PATH: /app/data/prices.db
+      # Sin esto el resumen diario y las horas tranquilas irían en hora UTC.
+      TZ: ${TZ:-Europe/Madrid}
+    volumes:
+      - datos:/app/data
+
+volumes:
+  datos:

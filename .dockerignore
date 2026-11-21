@@ -1,0 +1,13 @@
+# El .env entra por env_file, nunca dentro de la imagen.
+.env
+.venv
+.git
+.github
+data
+tests
+windows
+linux
+__pycache__
+.pytest_cache
+.ruff_cache
+*.db

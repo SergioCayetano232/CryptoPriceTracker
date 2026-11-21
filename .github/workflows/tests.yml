@@ -34,3 +34,23 @@ jobs:
         env:
           # Sin pantalla en el servidor de GitHub
           MPLBACKEND: Agg
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Construir la imagen
+        run: docker build -t cryptopricetracker .
+
+      # Sin .env no puede vigilar nada; basta con ver que arranca y carga todo.
+      - name: Que arranca
+        run: |
+          docker run --rm cryptopricetracker python main.py --help
+          docker run --rm cryptopricetracker python -c "import main"
+          docker run --rm cryptopricetracker python -c "from crypto_tracker import version; print(version.numero())"
+
+      - name: Que el compose está bien escrito
+        run: |
+          touch .env
+          docker compose config --quiet
