@@ -12121,3 +12121,83 @@ def test_inline_de_otro_no_contesta(config, monkeypatch):
     main.atender_inline(config, {"id": "q1", "from": {"id": 999}, "query": "btc"})
 
     assert contestadas == []
+
+
+# --- /mute ... salvo 10% ---
+
+
+def test_mute_con_salvo(config, monkeypatch):
+    mandados = _con_botones(monkeypatch)
+
+    main.atender(config, _mensaje("/mute 7d salvo 10%"))
+
+    assert database.silencio_salvo(config.database_path) == 10
+    assert "(7 d)" in mandados[0][0]
+    assert mandados[0][0].endswith("se mueve más de un 10% en 24 h.")
+
+    main.atender(config, _mensaje("/mute"))
+    assert ", salvo si alguna se mueve más de un 10%." in mandados[1][0]
+
+
+def test_mute_con_salvo_con_decimales(config, monkeypatch):
+    mandados = _con_botones(monkeypatch)
+
+    main.atender(config, _mensaje("/mute 2h salvo 7,5%"))
+
+    assert mandados[0][0].endswith("más de un 7,5% en 24 h.")
+
+
+def test_mute_con_salvo_de_una_sola_no(config, enviados):
+    main.atender(config, _mensaje("/mute btc 2h salvo 5%"))
+
+    assert "va con el /mute de todas" in enviados[0]
+    assert database.criptos_calladas(config.database_path) == {}
+
+
+def test_callado_con_salvo_avisa_de_lo_gordo_una_vez(config, enviados, monkeypatch):
+    _precio_de(config, "bitcoin", 100.0, 24 * 60)
+    _precio(monkeypatch, {"bitcoin": 85.0})
+    main.atender(config, _mensaje("/mute 7d salvo 10%"))
+    enviados.clear()
+
+    main.ejecutar_ciclo(config, {})
+    main.ejecutar_ciclo(config, {})
+
+    assert len(enviados) == 1
+    assert enviados[0].startswith("🚨 <b>Bitcoin</b> 🔻 -15,0% en 24 h")
+
+
+def test_callado_con_salvo_no_avisa_de_lo_pequeño(config, enviados, monkeypatch):
+    _precio_de(config, "bitcoin", 100.0, 24 * 60)
+    _precio(monkeypatch, {"bitcoin": 95.0})
+    main.atender(config, _mensaje("/mute 7d salvo 10%"))
+    enviados.clear()
+
+    main.ejecutar_ciclo(config, {})
+
+    assert enviados == []
+
+
+def test_callado_sin_salvo_no_avisa_de_nada(config, enviados, monkeypatch):
+    _precio_de(config, "bitcoin", 100.0, 24 * 60)
+    _precio(monkeypatch, {"bitcoin": 50.0})
+    main.atender(config, _mensaje("/mute 7d salvo 10%"))
+    main.atender(config, _mensaje("/mute 7d"))  # el nuevo quita el salvo
+    enviados.clear()
+
+    main.ejecutar_ciclo(config, {})
+
+    assert enviados == []
+
+
+def test_salvo_sin_silencio_no_hace_nada(config, enviados, monkeypatch):
+    _precio_de(config, "bitcoin", 100.0, 24 * 60)
+    _precio(monkeypatch, {"bitcoin": 85.0})
+    main.atender(config, _mensaje("/mute 7d salvo 10%"))
+    main.atender(config, _mensaje("/unmute"))
+    enviados.clear()
+
+    main.ejecutar_ciclo(config, {})
+
+    assert not any(t.startswith("🚨") for t in enviados)
+    assert database.silencio_salvo(config.database_path) is None

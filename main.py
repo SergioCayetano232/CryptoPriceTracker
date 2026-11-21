@@ -65,6 +65,7 @@ from crypto_tracker import (
     puntuales,
     refran,
     salud,
+    salvo,
     simbolos,
     stop,
     tarot,
@@ -248,6 +249,7 @@ from crypto_tracker.respuestas.revisiones import (
     revisar_estables,
     revisar_rezagadas,
     revisar_rsi,
+    revisar_salvo,
     revisar_volumen,
 )
 
@@ -413,6 +415,7 @@ def ejecutar_ciclo(
     revisar_estables(config, list(precios), calladas, sueltos)
     revisar_volumen(config, vigiladas, calladas, sueltos)
     revisar_calma(config, vigiladas, calladas, sueltos)
+    revisar_salvo(config, vigiladas, calladas, sueltos)
     revisar_721(config, valor, calladas, sueltos)
     revisar_direcciones(config, precios, sueltos)
     if calladas:
@@ -1203,14 +1206,19 @@ def _comando_mute(config: Config, argumento: str) -> Respuesta:
         # A secas, si ya estaba callado, mejor decirlo que alargarlo sin querer.
         estaba = database.silenciado_hasta(config.database_path)
         calladas = database.criptos_calladas(config.database_path)
+        umbral = database.silencio_salvo(config.database_path) if estaba else None
         return comandos.ConBotones(
-            callar.a_secas(estaba, calladas),
+            callar.a_secas(estaba, calladas, umbral),
             botones.para_mute(ya_callado=bool(estaba or calladas)),
         )
     try:
+        argumento, umbral = salvo.interpretar(argumento)
         cripto, minutos = callar.interpretar(argumento, datetime.now().astimezone())
     except ConfigError as e:
         return str(e)
+    if cripto and umbral is not None:
+        # Con una sola callada no tiene sentido: si te importa lo gordo, no la calles.
+        return "Lo de salvo va con el /mute de todas, como /mute 7d salvo 10%"
     hasta = datetime.now(timezone.utc) + timedelta(minutes=minutos)
     if cripto:
         database.callar_cripto(config.database_path, cripto, hasta)
@@ -1220,10 +1228,17 @@ def _comando_mute(config: Config, argumento: str) -> Respuesta:
             f"({salud.cuanto(timedelta(minutes=minutos))}). "
             f"Las demás siguen avisando. Para deshacerlo, /unmute {cripto}"
         )
-    database.silenciar_hasta(config.database_path, hasta)
+    database.silenciar_hasta(config.database_path, hasta, umbral)
+    excepto = ""
+    if umbral is not None:
+        pct = f"{umbral:g}".replace(".", ",")
+        excepto = (
+            f" Solo te escribo si alguna de las que vigilo se mueve más de un "
+            f"{pct}% en 24 h."
+        )
     return comandos.ConBotones(
         f"🔕 Callado hasta las {hasta.astimezone():%H:%M del %d/%m} "
-        f"({salud.cuanto(timedelta(minutes=minutos))}).",
+        f"({salud.cuanto(timedelta(minutes=minutos))}).{excepto}",
         botones.deshacer_mute(),
     )
 

@@ -192,6 +192,33 @@ def test_silenciar_y_leerlo(db):
     assert abs((guardado - hasta).total_seconds()) < 2
 
 
+def test_silencio_con_salvo(db):
+    from datetime import datetime, timedelta, timezone
+
+    hasta = datetime.now(timezone.utc) + timedelta(days=7)
+    database.silenciar_hasta(db, hasta, salvo=12.5)
+    assert database.silencio_salvo(db) == 12.5
+
+    # Un /mute nuevo sin salvo lo quita, y /unmute también.
+    database.silenciar_hasta(db, hasta)
+    assert database.silencio_salvo(db) is None
+    database.silenciar_hasta(db, hasta, salvo=10)
+    database.silenciar_hasta(db, None)
+    assert database.silencio_salvo(db) is None
+
+
+def test_ultimo_salvo_por_cripto(db):
+    from datetime import datetime, timezone
+
+    cuando = datetime(2026, 11, 21, 12, 0, tzinfo=timezone.utc)
+    assert database.ultimo_salvo(db, "bitcoin") is None
+
+    database.guardar_salvo(db, "bitcoin", cuando)
+
+    assert database.ultimo_salvo(db, "bitcoin") == cuando
+    assert database.ultimo_salvo(db, "ethereum") is None
+
+
 def test_el_silencio_caduca_solo(db):
     from datetime import datetime, timedelta, timezone
 

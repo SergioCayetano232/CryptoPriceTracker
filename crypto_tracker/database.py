@@ -137,6 +137,8 @@ CREATE TABLE IF NOT EXISTS dominancia (
 SILENCIO = "silenciado_hasta"
 # Desde cuándo, para contarte al volver lo que te has perdido.
 SILENCIO_DESDE = "silenciado_desde"
+# El % del /mute ... salvo 10%. Sin fila, callado del todo.
+SILENCIO_SALVO = "silenciado_salvo"
 
 # Dia del ultimo resumen diario, para no mandarlo dos veces si se reinicia.
 ULTIMO_RESUMEN = "ultimo_resumen"
@@ -514,9 +516,21 @@ def save_state(db_path: str, estado: dict[str, str]) -> None:
         )
 
 
-def silenciar_hasta(db_path: str, cuando: datetime | None) -> None:
-    """Guarda hasta cuando no se avisa. None quita el silencio."""
+def silenciar_hasta(
+    db_path: str, cuando: datetime | None, salvo: float | None = None
+) -> None:
+    """Guarda hasta cuando no se avisa. None quita el silencio.
+
+    Un /mute nuevo sin salvo quita el de antes: si no, uno de hace meses
+    seguiría colándose."""
     with _connect(db_path) as conn:
+        if salvo is None or cuando is None:
+            conn.execute("DELETE FROM ajustes WHERE clave = ?", (SILENCIO_SALVO,))
+        else:
+            conn.execute(
+                "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+                (SILENCIO_SALVO, repr(salvo)),
+            )
         if cuando is None:
             conn.execute("DELETE FROM ajustes WHERE clave = ?", (SILENCIO,))
             return
@@ -567,6 +581,30 @@ def silenciado_hasta(db_path: str) -> datetime | None:
         return None
 
     return cuando
+
+
+def silencio_salvo(db_path: str) -> float | None:
+    """El % a partir del cual aviso aunque esté callado, si lo hay."""
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT valor FROM ajustes WHERE clave = ?", (SILENCIO_SALVO,)
+        ).fetchone()
+    try:
+        return float(fila["valor"]) if fila else None
+    except ValueError:
+        return None
+
+
+def ultimo_salvo(db_path: str, coin_id: str) -> datetime | None:
+    return _leer_fecha(db_path, f"salvo:{coin_id}")
+
+
+def guardar_salvo(db_path: str, coin_id: str, cuando: datetime) -> None:
+    with _connect(db_path) as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (f"salvo:{coin_id}", cuando.isoformat(timespec="seconds")),
+        )
 
 
 def callar_cripto(db_path: str, coin_id: str, cuando: datetime | None) -> None:

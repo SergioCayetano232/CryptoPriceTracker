@@ -407,6 +407,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/mute` | Te pregunta cuánto tiempo callarse, con botones: 1 h, 4 h o hasta las 8:00 (si ya está callado, o tienes alguna cripto callada, te dice hasta cuándo) |
 | `/mute 2h` | Calla los avisos ese rato, con un botón para deshacerlo |
 | `/mute hasta 8:00` | Calla los avisos hasta esa hora (si ya ha pasado, la de mañana) |
+| `/mute 7d salvo 10%` | Callado, pero si alguna de las que vigilas se mueve más de ese % en 24 h te escribe igual, como mucho una vez al día por cripto. Para irte de vacaciones sin perderte un desplome. Un `/mute` nuevo sin `salvo` lo quita |
 | `/mute bitcoin 2h` | Calla solo esa cripto; las demás siguen avisando. Sus `/alerta` esperan a que vuelva |
 | `/unmute` | Vuelve a avisar, también de las que callaste una a una, y te cuenta lo que te has perdido: cuánto se ha movido cada una que vigilas mientras callaba, entre qué precios, y tu cartera. Si el silencio se acaba solo, te llega lo mismo al acabarse |
 | `/unmute bitcoin` | Vuelve a avisar solo de esa |
@@ -937,6 +938,7 @@ crypto_tracker/
   equilibrio.py  a qué precio dejas de perder, para /equilibrio
   doble.py       a qué precio doblas lo que metiste, para /doble
   mitad.py       a qué precio pierdes la mitad, para /mitad
+  salvo.py       lo de /mute ... salvo 10%
   callar.py      entiende /mute con una sola cripto
   dca.py         las compras periódicas de /dca
   maximo.py      el máximo histórico de /ath

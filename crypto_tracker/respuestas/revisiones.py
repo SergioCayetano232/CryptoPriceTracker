@@ -30,12 +30,19 @@ from .. import (
     record,
     rezagada,
     rsi,
+    salvo,
     telegram,
     volatilidad,
     volumen,
 )
 from ..config import Config
-from .base import _alertas_ratio, _direcciones_guardadas, _silenciado, _sin_sonido
+from .base import (
+    _alertas_ratio,
+    _direcciones_guardadas,
+    _silenciado,
+    _sin_sonido,
+    _variacion,
+)
 
 logger = logging.getLogger("crypto_tracker")
 
@@ -608,6 +615,49 @@ def revisar_rezagadas(
             partial(apuntar, r, avisada),
         ):
             logger.error("No se pudo avisar de que %s se queda atrás", r.coin_id)
+
+
+def revisar_salvo(
+    config: Config,
+    vigiladas: dict[str, float],
+    calladas: set[str],
+    sueltos: buzon.Buzon | None = None,
+) -> None:
+    """Con /mute ... salvo 10%: lo que se mueve mucho pasa aunque esté callado."""
+    hasta = _silenciado(config)
+    if hasta is None:
+        return
+    try:
+        umbral = database.silencio_salvo(config.database_path)
+    except database.DatabaseError as e:
+        logger.error("No se pudo leer el salvo del silencio: %s", e)
+        return
+    if umbral is None:
+        return
+
+    def apuntar(coin_id: str, cuando: datetime) -> None:
+        logger.info("Aviso de %s aunque estoy callado", coin_id)
+        try:
+            database.guardar_salvo(config.database_path, coin_id, cuando)
+        except database.DatabaseError as e:
+            logger.error("No se pudo apuntar el aviso de %s: %s", coin_id, e)
+
+    ahora = datetime.now(timezone.utc)
+    for coin_id, precio in vigiladas.items():
+        # La que callaste a propósito sigue callada, aunque se hunda.
+        if coin_id in calladas:
+            continue
+        variacion = _variacion(config, coin_id, precio)
+        try:
+            ultimo = database.ultimo_salvo(config.database_path, coin_id)
+        except database.DatabaseError as e:
+            logger.error("No se pudo leer el último aviso de %s: %s", coin_id, e)
+            continue
+        if not salvo.toca(variacion, umbral, ultimo, ahora):
+            continue
+        texto = salvo.texto(coin_id, precio, variacion, config.vs_currency, hasta)
+        if not _avisar(config, texto, sueltos, partial(apuntar, coin_id, ahora)):
+            logger.error("No se pudo avisar de %s aunque estoy callado", coin_id)
 
 
 def _mandar_sueltos(config: Config, sueltos: buzon.Buzon) -> None:

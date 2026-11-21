@@ -29,13 +29,20 @@ def interpretar(argumento: str, ahora: datetime) -> tuple[str | None, int]:
     return a_id(cripto), minutos_mute(resto, ahora)
 
 
-def a_secas(hasta: datetime | None, calladas: dict[str, datetime]) -> str:
+def a_secas(
+    hasta: datetime | None,
+    calladas: dict[str, datetime],
+    salvo: float | None = None,
+) -> str:
     """/mute sin nada: lo que tengo callado ahora y la pregunta de cuánto."""
     lineas = []
     if hasta:
-        lineas.append(
-            f"🔕 Ya estoy callado hasta las {hasta.astimezone():%H:%M del %d/%m}."
-        )
+        linea = f"🔕 Ya estoy callado hasta las {hasta.astimezone():%H:%M del %d/%m}"
+        if salvo is not None:
+            linea += f", salvo si alguna se mueve más de un {salvo:g}%".replace(
+                ".", ","
+            )
+        lineas.append(linea + ".")
     if calladas:
         lineas.append(
             "Y aparte, cada una por su lado:" if hasta else "🔕 Ahora no te aviso de:"
