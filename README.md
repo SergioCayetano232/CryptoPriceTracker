@@ -274,6 +274,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/dia bitcoin 01/09` | Qué día de la semana fue, a cuánto cerró, su máximo y su mínimo, y cuánto ha cambiado desde entonces. Vale `ayer` y con año (`01/09/2025`). Sale de lo guardado y no gasta consultas |
 | `/cuando bitcoin 60000` | La última vez que estuvo a ese precio (o más abajo, si ahora está por encima), hace cuánto y lo que ha cambiado desde entonces. Vale `60k`. Sale de lo guardado y no gasta consultas |
 | `/redondo bitcoin` | Cuánto le falta para la siguiente cifra redonda por arriba y por abajo (de 64.000 a 70.000 y a 60.000). A secas, las que vigilas. Sale de lo guardado y no gasta consultas |
+| `/semaforo bitcoin` | Una sola luz, verde, ámbar o roja, que junta lo que dicen el RSI, el MACD, las bandas de Bollinger, las medias, el índice de miedo y el funding: cada uno vota a favor de comprar, en contra o en medio, y hace falta ganar por dos para salir del ámbar. Debajo, el voto de cada uno con su porqué. No es un consejo. No gasta consultas de CoinGecko |
 | `/rsi bitcoin` | Su RSI de 14 días: por encima de 70 ha subido demasiado rápido (sobrecomprada) y por debajo de 30 ha bajado demasiado (sobrevendida). Necesita 15 días seguidos guardados y no gasta consultas |
 | `/bollinger bitcoin` | Sus bandas de Bollinger: la media de 20 días y dos veces lo que se suele separar de ella, por arriba y por abajo. Te dice si el precio está dentro, por encima (muy estirada) o por debajo (muy aplastada), con una barrita de dónde está, y si la banda está de las más estrechas de lo guardado, que suele ir antes de un movimiento fuerte. Necesita 20 días seguidos guardados y no gasta consultas. También `/bandas` |
 | `/macd bitcoin` | Si va con empuje al alza o a la baja según el MACD (la media de 12 días menos la de 26, contra su propia media de 9): desde cuándo, si coge o pierde fuerza y hacia dónde va de fondo. Cruzar su señal hacia arriba se suele leer como compra y hacia abajo como venta, con retraso. A secas, la primera que vigilo. Necesita 35 días seguidos guardados. Sale de lo guardado y no gasta consultas. También `/empuje` |
@@ -1131,6 +1132,7 @@ crypto_tracker/
   calma.py       cuándo una se queda muy quieta, para /tormenta y AVISO_CALMA
   redondo.py     la siguiente cifra redonda, para /redondo
   rsi.py         el RSI de 14 días, para /rsi
+  semaforo.py    el voto de cada indicador y la luz que sale, para /semaforo
   bollinger.py   las bandas de 20 días, para /bollinger
   macd.py        las medias de 12 y 26 días contra la de 9, para /macd
   estocastico.py dónde está dentro del rango de 14 días, para /estocastico

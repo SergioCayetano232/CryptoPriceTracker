@@ -46,6 +46,7 @@ from .mensajes.analisis import (
     formatear_rebalanceo,
     formatear_reparto,
     formatear_rsi,
+    formatear_semaforo,
     formatear_sharpe,
     formatear_soporte,
     formatear_sube,

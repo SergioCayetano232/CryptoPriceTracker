@@ -12794,3 +12794,90 @@ def test_sin_latido_puesto_no_llama_a_nadie(config, enviados, monkeypatch):
     _una_vuelta(config, monkeypatch)
 
     assert dados == []
+
+
+# --- /semaforo ---
+
+
+def _sin_funding(monkeypatch):
+    def sin_futuros(par):
+        raise funding.FundingError("sin futuros")
+
+    monkeypatch.setattr(funding, "pedir", sin_futuros)
+
+
+def test_semaforo_subiendo_sin_parar_queda_en_ambar(config, enviados, monkeypatch):
+    from crypto_tracker.miedo import Indice
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    monkeypatch.setattr(
+        miedo, "pedir", lambda: [Indice(80, "Extreme Greed", datetime.now().date())]
+    )
+    _sin_funding(monkeypatch)
+    # Subiendo sin parar la tendencia vota a favor y lo pasada que va, en contra
+    for dias in range(40):
+        _precio_de(config, "bitcoin", 100.0 * 1.03 ** (40 - dias), dias * 24 * 60)
+
+    main.atender(config, _mensaje("/semaforo btc"))
+
+    assert enviados[0].startswith("🟡 <b>Bitcoin</b>: luz ámbar")
+    assert "2 a favor · 2 en contra · 1 en medio" in enviados[0]
+    assert "❌ <b>RSI 100</b>" in enviados[0]
+    assert "❌ <b>Miedo 80</b>" in enviados[0]
+    assert "✅ <b>Medias</b>: por encima de todas" in enviados[0]
+    assert "Sin datos de el funding" in enviados[0]
+
+
+def test_semaforo_rojo_cayendo_con_euforia(config, enviados, monkeypatch):
+    from crypto_tracker.miedo import Indice
+
+    monkeypatch.setattr(
+        miedo, "pedir", lambda: [Indice(80, "Extreme Greed", datetime.now().date())]
+    )
+    monkeypatch.setattr(
+        funding, "pedir", lambda par: ({"lastFundingRate": "0.0009"}, [])
+    )
+    # Plana un mes y luego cuesta abajo cada día más deprisa, sin llegar a hundirse
+    precios = [100.0] * 30 + [100.0 - 0.05 * n * n for n in range(1, 11)]
+    for hace, precio in enumerate(reversed(precios)):
+        _precio_de(config, "bitcoin", precio, hace * 24 * 60)
+
+    main.atender(config, _mensaje("/semaforo btc"))
+
+    assert enviados[0].startswith("🔴 <b>Bitcoin</b>: luz roja"), enviados[0]
+    assert "❌ <b>Funding</b>: muy apalancado al alza" in enviados[0]
+
+
+def test_semaforo_cuenta_el_funding_si_lo_hay(config, enviados, monkeypatch):
+    monkeypatch.setattr(
+        funding, "pedir", lambda par: ({"lastFundingRate": "-0.0005"}, [])
+    )
+    for dias in range(40):
+        _precio_de(config, "bitcoin", 100.0 + dias % 3, dias * 24 * 60)
+
+    main.atender(config, _mensaje("/semaforo"))
+
+    assert "✅ <b>Funding</b>: muchos apostando a que baja" in enviados[0]
+    assert "Sin datos de el miedo" in enviados[0]
+
+
+def test_semaforo_con_pocos_dias(config, enviados, monkeypatch):
+    _sin_funding(monkeypatch)
+    _precio_de(config, "bitcoin", 100.0, 60)
+
+    main.atender(config, _mensaje("/semaforo btc"))
+
+    assert "Me faltan días de <b>bitcoin</b>" in enviados[0]
+    assert "/rellenar bitcoin" in enviados[0]
+
+
+def test_semaforo_sin_precios(config, enviados):
+    main.atender(config, _mensaje("/semaforo sol"))
+
+    assert "No tengo precios guardados de <b>solana</b>" in enviados[0]
+
+
+def test_semaforo_de_varias(config, enviados):
+    main.atender(config, _mensaje("/semaforo btc eth"))
+
+    assert "De una en una" in enviados[0]

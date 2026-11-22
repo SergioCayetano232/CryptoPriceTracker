@@ -30,6 +30,7 @@ from .. import (
     macd,
     media,
     mejor,
+    miedo,
     periodo,
     puntuales,
     quieta,
@@ -38,6 +39,7 @@ from .. import (
     ratio,
     rsi,
     ruido,
+    semaforo,
     sharpe,
     simbolos,
     soporte,
@@ -429,6 +431,85 @@ def _rsi(config: Config, argumento: str) -> str:
             "vigilo, y desde que las vigilo: míralas con /vigilar"
         )
     return alerts.formatear_rsi(coin_id, resultado, config.vs_currency)
+
+
+def _semaforo(config: Config, argumento: str) -> str:
+    if len(argumento.split()) > 1:
+        return "De una en una. Por ejemplo: /semaforo bitcoin"
+    if argumento:
+        coin_id = simbolos.a_id(argumento)
+    else:
+        vigiladas = _con_cambios(config).watchlist
+        if not vigiladas:
+            return "¿De cuál? Por ejemplo: /semaforo bitcoin"
+        coin_id = vigiladas[0].coin_id
+
+    serie = database.get_serie(
+        config.database_path, coin_id, rsi.HORAS, config.vs_currency
+    )
+    dias = volatilidad.por_dias(serie)
+    if not dias:
+        return (
+            f"No tengo precios guardados de <b>{telegram.escape(coin_id)}</b>. "
+            "Solo sé de las que vigilo: míralas con /vigilar"
+        )
+
+    votos, faltan = [], []
+    # Cada uno pide sus días; el que no llega se queda sin votar.
+    de_precios = (
+        ("el RSI", rsi.calcular(dias), semaforo.de_rsi),
+        ("el MACD", macd.calcular(dias), semaforo.de_macd),
+        ("las bandas", bollinger.calcular(dias), semaforo.de_bandas),
+    )
+    for nombre, resultado, votar in de_precios:
+        if resultado is None:
+            faltan.append(nombre)
+        else:
+            votos.append(votar(resultado))
+
+    medias = {v: media.calcular(dias, v) for v in media.VENTANAS}
+    voto = semaforo.de_medias(dias[-1][1], medias)
+    if voto is None:
+        faltan.append("las medias")
+    else:
+        votos.append(voto)
+
+    # Sin días suficientes no merece la pena salir a internet a por lo demás.
+    if not votos:
+        return (
+            f"Me faltan días de <b>{telegram.escape(coin_id)}</b> para el semáforo. "
+            f"Con /rellenar {telegram.escape(coin_id)} bajo los que faltan"
+        )
+
+    try:
+        indices = miedo.pedir()
+    except miedo.MiedoError as e:
+        logger.warning("El semaforo va sin el miedo: %s", e)
+        indices = []
+    if indices:
+        votos.append(semaforo.de_miedo(indices[0]))
+    else:
+        faltan.append("el miedo")
+
+    par = funding.par(coin_id, argumento)
+    try:
+        apuestas = funding.leer(par, *funding.pedir(par))
+    except funding.FundingError as e:
+        # Lo normal: que no tenga futuros en Binance.
+        logger.info("El semaforo va sin el funding de %s: %s", par, e)
+        apuestas = None
+    if apuestas is None:
+        faltan.append("el funding")
+    else:
+        votos.append(semaforo.de_funding(apuestas))
+
+    luz = semaforo.luz(votos)
+    if luz is None:
+        return (
+            f"Me faltan días de <b>{telegram.escape(coin_id)}</b> para el semáforo. "
+            f"Con /rellenar {telegram.escape(coin_id)} bajo los que faltan"
+        )
+    return alerts.formatear_semaforo(coin_id, votos, luz, faltan)
 
 
 def _sharpe(config: Config, argumento: str) -> str:

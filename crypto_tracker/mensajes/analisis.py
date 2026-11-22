@@ -45,6 +45,7 @@ from ..rebalanceo import EJEMPLO as EJEMPLO_REBALANCEO
 from ..rebalanceo import Paso
 from ..reparto import OTRAS, Trozo, demasiado
 from ..rsi import PERIODO, SOBRECOMPRA, SOBREVENTA, Rsi, hasta_zona
+from ..semaforo import AMBAR, VERDE, Voto
 from ..sharpe import Sharpe
 from ..soporte import Nivel, Soportes
 from ..sube import Subida
@@ -1166,6 +1167,41 @@ def formatear_sharpe(s: Sharpe, btc: Sharpe | None, dias: int) -> str:
         "que tienes hoy. De 1 para arriba está bien; no resta lo que daría un "
         "depósito</i>",
     ]
+    return "\n".join(texto)
+
+
+_LUCES = {
+    VERDE: ("🟢", "luz verde", "Más señales a favor de comprar que en contra"),
+    AMBAR: ("🟡", "luz ámbar", "Señales mezcladas, nada claro"),
+}
+_ROJA = ("🔴", "luz roja", "Más señales en contra de comprar que a favor")
+
+
+def formatear_semaforo(
+    coin_id: str, votos: list[Voto], luz: str, faltan: list[str]
+) -> str:
+    """Respuesta de /semaforo. faltan son los indicadores que no se pudieron mirar."""
+    nombre = escape(coin_id.replace("-", " ").title())
+    emoji, color, resumen = _LUCES.get(luz, _ROJA)
+    favor = sum(v.valor > 0 for v in votos)
+    contra = sum(v.valor < 0 for v in votos)
+    texto = [
+        f"{emoji} <b>{nombre}</b>: {color}",
+        resumen,
+        f"<i>{favor} a favor · {contra} en contra · "
+        f"{len(votos) - favor - contra} en medio</i>",
+        "",
+    ]
+    for v in votos:
+        marca = "✅" if v.valor > 0 else "❌" if v.valor < 0 else "⚪"
+        texto.append(f"{marca} <b>{escape(v.nombre)}</b>: {escape(v.motivo)}")
+    texto.append("")
+    if faltan:
+        texto.append(f"<i>Sin datos de {escape(', '.join(faltan))}</i>")
+    texto.append(
+        "<i>Junta lo que dicen los indicadores, no es un consejo. El detalle de "
+        "cada uno: /rsi, /macd, /bollinger, /media, /miedo y /funding</i>"
+    )
     return "\n".join(texto)
 
 

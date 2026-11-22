@@ -83,6 +83,7 @@ COMANDOS = {
     "dia": "A cuánto estaba un día concreto (ej: /dia btc 01/09 o ayer)",
     "cuando": "La última vez que estuvo a un precio (ej: /cuando btc 60000)",
     "redondo": "Cuánto le falta para la siguiente cifra redonda (ej: /redondo btc)",
+    "semaforo": "Una luz con lo que dicen todos los indicadores (ej: /semaforo btc)",
     "rsi": "Si ha subido o bajado demasiado rápido (ej: /rsi btc)",
     "bollinger": "Si se ha salido de su banda normal (ej: /bollinger btc)",
     "macd": "Si coge o pierde empuje, con el MACD (ej: /macd bitcoin)",
@@ -319,6 +320,8 @@ ALIAS = {
     "peor": "extremo",
     "drawdown": "caida",
     "sobrecompra": "rsi",
+    "semáforo": "semaforo",
+    "señal": "semaforo",
     "bandas": "bollinger",
     "empuje": "macd",
     "estocástico": "estocastico",
@@ -879,6 +882,10 @@ EJEMPLOS = {
     "bollinger": [
         ("/bollinger bitcoin", "si está dentro de su banda de 20 días o se ha salido"),
         ("/bollinger", "a secas, la primera que vigilo"),
+    ],
+    "semaforo": [
+        ("/semaforo bitcoin", "verde, ámbar o rojo, y qué dice cada indicador"),
+        ("/semaforo", "a secas, la primera que vigilo"),
     ],
     "rsi": [
         ("/rsi bitcoin", "el RSI de 14 días: por encima de 70 sobrecomprada"),
