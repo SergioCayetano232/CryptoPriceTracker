@@ -13059,3 +13059,125 @@ def test_informe_sin_matplotlib_lo_dice(config, enviados, archivos, monkeypatch)
 
     assert archivos == []
     assert "Falta matplotlib" in enviados[0]
+
+
+# --- el aviso de /comisionred 5 ---
+
+
+def _red(monkeypatch, media_hora):
+    """mempool.space con la de media hora a eso; se puede ir cambiando."""
+    ahora = {"halfHourFee": media_hora}
+    monkeypatch.setattr(comisionred, "pedir", lambda: (dict(ahora), []))
+    monkeypatch.setattr(comisionred, "pedir_ahora", lambda: dict(ahora))
+    return ahora
+
+
+def _avisos_red(enviados):
+    return [t for t in enviados if "Mover bitcoin ya está barato" in t]
+
+
+def test_comisionred_pone_el_aviso(config, enviados, monkeypatch):
+    _red(monkeypatch, 30)
+
+    main.atender(config, _mensaje("/comisionred 5"))
+
+    assert "Ahora está a 30 sat/vB" in enviados[0]
+    assert "baje a <b>5</b> o menos" in enviados[0]
+    assert database.aviso_comisionred(config.database_path) == 5
+
+
+def test_comisionred_si_ya_esta_barata_no_pone_nada(config, enviados, monkeypatch):
+    _red(monkeypatch, 4)
+
+    main.atender(config, _mensaje("/comisionred 5"))
+
+    assert "Ya está a <b>4 sat/vB</b>" in enviados[0]
+    assert database.aviso_comisionred(config.database_path) is None
+
+
+def test_comisionred_mal_escrito(config, enviados, monkeypatch):
+    _red(monkeypatch, 30)
+
+    main.atender(config, _mensaje("/comisionred barato"))
+
+    assert "de 1 a 1000" in enviados[0]
+    assert database.aviso_comisionred(config.database_path) is None
+
+
+def test_comisionred_avisa_una_vez_al_bajar(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 80000.0})
+    red = _red(monkeypatch, 30)
+    main.atender(config, _mensaje("/comisionred 5"))
+    main.ejecutar_ciclo(config, {})
+    assert _avisos_red(enviados) == []
+
+    red["halfHourFee"] = 4
+    main.ejecutar_ciclo(config, {})
+    main.ejecutar_ciclo(config, {})
+
+    [aviso] = _avisos_red(enviados)
+    assert "<b>€0,45</b> · 4 sat/vB" in aviso
+    assert "Pedías 5 o menos" in aviso
+    assert database.aviso_comisionred(config.database_path) is None
+
+
+def test_comisionred_sin_aviso_el_ciclo_no_pregunta(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 80000.0})
+    monkeypatch.setattr(comisionred, "pedir_ahora", lambda: pytest.fail())
+
+    main.ejecutar_ciclo(config, {})
+
+
+def test_comisionred_si_mempool_falla_sigue_puesto(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 80000.0})
+    _red(monkeypatch, 30)
+    main.atender(config, _mensaje("/comisionred 5"))
+
+    def falla():
+        raise comisionred.ComisionRedError("mempool.space no contesta")
+
+    monkeypatch.setattr(comisionred, "pedir_ahora", falla)
+    main.ejecutar_ciclo(config, {})
+
+    assert _avisos_red(enviados) == []
+    assert database.aviso_comisionred(config.database_path) == 5
+
+
+def test_comisionred_callado_espera_a_que_vuelvas(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 80000.0})
+    red = _red(monkeypatch, 30)
+    main.atender(config, _mensaje("/comisionred 5"))
+    red["halfHourFee"] = 4
+    database.silenciar_hasta(
+        config.database_path, datetime.now(timezone.utc) + timedelta(hours=1)
+    )
+    main.ejecutar_ciclo(config, {})
+    assert _avisos_red(enviados) == []
+
+    database.silenciar_hasta(config.database_path, None)
+    main.ejecutar_ciclo(config, {})
+
+    assert len(_avisos_red(enviados)) == 1
+
+
+def test_comisionred_no_quita_el_aviso(config, enviados, monkeypatch):
+    _red(monkeypatch, 30)
+    main.atender(config, _mensaje("/comisionred 5"))
+
+    main.atender(config, _mensaje("/comisionred no"))
+    main.atender(config, _mensaje("/comisionred no"))
+
+    assert "ya no te aviso" in enviados[1]
+    assert "No tenías ningún aviso" in enviados[2]
+    assert database.aviso_comisionred(config.database_path) is None
+
+
+def test_comisionred_a_secas_recuerda_el_aviso(config, monkeypatch):
+    mandados = _con_botones(monkeypatch)
+    _red(monkeypatch, 30)
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: {"bitcoin": 80000.0})
+    main.atender(config, _mensaje("/comisionred 5"))
+
+    main.atender(config, _mensaje("/comisionred"))
+
+    assert "🔔 Te aviso cuando la de media hora baje a 5 sat/vB" in mandados[-1][0]

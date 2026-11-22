@@ -250,6 +250,7 @@ from crypto_tracker.respuestas.revisiones import (
     revisar_alertas_ratio,
     revisar_bajon,
     revisar_calma,
+    revisar_comisionred,
     revisar_concentracion,
     revisar_cruces,
     revisar_direcciones,
@@ -471,6 +472,7 @@ def ejecutar_ciclo(
     revisar_salvo(config, vigiladas, calladas, sueltos)
     revisar_721(config, valor, calladas, sueltos)
     revisar_direcciones(config, precios, sueltos)
+    revisar_comisionred(config, sueltos)
     if calladas:
         avisos = [a for a in avisos if a.coin_id not in calladas]
         hechas = [p for p in hechas if p.coin_id not in calladas]
@@ -1687,7 +1689,7 @@ COMANDOS: dict[str, Callable[[Config, str], Respuesta]] = {
     "estacional": lambda c, a: _estacional(c, a),
     "funding": lambda c, a: _funding(c, a),
     "spread": lambda c, a: _spread(c, a),
-    "comisionred": lambda c, a: _comisionred(c),
+    "comisionred": lambda c, a: _comisionred(c, a),
     "comparar": lambda c, a: _comparar(c, a),
     "quieta": lambda c, a: _quieta(c),
     "volatilidad": lambda c, a: _volatilidad(c, a),

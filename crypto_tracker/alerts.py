@@ -217,6 +217,7 @@ from .mensajes.mercado import (
     HUMOR_VENTAS,
     _lado_sesgo,
     formatear_aleatoria,
+    formatear_aviso_comisionred,
     formatear_busqueda,
     formatear_comisionred,
     formatear_comparar,

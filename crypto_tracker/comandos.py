@@ -207,7 +207,7 @@ COMANDOS = {
     "glosario": "Qué significa hodl, fomo, dca... (ej: /glosario fomo)",
     "miedo": "El índice de miedo y codicia del mercado",
     "sesgo": "Si compras con miedo o con codicia, y cómo te ha ido",
-    "comisionred": "Lo que cuesta ahora mover bitcoin y si está barato",
+    "comisionred": "Lo que cuesta mover bitcoin, y aviso al bajar (ej: /comisionred 5)",
     "direccion": "Vigila una dirección de bitcoin o ethereum y avisa si se mueve",
     "funding": "Si los de futuros apuestan a que sube o baja (ej: /funding btc)",
     "spread": "El precio de CoinGecko contra el de Binance (ej: /spread btc eth)",
@@ -790,6 +790,11 @@ EJEMPLOS = {
     ],
     "equilibrio": [
         ("/equilibrio", "a qué precio te salió cada una y cuánto le falta"),
+    ],
+    "comisionred": [
+        ("/comisionred", "lo que cuesta ahora, con prisa y sin ella"),
+        ("/comisionred 5", "te aviso una vez cuando baje a 5 sat/vB"),
+        ("/comisionred no", "quitar el aviso"),
     ],
     "informe": [
         ("/informe", "el PDF de este año: resumen, cuota y cada venta"),

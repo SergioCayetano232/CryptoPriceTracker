@@ -205,20 +205,53 @@ def _aleatoria(config: Config) -> str | comandos.ConBotones:
     return comandos.ConBotones(texto, botones.para_aleatoria(m.coin_id))
 
 
-def _comisionred(config: Config) -> str | comandos.ConBotones:
+def _comisionred(config: Config, argumento: str = "") -> str | comandos.ConBotones:
+    try:
+        orden = comisionred.interpretar(argumento)
+    except comisionred.ComisionRedError as e:
+        return telegram.escape(str(e))
+    if orden == comisionred.QUITAR:
+        if database.aviso_comisionred(config.database_path) is None:
+            return f"No tenías ningún aviso puesto. Para ponerlo: {comisionred.EJEMPLO}"
+        database.guardar_aviso_comisionred(config.database_path, None)
+        return "Hecho, ya no te aviso de la comisión de la red."
+
     try:
         ahora, semana = comisionred.pedir()
     except comisionred.ComisionRedError as e:
         return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
 
     datos = comisionred.leer(ahora, semana)
+    if orden is not None:
+        return _avisar_comisionred(config, datos, orden)
+
     precio = database.get_last_price(config.database_path, "bitcoin")
     if precio is None:
         precio = (_consultar(config, ["bitcoin"]) or {}).get("bitcoin")
-    texto = alerts.formatear_comisionred(datos, precio, config.vs_currency)
+    aviso = database.aviso_comisionred(config.database_path)
+    texto = alerts.formatear_comisionred(datos, precio, config.vs_currency, aviso)
     if datos is None:
         return texto
     return comandos.ConBotones(texto, botones.actualizar("/comisionred"))
+
+
+def _avisar_comisionred(
+    config: Config, datos: comisionred.ComisionRed | None, limite: int
+) -> str:
+    if datos is None:
+        return "mempool.space no me ha dado las comisiones. Prueba en un rato."
+    ahora = comisionred.media_hora(datos.tarifas).sats_vb
+    # Avisar de algo que ya pasa sería un mensaje nada más ponerlo.
+    if comisionred.toca(datos, limite):
+        return (
+            f"Ya está a <b>{ahora} sat/vB</b>, no hace falta esperar. "
+            "Míralo en /comisionred"
+        )
+    database.guardar_aviso_comisionred(config.database_path, limite)
+    return (
+        f"🔔 Hecho. Ahora está a {ahora} sat/vB: te aviso una vez cuando la de "
+        f"media hora baje a <b>{limite}</b> o menos.\nPara quitarlo: /comisionred no"
+    )
 
 
 def _precios_de(

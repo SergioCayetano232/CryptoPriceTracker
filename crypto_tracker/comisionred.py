@@ -29,6 +29,13 @@ PRISAS = [
 ]
 
 
+EJEMPLO = "/comisionred 5"
+QUITAR = "quitar"
+_QUITAR = frozenset({"no", "off", "quitar", "quita", "fuera"})
+# Más que esto no se ha visto ni en los peores días: será un despiste.
+LIMITE_MAXIMO = 1000
+
+
 class ComisionRedError(Exception):
     """No se pudo leer lo que cobra la red."""
 
@@ -46,6 +53,27 @@ class ComisionRed:
     tarifas: list[Tarifa]
     semana: float | None  # lo normal de la semana, en sat/vB
     nivel: str  # regalada, barata, normal, cara o "" si no hay semana
+
+
+def interpretar(argumento: str) -> int | str | None:
+    """'' -> None, verlo. '5' -> avisar al bajar a 5 sat/vB. 'no' -> QUITAR."""
+    palabras = argumento.lower().split()
+    if not palabras:
+        return None
+    if palabras == ["no"] or (len(palabras) == 1 and palabras[0] in _QUITAR):
+        return QUITAR
+    # Vale "5", "5 sat/vB" y "5sat".
+    numero = palabras[0].removesuffix("sat/vb").removesuffix("sats").removesuffix("sat")
+    if not numero.isdigit() or not 1 <= int(numero) <= LIMITE_MAXIMO:
+        raise ComisionRedError(
+            f"Dime a cuántos sat/vB te aviso, de 1 a {LIMITE_MAXIMO}. Así: {EJEMPLO}"
+        )
+    return int(numero)
+
+
+def pedir_ahora() -> dict:
+    """Solo lo de ahora, para el aviso: en cada ciclo no hace falta la semana."""
+    return _get(URL)
 
 
 def pedir() -> tuple[dict, list]:
@@ -96,11 +124,18 @@ def _normal(semana) -> float | None:
     return median(valores) if valores else None
 
 
+def media_hora(tarifas: list[Tarifa]) -> Tarifa:
+    """La que usa casi todo el mundo. Si no viene, la primera que haya."""
+    return next((t for t in tarifas if t.nombre == "En media hora"), tarifas[0])
+
+
+def toca(c: ComisionRed | None, limite: int) -> bool:
+    """Si ya ha bajado a lo que pediste."""
+    return c is not None and media_hora(c.tarifas).sats_vb <= limite
+
+
 def nivel(tarifas: list[Tarifa], normal: float | None) -> str:
-    # La de media hora es la que usa casi todo el mundo.
-    ahora = next((t.sats_vb for t in tarifas if t.nombre == "En media hora"), None)
-    if ahora is None:
-        ahora = tarifas[0].sats_vb
+    ahora = media_hora(tarifas).sats_vb
     if ahora <= REGALADA:
         return "regalada"
     if not normal:

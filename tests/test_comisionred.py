@@ -174,3 +174,67 @@ def test_formatear_sin_precio():
 
 def test_formatear_sin_datos():
     assert "Prueba en un rato" in formatear_comisionred(None, 80000.0, "eur")
+
+
+# --- el aviso de /comisionred 5 ---
+
+
+@pytest.mark.parametrize(
+    "texto, sale",
+    [
+        ("", None),
+        ("5", 5),
+        ("5 sat/vB", 5),
+        ("12sat", 12),
+        ("no", comisionred.QUITAR),
+        ("quitar", comisionred.QUITAR),
+    ],
+)
+def test_interpretar(texto, sale):
+    assert comisionred.interpretar(texto) == sale
+
+
+@pytest.mark.parametrize("texto", ["0", "barato", "-3", "5000", "2,5"])
+def test_interpretar_mal(texto):
+    with pytest.raises(ComisionRedError, match="/comisionred 5"):
+        comisionred.interpretar(texto)
+
+
+def test_toca_cuando_la_de_media_hora_baja_al_limite():
+    datos = leer(AHORA, [])  # media hora a 8
+
+    assert comisionred.toca(datos, 8)
+    assert comisionred.toca(datos, 10)
+    assert not comisionred.toca(datos, 7)
+    assert not comisionred.toca(None, 100)
+
+
+def test_toca_sin_media_hora_mira_la_primera():
+    assert comisionred.toca(leer({"economyFee": 3}, []), 3)
+
+
+def test_pedir_ahora_no_pide_la_semana(monkeypatch):
+    pedidas = []
+    monkeypatch.setattr(comisionred, "_get", lambda url: pedidas.append(url) or AHORA)
+
+    assert comisionred.pedir_ahora() == AHORA
+    assert pedidas == [comisionred.URL]
+
+
+def test_formatear_el_aviso():
+    from crypto_tracker.alerts import formatear_aviso_comisionred
+
+    texto = formatear_aviso_comisionred(leer(AHORA, []), 10, 80000.0, "eur")
+
+    assert "⛓️ <b>Mover bitcoin ya está barato</b>" in texto
+    assert "🚶 En media hora: <b>€0,90</b> · 8 sat/vB" in texto
+    assert "Pedías 10 o menos" in texto
+    assert "/comisionred 10" in texto
+
+
+def test_formatear_dice_el_aviso_que_tienes_puesto():
+    con = formatear_comisionred(leer(AHORA, []), 80000.0, "eur", 5)
+    sin = formatear_comisionred(leer(AHORA, []), 80000.0, "eur")
+
+    assert "🔔 Te aviso cuando la de media hora baje a 5 sat/vB" in con
+    assert "🔔" not in sin

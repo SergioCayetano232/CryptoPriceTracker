@@ -19,6 +19,7 @@ from .. import (
     calma,
     cartera,
     coingecko,
+    comisionred,
     concentracion,
     cruce,
     database,
@@ -538,6 +539,42 @@ def revisar_direcciones(
         ):
             # Sin apuntarlo, lo vuelve a intentar el siguiente ciclo.
             logger.error("No se pudo avisar de que se movió %s", v.nombre)
+
+
+def revisar_comisionred(config: Config, sueltos: buzon.Buzon | None = None) -> None:
+    """Avisa una vez cuando mover bitcoin baja a lo que pediste en /comisionred."""
+    try:
+        limite = database.aviso_comisionred(config.database_path)
+    except database.DatabaseError as e:
+        logger.error("No se pudo leer el aviso de la comisión de red: %s", e)
+        return
+    # Callado se queda puesto: si sigue barato al volver, salta entonces.
+    if limite is None or _silenciado(config):
+        return
+    try:
+        datos = comisionred.leer(comisionred.pedir_ahora(), [])
+    except comisionred.ComisionRedError as e:
+        logger.warning("No se pudo mirar la comisión de red: %s", e)
+        return
+    if not comisionred.toca(datos, limite):
+        return
+
+    def avisada() -> None:
+        logger.info("Aviso de comisión de red: ha bajado a %d sat/vB", limite)
+        try:
+            database.guardar_aviso_comisionred(config.database_path, None)
+        except database.DatabaseError as e:
+            logger.error("No se pudo quitar el aviso de la comisión de red: %s", e)
+
+    try:
+        precio = database.get_last_price(config.database_path, "bitcoin")
+    except database.DatabaseError:
+        precio = None
+    texto = alerts.formatear_aviso_comisionred(
+        datos, limite, precio, config.vs_currency
+    )
+    if not _avisar(config, texto, sueltos, avisada):
+        logger.error("No se pudo avisar de la comisión de red")
 
 
 def revisar_rsi(

@@ -948,6 +948,16 @@ def test_un_reparto_nuevo_olvida_el_aviso_del_anterior(db):
     assert not database.ideal_avisado(db)
 
 
+def test_aviso_de_la_comision_de_red(db):
+    assert database.aviso_comisionred(db) is None
+
+    database.guardar_aviso_comisionred(db, 5)
+    assert database.aviso_comisionred(db) == 5
+
+    database.guardar_aviso_comisionred(db, None)
+    assert database.aviso_comisionred(db) is None
+
+
 def test_mensaje_en_vivo(db):
     assert database.envivo(db) is None
 

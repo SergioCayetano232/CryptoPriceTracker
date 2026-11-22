@@ -180,6 +180,8 @@ NOTA_HERENCIA = "*nota"
 # El reparto de /ideal, en JSON, y si ya se avisó de que la cartera se alejó.
 IDEAL = "reparto_ideal"
 IDEAL_AVISADO = "reparto_ideal_avisado"
+# A cuántos sat/vB avisar de que mover bitcoin está barato. Sin fila, sin aviso.
+AVISO_COMISIONRED = "aviso_comisionred"
 # El id del mensaje fijado de /envivo. Sin fila, no hay ninguno.
 ENVIVO = "envivo"
 
@@ -922,6 +924,28 @@ def guardar_limite_compras(db_path: str, limite: float | None) -> None:
         conn.execute(
             "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
             (LIMITE_COMPRAS, repr(limite)),
+        )
+
+
+def aviso_comisionred(db_path: str) -> int | None:
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT valor FROM ajustes WHERE clave = ?", (AVISO_COMISIONRED,)
+        ).fetchone()
+    try:
+        return int(fila["valor"]) if fila else None
+    except ValueError:
+        return None
+
+
+def guardar_aviso_comisionred(db_path: str, limite: int | None) -> None:
+    with _connect(db_path) as conn:
+        if limite is None:
+            conn.execute("DELETE FROM ajustes WHERE clave = ?", (AVISO_COMISIONRED,))
+            return
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (AVISO_COMISIONRED, str(limite)),
         )
 
 

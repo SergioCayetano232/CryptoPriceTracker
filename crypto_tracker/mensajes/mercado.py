@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from ..avisados import Ultimo
 from ..cartera import Valor
 from ..comisionred import TAMAÑO as TAMAÑO_ENVIO
-from ..comisionred import ComisionRed, en_dinero
+from ..comisionred import ComisionRed, en_dinero, media_hora
 from ..comparar import Resultado
 from ..comparar import media as media_comparar
 from ..copia import numero as numero_env
@@ -289,21 +289,49 @@ def formatear_aleatoria(puesto: int, m: Movida, currency: str) -> str:
     )
 
 
-def formatear_comisionred(
-    c: ComisionRed | None, precio_btc: float | None, currency: str
+def _cuesta_envio(sats: int, precio_btc: float | None, simbolo: str) -> str:
+    if not precio_btc:
+        return f"{_es(f'{sats:,}')} sats"
+    dinero = en_dinero(sats, precio_btc)
+    if dinero < 0.01:
+        return f"menos de 1 céntimo ({sats} sats)"
+    return f"{simbolo}{_es(f'{dinero:,.2f}')}"
+
+
+def formatear_aviso_comisionred(
+    c: ComisionRed, limite: int, precio_btc: float | None, currency: str
 ) -> str:
-    """Respuesta de /comisionred. Sin precio de bitcoin, solo en sats."""
+    """El aviso de /comisionred 5, cuando la red baja a lo que pediste."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    t = media_hora(c.tarifas)
+    return "\n".join(
+        [
+            "⛓️ <b>Mover bitcoin ya está barato</b>",
+            f"{t.emoji} {t.nombre}: <b>{_cuesta_envio(t.sats, precio_btc, simbolo)}"
+            f"</b> · {t.sats_vb} sat/vB",
+            f"Pedías {limite} o menos. Buen momento para pasarlo a tu monedero.",
+            "<i>Con prisa y sin ella, en /comisionred. Era un aviso de una vez: "
+            f"para otro, /comisionred {limite}</i>",
+        ]
+    )
+
+
+def formatear_comisionred(
+    c: ComisionRed | None,
+    precio_btc: float | None,
+    currency: str,
+    aviso: int | None = None,
+) -> str:
+    """Respuesta de /comisionred. Sin precio de bitcoin, solo en sats.
+
+    aviso es a cuántos sat/vB tienes puesto que te avise, si lo tienes.
+    """
     if c is None:
         return "mempool.space no me ha dado las comisiones. Prueba en un rato."
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
 
     def cuesta(sats: int) -> str:
-        if not precio_btc:
-            return f"{_es(f'{sats:,}')} sats"
-        dinero = en_dinero(sats, precio_btc)
-        if dinero < 0.01:
-            return f"menos de 1 céntimo ({sats} sats)"
-        return f"{simbolo}{_es(f'{dinero:,.2f}')}"
+        return _cuesta_envio(sats, precio_btc, simbolo)
 
     texto = ["⛓️ <b>Lo que cuesta mover bitcoin ahora</b>", ""]
     for t in c.tarifas:
@@ -322,6 +350,12 @@ def formatear_comisionred(
     }.get(c.nivel)
     if veredicto:
         texto += ["", veredicto]
+    if aviso is not None:
+        texto += [
+            "",
+            f"🔔 Te aviso cuando la de media hora baje a {aviso} sat/vB. "
+            "Para quitarlo: /comisionred no",
+        ]
 
     texto += [
         "",
