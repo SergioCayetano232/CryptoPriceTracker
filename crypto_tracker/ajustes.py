@@ -3,6 +3,7 @@
 from datetime import timedelta
 
 from .config import Config
+from .latido import servicio
 from .salud import _cada, _duracion
 
 
@@ -77,6 +78,11 @@ def lineas(config: Config) -> list[str]:
         texto.append(f"🌙 Sin sonar de {inicio:%H:%M} a {fin:%H:%M}")
     else:
         texto.append("🌙 Los avisos suenan siempre")
+
+    if config.latido_url and not config.invitado:
+        texto.append(f"💓 Latido a {servicio(config.latido_url)} en cada consulta")
+    elif not config.invitado:
+        texto.append("💓 Sin latido a un servicio de fuera")
 
     return texto
 

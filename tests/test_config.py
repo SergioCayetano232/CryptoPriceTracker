@@ -470,3 +470,33 @@ def test_calma_con_poca_historia(monkeypatch):
 
     with pytest.raises(ConfigError, match="AVISO_CALMA necesita al menos 38"):
         load_config()
+
+
+def test_latido_puesto(monkeypatch):
+    from crypto_tracker.config import load_config
+
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "x")
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "1")
+    monkeypatch.setenv("WATCHLIST", "bitcoin:%5")
+    monkeypatch.setenv("LATIDO_URL", " https://hc-ping.com/abc ")
+
+    assert load_config().latido_url == "https://hc-ping.com/abc"
+
+
+def test_sin_latido():
+    from crypto_tracker.config import parse_latido
+
+    assert parse_latido("") is None
+    assert parse_latido("   ") is None
+
+
+@pytest.mark.parametrize(
+    "entrada", ["hc-ping.com/secreto", "si", "ftp://x.com/secreto", "https://"]
+)
+def test_latido_que_no_es_una_direccion(entrada):
+    from crypto_tracker.config import parse_latido
+
+    with pytest.raises(ConfigError, match="LATIDO_URL") as e:
+        parse_latido(entrada)
+    # Lo que pusiste lleva la clave: no puede acabar en el log.
+    assert "secreto" not in str(e.value)

@@ -12735,3 +12735,62 @@ def test_envivo_si_no_deja_fijar_te_lo_dice(config, enviados, fijo, monkeypatch)
 
     assert "No he podido fijarlo" in enviados[0]
     assert database.envivo(config.database_path) is not None
+
+
+def _latidos(monkeypatch):
+    from crypto_tracker import latido
+
+    dados = []
+    monkeypatch.setattr(latido, "mandar", lambda url: dados.append(url) or True)
+    return dados
+
+
+def test_el_bucle_da_el_latido_si_el_ciclo_va_bien(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    dados = _latidos(monkeypatch)
+    monkeypatch.setattr(main, "ejecutar_ciclo", lambda c, e, s, p=None: (e, None))
+    monkeypatch.setattr(main, "pedir_precios", lambda *a: main.Pedidos({}))
+
+    _una_vuelta(replace(config, latido_url="https://hc-ping.com/abc"), monkeypatch)
+
+    assert dados == ["https://hc-ping.com/abc"]
+
+
+def test_sin_precios_no_hay_latido(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    dados = _latidos(monkeypatch)
+    monkeypatch.setattr(
+        main, "ejecutar_ciclo", lambda c, e, s, p=None: (e, "CoinGecko no contesta")
+    )
+    monkeypatch.setattr(main, "pedir_precios", lambda *a: main.Pedidos({}))
+
+    _una_vuelta(replace(config, latido_url="https://hc-ping.com/abc"), monkeypatch)
+
+    assert dados == []
+
+
+def test_si_el_ciclo_revienta_no_hay_latido(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    def revienta(*a, **k):
+        raise RuntimeError("algo raro")
+
+    dados = _latidos(monkeypatch)
+    monkeypatch.setattr(main, "ejecutar_ciclo", revienta)
+    monkeypatch.setattr(main, "pedir_precios", lambda *a: main.Pedidos({}))
+
+    _una_vuelta(replace(config, latido_url="https://hc-ping.com/abc"), monkeypatch)
+
+    assert dados == []
+
+
+def test_sin_latido_puesto_no_llama_a_nadie(config, enviados, monkeypatch):
+    dados = _latidos(monkeypatch)
+    monkeypatch.setattr(main, "ejecutar_ciclo", lambda c, e, s, p=None: (e, None))
+    monkeypatch.setattr(main, "pedir_precios", lambda *a: main.Pedidos({}))
+
+    _una_vuelta(config, monkeypatch)
+
+    assert dados == []

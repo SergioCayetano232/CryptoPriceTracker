@@ -889,6 +889,7 @@ Con el túnel abierto, entra en <http://127.0.0.1:8000>. Nadie más puede verlo.
 | `AVISO_VOLUMEN` | Con `si`, aviso cuando el volumen de 24 h pasa del triple de lo normal. Vacío, sin aviso | vacío |
 | `AVISO_CALMA` | Con `si`, aviso cuando una lleva una semana mucho más quieta de lo normal. Necesita `HISTORY_DAYS` de 38 o más. Vacío, sin aviso | vacío |
 | `COPIA_SEMANAL` | Con `si`, te manda la base de datos cada 7 días. Vacío, sin copia | vacío |
+| `LATIDO_URL` | Dirección a la que da un toque en cada consulta que sale bien, para que un servicio de fuera te avise si el bot se muere. Vacío, sin latido | vacío |
 
 No bajes mucho `CHECK_INTERVAL`. La clave gratuita de CoinGecko da 10.000
 consultas al mes y cada ciclo gasta una: con `330` (cinco minutos y medio) te
@@ -929,6 +930,13 @@ CoinGecko no contestaba y el bot ha tirado de Binance para no dejarte sin
 aviso. Solo vale con `VS_CURRENCY` en `eur` o `usd` y con las criptos
 conocidas (`btc`, `eth`, `sol`...). Las estables y las raras esperan a que
 vuelva CoinGecko.
+
+**Quiero enterarme si se cae el servidor**
+Si falla CoinGecko, el bot te avisa él. Pero si se va la luz o se cuelga la
+máquina, no puede. Crea un check gratis en [healthchecks.io](https://healthchecks.io)
+con un periodo de 10 minutos, copia su dirección en `LATIDO_URL` y reinicia: el
+bot le da un toque en cada consulta buena y, si deja de llegar, te escriben
+ellos. Vale cualquier servicio que funcione así (Uptime Kuma, Better Stack...).
 
 **Me avisa demasiado**
 El paso es muy pequeño. Con `bitcoin:100` te avisa continuamente; prueba con
@@ -1141,6 +1149,7 @@ crypto_tracker/
   semanal.py     el resumen de la semana de la cartera
   mes.py         desde cuándo cuentan el mes y el año, para /mes y /anual
   salud.py       avisa si el bot deja de funcionar
+  latido.py      el toque a un servicio de fuera, por si se cae el servidor
   version.py     la versión del bot, para /version
   copia.py       lo de ahora escrito como va en el .env, para /copia
   backup.py      el zip con la base de datos, para /backup

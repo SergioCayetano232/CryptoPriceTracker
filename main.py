@@ -55,6 +55,7 @@ from crypto_tracker import (
     halving,
     importar,
     inline,
+    latido,
     maximo,
     merge,
     movimientos,
@@ -916,6 +917,9 @@ def ejecutar_bucle(config: Config, estado: dict[str, str]) -> int:
         texto = pulso.fallo(problema) if problema else pulso.exito()
         if texto:
             _avisar_salud(config, texto)
+        # Solo con el ciclo bueno: que falte es justo lo que avisa el de fuera.
+        if config.latido_url and not problema:
+            latido.mandar(config.latido_url)
 
         # Aqui entran tambien las de los comandos de la espera anterior.
         apuntar_consultas(config)

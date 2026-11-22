@@ -34,6 +34,7 @@ def test_todo_puesto():
             aviso_calma=True,
             copia_semanal=True,
             horas_tranquilas=(time(23, 0), time(8, 0)),
+            latido_url="https://hc-ping.com/abc",
         )
     )
 
@@ -52,6 +53,7 @@ def test_todo_puesto():
         "🤫 Aviso si una se queda mucho más quieta de lo normal",
         "📦 Copia de seguridad cada semana",
         "🌙 Sin sonar de 23:00 a 08:00",
+        "💓 Latido a hc-ping.com en cada consulta",
     ]
 
 
@@ -79,3 +81,20 @@ def test_mensaje():
 
     assert texto.startswith("⚙️ <b>Tus ajustes</b>")
     assert "/horario" in texto
+
+
+def test_latido_enseña_el_servicio_pero_no_la_clave():
+    texto = lineas(_config(latido_url="https://hc-ping.com/mi-clave"))
+
+    assert "💓 Latido a hc-ping.com en cada consulta" in texto
+    assert "mi-clave" not in "".join(texto)
+
+
+def test_sin_latido():
+    assert "💓 Sin latido a un servicio de fuera" in lineas(_config())
+
+
+def test_a_un_invitado_no_le_sale_el_latido():
+    texto = lineas(_config(latido_url="https://hc-ping.com/x", invitado=True))
+
+    assert not any("atido" in linea for linea in texto)

@@ -4,6 +4,7 @@ import math
 import os
 from dataclasses import dataclass
 from datetime import datetime, time, timedelta
+from urllib.parse import urlsplit
 
 from dotenv import load_dotenv
 
@@ -77,6 +78,8 @@ class Config:
     aviso_calma: bool = False
     copia_semanal: bool = False
     aviso_721: bool = False
+    # None = sin latido a un servicio de fuera
+    latido_url: str | None = None
     # True si es alguien a quien invitaste: con su archivo y sin tus claves.
     invitado: bool = False
     # En un invitado, tu archivo: lo del mercado (/dominancia) solo se guarda ahí.
@@ -465,6 +468,21 @@ def parse_copia_semanal(raw: str) -> bool:
     return _si_o_no(raw, "COPIA_SEMANAL")
 
 
+def parse_latido(raw: str) -> str | None:
+    """La URL de LATIDO_URL. Vacio es sin latido."""
+    raw = raw.strip()
+    if not raw:
+        return None
+    partes = urlsplit(raw)
+    if partes.scheme not in ("http", "https") or not partes.hostname:
+        # Sin repetir lo que pusiste: suele llevar la clave y esto va al log.
+        raise ConfigError(
+            "LATIDO_URL tiene que ser una direccion entera, "
+            "como https://hc-ping.com/tu-codigo."
+        )
+    return raw
+
+
 def _si_o_no(raw: str, opcion: str) -> bool:
     """'si' -> True. Vacio o 'no' es False."""
     texto = raw.strip().lower()
@@ -560,4 +578,5 @@ def load_config() -> Config:
         aviso_calma=aviso_calma,
         copia_semanal=parse_copia_semanal(os.getenv("COPIA_SEMANAL", "")),
         aviso_721=aviso_721,
+        latido_url=parse_latido(os.getenv("LATIDO_URL", "")),
     )
