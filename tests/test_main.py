@@ -13417,3 +13417,140 @@ def test_juntas_mal_escrito(dos, enviados):
     main.atender(dos, _mensaje("/juntas btc"))
 
     assert "De dos en dos" in enviados[0]
+
+
+# --- /funding btc avisa ---
+
+
+def _futuros(monkeypatch, tasa):
+    """Binance con la media de la semana a ese %; se puede ir cambiando."""
+    estado = {"tasa": tasa, "pedidas": 0}
+
+    def pedir(par):
+        estado["pedidas"] += 1
+        texto = repr(estado["tasa"] / 100)
+        return {"lastFundingRate": texto}, [{"fundingRate": texto}]
+
+    monkeypatch.setattr(funding, "pedir", pedir)
+    return estado
+
+
+def _avisos_funding(enviados):
+    return [t for t in enviados if "<b>Funding de BTC:" in t and "No repito" in t]
+
+
+def _dentro_de(horas):
+    return datetime.now(timezone.utc) + timedelta(hours=horas)
+
+
+def test_funding_avisa_pone_el_aviso(config, enviados, monkeypatch):
+    _futuros(monkeypatch, 0.01)
+
+    main.atender(config, _mensaje("/funding btc avisa"))
+
+    assert "te aviso cuando el funding de <b>bitcoin</b>" in enviados[0]
+    assert "Ahora: 😐 tranquilo" in enviados[0]
+    [v] = database.get_funding(config.database_path)
+    assert (v.par, v.coin_id, v.extremo) == ("BTCUSDT", "bitcoin", "")
+
+
+def test_funding_avisa_una_vez_al_irse_al_extremo(config, enviados, monkeypatch):
+    futuros = _futuros(monkeypatch, 0.01)
+    main.atender(config, _mensaje("/funding btc avisa"))
+    enviados.clear()
+
+    futuros["tasa"] = 0.07
+    main.revisar_funding(config, set(), None, _dentro_de(2))
+    main.revisar_funding(config, set(), None, _dentro_de(4))
+
+    [aviso] = _avisos_funding(enviados)
+    assert "🔥 <b>Funding de BTC: muy apalancado al alza</b>" in aviso
+    assert "<b>+0,0700%</b>" in aviso
+
+
+def test_funding_vuelve_a_avisar_si_se_calma_y_repite(config, enviados, monkeypatch):
+    futuros = _futuros(monkeypatch, 0.01)
+    main.atender(config, _mensaje("/funding btc avisa"))
+    enviados.clear()
+
+    for horas, tasa in ((2, 0.07), (4, 0.01), (6, -0.02)):
+        futuros["tasa"] = tasa
+        main.revisar_funding(config, set(), None, _dentro_de(horas))
+
+    assert len(_avisos_funding(enviados)) == 2
+    assert "😱" in enviados[-1]
+
+
+def test_funding_no_pregunta_a_binance_en_cada_ciclo(config, enviados, monkeypatch):
+    futuros = _futuros(monkeypatch, 0.01)
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+    main.atender(config, _mensaje("/funding btc avisa"))
+    antes = futuros["pedidas"]
+
+    main.ejecutar_ciclo(config, {})
+    main.ejecutar_ciclo(config, {})
+
+    # Se miró al ponerlo: hasta dentro de una hora no toca.
+    assert futuros["pedidas"] == antes
+
+
+def test_funding_si_ya_estaba_en_el_extremo_no_avisa_de_eso(
+    config, enviados, monkeypatch
+):
+    _futuros(monkeypatch, 0.07)
+    main.atender(config, _mensaje("/funding btc avisa"))
+    enviados.clear()
+
+    main.revisar_funding(config, set(), None, _dentro_de(2))
+
+    assert enviados == []
+
+
+def test_funding_si_binance_falla_sigue_puesto(config, enviados, monkeypatch):
+    _futuros(monkeypatch, 0.01)
+    main.atender(config, _mensaje("/funding btc avisa"))
+    enviados.clear()
+
+    def falla(par):
+        raise funding.FundingError("Binance no contesta")
+
+    monkeypatch.setattr(funding, "pedir", falla)
+    main.revisar_funding(config, set(), None, _dentro_de(2))
+
+    assert enviados == []
+    assert len(database.get_funding(config.database_path)) == 1
+
+
+def test_funding_callada_no_avisa(config, enviados, monkeypatch):
+    futuros = _futuros(monkeypatch, 0.01)
+    main.atender(config, _mensaje("/funding btc avisa"))
+    enviados.clear()
+    futuros["tasa"] = 0.07
+
+    main.revisar_funding(config, {"bitcoin"}, None, _dentro_de(2))
+    assert enviados == []
+
+    main.revisar_funding(config, set(), None, _dentro_de(2))
+    assert len(_avisos_funding(enviados)) == 1
+
+
+def test_funding_no_quita_el_aviso(config, enviados, monkeypatch):
+    _futuros(monkeypatch, 0.01)
+    main.atender(config, _mensaje("/funding btc avisa"))
+
+    main.atender(config, _mensaje("/funding btc no"))
+    main.atender(config, _mensaje("/funding btc no"))
+
+    assert "ya no te aviso del funding de bitcoin" in enviados[1]
+    assert "No tenías ese aviso" in enviados[2]
+    assert database.get_funding(config.database_path) == []
+
+
+def test_funding_normal_recuerda_el_aviso(config, monkeypatch):
+    mandados = _con_botones(monkeypatch)
+    _futuros(monkeypatch, 0.01)
+    main.atender(config, _mensaje("/funding btc avisa"))
+
+    main.atender(config, _mensaje("/funding btc"))
+
+    assert "🔔 Te aviso si se va a un extremo" in mandados[-1][0]

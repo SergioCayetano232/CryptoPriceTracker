@@ -1,6 +1,7 @@
 """/funding: lo que se pagan los de los futuros de Binance entre ellos."""
 
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from statistics import mean
 
 import requests
@@ -37,6 +38,19 @@ NIVELES = [
 ]
 
 
+EJEMPLO_AVISO = "/funding btc avisa"
+AVISA = "avisa"
+QUITAR = "quitar"
+_AVISA = frozenset({"avisa", "aviso", "avisame", "avísame"})
+_QUITAR = frozenset({"no", "quitar", "off"})
+
+# La media de la semana se mueve cada 8 h, con cada pago: mirarla en cada
+# ciclo sería preguntar a Binance cien veces por lo mismo.
+CADA = timedelta(hours=1)
+
+ALTO, BAJO = "alto", "bajo"
+
+
 class FundingError(Exception):
     """No se pudo leer de Binance."""
 
@@ -54,6 +68,46 @@ class Funding:
     def al_año(self) -> float:
         tasa = self.ahora if self.semana is None else self.semana
         return tasa * AL_DIA * 365
+
+
+@dataclass(frozen=True)
+class Vigilado:
+    """Uno de /funding btc avisa."""
+
+    par: str
+    coin_id: str
+    extremo: str = ""  # ALTO o BAJO si ya se avisó de que está ahí; "" si no
+    mirado: datetime | None = None  # la última vez que se preguntó a Binance
+
+
+def separar(argumento: str) -> tuple[str, str | None]:
+    """'btc avisa' -> ('btc', AVISA). 'btc no' -> ('btc', QUITAR). Si no, None."""
+    partes = argumento.split()
+    if len(partes) >= 2 and partes[-1].lower() in _AVISA:
+        return " ".join(partes[:-1]), AVISA
+    if len(partes) >= 2 and partes[-1].lower() in _QUITAR:
+        return " ".join(partes[:-1]), QUITAR
+    return argumento, None
+
+
+def extremo(f: Funding) -> str:
+    """ALTO o BAJO si está en uno de los dos niveles de las puntas; si no, ''."""
+    tasa = f.ahora if f.semana is None else f.semana
+    if tasa < NIVELES[0][0]:
+        return BAJO
+    if tasa >= NIVELES[-2][0]:
+        return ALTO
+    return ""
+
+
+def toca_mirar(v: Vigilado, ahora: datetime) -> bool:
+    return v.mirado is None or ahora - v.mirado >= CADA
+
+
+def toca(v: Vigilado, f: Funding) -> tuple[bool, str]:
+    """(toca avisar, dónde queda). Avisa al entrar en una punta, no mientras sigue."""
+    donde = extremo(f)
+    return bool(donde) and donde != v.extremo, donde
 
 
 def par(coin_id: str, escrito: str = "") -> str:

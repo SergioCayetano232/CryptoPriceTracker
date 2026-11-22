@@ -322,6 +322,7 @@ def _direccion(config: Config, argumento: str) -> str:
 
 
 def _funding(config: Config, argumento: str) -> str | comandos.ConBotones:
+    argumento, orden = funding.separar(argumento)
     if len(argumento.split()) > 1:
         return "De una en una. Por ejemplo: /funding btc"
     if argumento:
@@ -333,6 +334,10 @@ def _funding(config: Config, argumento: str) -> str | comandos.ConBotones:
         coin_id = vigiladas[0].coin_id
 
     par = funding.par(coin_id, argumento)
+    if orden == funding.QUITAR:
+        if database.quitar_funding(config.database_path, par):
+            return f"Hecho, ya no te aviso del funding de {telegram.escape(coin_id)}."
+        return f"No tenías ese aviso. Para ponerlo: {funding.EJEMPLO_AVISO}"
     try:
         ahora, antes = funding.pedir(par)
     except funding.FundingError as e:
@@ -346,8 +351,24 @@ def _funding(config: Config, argumento: str) -> str | comandos.ConBotones:
     resultado = funding.leer(par, ahora, antes)
     if resultado is None:
         return "Binance no me ha dado el funding. Prueba en un rato."
+    if orden == funding.AVISA:
+        # Si ya está en una punta lo apunto: avisar de lo que acabas de ver sobra.
+        database.guardar_funding(
+            config.database_path,
+            funding.Vigilado(
+                par, coin_id, funding.extremo(resultado), datetime.now(timezone.utc)
+            ),
+        )
+        return (
+            f"🔔 Hecho: te aviso cuando el funding de <b>{telegram.escape(coin_id)}"
+            "</b> se vaya a un extremo, muy apalancado al alza o muchos apostando "
+            f"a que baja. Ahora: {resultado.emoji} {resultado.nivel.lower()}.\n"
+            f"Para quitarlo: /funding {telegram.escape(coin_id)} no"
+        )
+    avisa = any(v.par == par for v in database.get_funding(config.database_path))
     return comandos.ConBotones(
-        alerts.formatear_funding(resultado), botones.actualizar(f"/funding {coin_id}")
+        alerts.formatear_funding(resultado, avisa),
+        botones.actualizar(f"/funding {coin_id}"),
     )
 
 

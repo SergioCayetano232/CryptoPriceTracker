@@ -989,6 +989,22 @@ def test_parejas_de_juntas(db):
     assert database.get_juntas(db) == [Pareja("bitcoin", "usd-coin")]
 
 
+def test_avisos_de_funding(db):
+    from crypto_tracker.funding import Vigilado
+
+    mirado = datetime(2026, 11, 22, 12, 0, tzinfo=timezone.utc)
+    database.guardar_funding(db, Vigilado("BTCUSDT", "bitcoin"))
+    database.guardar_funding(db, Vigilado("ETHUSDT", "ethereum", "alto", mirado))
+
+    assert database.get_funding(db) == [
+        Vigilado("BTCUSDT", "bitcoin", "", None),
+        Vigilado("ETHUSDT", "ethereum", "alto", mirado),
+    ]
+    assert database.quitar_funding(db, "BTCUSDT")
+    assert not database.quitar_funding(db, "BTCUSDT")
+    assert [v.par for v in database.get_funding(db)] == ["ETHUSDT"]
+
+
 def test_mensaje_en_vivo(db):
     assert database.envivo(db) is None
 

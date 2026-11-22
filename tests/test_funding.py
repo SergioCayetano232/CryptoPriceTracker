@@ -150,3 +150,86 @@ def test_formatear_negativo_sin_semana():
     assert "😱 <b>Funding de ETH: -0,0300%</b>" in texto
     assert "Media de la semana" not in texto
     assert "Al año serían un -32,9%" in texto
+
+
+# --- el aviso de /funding btc avisa ---
+
+
+def _f(semana, ahora=0.01):
+    from crypto_tracker import funding
+
+    return funding.Funding("BTCUSDT", ahora, semana, *funding.como_esta(semana))
+
+
+def test_separar_la_orden_del_final():
+    from crypto_tracker import funding
+
+    assert funding.separar("btc avisa") == ("btc", funding.AVISA)
+    assert funding.separar("btc Avísame") == ("btc", funding.AVISA)
+    assert funding.separar("btc no") == ("btc", funding.QUITAR)
+    assert funding.separar("btc") == ("btc", None)
+    assert funding.separar("") == ("", None)
+    # Sin cripto delante no es una orden: "no" a secas se queda como estaba.
+    assert funding.separar("no") == ("no", None)
+
+
+def test_extremo_solo_en_las_dos_puntas():
+    from crypto_tracker import funding
+
+    assert funding.extremo(_f(-0.02)) == funding.BAJO
+    assert funding.extremo(_f(-0.005)) == ""
+    assert funding.extremo(_f(0.01)) == ""
+    assert funding.extremo(_f(0.03)) == ""
+    assert funding.extremo(_f(0.06)) == funding.ALTO
+
+
+def test_extremo_mira_la_semana_y_no_un_pago_suelto():
+    from crypto_tracker import funding
+
+    assert funding.extremo(_f(0.01, ahora=0.09)) == ""
+
+
+def test_avisa_al_entrar_en_la_punta_y_no_mientras_sigue():
+    from crypto_tracker import funding
+    from crypto_tracker.funding import ALTO, BAJO, Vigilado
+
+    assert funding.toca(Vigilado("BTCUSDT", "bitcoin"), _f(0.06)) == (True, ALTO)
+    assert funding.toca(Vigilado("BTCUSDT", "bitcoin", ALTO), _f(0.07)) == (False, ALTO)
+    # Al calmarse se olvida, para avisar la próxima vez.
+    assert funding.toca(Vigilado("BTCUSDT", "bitcoin", ALTO), _f(0.01)) == (False, "")
+    # De una punta a la otra también es noticia.
+    assert funding.toca(Vigilado("BTCUSDT", "bitcoin", ALTO), _f(-0.02)) == (True, BAJO)
+
+
+def test_se_mira_una_vez_por_hora():
+    from datetime import datetime, timedelta, timezone
+
+    from crypto_tracker import funding
+    from crypto_tracker.funding import Vigilado
+
+    ahora = datetime(2026, 11, 22, 12, 0, tzinfo=timezone.utc)
+
+    assert funding.toca_mirar(Vigilado("BTCUSDT", "bitcoin"), ahora)
+    hace_poco = Vigilado("BTCUSDT", "bitcoin", "", ahora - timedelta(minutes=30))
+    assert not funding.toca_mirar(hace_poco, ahora)
+    hace_rato = Vigilado("BTCUSDT", "bitcoin", "", ahora - timedelta(minutes=60))
+    assert funding.toca_mirar(hace_rato, ahora)
+
+
+def test_mensaje_del_aviso():
+    from crypto_tracker.alerts import formatear_aviso_funding
+
+    texto = formatear_aviso_funding(_f(0.0612))
+
+    assert "🔥 <b>Funding de BTC: muy apalancado al alza</b>" in texto
+    assert "Media de la semana: <b>+0,0612%</b> cada 8 h" in texto
+    assert "caídas bruscas" in texto
+    assert "/funding btc" in texto
+
+
+def test_formatear_recuerda_que_tienes_el_aviso():
+    from crypto_tracker.alerts import formatear_funding
+
+    assert "🔔 Te aviso" in formatear_funding(_f(0.01), True)
+    assert "/funding btc no" in formatear_funding(_f(0.01), True)
+    assert "🔔" not in formatear_funding(_f(0.01))

@@ -13,6 +13,7 @@ from .mensajes.analisis import (
     _redondo_alerta,
     _rsi_antes,
     _saldo,
+    formatear_aviso_funding,
     formatear_backtest,
     formatear_bollinger,
     formatear_caida,

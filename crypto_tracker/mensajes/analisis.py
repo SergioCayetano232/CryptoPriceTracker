@@ -1205,8 +1205,30 @@ def formatear_semaforo(
     return "\n".join(texto)
 
 
-def formatear_funding(f: Funding) -> str:
-    """Respuesta de /funding."""
+def _pct_funding(valor: float) -> str:
+    return f"{valor:+.4f}%".replace(".", ",")
+
+
+def formatear_aviso_funding(f: Funding) -> str:
+    """El aviso de /funding btc avisa, al entrar en una de las dos puntas."""
+    simbolo = escape(f.par.removesuffix("USDT"))
+    tasa = f.ahora if f.semana is None else f.semana
+    de_que = "Media de la semana" if f.semana is not None else "Último pago"
+    texto = [
+        f"{f.emoji} <b>Funding de {simbolo}: {f.nivel.lower()}</b>",
+        f"{de_que}: <b>{_pct_funding(tasa)}</b> cada 8 h (lo normal es +0,01%)",
+    ]
+    if f.que_pasa:
+        texto.append(f.que_pasa)
+    texto.append(
+        f"<i>El detalle, en /funding {simbolo.lower()}. No repito hasta que se "
+        "calme y vuelva a pasar</i>"
+    )
+    return "\n".join(texto)
+
+
+def formatear_funding(f: Funding, avisa: bool = False) -> str:
+    """Respuesta de /funding. avisa, si tienes puesto el aviso de esa."""
     simbolo = escape(f.par.removesuffix("USDT"))
 
     def pct(valor: float) -> str:
@@ -1222,6 +1244,12 @@ def formatear_funding(f: Funding) -> str:
     if f.semana is not None:
         texto.append(f"Media de la semana: {pct(f.semana)}")
     texto.append(f"Al año serían un {_decimal(f.al_año)}%")
+    if avisa:
+        texto += [
+            "",
+            f"🔔 Te aviso si se va a un extremo. Para quitarlo: /funding "
+            f"{simbolo.lower()} no",
+        ]
     texto += [
         "",
         "<i>Lo que pagan cada 8 h los que apuestan a que sube a los que apuestan "

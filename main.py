@@ -259,6 +259,7 @@ from crypto_tracker.respuestas.revisiones import (
     revisar_direcciones,
     revisar_equilibrio,
     revisar_estables,
+    revisar_funding,
     revisar_ideal,
     revisar_juntas,
     revisar_rezagadas,
@@ -468,6 +469,7 @@ def ejecutar_ciclo(
     revisar_equilibrio(config, precios, calladas, sueltos)
     revisar_rezagadas(config, precios, sueltos)
     revisar_juntas(config, sueltos)
+    revisar_funding(config, calladas, sueltos)
     revisar_alertas_ratio(config, precios, calladas, sueltos)
     revisar_rsi(config, vigiladas, calladas, sueltos)
     revisar_cruces(config, vigiladas, calladas, sueltos)

@@ -886,6 +886,8 @@ EJEMPLOS = {
     "funding": [
         ("/funding btc", "lo que pagan los de futuros de bitcoin y si está apalancado"),
         ("/funding", "a secas, la primera que vigilo"),
+        ("/funding btc avisa", "te aviso cuando se vaya a un extremo"),
+        ("/funding btc no", "quitar ese aviso"),
     ],
     "sharpe": [
         ("/sharpe", "los últimos 90 días, comparado con bitcoin"),
