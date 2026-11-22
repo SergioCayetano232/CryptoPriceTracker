@@ -13181,3 +13181,84 @@ def test_comisionred_a_secas_recuerda_el_aviso(config, monkeypatch):
     main.atender(config, _mensaje("/comisionred"))
 
     assert "🔔 Te aviso cuando la de media hora baje a 5 sat/vB" in mandados[-1][0]
+
+
+# --- /liga ---
+
+
+def _cerrada(ruta, predicho, real, hace_dias=0):
+    """Una predicción ya cerrada, con bitcoin a 100 cuando se hizo."""
+    from crypto_tracker.prediccion import Prediccion
+
+    cierre = datetime(2026, 11, 22, 19, 0, tzinfo=timezone.utc) - timedelta(
+        days=hace_dias
+    )
+    p = database.guardar_prediccion(
+        ruta,
+        Prediccion(
+            None, "bitcoin", cierre - timedelta(days=3), cierre, 100.0, predicho
+        ),
+        "eur",
+    )
+    database.cerrar_prediccion(ruta, p.id, real)
+
+
+def _archivo_de(config, chat):
+    from crypto_tracker import usuarios
+
+    return usuarios.archivo(config, str(chat))
+
+
+def test_liga_sin_nada_cerrado(config, enviados):
+    main.atender(config, _mensaje("/liga"))
+
+    assert "Todavía no se ha cerrado ninguna predicción" in enviados[0]
+
+
+def test_liga_entre_el_dueño_y_un_invitado(config, a_quien):
+    _con_invitado(config, a_quien)
+    _cerrada(config.database_path, 150, 110)  # acierta el lado, lejísimos: 1
+    _cerrada(_archivo_de(config, 555), 109, 110)  # clavada: 2
+
+    main.atender(config, _mensaje("/liga"))
+    tuya = a_quien[-1]
+    main.atender(config, _de(555, "/liga"))
+    suya = a_quien[-1]
+
+    assert tuya[0] == "123"
+    assert "🥇 <b>Ana</b> · 2 puntos" in tuya[1]
+    assert "🥈 <b>El anfitrión</b> 👈 · 1 punto" in tuya[1]
+    # El invitado ve la misma tabla, con la marca en su fila.
+    assert suya[0] == "555"
+    assert "🥇 <b>Ana</b> 👈 · 2 puntos" in suya[1]
+    assert "🥈 <b>El anfitrión</b> · 1 punto" in suya[1]
+
+
+def test_liga_semana_solo_cuenta_el_ultimo_domingo(config, a_quien):
+    _con_invitado(config, a_quien)
+    _cerrada(config.database_path, 109, 110, hace_dias=7)
+    _cerrada(config.database_path, 109, 110, hace_dias=14)
+    _cerrada(_archivo_de(config, 555), 150, 110)
+
+    main.atender(config, _mensaje("/liga semana"))
+
+    texto = a_quien[-1][1]
+    assert "La jornada del 22/11" in texto
+    assert "Ana" in texto
+    assert "El anfitrión" not in texto
+
+
+def test_liga_no_cuenta_a_quien_has_expulsado(config, a_quien):
+    _con_invitado(config, a_quien)
+    _cerrada(_archivo_de(config, 555), 109, 110)
+    main.atender(config, _mensaje("/expulsar 555"))
+
+    main.atender(config, _mensaje("/liga"))
+
+    assert "Todavía no se ha cerrado ninguna predicción" in a_quien[-1][1]
+
+
+def test_liga_mal_escrita(config, enviados):
+    main.atender(config, _mensaje("/liga bitcoin"))
+
+    assert "/liga semana" in enviados[0]

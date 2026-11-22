@@ -239,6 +239,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/herencia` | Un papel para tu familia en un `.txt`, para guardarlo o imprimirlo: lo que tienes, cuánto vale hoy y dónde está cada una, con una nota tuya y qué hacer para recuperarlo (exchanges, carteras propias, estafas, impuesto de sucesiones). Dónde está cada una se apunta con `/herencia btc Ledger en el cajón del escritorio` y la nota con `/herencia nota ...`. **Nunca guarda claves:** si lo que escribes parece una frase de recuperación o una clave privada, no lo apunta. También `/legado` |
 | `/fantasma compra btc 200` | Una cartera de mentira para probar estrategias sin arriesgar: empiezas con 1.000 sin invertir y compras y vendes a precio de ahora (`/fantasma vende btc 50%`, `todo` o un importe). `/fantasma` a secas, cómo va cada una, el total y si le ganas a haber dejado todo en bitcoin el primer día. `/fantasma reinicia 5000` empieza de cero con otra cifra. Sin comisiones. También `/simulador` |
 | `/prediccion btc 70000` | Dices a cuánto estará el domingo a las 20:00 y ese día te digo cómo ha quedado: cuánto te fuiste, si acertaste hacia dónde iba y si le ganas a decir «se queda igual». Lleva tu marcador de todas las semanas y, a partir de cuatro, te dice si lo haces mejor que una moneda al aire. Se puede cambiar hasta un día antes. `/prediccion` a secas, lo que tienes en juego y el marcador; `/prediccion btc no`, la quita. También `/apuesta` |
+| `/liga` | La clasificación de `/prediccion` entre tú y la gente a la que has invitado: un punto por acertar si sube o baja y otro por acercarte más que decir «se queda igual». A igualdad de puntos, gana quien menos se va. Solo se ven los nombres y los puntos, no lo que tiene nadie. `/liga semana`, solo la del último domingo |
 | `/pienso btc 500` | Antes de comprar: te dice cómo está ahora (lo que ha subido en 24 h, el miedo y codicia y el RSI) y a las 24 h te pregunta si sigues queriendo, con el precio de entonces y un botón ✅ que la apunta en la cartera, o ❌ para dejarlo. `/pienso` a secas, lo que te estás pensando; `/pienso btc no`, lo olvida |
 | `/recordar lunes 50 btc` | Cada lunes, a la hora del resumen (o a las 9:00 si no tienes), te recuerda tu compra con el precio y lo que te dan los 50 €, y un botón ✅ que la apunta en la cartera. `/recordar` a secas, los que tienes; `/recordar btc no`, lo quita |
 | `/alerta bitcoin 70000` | Te avisa una vez cuando llegue a ese precio |
@@ -1088,6 +1089,7 @@ crypto_tracker/
   escalera.py    vender por tramos al subir, para /escalera
   emocion.py     con qué ánimo compras y vendes, para /emociones
   prediccion.py  a cuánto estará el domingo y tu marcador, para /prediccion
+  liga.py        la clasificación de /prediccion entre todos, para /liga
   condicion.py   lo del miedo o el RSI que puede llevar una /alerta
   vigiladas.py   lo que cambias con /vigilar
   volatilidad.py lo que se mueve cada día, para /volatilidad

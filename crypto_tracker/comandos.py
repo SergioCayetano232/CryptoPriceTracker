@@ -61,6 +61,7 @@ COMANDOS = {
     "herencia": "Lo que tienes y dónde, para tu familia, sin claves",
     "emociones": "Con qué ánimo compras y vendes, y qué te sale de cada uno",
     "emocion": "Apuntar con qué ánimo hiciste un movimiento (ej: /emocion 12 miedo)",
+    "liga": "Quién acierta más con /prediccion, entre tú y tus invitados",
     "prediccion": "A cuánto estará el domingo, y tu marcador (ej: /prediccion btc 70k)",
     "deshacer": "Quitar la última compra o venta que apuntaste",
     "corregir": "Cambiar una compra o venta antigua (ej: /corregir 12 importe 700)",
@@ -251,6 +252,8 @@ ALIAS = {
     "practica": "fantasma",
     "predicción": "prediccion",
     "apuesta": "prediccion",
+    "clasificacion": "liga",
+    "clasificación": "liga",
     "momento": "timing",
     "start": "ayuda",
     "invitados": "usuarios",
@@ -642,6 +645,10 @@ EJEMPLOS = {
         ("/fantasma compra btc 200", "gastar 200 de mentira en bitcoin"),
         ("/fantasma vende btc 50%", "también 'todo' o un importe"),
         ("/fantasma reinicia 5000", "empezar de cero (sin cifra, con 1.000)"),
+    ],
+    "liga": [
+        ("/liga", "la clasificación desde el principio"),
+        ("/liga semana", "solo la del último domingo"),
     ],
     "prediccion": [
         ("/prediccion btc 70000", "a cuánto estará el domingo a las 20:00"),

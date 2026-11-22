@@ -16,6 +16,7 @@ from ..fantasma import BITCOIN as BITCOIN_FANTASMA
 from ..fantasma import EMPATE as EMPATE_FANTASMA
 from ..fantasma import Fantasma
 from ..herencia import Linea
+from ..liga import Puesto, posiciones
 from ..maximo import hace
 from ..miedo import Indice
 from ..miedo import nombre as nombre_miedo
@@ -432,6 +433,42 @@ def _marcador(m: Marcador) -> list[str]:
     else:
         lineas.append("👉 Una moneda al aire lo haría igual o mejor")
     return lineas
+
+
+_MEDALLAS = {1: "🥇", 2: "🥈", 3: "🥉"}
+
+
+def formatear_liga(tabla: list[Puesto], jornada: datetime | None) -> str:
+    """Respuesta de /liga. Con jornada, la de ese domingo; sin ella, la general."""
+    if not tabla:
+        return (
+            "Todavía no se ha cerrado ninguna predicción. Haz la tuya con "
+            "/prediccion btc 70000: el domingo a las 20:00 se mira quién acertó"
+        )
+    if jornada is None:
+        texto = ["🏆 <b>La liga de predicciones</b>", ""]
+    else:
+        texto = [f"🏆 <b>La jornada del {jornada.astimezone():%d/%m}</b>", ""]
+
+    for lugar, p in zip(posiciones(tabla), tabla, strict=True):
+        marca = _MEDALLAS.get(lugar, f"{lugar}.")
+        yo = " 👈" if p.yo else ""
+        cuantos = "1 punto" if p.puntos == 1 else f"{p.puntos} puntos"
+        hechas = "1 predicción" if p.total == 1 else f"{p.total} predicciones"
+        error = f"{p.error_medio:.1f}".replace(".", ",")
+        texto += [
+            f"{marca} <b>{escape(p.nombre)}</b>{yo} · {cuantos}",
+            f"   <i>{hechas} · acierta el lado en {p.lado} · se va un {error}%</i>",
+        ]
+
+    pie = (
+        "Un punto por acertar si sube o baja y otro por acercarte más que decir "
+        "«se queda igual»."
+    )
+    if jornada is None:
+        pie += " Solo la del último domingo: /liga semana"
+    texto += ["", f"<i>{pie}</i>"]
+    return "\n".join(texto)
 
 
 def formatear_piensos(lista: list[Pienso], currency: str) -> str:

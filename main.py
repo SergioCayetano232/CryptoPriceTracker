@@ -221,6 +221,7 @@ from crypto_tracker.respuestas.ratos import (
     _comando_quiz,
 )
 from crypto_tracker.respuestas.recordatorios import (
+    _liga,
     _pienso,
     _prediccion,
     _recordar,
@@ -1616,6 +1617,7 @@ COMANDOS: dict[str, Callable[[Config, str], Respuesta]] = {
     "rezagada": lambda c, a: _rezagada(c, a),
     "pienso": lambda c, a: _pienso(c, a),
     "prediccion": lambda c, a: _prediccion(c, a),
+    "liga": lambda c, a: _liga(c, a),
     "fantasma": lambda c, a: _fantasma(c, a),
     "emocion": lambda c, a: _emocion(c, a),
     "emociones": lambda c, a: _emociones(c),

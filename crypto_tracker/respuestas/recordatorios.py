@@ -10,11 +10,13 @@ from .. import (
     botones,
     coingecko,
     database,
+    liga,
     miedo,
     pienso,
     prediccion,
     recordar,
     telegram,
+    usuarios,
 )
 from ..config import Config
 from .base import _con_cambios, _indicador, _silenciado
@@ -153,6 +155,44 @@ def _prediccion(config: Config, argumento: str) -> str:
         config.vs_currency,
     )
     return alerts.con_fuente(alerts.formatear_prediccion(p, config.vs_currency))
+
+
+def _jugadores(config: Config) -> list[liga.Jugador]:
+    """Tú y tus invitados con sus predicciones, vistos desde quien pregunta."""
+    # Un invitado solo sabe de su archivo; la lista de todos está en el tuyo.
+    del_dueño = config.archivo_dueño or config.database_path
+    dueño = replace(config, database_path=del_dueño)
+    fichas = [(None, "El anfitrión", del_dueño)]
+    for n, invitado in enumerate(database.get_invitados(del_dueño), start=1):
+        fichas.append(
+            (
+                invitado.chat_id,
+                invitado.nombre or f"Invitado {n}",
+                usuarios.archivo(dueño, invitado.chat_id),
+            )
+        )
+
+    yo = config.telegram_chat_id if config.invitado else None
+    jugadores = []
+    for chat, nombre, ruta in fichas:
+        try:
+            suyas = database.get_predicciones(ruta, config.vs_currency)
+        except database.DatabaseError as e:
+            # Uno con el archivo roto no deja a los demás sin liga.
+            logger.warning("La liga va sin %s: %s", chat or "el dueño", e)
+            continue
+        jugadores.append(liga.Jugador(nombre, chat == yo, suyas))
+    return jugadores
+
+
+def _liga(config: Config, argumento: str) -> str:
+    try:
+        semana = liga.interpretar(argumento)
+    except liga.LigaError as e:
+        return telegram.escape(str(e))
+    jugadores = _jugadores(config)
+    jornada = liga.ultima_jornada(jugadores) if semana else None
+    return alerts.formatear_liga(liga.clasificar(jugadores, jornada), jornada)
 
 
 def cerrar_predicciones(config: Config, ahora: datetime | None = None) -> None:
