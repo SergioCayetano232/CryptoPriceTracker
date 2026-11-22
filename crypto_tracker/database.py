@@ -19,6 +19,7 @@ from .dominancia import Foto
 from .fantasma import Fantasma
 from .fantasma import a_texto as texto_fantasma
 from .fantasma import de_texto as leer_fantasma
+from .juntas import Pareja
 from .movimientos import Movimiento
 from .pienso import Pienso
 from .pienso import a_texto as texto_pienso
@@ -1233,6 +1234,40 @@ def quitar_rezagada(db_path: str, coin_id: str, contra: str) -> bool:
     with _connect(db_path) as conn:
         cursor = conn.execute(
             "DELETE FROM ajustes WHERE clave = ?", (f"rezagada:{coin_id}:{contra}",)
+        )
+    return cursor.rowcount > 0
+
+
+def guardar_juntas(db_path: str, p: Pareja) -> None:
+    with _connect(db_path) as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (f"juntas:{p.una}:{p.otra}", str(int(p.avisada))),
+        )
+
+
+def get_juntas(db_path: str) -> list[Pareja]:
+    """Las de /juntas."""
+    with _connect(db_path) as conn:
+        filas = conn.execute(
+            "SELECT clave, valor FROM ajustes WHERE clave LIKE 'juntas:%' "
+            "ORDER BY clave"
+        ).fetchall()
+    lista = []
+    for f in filas:
+        try:
+            _, una, otra = f["clave"].split(":")
+        except ValueError:
+            logger.warning("Una /juntas que no se entiende: %r", f["clave"])
+            continue
+        lista.append(Pareja(una, otra, f["valor"] == "1"))
+    return lista
+
+
+def quitar_juntas(db_path: str, una: str, otra: str) -> bool:
+    with _connect(db_path) as conn:
+        cursor = conn.execute(
+            "DELETE FROM ajustes WHERE clave = ?", (f"juntas:{una}:{otra}",)
         )
     return cursor.rowcount > 0
 

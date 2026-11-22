@@ -27,6 +27,7 @@ from .. import (
     equilibrio,
     estables,
     ideal,
+    juntas,
     modelo721,
     puntuales,
     record,
@@ -41,6 +42,7 @@ from ..config import Config
 from .base import (
     _alertas_ratio,
     _direcciones_guardadas,
+    _medir_pareja,
     _silenciado,
     _sin_sonido,
     _variacion,
@@ -700,6 +702,38 @@ def revisar_rezagadas(
             partial(apuntar, r, avisada),
         ):
             logger.error("No se pudo avisar de que %s se queda atrás", r.coin_id)
+
+
+def revisar_juntas(config: Config, sueltos: buzon.Buzon | None = None) -> None:
+    """Las de /juntas: avisa cuando dos que iban a la vez se separan."""
+    if _silenciado(config):
+        return
+    try:
+        lista = database.get_juntas(config.database_path)
+    except database.DatabaseError as e:
+        logger.error("No se pudieron leer las de /juntas: %s", e)
+        return
+
+    def apuntar(p: juntas.Pareja, avisada: bool) -> None:
+        if avisada != p.avisada:
+            database.guardar_juntas(config.database_path, replace(p, avisada=avisada))
+
+    for p in lista:
+        try:
+            medida = _medir_pareja(config, p.una, p.otra)
+        except database.DatabaseError as e:
+            logger.error("Sin histórico para /juntas: %s", e)
+            return
+        avisar, avisada = juntas.toca(p, medida)
+        if not avisar:
+            apuntar(p, avisada)
+        elif not _avisar(
+            config,
+            alerts.formatear_aviso_juntas(p, medida),
+            sueltos,
+            partial(apuntar, p, avisada),
+        ):
+            logger.error("No se pudo avisar de que %s y %s se separan", p.una, p.otra)
 
 
 def revisar_salvo(

@@ -973,6 +973,22 @@ def test_votos_uno_por_aviso(db):
     ]
 
 
+def test_parejas_de_juntas(db):
+    from crypto_tracker.juntas import Pareja
+
+    database.guardar_juntas(db, Pareja("bitcoin", "ethereum"))
+    database.guardar_juntas(db, Pareja("bitcoin", "usd-coin"))
+    database.guardar_juntas(db, Pareja("bitcoin", "ethereum", avisada=True))
+
+    assert database.get_juntas(db) == [
+        Pareja("bitcoin", "ethereum", True),
+        Pareja("bitcoin", "usd-coin", False),
+    ]
+    assert database.quitar_juntas(db, "bitcoin", "ethereum")
+    assert not database.quitar_juntas(db, "bitcoin", "ethereum")
+    assert database.get_juntas(db) == [Pareja("bitcoin", "usd-coin")]
+
+
 def test_mensaje_en_vivo(db):
     assert database.envivo(db) is None
 

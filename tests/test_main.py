@@ -13322,3 +13322,98 @@ def test_ruido_ensena_tus_votos_y_propone_por_ellos(config, enviados):
     assert "Tus votos: 👍 0 · 👎 4" in enviados[0]
     assert "Te sobran la mayoría" in enviados[0]
     assert "<code>/vigilar bitcoin %" in enviados[0]
+
+
+# --- /juntas ---
+
+# Veinte días yendo a la vez y los diez últimos, por si se quieren separar.
+_A_LA_VEZ = [2, -1, 3, -2, 1, -3, 2, 1, -1, 2, -2, 3, -1, 1, 2, -3, 1, -1, 2, -2]
+_ULTIMOS = [2, -2, 3, -1, 2, -3, 1, 2, -2, 1]
+
+
+def _historia(config, coin_id, cambios, precio=100.0):
+    """Un precio por día acabando hoy, a partir de los % de cada día."""
+    precios = [precio]
+    for c in cambios:
+        precios.append(precios[-1] * (1 + c / 100))
+    for hace, p in enumerate(reversed(precios)):
+        _precio_de(config, coin_id, p, hace * 24 * 60 + 1)
+    return precios[-1]
+
+
+@pytest.fixture
+def dos(config):
+    from dataclasses import replace
+
+    return replace(
+        config, watchlist=[Watch("bitcoin", percent=50), Watch("ethereum", percent=50)]
+    )
+
+
+def _avisos_juntas(enviados):
+    return [t for t in enviados if "han dejado de ir juntas" in t]
+
+
+def test_juntas_avisa_una_vez_cuando_se_separan(dos, enviados, monkeypatch):
+    btc = _historia(dos, "bitcoin", _A_LA_VEZ)
+    eth = _historia(dos, "ethereum", _A_LA_VEZ)
+    main.atender(dos, _mensaje("/juntas eth btc"))
+    assert "te aviso si <b>bitcoin</b> y <b>ethereum</b> dejan de ir" in enviados[0]
+    _precio(monkeypatch, {"bitcoin": btc, "ethereum": eth})
+    estado, _ = main.ejecutar_ciclo(dos, {})
+    assert _avisos_juntas(enviados) == []
+
+    # Diez días más: bitcoin sigue igual y ethereum hace justo lo contrario.
+    btc = _historia(dos, "bitcoin", _ULTIMOS, btc)
+    eth = _historia(dos, "ethereum", [-c for c in _ULTIMOS], eth)
+    _precio(monkeypatch, {"bitcoin": btc, "ethereum": eth})
+    estado, _ = main.ejecutar_ciclo(dos, estado)
+    main.ejecutar_ciclo(dos, estado)
+
+    [aviso] = _avisos_juntas(enviados)
+    assert "💔 <b>Bitcoin y Ethereum han dejado de ir juntas</b>" in aviso
+    assert "/comparar bitcoin ethereum 10d" in aviso
+    [pareja] = database.get_juntas(dos.database_path)
+    assert pareja.avisada
+
+
+def test_juntas_de_dos_que_no_van_juntas_no_la_pone(dos, enviados):
+    _historia(dos, "bitcoin", _A_LA_VEZ)
+    _historia(dos, "ethereum", [-c for c in _A_LA_VEZ])
+
+    main.atender(dos, _mensaje("/juntas btc eth"))
+
+    assert "no van juntas" in enviados[0]
+    assert "/correlacion bitcoin ethereum" in enviados[0]
+    assert database.get_juntas(dos.database_path) == []
+
+
+def test_juntas_sin_dias_la_pone_y_lo_dice(dos, enviados):
+    main.atender(dos, _mensaje("/juntas btc eth"))
+
+    assert "Aún no tengo días para compararlas" in enviados[0]
+    assert len(database.get_juntas(dos.database_path)) == 1
+
+
+def test_juntas_de_una_que_no_vigilas(config, enviados):
+    main.atender(config, _mensaje("/juntas btc sol"))
+
+    assert "No guardo el precio de <b>solana</b>" in enviados[0]
+    assert database.get_juntas(config.database_path) == []
+
+
+def test_juntas_lista_y_quita(dos, enviados):
+    main.atender(dos, _mensaje("/juntas btc eth"))
+    main.atender(dos, _mensaje("/juntas"))
+    main.atender(dos, _mensaje("/juntas eth btc no"))
+    main.atender(dos, _mensaje("/juntas"))
+
+    assert "<b>Bitcoin</b> y <b>Ethereum</b>" in enviados[1]
+    assert "ya no miro" in enviados[2]
+    assert "No vigilas ninguna pareja" in enviados[3]
+
+
+def test_juntas_mal_escrito(dos, enviados):
+    main.atender(dos, _mensaje("/juntas btc"))
+
+    assert "De dos en dos" in enviados[0]

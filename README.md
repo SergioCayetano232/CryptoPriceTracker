@@ -291,6 +291,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/comparar btc eth sol 7d` | Qué tal le ha ido a cada una en ese tramo, de la mejor a la peor (sin tramo, 7 días; sin criptos, las que vigilas). Con una gráfica de todas juntas, empezando en el mismo punto para que un BTC de 60.000 y un DOGE de céntimos se puedan comparar. Con más de 6 va sin gráfica, que no se distinguirían las líneas |
 | `/quieta` | La que menos se ha movido en las últimas 24 h de las que vigilas, del mínimo al máximo, y debajo las demás. Sale de lo guardado y no gasta consultas |
 | `/correlacion btc eth 30d` | Si dos criptos suben y bajan a la vez (de -1 a +1), para saber si tu cartera está repartida de verdad (sin tramo, 30 días; sin criptos, las dos primeras que vigilas). Sale de lo guardado y no gasta consultas |
+| `/juntas btc eth` | Te avisa una vez cuando dos criptos que siempre van a la vez llevan 10 días cada una por su lado (su correlación baja de 0,3), con lo que se ha movido cada una. Suele ser que a una le pasa algo. No repite hasta que vuelven a ir juntas. Las dos tienen que estar vigiladas o en la cartera; si en el mes ya no van juntas, te lo dice y no la pone. A secas, las que miras; con `no` al final, la quita |
 | `/ratio eth btc 30d` | Cuánto vale una en la otra (1 ethereum = 0,03 bitcoin) y cuánto ha cambiado en ese tramo, con barritas, el máximo, el mínimo y en qué punto del rango está. Si sube, a la primera le ha ido mejor (sin tramo, 30 días; sin criptos, las dos primeras que vigilas). Sale de lo guardado y no gasta consultas |
 | `/convertir 0.05 bitcoin` | Cuánto es en euros al precio de ahora |
 | `/convertir 500 eur solana` | Al revés: cuánta solana compras con 500 € (vale `500€`) |
@@ -975,6 +976,7 @@ crypto_tracker/
   comparar.py    el ranking de /comparar
   quieta.py      la que menos se mueve, para /quieta
   correlacion.py si dos criptos se mueven juntas, para /correlacion
+  juntas.py      avisa cuando dos que iban a la vez se separan, para /juntas
   ratio.py       lo que vale una cripto en otra, para /ratio
   convertir.py   entiende lo que le pides a /convertir
   exportar.py    los CSV de /exportar, de precios y de movimientos

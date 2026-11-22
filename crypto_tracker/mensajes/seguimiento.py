@@ -16,6 +16,9 @@ from ..fantasma import BITCOIN as BITCOIN_FANTASMA
 from ..fantasma import EMPATE as EMPATE_FANTASMA
 from ..fantasma import Fantasma
 from ..herencia import Linea
+from ..juntas import CORTA as CORTA_JUNTAS
+from ..juntas import EJEMPLO as EJEMPLO_JUNTAS
+from ..juntas import Medida, Pareja
 from ..liga import Puesto, posiciones
 from ..maximo import hace
 from ..miedo import Indice
@@ -609,6 +612,52 @@ def formatear_rezagadas(lista: list[Rezagada]) -> str:
     primera = lista[0]
     lineas.append(f"\nPara quitar una: /rezagada {primera.coin_id} {primera.contra} no")
     return "\n".join(lineas)
+
+
+def formatear_juntas(lista: list[Pareja]) -> str:
+    """Respuesta de /juntas a secas."""
+    if not lista:
+        return (
+            "No vigilas ninguna pareja. Dime dos que suelan ir a la vez y te aviso "
+            f"si se separan: {EJEMPLO_JUNTAS}"
+        )
+    lineas = ["🔗 <b>Te aviso si dejan de ir juntas</b>", ""]
+    for p in lista:
+        linea = f"<b>{_nombre(p.una)}</b> y <b>{_nombre(p.otra)}</b>"
+        lineas.append(linea + (" · separadas ahora" if p.avisada else ""))
+    primera = lista[0]
+    lineas.append(f"\nPara quitar una: /juntas {primera.una} {primera.otra} no")
+    return "\n".join(lineas)
+
+
+def _correlacion(valor: float) -> str:
+    return f"{valor:+.2f}".replace(".", ",")
+
+
+def formatear_aviso_juntas(p: Pareja, m: Medida) -> str:
+    """Cuando dos que iban a la vez llevan unos días cada una por su lado."""
+    una, otra = _nombre(p.una), _nombre(p.otra)
+    lineas = [
+        f"💔 <b>{una} y {otra} han dejado de ir juntas</b>",
+        f"Estos {CORTA_JUNTAS} días: <b>{_correlacion(m.corta.valor)}</b> "
+        "(+1 es moverse igual; 0, cada una a lo suyo)",
+    ]
+    if m.larga is not None:
+        lineas.append(f"En el mes: {_correlacion(m.larga.valor)}")
+    if m.cambio_una is not None and m.cambio_otra is not None:
+        lineas.append(
+            f"En {CORTA_JUNTAS} días: {una} {_pct_signo(m.cambio_una)} · "
+            f"{otra} {_pct_signo(m.cambio_otra)}"
+        )
+    lineas.append(
+        "Suele ser que a una le pasa algo que a la otra no. Míralas: "
+        f"/comparar {p.una} {p.otra} {CORTA_JUNTAS}d"
+    )
+    return "\n".join(lineas)
+
+
+def _pct_signo(valor: float) -> str:
+    return f"{valor:+.1f}%".replace(".", ",")
 
 
 def formatear_aviso_rezagada(

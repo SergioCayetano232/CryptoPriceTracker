@@ -14,6 +14,7 @@ from .. import (
     database,
     escalera,
     impuestos,
+    juntas,
     movimientos,
     puntuales,
     rezagada,
@@ -27,6 +28,7 @@ from .base import (
     Respuesta,
     _alertas_ratio,
     _con_cambios,
+    _medir_pareja,
     _precio_o_pedirlo,
 )
 from .cartera import _en_negrita, _valor_cartera
@@ -363,6 +365,52 @@ def _rezagada(config: Config, argumento: str) -> str:
         config.database_path, rezagada.Rezagada(coin_id, contra, pct)
     )
     return f"🐢 Hecho: te aviso si {una} va un {pct:g}% peor que {otra} en 7 días."
+
+
+def _juntas(config: Config, argumento: str) -> str:
+    if not argumento:
+        return alerts.formatear_juntas(database.get_juntas(config.database_path))
+    try:
+        una, otra, quitar = juntas.interpretar(argumento)
+    except juntas.JuntasError as e:
+        return telegram.escape(str(e))
+    nombres = " y ".join(f"<b>{telegram.escape(c)}</b>" for c in (una, otra))
+    if quitar:
+        if database.quitar_juntas(config.database_path, una, otra):
+            return f"Hecho, ya no miro si {nombres} van juntas."
+        return "No tenías esa. Mira /juntas"
+
+    # Solo guardo el histórico de estas: sin él no hay con qué compararlas.
+    config = _con_cambios(config)
+    con_historico = {w.coin_id for w in config.watchlist} | {
+        p.coin_id for p in config.cartera
+    }
+    fuera = [c for c in (una, otra) if c not in con_historico]
+    if fuera:
+        return (
+            f"No guardo el precio de <b>{telegram.escape(fuera[0])}</b>. Vigílala "
+            f"antes: /vigilar {telegram.escape(fuera[0])} 5%"
+        )
+
+    medida = _medir_pareja(config, una, otra)
+    if juntas.van_juntas(medida) is False:
+        valor = f"{medida.larga.valor:+.2f}".replace(".", ",")
+        return (
+            f"{nombres} no van juntas: este mes su correlación es {valor}. No hay "
+            f"nada que se pueda romper. Míralo en /correlacion {una} {otra}"
+        )
+    # Si ya están separadas no aviso de eso: aviso cuando vuelva a pasar.
+    _, avisada = juntas.toca(juntas.Pareja(una, otra), medida)
+    database.guardar_juntas(config.database_path, juntas.Pareja(una, otra, avisada))
+    texto = f"🔗 Hecho: te aviso si {nombres} dejan de ir juntas."
+    if juntas.van_juntas(medida) is None:
+        texto += (
+            f"\n<i>Aún no tengo días para compararlas; hacen falta unos "
+            f"{juntas.CORTA}. Con /rellenar los bajo.</i>"
+        )
+    elif avisada:
+        texto += "\n<i>Ahora mismo ya van separadas: te aviso la próxima vez.</i>"
+    return texto
 
 
 def _stop(config: Config, argumento: str) -> str:

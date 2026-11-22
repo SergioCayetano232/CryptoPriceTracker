@@ -13,6 +13,7 @@ from .. import (
     database,
     diario,
     direccion,
+    juntas,
     miedo,
     movimientos,
     puntuales,
@@ -152,6 +153,19 @@ def _variacion(config: Config, coin_id: str, precio: float) -> float | None:
         return None
 
     return (precio - antes) / antes * 100
+
+
+def _medir_pareja(config: Config, una: str, otra: str) -> juntas.Medida:
+    """Cómo van dos criptos entre ellas, con lo guardado."""
+    dias = [
+        volatilidad.por_dias(
+            database.get_serie(
+                config.database_path, c, juntas.HORAS, config.vs_currency
+            )
+        )
+        for c in (una, otra)
+    ]
+    return juntas.medir(*dias, datetime.now().astimezone().date())
 
 
 def _silenciado(config: Config) -> datetime | None:

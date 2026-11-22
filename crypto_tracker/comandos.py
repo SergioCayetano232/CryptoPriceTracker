@@ -56,6 +56,7 @@ COMANDOS = {
     "recordar": "Avísame cada semana de mi compra (ej: /recordar lunes 50 btc)",
     "cada": "Mándame un comando solo (ej: /cada viernes 20:00 /cartera)",
     "rezagada": "Avísame si una va peor que otra en 7 días (ej: /rezagada eth btc 10)",
+    "juntas": "Avísame si dos que van a la vez se separan (ej: /juntas btc eth)",
     "pienso": "Antes de comprar, 24 h para pensarlo (ej: /pienso btc 500)",
     "fantasma": "Una cartera de mentira para probar (ej: /fantasma compra btc 200)",
     "herencia": "Lo que tienes y dónde, para tu familia, sin claves",
@@ -646,6 +647,11 @@ EJEMPLOS = {
         ("/fantasma compra btc 200", "gastar 200 de mentira en bitcoin"),
         ("/fantasma vende btc 50%", "también 'todo' o un importe"),
         ("/fantasma reinicia 5000", "empezar de cero (sin cifra, con 1.000)"),
+    ],
+    "juntas": [
+        ("/juntas btc eth", "te aviso si dejan de moverse a la vez"),
+        ("/juntas", "las parejas que miro"),
+        ("/juntas btc eth no", "quitarla"),
     ],
     "liga": [
         ("/liga", "la clasificación desde el principio"),
