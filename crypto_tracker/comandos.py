@@ -38,6 +38,7 @@ COMANDOS = {
     "arrepentido": "Lo que valdría hoy lo que vendiste, ¿hiciste bien?",
     "rentabilidad": "Lo que ganas al año, contando cuándo metiste cada euro",
     "impuestos": "Lo que le tocaría a Hacienda de lo que ganaste vendiendo",
+    "informe": "Tu año fiscal en un PDF, para ti o para el gestor (ej: /informe 2025)",
     "comisiones": "Lo que llevas pagado en comisiones (ej: /comisiones 2026)",
     "sivendo": "Lo que ganarías y pagarías antes de vender (ej: /sivendo btc 0.5)",
     "permuta": "Lo que pagas a Hacienda al cambiar una cripto por otra",
@@ -547,6 +548,8 @@ ALIAS = {
     "hacienda": "impuestos",
     "irpf": "impuestos",
     "taxes": "impuestos",
+    "pdf": "informe",
+    "gestor": "informe",
     "sivender": "sivendo",
     "swap": "permuta",
     "721": "modelo721",
@@ -787,6 +790,10 @@ EJEMPLOS = {
     ],
     "equilibrio": [
         ("/equilibrio", "a qué precio te salió cada una y cuánto le falta"),
+    ],
+    "informe": [
+        ("/informe", "el PDF de este año: resumen, cuota y cada venta"),
+        ("/informe 2025", "el de otro año"),
     ],
     "impuestos": [
         ("/impuestos", "lo de este año, por tramos"),

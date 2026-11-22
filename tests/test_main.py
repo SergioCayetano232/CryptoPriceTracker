@@ -13005,3 +13005,57 @@ def test_ideal_callado_espera(con_semana, enviados, monkeypatch):
     main.ejecutar_ciclo(con_semana, {})
 
     assert len(_avisos_ideal(enviados)) == 1
+
+
+# --- /informe ---
+
+
+def test_informe_manda_el_pdf_del_año(config, enviados, archivos, monkeypatch):
+    from datetime import date
+
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
+    _precio(monkeypatch, {})
+    main.atender(config, _mensaje("/venta bitcoin 0.01 900 com 1"))
+    enviados.clear()
+    año = date.today().year
+
+    main.atender(config, _mensaje("/informe"))
+
+    contenido, nombre, pie = archivos[0]
+    assert contenido.startswith(b"%PDF")
+    assert nombre == f"informe-{año}.pdf"
+    assert f"Tu informe de {año}: 1 venta" in pie
+    assert f"/impuestos {año} csv" in pie
+    assert enviados == []
+
+
+def test_informe_sin_ventas_no_manda_nada(config, enviados, archivos):
+    main.atender(config, _mensaje("/informe"))
+
+    assert archivos == []
+    assert "no hay informe que hacer" in enviados[0]
+
+
+def test_informe_año_que_no_vale(config, enviados, archivos):
+    main.atender(config, _mensaje("/informe mañana"))
+
+    assert archivos == []
+    assert "como /informe 2025" in enviados[0]
+
+
+def test_informe_sin_matplotlib_lo_dice(config, enviados, archivos, monkeypatch):
+    from crypto_tracker import informe_pdf
+
+    def sin_matplotlib(*a):
+        raise grafica.GraficaError("Falta matplotlib.")
+
+    config = _con_cartera(config, Posicion("bitcoin", 0.02, 1000))
+    _precio(monkeypatch, {})
+    main.atender(config, _mensaje("/venta bitcoin 0.01 900"))
+    enviados.clear()
+    monkeypatch.setattr(informe_pdf, "dibujar", sin_matplotlib)
+
+    main.atender(config, _mensaje("/informe"))
+
+    assert archivos == []
+    assert "Falta matplotlib" in enviados[0]

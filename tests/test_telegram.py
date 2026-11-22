@@ -231,6 +231,23 @@ def test_mandar_archivo(monkeypatch):
     assert enviado["data"]["caption"] == "pie"
 
 
+@pytest.mark.parametrize(
+    "nombre, tipo",
+    [("informe-2025.pdf", "application/pdf"), ("copia.zip", "application/zip")],
+)
+def test_el_tipo_del_archivo_sale_del_nombre(monkeypatch, nombre, tipo):
+    enviado = {}
+
+    def capturar(url, data=None, files=None, timeout=None):
+        enviado.update(files=files)
+        return RespuestaFalsa()
+
+    monkeypatch.setattr(requests, "post", capturar)
+
+    assert telegram.send_document("token", "123", b"x", nombre)
+    assert enviado["files"]["document"][2] == tipo
+
+
 def test_archivo_rechazado(monkeypatch):
     respuesta = RespuestaFalsa(400, {"ok": False, "description": "too big"})
     monkeypatch.setattr(requests, "post", lambda *a, **k: respuesta)

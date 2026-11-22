@@ -226,7 +226,8 @@ def send_document(
     sin_sonido: bool = False,
 ) -> bool:
     """Manda un archivo adjunto, como el CSV de /exportar o la copia de /backup."""
-    tipo = "application/zip" if nombre.endswith(".zip") else "text/csv"
+    tipos = {"zip": "application/zip", "pdf": "application/pdf"}
+    tipo = tipos.get(nombre.rsplit(".", 1)[-1], "text/csv")
     return _mandar_archivo(
         DOCUMENT_URL.format(token=token),
         chat_id,

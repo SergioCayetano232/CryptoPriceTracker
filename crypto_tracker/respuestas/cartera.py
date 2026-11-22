@@ -33,6 +33,8 @@ from .. import (
     ideal,
     impuestos,
     inflacion,
+    informe,
+    informe_pdf,
     limite,
     meta,
     miedo,
@@ -298,6 +300,35 @@ def _impuestos(config: Config, argumento: str) -> str | comandos.Archivo:
         impuestos.calcular(todos, año),
         config.vs_currency,
         impuestos.recompensas_de(todos, año),
+    )
+
+
+def _informe(config: Config, argumento: str) -> str | comandos.Archivo:
+    hoy = date.today()
+    try:
+        año = informe.interpretar(argumento, hoy.year)
+    except informe.InformeError as e:
+        return telegram.escape(str(e))
+    todos = database.get_movimientos(config.database_path, None)
+    datos = informe.montar(todos, año)
+    if datos.vacio:
+        return f"En {año} no has vendido nada, así que no hay informe que hacer."
+    try:
+        pdf = informe_pdf.dibujar(datos, config.vs_currency, hoy)
+    except grafica.GraficaError as e:
+        return telegram.escape(str(e))
+
+    cuantas = "1 venta" if len(datos.ventas) == 1 else f"{len(datos.ventas)} ventas"
+    pie = [
+        f"🏛️ Tu informe de {año}: {cuantas}, con FIFO como Hacienda",
+        "<i>Para guardarlo o dárselo a tu gestor. Es orientativo. Las mismas "
+        f"ventas en una hoja de cálculo: /impuestos {año} csv</i>",
+    ]
+    return comandos.Archivo(
+        pdf,
+        informe.nombre(año),
+        "\n".join(pie),
+        "No he podido mandarte el informe. Prueba en un rato.",
     )
 
 
