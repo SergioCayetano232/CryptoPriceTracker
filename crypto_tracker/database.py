@@ -28,6 +28,7 @@ from .puntuales import Puntual
 from .recordar import Recordatorio, a_texto, de_texto
 from .rezagada import Rezagada
 from .usuarios import Invitado
+from .voto import Voto
 
 logger = logging.getLogger(__name__)
 
@@ -1090,6 +1091,33 @@ def guardar_avisos(
                 for c, precio, sube in avisos
             ],
         )
+
+
+def guardar_voto(db_path: str, v: Voto) -> None:
+    """Uno por aviso: pulsar el otro botón cambia el voto, no suma otro."""
+    clave = f"voto:{v.coin_id}:{int(v.cuando.timestamp())}"
+    with _connect(db_path) as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (clave, "1" if v.util else "0"),
+        )
+
+
+def get_votos(db_path: str) -> list[Voto]:
+    with _connect(db_path) as conn:
+        filas = conn.execute(
+            "SELECT clave, valor FROM ajustes WHERE clave LIKE 'voto:%'"
+        ).fetchall()
+    votos = []
+    for f in filas:
+        # El id puede llevar guiones pero no dos puntos: la hora es lo último.
+        _, coin_id, segundos = f["clave"].rsplit(":", 2)
+        try:
+            cuando = datetime.fromtimestamp(int(segundos), timezone.utc)
+        except (ValueError, OverflowError, OSError):
+            continue
+        votos.append(Voto(coin_id, cuando, f["valor"] == "1"))
+    return sorted(votos, key=lambda v: v.cuando)
 
 
 def ultimos_avisos(db_path: str) -> dict[str, Aviso]:

@@ -958,6 +958,21 @@ def test_aviso_de_la_comision_de_red(db):
     assert database.aviso_comisionred(db) is None
 
 
+def test_votos_uno_por_aviso(db):
+    from crypto_tracker.voto import Voto
+
+    aviso = datetime(2026, 11, 22, 10, 30, tzinfo=timezone.utc)
+    database.guardar_voto(db, Voto("bitcoin", aviso, True))
+    # Pulsar el otro botón del mismo aviso lo cambia, no suma otro.
+    database.guardar_voto(db, Voto("bitcoin", aviso, False))
+    database.guardar_voto(db, Voto("usd-coin", aviso - timedelta(hours=1), True))
+
+    assert database.get_votos(db) == [
+        Voto("usd-coin", aviso - timedelta(hours=1), True),
+        Voto("bitcoin", aviso, False),
+    ]
+
+
 def test_mensaje_en_vivo(db):
     assert database.envivo(db) is None
 

@@ -125,6 +125,7 @@ from crypto_tracker.respuestas.analisis import (
     _sube,
     _verdes,
     _volatilidad,
+    _voto,
 )
 from crypto_tracker.respuestas.base import (
     SIN_CARTERA,
@@ -526,7 +527,9 @@ def ejecutar_ciclo(
         config.telegram_chat_id,
         texto,
         sin_sonido=_sin_sonido(config),
-        botones=botones.para_avisos(avisos, config.vs_currency),
+        botones=botones.para_avisos(
+            avisos, config.vs_currency, datetime.now(timezone.utc)
+        ),
     ):
         logger.info("Aviso enviado (%d): %s", len(avisos), cruzadas)
         _borrar_puntuales(config, hechas + quitadas)
@@ -1696,6 +1699,7 @@ COMANDOS: dict[str, Callable[[Config, str], Respuesta]] = {
     "quieta": lambda c, a: _quieta(c),
     "volatilidad": lambda c, a: _volatilidad(c, a),
     "ruido": lambda c, a: _ruido(c, a),
+    "voto": lambda c, a: _voto(c, a),
     "soporte": lambda c, a: _soporte(c, a),
     "rango": lambda c, a: _rango(c, a),
     "racha": lambda c, a: _racha(c, a),

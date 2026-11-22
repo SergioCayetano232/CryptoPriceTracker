@@ -267,3 +267,51 @@ def test_para_precio_con_grafica_y_un_id_largo():
     assert para_precio("x" * 53, grafica=True) == [
         [("📈 Gráfica", "/historico " + "x" * 53)]
     ]
+
+
+# --- los 👍 y 👎 ---
+
+
+def _ahora():
+    from datetime import datetime, timezone
+
+    return datetime(2026, 11, 22, 10, 30, tzinfo=timezone.utc)
+
+
+def _de_votar(filas):
+    return [b for fila in filas for b in fila if b[1].startswith("/voto")]
+
+
+def test_un_aviso_de_lo_que_vigilas_se_puede_votar():
+    filas = para_avisos([Alert("bitcoin", 64100.0, 64000.0, ALTO)], "eur", _ahora())
+
+    assert filas[-2] == [
+        ("👍 Me sirve", "/voto bitcoin si 1795343400"),
+        ("👎 Sobraba", "/voto bitcoin no 1795343400"),
+    ]
+    assert filas[-1] == [CALLAR]
+
+
+def test_sin_la_hora_no_hay_votos():
+    filas = para_avisos([Alert("bitcoin", 64100.0, 64000.0, ALTO)], "eur")
+
+    assert _de_votar(filas) == []
+
+
+def test_con_varias_criptos_no_se_vota():
+    avisos = [
+        Alert("bitcoin", 64100.0, 64000.0, ALTO),
+        Alert("solana", 99.0, 100.0, BAJO),
+    ]
+
+    assert _de_votar(para_avisos(avisos, "eur", _ahora())) == []
+
+
+def test_lo_que_no_es_de_vigilar_no_se_vota():
+    for aviso in (
+        Alert("bitcoin", 64100.0, 64000.0, ALTO, puntual=True),
+        Alert("bitcoin", 64100.0, 60000.0, ALTO, minutos=60),
+        Alert("bitcoin", 64100.0, 64000.0, ALTO, extremo_dias=30),
+        Alert(puntuales.CARTERA, 5000.0, 4000.0, ALTO),
+    ):
+        assert _de_votar(para_avisos([aviso], "eur", _ahora())) == []

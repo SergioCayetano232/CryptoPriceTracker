@@ -236,6 +236,7 @@ from .mensajes.mercado import (
     formatear_top,
     formatear_ultimo,
     formatear_volatilidad,
+    formatear_voto,
     linea_miedo,
 )
 from .mensajes.planes import (

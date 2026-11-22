@@ -1,5 +1,8 @@
 """Los botones que van debajo de cada aviso."""
 
+from datetime import datetime
+
+from . import voto
 from .alerts import ALTO, SIMBOLOS, Alert, _num
 from .emocion import EMOCIONES
 from .puntuales import CARTERA, Puntual
@@ -32,8 +35,13 @@ POR_FILA = 2
 MAX_ALERTAS = 10
 
 
-def para_avisos(avisos: list[Alert], currency: str) -> list[list[tuple[str, str]]]:
-    """Filas de (texto, comando). Pulsar un boton es como escribir el comando."""
+def para_avisos(
+    avisos: list[Alert], currency: str, ahora: datetime | None = None
+) -> list[list[tuple[str, str]]]:
+    """Filas de (texto, comando). Pulsar un boton es como escribir el comando.
+
+    Con ahora, la hora del aviso, lleva también los 👍 y 👎 para /ruido.
+    """
     simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
     # Si una cripto sale dos veces (nivel y brusco), la primera manda.
     primeros, vistas = [], set()
@@ -60,8 +68,27 @@ def para_avisos(avisos: list[Alert], currency: str) -> list[list[tuple[str, str]
         if a.puntual:
             filas.append([b for b in [_otra(a, nombre, solo_una)] if _cabe(b)])
 
+    if ahora is not None and solo_una and _se_vota(primeros[0]):
+        coin_id = primeros[0].coin_id
+        votar = [
+            ("👍 Me sirve", voto.datos(coin_id, True, ahora)),
+            ("👎 Sobraba", voto.datos(coin_id, False, ahora)),
+        ]
+        if all(_cabe(b) for b in votar):
+            filas.append(votar)
     filas.append([CALLAR])
     return [f for f in filas if f]
+
+
+def _se_vota(a: Alert) -> bool:
+    # Solo los de /vigilar, que son los que /ruido sabe afinar. Una /alerta la
+    # pediste tú tal cual, y con varias criptos no se sabría a cuál va el voto.
+    return (
+        not a.puntual
+        and a.minutos is None
+        and a.extremo_dias is None
+        and a.coin_id != CARTERA
+    )
 
 
 def _otra(a: Alert, nombre: str, solo_una: bool) -> tuple[str, str]:

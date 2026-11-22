@@ -43,6 +43,7 @@ from .base import (
 # Solo para el tipo: esos módulos importan de alerts y se haría un círculo.
 if TYPE_CHECKING:
     from ..ruido import Ruido
+    from ..voto import Votos
 
 
 def formatear_precio(
@@ -581,6 +582,19 @@ def _lado_sesgo(titulo: str, lado: Lado, humores: dict[str, str]) -> list[str]:
     return lineas
 
 
+def formatear_voto(coin_id: str, util: bool, v: "Votos") -> str:
+    """Lo que contesta el botón 👍 o 👎 de un aviso. v, los de los últimos 30 días."""
+    nombre = _nombre(coin_id)
+    if util:
+        texto = f"👍 Apuntado: el aviso de <b>{nombre}</b> te sirvió."
+    else:
+        texto = f"👎 Apuntado: el aviso de <b>{nombre}</b> sobraba."
+    texto += f"\nEn 30 días llevas 👍 {v.utiles} · 👎 {v.sobran}."
+    if v.muchos_sobran:
+        texto += f" Te sobran la mayoría: mira una regla mejor en /ruido {coin_id}"
+    return texto
+
+
 def formatear_ruido(
     lista: "list[Ruido]", horas: float, currency: str, desde: datetime | None
 ) -> str:
@@ -590,13 +604,19 @@ def formatear_ruido(
         c = r.cuenta
         como = describir(r.watch, currency)
         texto += ["", f"<b>{_nombre(r.watch.coin_id)}</b>  {como}"]
+        v = r.votos
+        tuyos = f"Tus votos: 👍 {v.utiles} · 👎 {v.sobran}" if v.total else ""
         if not c.avisos:
             texto.append("Ningún aviso en el tramo")
+            if tuyos:
+                texto.append(tuyos)
             continue
 
         avisos = "1 aviso" if c.avisos == 1 else f"{c.avisos} avisos"
         if not c.cerrados:
             texto.append(f"{avisos}, todavía sin 24 h detrás para saber")
+            if tuyos:
+                texto.append(tuyos)
             continue
         if c.falsos:
             linea = f"{avisos}, <b>{c.falsos} en falso</b> ({c.proporcion:.0%})"
@@ -606,6 +626,8 @@ def formatear_ruido(
         texto.append(f"{icono} {linea}")
         if c.pendientes:
             texto.append(f"<i>Más {c.pendientes} de las últimas 24 h, aún por ver</i>")
+        if tuyos:
+            texto.append(tuyos)
 
         if r.propuesta:
             otra, suya = r.propuesta
@@ -615,6 +637,9 @@ def formatear_ruido(
                 regla = numero_env(otra.step)
             cuantos = "1 aviso" if suya.avisos == 1 else f"{suya.avisos} avisos"
             falsos = "ninguno" if not suya.falsos else str(suya.falsos)
+            # Si el precio no veía ruido, la propuesta sale de tus 👎.
+            if not c.mucho:
+                texto.append("Te sobran la mayoría, así que pruebo una más ancha")
             texto.append(
                 f"👉 Con {regla}: {cuantos}, {falsos} en falso · "
                 f"<code>/vigilar {escape(otra.coin_id)} {regla}</code>"
@@ -625,7 +650,8 @@ def formatear_ruido(
     texto.append(
         "\n<i>En falso es que en 24 h lo deshizo: volvió a cruzar el precio, o en "
         "los de % deshizo la mitad de lo que se movió. Es con tus reglas de hoy "
-        "sobre los precios guardados; no cuenta /alerta ni los avisos automáticos</i>"
+        "sobre los precios guardados; no cuenta /alerta ni los avisos automáticos. "
+        "Tus votos son los 👍 y 👎 de debajo de cada aviso</i>"
     )
     if desde:
         texto.append(f"<i>Solo tengo precios desde el {desde.astimezone():%d/%m}</i>")

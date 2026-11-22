@@ -47,6 +47,7 @@ from .. import (
     telegram,
     verdes,
     volatilidad,
+    voto,
 )
 from ..config import Config
 from .base import (
@@ -906,6 +907,17 @@ def _volatilidad(config: Config, argumento: str) -> str:
     )
 
 
+def _voto(config: Config, argumento: str) -> str:
+    try:
+        v = voto.interpretar(argumento)
+    except voto.VotoError as e:
+        return telegram.escape(str(e))
+    database.guardar_voto(config.database_path, v)
+    desde = datetime.now(timezone.utc) - timedelta(hours=ruido.POR_DEFECTO)
+    suyos = voto.contar(database.get_votos(config.database_path), v.coin_id, desde)
+    return alerts.formatear_voto(v.coin_id, v.util, suyos)
+
+
 def _ruido(config: Config, argumento: str) -> str:
     try:
         coin_id, horas = ruido.interpretar(argumento)
@@ -924,11 +936,13 @@ def _ruido(config: Config, argumento: str) -> str:
         return "No vigilo ninguna. Empieza con /vigilar bitcoin %5"
 
     lista, primero = [], None
+    votos = database.get_votos(config.database_path)
+    desde = datetime.now(timezone.utc) - timedelta(hours=horas)
     for w in vigiladas:
         serie = database.get_serie(
             config.database_path, w.coin_id, horas, config.vs_currency
         )
-        lista.append(ruido.analizar(serie, w))
+        lista.append(ruido.analizar(serie, w, voto.contar(votos, w.coin_id, desde)))
         if serie and (primero is None or serie[0][0] > primero):
             primero = serie[0][0]
 

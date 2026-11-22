@@ -145,3 +145,41 @@ def test_pocos_avisos_no_son_mucho_ruido():
     assert r.cuenta.falsos >= 1
     assert not r.cuenta.mucho
     assert r.propuesta is None
+
+
+# --- con tus 👍 y 👎 ---
+
+
+def test_si_te_sobran_la_mayoria_propone_aunque_el_precio_no_lo_vea():
+    from crypto_tracker.voto import Votos
+
+    # Sube limpio un 6% cada día: ninguno en falso, pero son muchos avisos.
+    serie = _cada_dia(100, 106, 112, 119, 126, 134, 142, 142, 142)
+
+    r = analizar(serie, Watch("bitcoin", percent=5), Votos(utiles=1, sobran=4))
+
+    assert not r.cuenta.mucho
+    otra, suya = r.propuesta
+    assert otra.percent > 5
+    assert 0 < suya.avisos < r.cuenta.avisos
+    assert r.votos == Votos(1, 4)
+
+
+def test_con_pocos_votos_o_la_mayoria_buenos_no_cambia_nada():
+    from crypto_tracker.voto import Votos
+
+    serie = _cada_dia(100, 106, 112, 119, 126, 134, 142, 142, 142)
+
+    assert analizar(serie, Watch("bitcoin", percent=5), Votos(0, 2)).propuesta is None
+    assert analizar(serie, Watch("bitcoin", percent=5), Votos(4, 1)).propuesta is None
+
+
+def test_los_votos_no_proponen_una_regla_muda():
+    from crypto_tracker.voto import Votos
+
+    # Un solo aviso: cualquier regla más ancha o avisa igual o no avisa nunca.
+    serie = _cada_dia(100, 106, 106, 106)
+
+    r = analizar(serie, Watch("bitcoin", percent=5), Votos(0, 5))
+
+    assert r.propuesta is None

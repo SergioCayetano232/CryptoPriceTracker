@@ -98,6 +98,7 @@ COMANDOS = {
     "sube": "Cuánto ha subido desde el mínimo (ej: /sube btc 30d)",
     "volatilidad": "Cuánto se mueve, para elegir el % (ej: /volatilidad btc 30d)",
     "ruido": "Cuántos avisos fueron en falso y un % mejor (ej: /ruido btc 30d)",
+    "voto": "Si un aviso te sirvió: va con los 👍 👎 de debajo, no escrito",
     "vigilar": "Ver o cambiar lo que vigilo (ej: /vigilar solana %5)",
     "dejar": "Dejar de vigilar una o varias (ej: /dejar solana o /dejar sol eth)",
     "comparar": "Qué tal les ha ido, de mejor a peor (ej: /comparar btc eth 7d)",

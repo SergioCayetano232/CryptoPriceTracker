@@ -8,6 +8,7 @@ from .alerts import ALTO, revisar
 from .config import Watch
 from .periodo import PeriodoError, es_tramo, leer
 from .simbolos import a_id
+from .voto import SIN_VOTOS, Votos
 
 POR_DEFECTO = 30 * 24
 VENTANA = timedelta(hours=24)
@@ -53,6 +54,7 @@ class Ruido:
     watch: Watch
     cuenta: Cuenta
     propuesta: tuple[Watch, Cuenta] | None = None
+    votos: Votos = SIN_VOTOS  # tus 👍 y 👎 del tramo
 
 
 def interpretar(argumento: str) -> tuple[str, float]:
@@ -123,14 +125,24 @@ def candidatas(watch: Watch) -> list[Watch]:
     return []
 
 
-def analizar(serie: list[tuple[datetime, float]], watch: Watch) -> Ruido:
+def analizar(
+    serie: list[tuple[datetime, float]], watch: Watch, votos: Votos = SIN_VOTOS
+) -> Ruido:
+    """votos son tus 👍 y 👎 a los avisos de esa cripto en el tramo."""
     cuenta = contar(serie, simular(serie, watch))
-    if not cuenta.mucho:
-        return Ruido(watch, cuenta)
+    if cuenta.mucho:
+        for otra in candidatas(watch):
+            suya = contar(serie, simular(serie, otra))
+            # Una que no avise nunca no tiene falsos, pero tampoco sirve.
+            if suya.cerrados and suya.proporcion <= MUCHO:
+                return Ruido(watch, cuenta, (otra, suya), votos)
+        return Ruido(watch, cuenta, votos=votos)
 
-    for otra in candidatas(watch):
-        suya = contar(serie, simular(serie, otra))
-        # Una que no avise nunca no tiene falsos, pero tampoco sirve.
-        if suya.cerrados and suya.proporcion <= MUCHO:
-            return Ruido(watch, cuenta, (otra, suya))
-    return Ruido(watch, cuenta)
+    # El precio no dice que haya ruido, pero tú sí: la primera que avise menos
+    # sin quedarse muda.
+    if votos.muchos_sobran:
+        for otra in candidatas(watch):
+            suya = contar(serie, simular(serie, otra))
+            if 0 < suya.avisos < cuenta.avisos:
+                return Ruido(watch, cuenta, (otra, suya), votos)
+    return Ruido(watch, cuenta, votos=votos)

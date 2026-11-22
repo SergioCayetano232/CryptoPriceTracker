@@ -13262,3 +13262,63 @@ def test_liga_mal_escrita(config, enviados):
     main.atender(config, _mensaje("/liga bitcoin"))
 
     assert "/liga semana" in enviados[0]
+
+
+# --- los 👍 y 👎 de los avisos ---
+
+
+def test_el_aviso_lleva_los_botones_de_votar(config, monkeypatch):
+    mandados = _con_botones(monkeypatch)
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+    _, _ = main.ejecutar_ciclo(config, {})
+    estado = database.load_state(config.database_path)
+    _precio(monkeypatch, {"bitcoin": 64000.0})  # +6,7% con la regla de %5
+
+    main.ejecutar_ciclo(config, estado)
+
+    _, teclado = mandados[-1]
+    votar = [b for fila in teclado for b in fila if b[1].startswith("/voto bitcoin")]
+    assert [b[0] for b in votar] == ["👍 Me sirve", "👎 Sobraba"]
+
+
+def test_pulsar_el_voto_lo_apunta(config, enviados):
+    aviso = int(datetime.now(timezone.utc).timestamp())
+
+    main.atender(config, _mensaje(f"/voto bitcoin no {aviso}"))
+
+    assert "👎 Apuntado: el aviso de <b>Bitcoin</b> sobraba." in enviados[0]
+    assert "llevas 👍 0 · 👎 1" in enviados[0]
+    [v] = database.get_votos(config.database_path)
+    assert (v.coin_id, v.util) == ("bitcoin", False)
+
+
+def test_cambiar_de_opinion_no_cuenta_dos_veces(config, enviados):
+    aviso = int(datetime.now(timezone.utc).timestamp())
+
+    main.atender(config, _mensaje(f"/voto bitcoin no {aviso}"))
+    main.atender(config, _mensaje(f"/voto bitcoin si {aviso}"))
+
+    assert "llevas 👍 1 · 👎 0" in enviados[1]
+
+
+def test_voto_escrito_a_mano(config, enviados):
+    main.atender(config, _mensaje("/voto bitcoin si"))
+
+    assert "va con los botones 👍 y 👎" in enviados[0]
+    assert database.get_votos(config.database_path) == []
+
+
+def test_ruido_ensena_tus_votos_y_propone_por_ellos(config, enviados):
+    # Sube limpio un 6% al día: para el precio no hay ruido.
+    for dias, precio in enumerate([142, 142, 142, 134, 126, 119, 112, 106, 100]):
+        _precio_de(config, "bitcoin", float(precio), dias * 24 * 60 + 5)
+    ahora = int(datetime.now(timezone.utc).timestamp())
+    for n in range(4):
+        main.atender(config, _mensaje(f"/voto bitcoin no {ahora - n * 86400}"))
+    enviados.clear()
+
+    main.atender(config, _mensaje("/ruido bitcoin"))
+
+    assert "Tus votos: 👍 0 · 👎 4" in enviados[0]
+    assert "Te sobran la mayoría" in enviados[0]
+    assert "<code>/vigilar bitcoin %" in enviados[0]

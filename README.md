@@ -256,6 +256,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/quitar 3` | Quita la alerta número 3 (`/quitar 2 5` varias, `/quitar bitcoin` las de esa cripto, `/quitar todas` todas) |
 | `/volatilidad bitcoin 30d` | Cuánto se mueve de media al día y cuántos avisos te habría dado `/vigilar` con %2, %5 y %10 (sin tramo, 30 días) |
 | `/ruido` | De los avisos que te habrían dado tus reglas de `/vigilar`, cuántos fueron en falso: en las 24 h siguientes el precio volvió a cruzar la línea (o, en los de %, deshizo la mitad del movimiento). Si más de un tercio lo son, te propone el % o el paso más pequeño que lo arregla, listo para copiar (si vigilas por pasos y ninguno más ancho vale, prueba con %). Con `/ruido bitcoin 90d`, solo una y en otro tramo (sin tramo, 30 días). Sale de lo guardado y no gasta consultas. También `/falsos` |
+| 👍 y 👎 en los avisos | Debajo de cada aviso de lo que vigilas hay dos botones para decir si te sirvió o sobraba. Se guarda uno por aviso (si pulsas el otro, cambia) y `/ruido` los enseña: si te sobran más de la mitad, te propone una regla más ancha aunque el precio no lo viera como ruido. No salen en las `/alerta` ni cuando el aviso junta varias criptos |
 | `/vigilar` | Lo que está vigilando y cómo, con un ✖ en cada una para dejarla |
 | `/vigilar solana %5` | Añade una cripto, o cambia cómo vigila una que ya estaba |
 | `/dejar solana` | Deja de vigilarla (`/dejar sol eth` varias a la vez) |
@@ -964,6 +965,7 @@ crypto_tracker/
   usuarios.py    los invitados de /invitar, cada uno con su archivo
   telegram.py    manda los mensajes
   botones.py     los botones de debajo de los avisos
+  voto.py        los 👍 y 👎 de los avisos, que luego mira /ruido
   envivo.py      el mensaje fijado que se edita solo, para /envivo
   ideal.py       el reparto que quieres y cuándo avisar de que te alejas, para /ideal
   buzon.py       junta los avisos del mismo ciclo en un mensaje
