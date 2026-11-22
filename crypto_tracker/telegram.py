@@ -18,6 +18,8 @@ ANSWER_URL = "https://api.telegram.org/bot{token}/answerCallbackQuery"
 INLINE_URL = "https://api.telegram.org/bot{token}/answerInlineQuery"
 GETFILE_URL = "https://api.telegram.org/bot{token}/getFile"
 FILE_URL = "https://api.telegram.org/file/bot{token}/{ruta}"
+# Lo de /envivo: editar, fijar y quitar un mensaje ya mandado.
+METODO_URL = "https://api.telegram.org/bot{token}/{metodo}"
 
 # El pie de una foto admite mucho menos que un mensaje.
 MAX_CAPTION = 1024
@@ -295,6 +297,80 @@ def _mandar_archivo(
         )
         return False
     return True
+
+
+def _llamar(token: str, metodo: str, payload: dict) -> tuple[dict | None, str]:
+    """(lo que devuelve Telegram, el error). Un solo intento, sin reintentos."""
+    try:
+        response = requests.post(
+            METODO_URL.format(token=token, metodo=metodo),
+            json=payload,
+            timeout=TIMEOUT,
+        )
+        data = response.json()
+    except (requests.RequestException, ValueError):
+        return None, ""
+    if not isinstance(data, dict) or not data.get("ok"):
+        return None, _explain(response.status_code, data or {})
+    return data, ""
+
+
+def enviar_con_id(token: str, chat_id: str, text: str) -> int | None:
+    """Manda un mensaje sin sonido y devuelve su id, para editarlo luego."""
+    payload = {
+        "chat_id": chat_id,
+        "text": _recortar(text, MAX_LENGTH),
+        "parse_mode": "HTML",
+        "disable_web_page_preview": True,
+        "disable_notification": True,
+    }
+    data, error = _llamar(token, "sendMessage", payload)
+    if data is None:
+        logger.error("No se pudo mandar el mensaje fijo: %s", error or "sin conexion")
+        return None
+    resultado = data.get("result")
+    numero = resultado.get("message_id") if isinstance(resultado, dict) else None
+    return numero if isinstance(numero, int) else None
+
+
+def editar_mensaje(token: str, chat_id: str, message_id: int, text: str) -> str | None:
+    """Cambia el texto de uno ya mandado. None si quedó; si no, el error.
+
+    El error vacío es que Telegram ni contestó.
+    """
+    payload = {
+        "chat_id": chat_id,
+        "message_id": message_id,
+        "text": _recortar(text, MAX_LENGTH),
+        "parse_mode": "HTML",
+        "disable_web_page_preview": True,
+    }
+    data, error = _llamar(token, "editMessageText", payload)
+    # Si el texto no ha cambiado Telegram lo da por error, y no lo es.
+    if data is not None or "message is not modified" in error:
+        return None
+    return error
+
+
+def fijar(token: str, chat_id: str, message_id: int) -> bool:
+    """Lo ancla arriba del chat, sin avisar a nadie."""
+    payload = {
+        "chat_id": chat_id,
+        "message_id": message_id,
+        "disable_notification": True,
+    }
+    return _llamar(token, "pinChatMessage", payload)[0] is not None
+
+
+def desfijar(token: str, chat_id: str, message_id: int) -> bool:
+    payload = {"chat_id": chat_id, "message_id": message_id}
+    return _llamar(token, "unpinChatMessage", payload)[0] is not None
+
+
+def borrar_mensaje(token: str, chat_id: str, message_id: int) -> bool:
+    """Telegram solo deja borrar los de menos de dos días."""
+    payload = {"chat_id": chat_id, "message_id": message_id}
+    return _llamar(token, "deleteMessage", payload)[0] is not None
 
 
 def get_updates(token: str, offset: int | None, espera: int) -> list[dict]:

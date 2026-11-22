@@ -228,10 +228,12 @@ from crypto_tracker.respuestas.resumenes import (
     _anual,
     _comando_resumen,
     _comando_status,
+    _envivo,
     _mes,
     _semana,
     aviso_compensar,
     copia_semanal,
+    en_vivo,
     enviar_resumen,
     resumen_anual,
     resumen_diario,
@@ -935,6 +937,7 @@ def tareas() -> tuple[Callable[[Config], None], ...]:
         pensados,
         cerrar_predicciones,
         copia_semanal,
+        en_vivo,
     )
 
 
@@ -1568,6 +1571,7 @@ COMANDOS: dict[str, Callable[[Config, str], Respuesta]] = {
     "mute": _comando_mute,
     "unmute": _comando_unmute,
     "horario": lambda c, a: _horario(c, a),
+    "envivo": lambda c, a: _envivo(c, a),
     "semana": _comando_semana,
     "cartera": _con_cartera(lambda c, a: _cartera(c, a)),
     "tarjeta": lambda c, a: _tarjeta(c, a),

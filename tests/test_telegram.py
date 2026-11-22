@@ -582,3 +582,98 @@ def test_contesta_la_consulta_inline(monkeypatch):
     assert resultado["type"] == "article"
     assert resultado["id"] == "bitcoin"
     assert resultado["input_message_content"]["parse_mode"] == "HTML"
+
+
+def _apuntando(monkeypatch, respuesta=None):
+    pedidos = []
+    monkeypatch.setattr(
+        requests,
+        "post",
+        lambda url, json, **k: (
+            pedidos.append((url, json)) or (respuesta or RespuestaFalsa())
+        ),
+    )
+    return pedidos
+
+
+def test_enviar_con_id_devuelve_el_del_mensaje(monkeypatch):
+    dada = RespuestaFalsa(data={"ok": True, "result": {"message_id": 77}})
+    pedidos = _apuntando(monkeypatch, dada)
+
+    assert telegram.enviar_con_id("T", "123", "hola") == 77
+    url, payload = pedidos[0]
+    assert url.endswith("/sendMessage")
+    assert payload["disable_notification"] is True
+
+
+def test_enviar_con_id_sin_red(monkeypatch):
+    def sin_red(*a, **k):
+        raise requests.ConnectionError()
+
+    monkeypatch.setattr(requests, "post", sin_red)
+
+    assert telegram.enviar_con_id("T", "123", "hola") is None
+
+
+def test_editar_mensaje(monkeypatch):
+    pedidos = _apuntando(monkeypatch)
+
+    assert telegram.editar_mensaje("T", "123", 77, "nuevo") is None
+    url, payload = pedidos[0]
+    assert url.endswith("/editMessageText")
+    assert payload["message_id"] == 77
+    assert payload["text"] == "nuevo"
+
+
+def test_editar_sin_cambios_no_es_un_fallo(monkeypatch):
+    igual = {
+        "ok": False,
+        "description": "Bad Request: message is not modified: specified new "
+        "message content and reply markup are exactly the same",
+    }
+    _apuntando(monkeypatch, RespuestaFalsa(400, igual))
+
+    assert telegram.editar_mensaje("T", "123", 77, "igual") is None
+
+
+def test_editar_uno_borrado_dice_el_error(monkeypatch):
+    borrado = {"ok": False, "description": "Bad Request: message to edit not found"}
+    _apuntando(monkeypatch, RespuestaFalsa(400, borrado))
+
+    assert "message to edit not found" in telegram.editar_mensaje("T", "1", 77, "x")
+
+
+def test_editar_sin_red_da_error_vacio(monkeypatch):
+    def sin_red(*a, **k):
+        raise requests.Timeout()
+
+    monkeypatch.setattr(requests, "post", sin_red)
+
+    assert telegram.editar_mensaje("T", "123", 77, "x") == ""
+
+
+def test_fijar_no_avisa(monkeypatch):
+    pedidos = _apuntando(monkeypatch)
+
+    assert telegram.fijar("T", "123", 77)
+    url, payload = pedidos[0]
+    assert url.endswith("/pinChatMessage")
+    assert payload["disable_notification"] is True
+
+
+def test_borrar_y_desfijar(monkeypatch):
+    pedidos = _apuntando(monkeypatch)
+
+    assert telegram.borrar_mensaje("T", "123", 77)
+    assert telegram.desfijar("T", "123", 77)
+    assert [url.rsplit("/", 1)[1] for url, _ in pedidos] == [
+        "deleteMessage",
+        "unpinChatMessage",
+    ]
+
+
+def test_no_deja_borrar_uno_viejo(monkeypatch):
+    viejo = {"ok": False, "description": "Bad Request: message can't be deleted"}
+    _apuntando(monkeypatch, RespuestaFalsa(400, viejo))
+
+    assert not telegram.borrar_mensaje("T", "123", 77)

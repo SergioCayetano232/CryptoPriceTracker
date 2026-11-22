@@ -177,6 +177,8 @@ AVISO_721 = "aviso_721"
 FANTASMA = "fantasma"
 # Con el *, ninguna cripto se puede llamar así.
 NOTA_HERENCIA = "*nota"
+# El id del mensaje fijado de /envivo. Sin fila, no hay ninguno.
+ENVIVO = "envivo"
 
 
 class DatabaseError(Exception):
@@ -876,6 +878,29 @@ def guardar_limite_compras(db_path: str, limite: float | None) -> None:
         conn.execute(
             "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
             (LIMITE_COMPRAS, repr(limite)),
+        )
+
+
+def envivo(db_path: str) -> int | None:
+    """El id del mensaje de /envivo, o None si no lo tienes puesto."""
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT valor FROM ajustes WHERE clave = ?", (ENVIVO,)
+        ).fetchone()
+    try:
+        return int(fila["valor"]) if fila else None
+    except ValueError:
+        return None
+
+
+def guardar_envivo(db_path: str, message_id: int | None) -> None:
+    with _connect(db_path) as conn:
+        if message_id is None:
+            conn.execute("DELETE FROM ajustes WHERE clave = ?", (ENVIVO,))
+            return
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (ENVIVO, str(message_id)),
         )
 
 

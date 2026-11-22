@@ -15,6 +15,7 @@ from .. import (
     compensar,
     database,
     diario,
+    envivo,
     grafica,
     mensual,
     mes,
@@ -66,6 +67,99 @@ def _comando_resumen(config: Config, argumento: str) -> Respuesta:
     if texto is None:
         return "No he podido consultar los precios. Prueba en un rato."
     return comandos.ConBotones(texto, botones.actualizar("/resumen"))
+
+
+def _texto_envivo(config: Config, ahora: datetime) -> str | None:
+    """Lo de /envivo con lo último guardado. None si aún no hay precios."""
+    config = _con_cambios(config)
+    vigiladas = [w.coin_id for w in config.watchlist]
+    suyas = [p.coin_id for p in config.cartera if p.coin_id not in vigiladas]
+    # De la base de datos y no de CoinGecko: el ciclo los acaba de guardar y
+    # pedirlos otra vez gastaría el doble de consultas al mes.
+    precios = {}
+    for coin_id in (*vigiladas, *suyas):
+        precio = database.get_last_price(config.database_path, coin_id)
+        if precio is not None:
+            precios[coin_id] = precio
+    if not precios:
+        return None
+
+    lineas = [
+        (c, precios[c], _variacion(config, c, precios[c]))
+        for c in vigiladas
+        if c in precios
+    ]
+    texto = alerts.formatear_resumen(lineas, config.vs_currency, envivo.TITULO)
+    if config.cartera:
+        texto += "\n\n" + _bloque_cartera(config, precios)
+    return texto + "\n\n" + envivo.pie(ahora)
+
+
+def _retirar_envivo(config: Config, numero: int) -> None:
+    token, chat = config.telegram_token, config.telegram_chat_id
+    # Borrado ya no queda fijado. Si es viejo no deja borrarlo: al menos lo suelto.
+    if not telegram.borrar_mensaje(token, chat, numero):
+        telegram.desfijar(token, chat, numero)
+
+
+def _envivo(config: Config, argumento: str) -> Respuesta:
+    try:
+        poner = envivo.interpretar(argumento)
+    except envivo.EnvivoError as e:
+        return str(e)
+
+    anterior = database.envivo(config.database_path)
+    if not poner:
+        if anterior is None:
+            return "No lo tenías puesto. Para ponerlo: /envivo"
+        _retirar_envivo(config, anterior)
+        database.guardar_envivo(config.database_path, None)
+        return "Hecho, quitado el mensaje en vivo. Para volver: /envivo"
+
+    texto = _texto_envivo(config, datetime.now().astimezone())
+    if texto is None:
+        return "Todavía no tengo precios guardados. Prueba en unos minutos."
+    token, chat = config.telegram_token, config.telegram_chat_id
+    nuevo = telegram.enviar_con_id(token, chat, texto)
+    if nuevo is None:
+        return "No he podido mandarlo. Prueba en un rato."
+    # Con uno ya puesto, /envivo lo baja al final del chat.
+    if anterior is not None:
+        _retirar_envivo(config, anterior)
+    database.guardar_envivo(config.database_path, nuevo)
+
+    minutos = max(1, round(config.check_interval / 60))
+    cada = f"Lo actualizo solo cada {minutos} min, sin mandarte nada nuevo."
+    if not telegram.fijar(token, chat, nuevo):
+        return (
+            f"📌 Ahí lo tienes. {cada}\n"
+            "No he podido fijarlo: mantenlo pulsado y dale a Fijar."
+        )
+    return f"📌 Fijado arriba. {cada} Para quitarlo: /envivo no"
+
+
+def en_vivo(config: Config, ahora: datetime | None = None) -> None:
+    """Pone al día el mensaje de /envivo, si lo tienes."""
+    try:
+        numero = database.envivo(config.database_path)
+        if numero is None:
+            return
+        texto = _texto_envivo(config, ahora or datetime.now().astimezone())
+    except database.DatabaseError as e:
+        logger.error("No se pudo preparar el mensaje en vivo: %s", e)
+        return
+    if texto is None:
+        return
+
+    error = telegram.editar_mensaje(
+        config.telegram_token, config.telegram_chat_id, numero, texto
+    )
+    if error and envivo.se_perdio(error):
+        logger.info("El mensaje en vivo ya no esta, dejo de actualizarlo")
+        try:
+            database.guardar_envivo(config.database_path, None)
+        except database.DatabaseError as e:
+            logger.error("No se pudo quitar el mensaje en vivo: %s", e)
 
 
 def resumen_diario(config: Config, ahora: datetime | None = None) -> None:

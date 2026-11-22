@@ -925,6 +925,16 @@ def test_limite_de_compras(db):
     assert database.limite_compras(db) is None
 
 
+def test_mensaje_en_vivo(db):
+    assert database.envivo(db) is None
+
+    database.guardar_envivo(db, 4711)
+    assert database.envivo(db) == 4711
+
+    database.guardar_envivo(db, None)
+    assert database.envivo(db) is None
+
+
 def test_alerta_con_condicion(db):
     from crypto_tracker.condicion import Condicion
 

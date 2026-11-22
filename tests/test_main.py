@@ -12557,3 +12557,181 @@ def test_dominancia_del_invitado_con_tu_historico(config, a_quien, monkeypatch):
     assert len(database.get_dominancia(config.database_path, 1)) == 1
     suyo = usuarios.archivo(config, "555")
     assert database.get_dominancia(suyo, 24 * 30) == []
+
+
+@pytest.fixture
+def fijo(monkeypatch):
+    """El Telegram de /envivo: apunta lo que se le pide y lo da por bueno."""
+
+    class Fijo:
+        hechos: list = []
+        error_al_editar = None
+        deja_borrar = True
+
+    f = Fijo()
+    f.hechos = []
+    numeros = iter(range(500, 600))
+
+    def enviar(token, chat, texto):
+        numero = next(numeros)
+        f.hechos.append(("enviar", numero, texto))
+        return numero
+
+    def editar(token, chat, numero, texto):
+        f.hechos.append(("editar", numero, texto))
+        return f.error_al_editar
+
+    def borrar(token, chat, numero):
+        f.hechos.append(("borrar", numero))
+        return f.deja_borrar
+
+    monkeypatch.setattr(telegram, "enviar_con_id", enviar)
+    monkeypatch.setattr(telegram, "editar_mensaje", editar)
+    monkeypatch.setattr(telegram, "borrar_mensaje", borrar)
+    monkeypatch.setattr(
+        telegram, "fijar", lambda t, c, n: f.hechos.append(("fijar", n)) or True
+    )
+    monkeypatch.setattr(
+        telegram, "desfijar", lambda t, c, n: f.hechos.append(("desfijar", n)) or True
+    )
+    return f
+
+
+def test_envivo_sin_precios_no_pone_nada(config, enviados, fijo):
+    main.atender(config, _mensaje("/envivo"))
+
+    assert "no tengo precios" in enviados[0]
+    assert fijo.hechos == []
+    assert database.envivo(config.database_path) is None
+
+
+def test_envivo_lo_manda_y_lo_fija(config, enviados, fijo):
+    database.save_prices(config.database_path, {"bitcoin": 63000.0}, "eur")
+
+    main.atender(config, _mensaje("/envivo"))
+
+    (_, numero, texto), fijado = fijo.hechos
+    assert "En vivo" in texto
+    assert "63.000" in texto
+    assert fijado == ("fijar", numero)
+    assert database.envivo(config.database_path) == numero
+    assert "Fijado arriba" in enviados[0]
+    assert "cada 5 min" in enviados[0]
+
+
+def test_envivo_se_edita_en_cada_ciclo_sin_pedir_precios(
+    config, enviados, fijo, monkeypatch
+):
+    def no_pedir(*a, **k):
+        raise AssertionError("no tiene que gastar consultas")
+
+    monkeypatch.setattr(coingecko, "get_prices", no_pedir)
+    database.save_prices(config.database_path, {"bitcoin": 63000.0}, "eur")
+    main.atender(config, _mensaje("/envivo"))
+    database.save_prices(config.database_path, {"bitcoin": 64500.0}, "eur")
+
+    main.en_vivo(config, datetime(2026, 11, 22, 9, 5).astimezone())
+
+    accion, numero, texto = fijo.hechos[-1]
+    assert (accion, numero) == ("editar", database.envivo(config.database_path))
+    assert "64.500" in texto
+    assert "a las 09:05" in texto
+    assert len(enviados) == 1  # solo el "Fijado arriba": editar no manda nada
+
+
+def test_envivo_lleva_la_cartera(config, enviados, fijo):
+    from dataclasses import replace
+
+    con_cartera = replace(config, cartera=(Posicion("ethereum", 2.0, 4000.0),))
+    database.save_prices(
+        config.database_path, {"bitcoin": 63000.0, "ethereum": 2500.0}, "eur"
+    )
+
+    main.atender(con_cartera, _mensaje("/envivo"))
+
+    texto = fijo.hechos[0][2]
+    assert "Tu cartera" in texto
+    assert "5.000" in texto
+
+
+def test_envivo_sin_ponerlo_el_ciclo_no_hace_nada(config, fijo):
+    database.save_prices(config.database_path, {"bitcoin": 63000.0}, "eur")
+
+    main.en_vivo(config)
+
+    assert fijo.hechos == []
+
+
+def test_envivo_si_lo_borras_deja_de_editarlo(config, enviados, fijo):
+    database.save_prices(config.database_path, {"bitcoin": 63000.0}, "eur")
+    main.atender(config, _mensaje("/envivo"))
+    fijo.error_al_editar = "HTTP 400: Bad Request: message to edit not found"
+
+    main.en_vivo(config)
+    main.en_vivo(config)
+
+    assert database.envivo(config.database_path) is None
+    assert [h[0] for h in fijo.hechos].count("editar") == 1
+
+
+def test_envivo_un_fallo_de_red_no_lo_quita(config, enviados, fijo):
+    database.save_prices(config.database_path, {"bitcoin": 63000.0}, "eur")
+    main.atender(config, _mensaje("/envivo"))
+    fijo.error_al_editar = ""
+
+    main.en_vivo(config)
+
+    assert database.envivo(config.database_path) is not None
+
+
+def test_envivo_no_lo_quita(config, enviados, fijo):
+    database.save_prices(config.database_path, {"bitcoin": 63000.0}, "eur")
+    main.atender(config, _mensaje("/envivo"))
+    numero = database.envivo(config.database_path)
+
+    main.atender(config, _mensaje("/envivo no"))
+
+    assert fijo.hechos[-1] == ("borrar", numero)
+    assert database.envivo(config.database_path) is None
+    assert "quitado" in enviados[1]
+
+
+def test_envivo_no_con_uno_viejo_lo_desfija(config, enviados, fijo):
+    database.save_prices(config.database_path, {"bitcoin": 63000.0}, "eur")
+    main.atender(config, _mensaje("/envivo"))
+    numero = database.envivo(config.database_path)
+    fijo.deja_borrar = False
+
+    main.atender(config, _mensaje("/envivo no"))
+
+    assert fijo.hechos[-1] == ("desfijar", numero)
+
+
+def test_envivo_no_sin_tenerlo(config, enviados, fijo):
+    main.atender(config, _mensaje("/envivo no"))
+
+    assert "No lo tenías puesto" in enviados[0]
+    assert fijo.hechos == []
+
+
+def test_envivo_otra_vez_lo_baja_y_quita_el_de_antes(config, enviados, fijo):
+    database.save_prices(config.database_path, {"bitcoin": 63000.0}, "eur")
+    main.atender(config, _mensaje("/envivo"))
+    primero = database.envivo(config.database_path)
+
+    main.atender(config, _mensaje("/envivo"))
+
+    segundo = database.envivo(config.database_path)
+    assert segundo != primero
+    assert ("borrar", primero) in fijo.hechos
+    assert fijo.hechos[-1] == ("fijar", segundo)
+
+
+def test_envivo_si_no_deja_fijar_te_lo_dice(config, enviados, fijo, monkeypatch):
+    database.save_prices(config.database_path, {"bitcoin": 63000.0}, "eur")
+    monkeypatch.setattr(telegram, "fijar", lambda t, c, n: False)
+
+    main.atender(config, _mensaje("/envivo"))
+
+    assert "No he podido fijarlo" in enviados[0]
+    assert database.envivo(config.database_path) is not None
