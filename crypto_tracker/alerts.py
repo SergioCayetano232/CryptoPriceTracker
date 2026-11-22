@@ -307,6 +307,7 @@ from .mensajes.seguimiento import (
     formatear_calma,
     formatear_cerca,
     formatear_emociones,
+    formatear_encuesta_puesta,
     formatear_escalera,
     formatear_fantasma,
     formatear_fantasma_nueva,
@@ -336,6 +337,9 @@ from .mensajes.seguimiento import (
     formatear_stop_pasado,
     formatear_toca_comprar,
     formatear_vigiladas,
+    formatear_voto_encuesta,
+    opciones_encuesta,
     pie_herencia,
+    pregunta_encuesta,
     texto_condicion,
 )

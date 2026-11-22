@@ -11,6 +11,8 @@ from ..condicion import Condicion
 from ..config import Watch
 from ..emocion import EMOCIONES, Emociones, en_frase
 from ..emocion import Grupo as GrupoEmocion
+from ..encuesta import BANDA as BANDA_ENCUESTA
+from ..encuesta import Encuesta, limites, se_cierra
 from ..escalera import Escalera
 from ..fantasma import BITCOIN as BITCOIN_FANTASMA
 from ..fantasma import EMPATE as EMPATE_FANTASMA
@@ -436,6 +438,53 @@ def _marcador(m: Marcador) -> list[str]:
     else:
         lineas.append("👉 Una moneda al aire lo haría igual o mejor")
     return lineas
+
+
+def pregunta_encuesta(e: Encuesta, currency: str) -> str:
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = e.coin_id.replace("-", " ").title()
+    # Sin HTML: Telegram enseña la pregunta tal cual.
+    return (
+        f"🔮 ¿Dónde estará {nombre} el domingo {e.cierre.astimezone():%d/%m} a las "
+        f"{e.cierre.astimezone():%H:%M}? Ahora está a {simbolo}{_num(e.entonces)}"
+    )
+
+
+def opciones_encuesta(e: Encuesta, currency: str) -> list[str]:
+    """Las cuatro, de la que más baja a la que más sube."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    bajo, alto = (f"{simbolo}{_num(v)}" for v in limites(e.entonces))
+    ahora = f"{simbolo}{_num(e.entonces)}"
+    return [
+        f"📉 Por debajo de {bajo} (-{BANDA_ENCUESTA}% o más)",
+        f"↘️ Entre {bajo} y {ahora}",
+        f"↗️ Entre {ahora} y {alto}",
+        f"🚀 Por encima de {alto} (+{BANDA_ENCUESTA}% o más)",
+    ]
+
+
+def formatear_encuesta_puesta(e: Encuesta) -> str:
+    """Respuesta de /encuesta, con la primera ya mandada."""
+    hasta = se_cierra(e.cierre).astimezone()
+    return (
+        "🗳️ Hecho. Ahí tienes la primera: se cierra sola el "
+        f"{hasta:%d/%m a las %H:%M} y el domingo te digo cómo ha quedado.\n"
+        "Cada lunes te mando la de esa semana. Para quitarla: /encuesta no"
+    )
+
+
+def formatear_voto_encuesta(p: Prediccion, opcion: str, currency: str) -> str:
+    """Lo que se contesta al votar. opcion es el texto de lo que elegiste."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    # Sin el emoji de delante ni el paréntesis del %.
+    tramo = escape(opcion.split(" ", 1)[1].split(" (")[0].lower())
+    corto = p.coin_id
+    return (
+        f"🔮 Apuntado: <b>{_nombre(p.coin_id)}</b> {tramo} el domingo "
+        f"{p.cierre.astimezone():%d/%m}.\n"
+        f"Lo cuento como <b>{simbolo}{_num(p.predicho)}</b>, el centro de ese "
+        f"tramo. Para afinar más: /prediccion {corto} y el precio"
+    )
 
 
 _MEDALLAS = {1: "🥇", 2: "🥈", 3: "🥉"}

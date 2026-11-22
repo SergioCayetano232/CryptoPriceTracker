@@ -185,6 +185,8 @@ IDEAL = "reparto_ideal"
 IDEAL_AVISADO = "reparto_ideal_avisado"
 # A cuántos sat/vB avisar de que mover bitcoin está barato. Sin fila, sin aviso.
 AVISO_COMISIONRED = "aviso_comisionred"
+# La última encuesta de /encuesta, en JSON. Sin fila, no la tienes puesta.
+ENCUESTA = "encuesta"
 # El id del mensaje fijado de /envivo. Sin fila, no hay ninguno.
 ENVIVO = "envivo"
 
@@ -949,6 +951,26 @@ def guardar_aviso_comisionred(db_path: str, limite: int | None) -> None:
         conn.execute(
             "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
             (AVISO_COMISIONRED, str(limite)),
+        )
+
+
+def encuesta(db_path: str) -> str | None:
+    """Lo guardado de /encuesta, tal cual. None si no la tienes puesta."""
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT valor FROM ajustes WHERE clave = ?", (ENCUESTA,)
+        ).fetchone()
+    return fila["valor"] if fila else None
+
+
+def guardar_encuesta(db_path: str, texto: str | None) -> None:
+    with _connect(db_path) as conn:
+        if texto is None:
+            conn.execute("DELETE FROM ajustes WHERE clave = ?", (ENCUESTA,))
+            return
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (ENCUESTA, texto),
         )
 
 

@@ -223,13 +223,16 @@ from crypto_tracker.respuestas.ratos import (
     _comando_quiz,
 )
 from crypto_tracker.respuestas.recordatorios import (
+    _encuesta,
     _liga,
     _pienso,
     _prediccion,
     _recordar,
     cerrar_predicciones,
+    encuesta_semanal,
     pensados,
     recordatorios,
+    voto_encuesta,
 )
 from crypto_tracker.respuestas.resumenes import (
     _anual,
@@ -956,6 +959,7 @@ def tareas() -> tuple[Callable[[Config], None], ...]:
         programados,
         pensados,
         cerrar_predicciones,
+        encuesta_semanal,
         copia_semanal,
         en_vivo,
     )
@@ -1070,6 +1074,8 @@ def esperar_escuchando(config: Config, segundos: int, offset: int | None) -> int
                     atender_boton(config, update["callback_query"])
                 elif "inline_query" in update:
                     atender_inline(config, update["inline_query"])
+                elif "poll_answer" in update:
+                    atender_voto(config, update["poll_answer"])
                 else:
                     atender(config, update.get("message") or {})
             except Exception:
@@ -1306,6 +1312,18 @@ def atender_boton(config: Config, boton: dict) -> None:
     texto = boton.get("data") or ""
     logger.info("Boton pulsado: %s", texto)
     contestar(config, texto)
+
+
+def atender_voto(config: Config, voto: dict) -> None:
+    """Alguien ha votado en una encuesta de /encuesta."""
+    # En un chat privado el chat es el usuario: el voto no trae otro.
+    chat = str((voto.get("user") or {}).get("id", ""))
+    quien = _quien(config, chat)
+    if quien is None:
+        logger.warning("Voto de alguien que no es de nadie (%s), lo ignoro", chat)
+        return
+    opciones = [o for o in voto.get("option_ids") or [] if isinstance(o, int)]
+    voto_encuesta(quien, str(voto.get("poll_id", "")), opciones)
 
 
 def atender_inline(config: Config, consulta: dict) -> None:
@@ -1627,6 +1645,7 @@ COMANDOS: dict[str, Callable[[Config, str], Respuesta]] = {
     "pienso": lambda c, a: _pienso(c, a),
     "prediccion": lambda c, a: _prediccion(c, a),
     "liga": lambda c, a: _liga(c, a),
+    "encuesta": lambda c, a: _encuesta(c, a),
     "fantasma": lambda c, a: _fantasma(c, a),
     "emocion": lambda c, a: _emocion(c, a),
     "emociones": lambda c, a: _emociones(c),

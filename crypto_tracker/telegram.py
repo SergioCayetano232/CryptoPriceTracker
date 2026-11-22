@@ -353,6 +353,37 @@ def editar_mensaje(token: str, chat_id: str, message_id: int, text: str) -> str 
     return error
 
 
+def enviar_encuesta(
+    token: str,
+    chat_id: str,
+    pregunta: str,
+    opciones: list[str],
+    cierre: int,
+    sin_sonido: bool = False,
+) -> str | None:
+    """Manda una encuesta que se cierra sola en `cierre` (segundos Unix).
+
+    Devuelve su id, con el que luego llegan los votos. None si no salió.
+    """
+    payload = {
+        "chat_id": chat_id,
+        "question": pregunta,
+        "options": [{"text": o} for o in opciones],
+        # Anónima no nos diría quién ha votado, y no llegaría el voto.
+        "is_anonymous": False,
+        "close_date": cierre,
+        "disable_notification": sin_sonido,
+    }
+    data, error = _llamar(token, "sendPoll", payload)
+    if data is None:
+        logger.error("No se pudo mandar la encuesta: %s", error or "sin conexion")
+        return None
+    resultado = data.get("result")
+    encuesta = resultado.get("poll") if isinstance(resultado, dict) else None
+    numero = encuesta.get("id") if isinstance(encuesta, dict) else None
+    return str(numero) if numero else None
+
+
 def fijar(token: str, chat_id: str, message_id: int) -> bool:
     """Lo ancla arriba del chat, sin avisar a nadie."""
     payload = {
@@ -381,7 +412,10 @@ def get_updates(token: str, offset: int | None, espera: int) -> list[dict]:
     """
     params = {
         "timeout": espera,
-        "allowed_updates": '["message", "callback_query", "inline_query"]',
+        # poll_answer: los votos de /encuesta. Si no se pide, no llegan.
+        "allowed_updates": (
+            '["message", "callback_query", "inline_query", "poll_answer"]'
+        ),
     }
     if offset is not None:
         params["offset"] = offset

@@ -13554,3 +13554,223 @@ def test_funding_normal_recuerda_el_aviso(config, monkeypatch):
     main.atender(config, _mensaje("/funding btc"))
 
     assert "🔔 Te aviso si se va a un extremo" in mandados[-1][0]
+
+
+# --- /encuesta ---
+
+
+@pytest.fixture
+def encuestas(monkeypatch):
+    """Las encuestas que se mandarían: (chat, pregunta, opciones, cierre)."""
+    lista = []
+
+    def enviar(token, chat, pregunta, opciones, cierre, sin_sonido=False):
+        lista.append((str(chat), pregunta, opciones, cierre))
+        return f"poll-{len(lista)}"
+
+    monkeypatch.setattr(telegram, "enviar_encuesta", enviar)
+    return lista
+
+
+def _voto(poll_id, opciones, usuario=123):
+    return {"poll_id": poll_id, "user": {"id": usuario}, "option_ids": opciones}
+
+
+def _guardada(config):
+    from crypto_tracker import encuesta
+
+    return encuesta.de_texto(database.encuesta(config.database_path))
+
+
+def test_encuesta_manda_la_primera_sin_gastar_consultas(
+    config, enviados, encuestas, monkeypatch
+):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    database.save_prices(config.database_path, {"bitcoin": 80000.0}, "eur")
+
+    main.atender(config, _mensaje("/encuesta"))
+
+    [(chat, pregunta, opciones, cierre)] = encuestas
+    assert chat == "123"
+    assert "¿Dónde estará Bitcoin el domingo" in pregunta
+    assert opciones[2] == "↗️ Entre €80.000,00 y €84.000,00"
+    guardada = _guardada(config)
+    assert (guardada.poll_id, guardada.entonces) == ("poll-1", 80000.0)
+    # Se cierra sola un día antes del domingo.
+    assert cierre == int((guardada.cierre - timedelta(hours=24)).timestamp())
+    assert "Cada lunes te mando la de esa semana" in enviados[0]
+
+
+def test_encuesta_sin_precios_no_la_pone(config, enviados, encuestas):
+    main.atender(config, _mensaje("/encuesta"))
+
+    assert encuestas == []
+    assert "no tengo precios" in enviados[0]
+    assert database.encuesta(config.database_path) is None
+
+
+def test_encuesta_si_telegram_no_la_manda_no_queda_puesta(
+    config, enviados, monkeypatch
+):
+    database.save_prices(config.database_path, {"bitcoin": 80000.0}, "eur")
+    monkeypatch.setattr(telegram, "enviar_encuesta", lambda *a, **k: None)
+
+    main.atender(config, _mensaje("/encuesta"))
+
+    assert "No he podido mandarte la encuesta" in enviados[0]
+    assert database.encuesta(config.database_path) is None
+
+
+def test_encuesta_dos_veces_no_manda_otra(config, enviados, encuestas):
+    database.save_prices(config.database_path, {"bitcoin": 80000.0}, "eur")
+
+    main.atender(config, _mensaje("/encuesta"))
+    main.atender(config, _mensaje("/encuesta"))
+
+    assert len(encuestas) == 1
+    assert "Ya la tienes puesta" in enviados[1]
+
+
+def test_votar_lo_apunta_como_prediccion(config, enviados, encuestas):
+    database.save_prices(config.database_path, {"bitcoin": 80000.0}, "eur")
+    main.atender(config, _mensaje("/encuesta"))
+    enviados.clear()
+
+    main.atender_voto(config, _voto("poll-1", [3]))
+
+    [p] = database.get_predicciones(config.database_path, "eur")
+    assert (p.coin_id, p.entonces, p.predicho) == ("bitcoin", 80000.0, 86000.0)
+    assert p.cierre == _guardada(config).cierre
+    assert "<b>Bitcoin</b> por encima de €84.000,00" in enviados[0]
+    assert "Lo cuento como <b>€86.000,00</b>" in enviados[0]
+
+
+def test_cambiar_el_voto_cambia_la_prediccion(config, enviados, encuestas):
+    database.save_prices(config.database_path, {"bitcoin": 80000.0}, "eur")
+    main.atender(config, _mensaje("/encuesta"))
+
+    main.atender_voto(config, _voto("poll-1", [3]))
+    main.atender_voto(config, _voto("poll-1", [1]))
+
+    [p] = database.get_predicciones(config.database_path, "eur")
+    assert p.predicho == pytest.approx(78000.0)
+
+
+def test_retirar_el_voto_quita_la_prediccion(config, enviados, encuestas):
+    database.save_prices(config.database_path, {"bitcoin": 80000.0}, "eur")
+    main.atender(config, _mensaje("/encuesta"))
+    main.atender_voto(config, _voto("poll-1", [2]))
+
+    main.atender_voto(config, _voto("poll-1", []))
+
+    assert database.get_predicciones(config.database_path, "eur") == []
+    assert "quitada tu predicción" in enviados[-1]
+
+
+def test_un_voto_en_una_encuesta_vieja_no_cuenta(config, enviados, encuestas):
+    database.save_prices(config.database_path, {"bitcoin": 80000.0}, "eur")
+    main.atender(config, _mensaje("/encuesta"))
+    enviados.clear()
+
+    main.atender_voto(config, _voto("otra", [2]))
+
+    assert enviados == []
+    assert database.get_predicciones(config.database_path, "eur") == []
+
+
+def test_un_voto_de_un_desconocido_no_cuenta(config, enviados, encuestas):
+    database.save_prices(config.database_path, {"bitcoin": 80000.0}, "eur")
+    main.atender(config, _mensaje("/encuesta"))
+    enviados.clear()
+
+    main.atender_voto(config, _voto("poll-1", [2], usuario=999))
+
+    assert enviados == []
+    assert database.get_predicciones(config.database_path, "eur") == []
+
+
+def test_un_voto_fuera_de_plazo_no_cuenta(config, enviados, encuestas):
+    from crypto_tracker.respuestas import recordatorios
+
+    database.save_prices(config.database_path, {"bitcoin": 80000.0}, "eur")
+    main.atender(config, _mensaje("/encuesta"))
+    enviados.clear()
+    tarde = _guardada(config).cierre - timedelta(hours=1)
+
+    recordatorios.voto_encuesta(config, "poll-1", [2], tarde)
+
+    assert enviados == []
+    assert database.get_predicciones(config.database_path, "eur") == []
+
+
+def test_el_voto_del_invitado_va_a_su_archivo(config, a_quien, encuestas):
+    _con_invitado(config, a_quien)
+    main.atender(config, _de(555, "/vigilar solana %5"))
+    database.save_prices(_archivo_de(config, 555), {"solana": 200.0}, "eur")
+    main.atender(config, _de(555, "/encuesta"))
+
+    main.atender_voto(config, _voto("poll-1", [2], usuario=555))
+
+    assert encuestas[0][0] == "555"
+    assert database.get_predicciones(config.database_path, "eur") == []
+    [p] = database.get_predicciones(_archivo_de(config, 555), "eur")
+    assert (p.coin_id, p.predicho) == ("solana", pytest.approx(205.0))
+    assert a_quien[-1][0] == "555"
+
+
+def test_la_encuesta_de_cada_semana_sale_el_lunes(config, enviados, encuestas):
+    database.save_prices(config.database_path, {"bitcoin": 80000.0}, "eur")
+    main.atender(config, _mensaje("/encuesta"))
+    primera = _guardada(config).cierre
+    # El lunes de después de ese domingo, a las diez.
+    lunes = (primera + timedelta(days=1)).astimezone().replace(hour=10, minute=0)
+
+    main.encuesta_semanal(config, lunes - timedelta(days=3))  # el viernes, nada
+    assert len(encuestas) == 1
+    main.encuesta_semanal(config, lunes)
+    main.encuesta_semanal(config, lunes + timedelta(hours=1))
+
+    assert len(encuestas) == 2
+    assert _guardada(config).cierre == primera + timedelta(days=7)
+    assert _guardada(config).poll_id == "poll-2"
+
+
+def test_sin_encuesta_puesta_el_lunes_no_manda_nada(config, encuestas):
+    database.save_prices(config.database_path, {"bitcoin": 80000.0}, "eur")
+    lunes = datetime(2026, 11, 23, 10, 0).astimezone()
+
+    main.encuesta_semanal(config, lunes)
+
+    assert encuestas == []
+
+
+def test_encuesta_no_la_quita(config, enviados, encuestas):
+    database.save_prices(config.database_path, {"bitcoin": 80000.0}, "eur")
+    main.atender(config, _mensaje("/encuesta"))
+    primera = _guardada(config).cierre
+    lunes = (primera + timedelta(days=1)).astimezone().replace(hour=10, minute=0)
+
+    main.atender(config, _mensaje("/encuesta no"))
+    main.atender(config, _mensaje("/encuesta no"))
+    main.encuesta_semanal(config, lunes)
+
+    assert "ya no te mando la encuesta" in enviados[1]
+    assert "No la tenías puesta" in enviados[2]
+    assert len(encuestas) == 1
+
+
+def test_el_bucle_reparte_los_votos(config, monkeypatch):
+    votos = []
+    monkeypatch.setattr(main, "atender_voto", lambda c, v: votos.append(v))
+    tandas = [[{"update_id": 7, "poll_answer": _voto("poll-1", [0])}]]
+    monkeypatch.setattr(
+        telegram, "get_updates", lambda t, o, e: tandas.pop() if tandas else []
+    )
+    # El reloj da un salto tras la primera tanda, para que la espera se acabe.
+    reloj = iter([0.0, 0.0, 99.0])
+    monkeypatch.setattr(main.time, "monotonic", lambda: next(reloj, 99.0))
+
+    offset = main.esperar_escuchando(config, 10, None)
+
+    assert offset == 8
+    assert votos == [_voto("poll-1", [0])]

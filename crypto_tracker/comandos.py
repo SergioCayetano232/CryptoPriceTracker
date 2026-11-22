@@ -62,6 +62,7 @@ COMANDOS = {
     "herencia": "Lo que tienes y dónde, para tu familia, sin claves",
     "emociones": "Con qué ánimo compras y vendes, y qué te sale de cada uno",
     "emocion": "Apuntar con qué ánimo hiciste un movimiento (ej: /emocion 12 miedo)",
+    "encuesta": "Cada lunes, una encuesta con dónde acabará el domingo",
     "liga": "Quién acierta más con /prediccion, entre tú y tus invitados",
     "prediccion": "A cuánto estará el domingo, y tu marcador (ej: /prediccion btc 70k)",
     "deshacer": "Quitar la última compra o venta que apuntaste",
@@ -255,6 +256,8 @@ ALIAS = {
     "predicción": "prediccion",
     "apuesta": "prediccion",
     "clasificacion": "liga",
+    "poll": "encuesta",
+    "quiniela": "encuesta",
     "clasificación": "liga",
     "momento": "timing",
     "start": "ayuda",
@@ -652,6 +655,10 @@ EJEMPLOS = {
         ("/juntas btc eth", "te aviso si dejan de moverse a la vez"),
         ("/juntas", "las parejas que miro"),
         ("/juntas btc eth no", "quitarla"),
+    ],
+    "encuesta": [
+        ("/encuesta", "te mando una ya y luego una cada lunes"),
+        ("/encuesta no", "quitarla"),
     ],
     "liga": [
         ("/liga", "la clasificación desde el principio"),

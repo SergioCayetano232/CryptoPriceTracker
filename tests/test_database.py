@@ -1005,6 +1005,16 @@ def test_avisos_de_funding(db):
     assert [v.par for v in database.get_funding(db)] == ["ETHUSDT"]
 
 
+def test_encuesta_guardada(db):
+    assert database.encuesta(db) is None
+
+    database.guardar_encuesta(db, '{"poll_id": "1"}')
+    assert database.encuesta(db) == '{"poll_id": "1"}'
+
+    database.guardar_encuesta(db, None)
+    assert database.encuesta(db) is None
+
+
 def test_mensaje_en_vivo(db):
     assert database.envivo(db) is None
 

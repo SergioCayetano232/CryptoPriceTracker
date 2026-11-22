@@ -10,6 +10,7 @@ from .. import (
     botones,
     coingecko,
     database,
+    encuesta,
     liga,
     miedo,
     pienso,
@@ -19,7 +20,7 @@ from .. import (
     usuarios,
 )
 from ..config import Config
-from .base import _con_cambios, _indicador, _silenciado
+from .base import _con_cambios, _indicador, _silenciado, _sin_sonido
 
 logger = logging.getLogger("crypto_tracker")
 
@@ -155,6 +156,116 @@ def _prediccion(config: Config, argumento: str) -> str:
         config.vs_currency,
     )
     return alerts.con_fuente(alerts.formatear_prediccion(p, config.vs_currency))
+
+
+def _mandar_encuesta(config: Config, ahora: datetime) -> encuesta.Encuesta | str:
+    """Manda la de esta semana y la guarda. Si no puede, el porqué."""
+    vigiladas = _con_cambios(config).watchlist
+    if not vigiladas:
+        return "No vigilas ninguna cripto. Empieza con /vigilar bitcoin %5"
+    coin_id = vigiladas[0].coin_id
+    # Lo último guardado: para preguntar no hace falta gastar una consulta.
+    precio = database.get_last_price(config.database_path, coin_id)
+    if not precio:
+        return "Todavía no tengo precios guardados. Prueba en unos minutos."
+
+    nueva = encuesta.Encuesta("", coin_id, precio, prediccion.cierre(ahora))
+    hasta = encuesta.se_cierra(nueva.cierre)
+    # Telegram no admite un cierre ya pasado ni a más de un mes.
+    if not encuesta.MINIMO_TELEGRAM < hasta - ahora < encuesta.MAXIMO_TELEGRAM:
+        return "Ahora mismo no puedo abrirla. Prueba en un rato."
+    poll_id = telegram.enviar_encuesta(
+        config.telegram_token,
+        config.telegram_chat_id,
+        alerts.pregunta_encuesta(nueva, config.vs_currency),
+        alerts.opciones_encuesta(nueva, config.vs_currency),
+        int(hasta.timestamp()),
+        sin_sonido=_sin_sonido(config),
+    )
+    if poll_id is None:
+        return "No he podido mandarte la encuesta. Prueba en un rato."
+    nueva = replace(nueva, poll_id=poll_id)
+    database.guardar_encuesta(config.database_path, encuesta.a_texto(nueva))
+    return nueva
+
+
+def _encuesta(config: Config, argumento: str) -> str:
+    try:
+        poner = encuesta.interpretar(argumento)
+    except encuesta.EncuestaError as e:
+        return str(e)
+    puesta = database.encuesta(config.database_path) is not None
+    if not poner:
+        if not puesta:
+            return "No la tenías puesta. Para ponerla: /encuesta"
+        database.guardar_encuesta(config.database_path, None)
+        return "Hecho, ya no te mando la encuesta de cada semana."
+    if puesta:
+        return (
+            "Ya la tienes puesta: cada lunes te llega la de esa semana. "
+            "Para quitarla: /encuesta no"
+        )
+    resultado = _mandar_encuesta(config, datetime.now(timezone.utc))
+    if isinstance(resultado, str):
+        return resultado
+    return alerts.formatear_encuesta_puesta(resultado)
+
+
+def encuesta_semanal(config: Config, ahora: datetime | None = None) -> None:
+    """Los lunes manda la encuesta de la semana a quien tenga /encuesta puesto."""
+    ahora = ahora or datetime.now(timezone.utc)
+    try:
+        ultima = encuesta.de_texto(database.encuesta(config.database_path))
+        if ultima is None or not encuesta.toca(ahora, ultima):
+            return
+        if _silenciado(config):
+            return
+        resultado = _mandar_encuesta(config, ahora)
+    except database.DatabaseError as e:
+        logger.error("No se pudo mandar la encuesta de la semana: %s", e)
+        return
+    if isinstance(resultado, str):
+        # Lo reintenta el siguiente ciclo, mientras siga siendo de lunes a miércoles.
+        logger.warning("La encuesta de la semana no ha salido: %s", resultado)
+    else:
+        logger.info("Encuesta de la semana enviada: %s", resultado.coin_id)
+
+
+def voto_encuesta(
+    config: Config, poll_id: str, opciones: list[int], ahora: datetime | None = None
+) -> None:
+    """Un voto en la encuesta: se apunta como la /prediccion de esa semana."""
+    ahora = ahora or datetime.now(timezone.utc)
+    e = encuesta.de_texto(database.encuesta(config.database_path))
+    # Una encuesta vieja, o de cuando la tenías puesta: ya no cuenta.
+    if e is None or e.poll_id != poll_id or not encuesta.a_tiempo(e, ahora):
+        logger.info("Voto en una encuesta que ya no cuenta (%s)", poll_id)
+        return
+
+    if not opciones:
+        # Ha retirado el voto: fuera también la predicción que salió de él.
+        database.quitar_prediccion(config.database_path, e.coin_id, config.vs_currency)
+        texto = (
+            f"Hecho, quitada tu predicción de <b>{telegram.escape(e.coin_id)}</b>. "
+            "Puedes volver a votar hasta que se cierre."
+        )
+    else:
+        valor = encuesta.predicho(e.entonces, opciones[0])
+        if valor is None:
+            return
+        p = database.guardar_prediccion(
+            config.database_path,
+            prediccion.Prediccion(None, e.coin_id, ahora, e.cierre, e.entonces, valor),
+            config.vs_currency,
+        )
+        elegida = alerts.opciones_encuesta(e, config.vs_currency)[opciones[0]]
+        texto = alerts.formatear_voto_encuesta(p, elegida, config.vs_currency)
+    telegram.send_message(
+        config.telegram_token,
+        config.telegram_chat_id,
+        texto,
+        sin_sonido=_sin_sonido(config),
+    )
 
 
 def _jugadores(config: Config) -> list[liga.Jugador]:

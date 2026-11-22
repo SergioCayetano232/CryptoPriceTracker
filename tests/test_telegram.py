@@ -410,6 +410,7 @@ def test_pide_tambien_los_botones_pulsados(monkeypatch):
 
     assert "callback_query" in pedido["allowed_updates"]
     assert "inline_query" in pedido["allowed_updates"]
+    assert "poll_answer" in pedido["allowed_updates"]
 
 
 def test_contestar_un_boton(monkeypatch):
@@ -694,3 +695,31 @@ def test_no_deja_borrar_uno_viejo(monkeypatch):
     _apuntando(monkeypatch, RespuestaFalsa(400, viejo))
 
     assert not telegram.borrar_mensaje("T", "123", 77)
+
+
+def test_enviar_encuesta_devuelve_su_id(monkeypatch):
+    dada = RespuestaFalsa(data={"ok": True, "result": {"poll": {"id": "777"}}})
+    pedidos = _apuntando(monkeypatch, dada)
+
+    numero = telegram.enviar_encuesta("T", "123", "¿Sube?", ["Sí", "No"], 1795000000)
+
+    url, payload = pedidos[0]
+    assert numero == "777"
+    assert url.endswith("/sendPoll")
+    assert payload["options"] == [{"text": "Sí"}, {"text": "No"}]
+    # Anónima no llegarían los votos.
+    assert payload["is_anonymous"] is False
+    assert payload["close_date"] == 1795000000
+
+
+def test_enviar_encuesta_rechazada(monkeypatch):
+    mal = {"ok": False, "description": "Bad Request: POLL_OPTION_INVALID"}
+    _apuntando(monkeypatch, RespuestaFalsa(400, mal))
+
+    assert telegram.enviar_encuesta("T", "123", "¿Sube?", ["Sí", "No"], 1) is None
+
+
+def test_enviar_encuesta_sin_el_id_en_la_respuesta(monkeypatch):
+    _apuntando(monkeypatch, RespuestaFalsa(data={"ok": True, "result": {}}))
+
+    assert telegram.enviar_encuesta("T", "123", "¿Sube?", ["Sí", "No"], 1) is None
