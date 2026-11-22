@@ -158,6 +158,7 @@ from crypto_tracker.respuestas.cartera import (
     _ganancias,
     _herencia,
     _hodl,
+    _ideal,
     _impuestos,
     _inflacion,
     _limite,
@@ -253,6 +254,7 @@ from crypto_tracker.respuestas.revisiones import (
     revisar_direcciones,
     revisar_equilibrio,
     revisar_estables,
+    revisar_ideal,
     revisar_rezagadas,
     revisar_rsi,
     revisar_salvo,
@@ -456,6 +458,7 @@ def ejecutar_ciclo(
     sueltos = buzon.Buzon()
     revisar_bajon(config, valor, calladas, sueltos)
     revisar_concentracion(config, precios, calladas, sueltos)
+    revisar_ideal(config, precios, calladas, sueltos)
     revisar_equilibrio(config, precios, calladas, sueltos)
     revisar_rezagadas(config, precios, sueltos)
     revisar_alertas_ratio(config, precios, calladas, sueltos)
@@ -1583,6 +1586,7 @@ COMANDOS: dict[str, Callable[[Config, str], Respuesta]] = {
     "reparto": _con_cartera(lambda c, a: _reparto(c)),
     "riesgo": _con_cartera(lambda c, a: _riesgo(c)),
     "rebalanceo": _con_cartera(lambda c, a: _rebalanceo(c, a)),
+    "ideal": _con_cartera(lambda c, a: _ideal(c, a)),
     "compra": lambda c, a: _comprar(c, a),
     "importar": _comando_importar,
     "venta": lambda c, a: _vender(c, a),

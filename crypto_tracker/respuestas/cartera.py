@@ -30,6 +30,7 @@ from .. import (
     grafica,
     herencia,
     hodl,
+    ideal,
     impuestos,
     inflacion,
     limite,
@@ -1243,6 +1244,42 @@ def _rebalanceo(config: Config, argumento: str) -> str:
     return alerts.con_fuente(
         alerts.formatear_rebalanceo(pasos, total, config.vs_currency, iguales)
     )
+
+
+def _ideal(config: Config, argumento: str) -> str:
+    try:
+        orden = ideal.interpretar(argumento)
+    except ideal.IdealError as e:
+        return telegram.escape(str(e))
+
+    if orden == ideal.QUITAR:
+        if database.reparto_ideal(config.database_path) is None:
+            return f"No tenías ninguno puesto. Para ponerlo: {ideal.EJEMPLO}"
+        database.guardar_reparto_ideal(config.database_path, None)
+        return "Hecho, ya no vigilo tu reparto."
+    if orden is None:
+        suyo = ideal.de_texto(database.reparto_ideal(config.database_path))
+        if suyo is None:
+            return (
+                "No tienes un reparto ideal puesto. Dime cuál quieres y te aviso "
+                f"cuando tu cartera se aleje: {ideal.EJEMPLO}"
+            )
+    else:
+        suyo = orden
+        database.guardar_reparto_ideal(config.database_path, ideal.a_texto(suyo))
+
+    # Con lo último guardado: para ver por dónde vas no hace falta gastar consulta.
+    precios = {}
+    for p in config.cartera:
+        precio = database.get_last_price(config.database_path, p.coin_id)
+        if precio is not None:
+            precios[p.coin_id] = precio
+    valores, faltan = cartera.valorar(list(config.cartera), precios)
+    lista = [] if faltan else ideal.partes(valores, suyo.reparto)
+    texto = alerts.formatear_ideal(suyo, lista)
+    if orden is not None:
+        texto = "👌 Apuntado.\n\n" + texto
+    return texto
 
 
 def montar_cartera(config: Config) -> str | None:

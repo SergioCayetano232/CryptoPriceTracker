@@ -194,6 +194,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/reparto` | Qué parte de tu cartera es cada cripto, con una imagen de barras. Si tienes más de 6, las pequeñas van juntas en "Otras" |
 | `/tarjeta` | Una imagen cuadrada para reenviar o subir a redes: lo que gana o pierde tu cartera sobre lo que metiste, cómo ha ido en los últimos 30 días (`/tarjeta 90d` para otro tramo) y el reparto. Solo lleva porcentajes, ni una cifra en dinero. También `/compartir` |
 | `/rebalanceo btc 60 eth 40` | Qué comprar y qué vender, en dinero y en cantidad, para dejar tu cartera con ese reparto. Lo que tienes y no nombras, a venderlo entero. A secas, a partes iguales entre lo que tienes. Al precio de ahora y sin comisiones. También `/rebalancear` |
+| `/ideal btc 60 eth 40` | Guarda el reparto que quieres y te avisa una vez cuando alguna cripto se aleje 5 puntos de lo suyo (con `margen 10` al final, a los que digas), con el `/rebalanceo` para volver listo para copiar. No repite hasta que lo arregles al menos a medias. A secas, cómo vas contra tu reparto, sin gastar consultas; `/ideal no` lo quita |
 | `/riesgo` | Cuánto pesa tu cripto más grande y lo que caería la cartera si esa cae un 20%, a cuántas criptos a partes iguales equivale tu reparto, cuánto se mueve la cartera al día en los últimos 30 días (en % y en dinero), su peor día, si se mueve más o menos que bitcoin, y un nivel: bajo, medio o alto |
 | `/sharpe 90d` | Cuánto gana tu cartera para lo que se mueve: lo que ha ganado en esos días, lo que se mueve al año, con una nota (de 1 para arriba está bien) y comparado con bitcoin. Con lo que tienes hoy y sin restar lo que daría un depósito. Sin tramo, 90 días; de 30 a 365. Necesita 31 días seguidos guardados |
 | `/futuro 30d` | Entre qué cifras puede estar tu cartera dentro de esos días: dónde cae 2 de cada 3 veces y dónde 9 de cada 10, según cuánto se ha movido en los últimos 90 días con lo que tienes hoy. No es una predicción: no dice si sube o baja, solo cuánto suele moverse. Sin tramo, 30 días; hasta 365. Necesita 15 días seguidos guardados. También `/proyeccion` |
@@ -961,6 +962,7 @@ crypto_tracker/
   telegram.py    manda los mensajes
   botones.py     los botones de debajo de los avisos
   envivo.py      el mensaje fijado que se edita solo, para /envivo
+  ideal.py       el reparto que quieres y cuándo avisar de que te alejas, para /ideal
   buzon.py       junta los avisos del mismo ciclo en un mensaje
   alerts.py      decide cuándo avisar y escribe los avisos
   brusco.py      los movimientos bruscos

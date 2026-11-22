@@ -12881,3 +12881,127 @@ def test_semaforo_de_varias(config, enviados):
     main.atender(config, _mensaje("/semaforo btc eth"))
 
     assert "De una en una" in enviados[0]
+
+
+# --- /ideal ---
+
+
+def _avisos_ideal(enviados):
+    return [t for t in enviados if "alejado de tu reparto" in t]
+
+
+# con_semana tiene 0,1 BTC y 10 SOL: con BTC a 60.000 y SOL a 400 van 60/40
+
+
+def test_ideal_lo_guarda_y_dice_como_vas(con_semana, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    database.save_prices(
+        con_semana.database_path, {"bitcoin": 66000.0, "solana": 100.0}, "eur"
+    )
+
+    main.atender(con_semana, _mensaje("/ideal btc 60 sol 40"))
+
+    assert enviados[0].startswith("👌 Apuntado.")
+    assert "⚠️ <b>Bitcoin</b> 87% · querías 60% · le sobran 27 puntos" in enviados[0]
+    assert "se aleje 5 puntos" in enviados[0]
+
+
+def test_ideal_a_secas_sin_tenerlo(con_semana, enviados):
+    main.atender(con_semana, _mensaje("/ideal"))
+
+    assert "No tienes un reparto ideal puesto" in enviados[0]
+
+
+def test_ideal_a_secas_ensena_el_guardado(con_semana, enviados):
+    main.atender(con_semana, _mensaje("/ideal btc 60 sol 40 margen 10"))
+    main.atender(con_semana, _mensaje("/ideal"))
+
+    assert not enviados[1].startswith("👌")
+    assert "<b>Bitcoin</b> 60%" in enviados[1]
+    assert "se aleje 10 puntos" in enviados[1]
+
+
+def test_ideal_mal_escrito_no_guarda_nada(con_semana, enviados):
+    main.atender(con_semana, _mensaje("/ideal btc 60 sol 30"))
+
+    assert "suma 90%" in enviados[0]
+    assert database.reparto_ideal(con_semana.database_path) is None
+
+
+def test_ideal_sin_cartera(config, enviados):
+    main.atender(config, _mensaje("/ideal btc 60 eth 40"))
+
+    assert enviados[0] == main.SIN_CARTERA
+
+
+def test_ideal_no_lo_quita(con_semana, enviados, monkeypatch):
+    main.atender(con_semana, _mensaje("/ideal btc 60 sol 40"))
+    main.atender(con_semana, _mensaje("/ideal no"))
+    _precio(monkeypatch, {"bitcoin": 66000.0, "solana": 100.0})
+    main.ejecutar_ciclo(con_semana, {})
+
+    assert "ya no vigilo tu reparto" in enviados[1]
+    assert _avisos_ideal(enviados) == []
+
+
+def test_ideal_avisa_una_vez_al_alejarse(con_semana, enviados, monkeypatch):
+    main.atender(con_semana, _mensaje("/ideal btc 60 sol 40"))
+    _precio(monkeypatch, {"bitcoin": 60000.0, "solana": 400.0})
+    main.ejecutar_ciclo(con_semana, {})
+    assert _avisos_ideal(enviados) == []
+
+    # SOL a la mitad: 75/25
+    _precio(monkeypatch, {"bitcoin": 60000.0, "solana": 200.0})
+    main.ejecutar_ciclo(con_semana, {})
+    main.ejecutar_ciclo(con_semana, {})
+
+    [aviso] = _avisos_ideal(enviados)
+    assert "<b>Bitcoin</b> 75% · querías 60% · le sobran 15 puntos" in aviso
+    assert "<code>/rebalanceo bitcoin 60 solana 40</code>" in aviso
+
+
+def test_ideal_vuelve_a_avisar_si_se_arregla_y_se_aleja(
+    con_semana, enviados, monkeypatch
+):
+    main.atender(con_semana, _mensaje("/ideal btc 60 sol 40"))
+    for sol in (200.0, 400.0, 200.0):  # 75/25, 60/40 y otra vez 75/25
+        _precio(monkeypatch, {"bitcoin": 60000.0, "solana": sol})
+        main.ejecutar_ciclo(con_semana, {})
+
+    assert len(_avisos_ideal(enviados)) == 2
+
+
+def test_ideal_rondando_el_margen_no_repite(con_semana, enviados, monkeypatch):
+    main.atender(con_semana, _mensaje("/ideal btc 60 sol 40"))
+    # 75/25, 64/36 (a 4 puntos, sin arreglar del todo) y otra vez 75/25
+    for sol in (200.0, 337.5, 200.0):
+        _precio(monkeypatch, {"bitcoin": 60000.0, "solana": sol})
+        main.ejecutar_ciclo(con_semana, {})
+
+    assert len(_avisos_ideal(enviados)) == 1
+
+
+def test_ideal_sin_el_precio_de_una_no_avisa(con_semana, enviados, monkeypatch):
+    main.atender(con_semana, _mensaje("/ideal btc 60 sol 40"))
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+
+    main.ejecutar_ciclo(con_semana, {})
+
+    assert _avisos_ideal(enviados) == []
+
+
+def test_ideal_callado_espera(con_semana, enviados, monkeypatch):
+    main.atender(con_semana, _mensaje("/ideal btc 60 sol 40"))
+    _precio(monkeypatch, {"bitcoin": 60000.0, "solana": 200.0})
+    database.callar_cripto(
+        con_semana.database_path,
+        "cartera",
+        datetime.now(timezone.utc) + timedelta(hours=1),
+    )
+    main.ejecutar_ciclo(con_semana, {})
+    assert _avisos_ideal(enviados) == []
+
+    database.callar_cripto(con_semana.database_path, "cartera", None)
+    main.ejecutar_ciclo(con_semana, {})
+
+    assert len(_avisos_ideal(enviados)) == 1

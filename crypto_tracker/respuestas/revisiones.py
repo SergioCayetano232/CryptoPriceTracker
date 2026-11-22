@@ -25,6 +25,7 @@ from .. import (
     direccion,
     equilibrio,
     estables,
+    ideal,
     modelo721,
     puntuales,
     record,
@@ -160,6 +161,53 @@ def revisar_concentracion(
 
     if not _avisar(config, alerts.formatear_concentracion(c), sueltos, avisada):
         logger.error("No se pudo avisar de la concentración de la cartera")
+
+
+def revisar_ideal(
+    config: Config,
+    precios: dict[str, float],
+    calladas: set[str],
+    sueltos: buzon.Buzon | None = None,
+) -> None:
+    """Avisa una vez si la cartera se aleja del reparto de /ideal."""
+    if not config.cartera:
+        return
+    try:
+        suyo = ideal.de_texto(database.reparto_ideal(config.database_path))
+        avisado = suyo is not None and database.ideal_avisado(config.database_path)
+    except database.DatabaseError as e:
+        logger.error("No se pudo leer el reparto ideal: %s", e)
+        return
+    if suyo is None:
+        return
+    if puntuales.CARTERA in calladas or _silenciado(config):
+        return
+    valores, faltan = cartera.valorar(list(config.cartera), precios)
+    # Sin el precio de una, las demás pesarían más de lo que pesan.
+    if faltan:
+        return
+
+    def apuntar(nuevo: bool) -> None:
+        if nuevo == avisado:
+            return
+        try:
+            database.marcar_ideal_avisado(config.database_path, nuevo)
+        except database.DatabaseError as e:
+            logger.error("No se pudo apuntar el aviso del reparto ideal: %s", e)
+
+    lista = ideal.partes(valores, suyo.reparto)
+    if not ideal.toca(lista, suyo.margen, avisado):
+        apuntar(ideal.sigue_avisado(lista, suyo.margen, avisado))
+        return
+
+    def avisada() -> None:
+        logger.info(
+            "Aviso de reparto: %s a %.1f puntos", lista[0].coin_id, lista[0].puntos
+        )
+        apuntar(True)
+
+    if not _avisar(config, alerts.formatear_aviso_ideal(lista, suyo), sueltos, avisada):
+        logger.error("No se pudo avisar de que la cartera se aleja del reparto")
 
 
 def revisar_equilibrio(

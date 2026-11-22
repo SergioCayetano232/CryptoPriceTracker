@@ -925,6 +925,29 @@ def test_limite_de_compras(db):
     assert database.limite_compras(db) is None
 
 
+def test_reparto_ideal(db):
+    assert database.reparto_ideal(db) is None
+
+    database.guardar_reparto_ideal(db, '{"reparto": {}}')
+    assert database.reparto_ideal(db) == '{"reparto": {}}'
+
+    database.guardar_reparto_ideal(db, None)
+    assert database.reparto_ideal(db) is None
+
+
+def test_un_reparto_nuevo_olvida_el_aviso_del_anterior(db):
+    database.guardar_reparto_ideal(db, "uno")
+    database.marcar_ideal_avisado(db, True)
+    assert database.ideal_avisado(db)
+
+    database.guardar_reparto_ideal(db, "otro")
+    assert not database.ideal_avisado(db)
+
+    database.marcar_ideal_avisado(db, True)
+    database.marcar_ideal_avisado(db, False)
+    assert not database.ideal_avisado(db)
+
+
 def test_mensaje_en_vivo(db):
     assert database.envivo(db) is None
 

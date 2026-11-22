@@ -23,6 +23,8 @@ from ..ganancias import Ganancias
 from ..hodl import Hodl
 from ..hoy import Hoy
 from ..hoy import mejor_y_peor as extremos_hoy
+from ..ideal import Ideal, Parte, fuera
+from ..ideal import comando as comando_ideal
 from ..importar import Operacion
 from ..impuestos import Impuestos
 from ..inflacion import Inflacion
@@ -515,6 +517,53 @@ def formatear_concentracion(c: Concentracion) -> str:
             "en /rebalanceo",
         ]
     )
+
+
+def _puntos(valor: float) -> str:
+    texto = f"{abs(valor):.1f}".replace(".", ",").removesuffix(",0")
+    return f"{texto} punto" if texto == "1" else f"{texto} puntos"
+
+
+def _parte(p: Parte) -> str:
+    nombre = escape(p.coin_id.replace("-", " ").title())
+    linea = f"<b>{nombre}</b> {p.peso:.0f}% · querías {p.objetivo:.0f}%"
+    # Por debajo de medio punto ya está donde querías.
+    if abs(p.puntos) < 0.5:
+        return linea
+    verbo = "le sobran" if p.puntos > 0 else "le faltan"
+    # Sin decimales, como los % de al lado: 87% contra 60% son 27, no 26,8.
+    return f"{linea} · {verbo} {_puntos(round(p.puntos))}"
+
+
+def formatear_aviso_ideal(lista: list[Parte], ideal: Ideal) -> str:
+    """El aviso de /ideal: solo las que se han salido del margen."""
+    return "\n".join(
+        [
+            "⚖️ <b>Tu cartera se ha alejado de tu reparto</b>",
+            *(_parte(p) for p in fuera(lista, ideal.margen)),
+            "Para volver, mira qué mover con:",
+            f"<code>{escape(comando_ideal(ideal.reparto))}</code>",
+        ]
+    )
+
+
+def formatear_ideal(ideal: Ideal, lista: list[Parte]) -> str:
+    """Respuesta de /ideal. Sin lista (no hay precios), solo lo que quieres."""
+    texto = ["⚖️ <b>Tu reparto ideal</b>"]
+    if lista:
+        for p in lista:
+            marca = "⚠️ " if abs(p.puntos) >= ideal.margen else ""
+            texto.append(marca + _parte(p))
+    else:
+        for coin_id, pct in ideal.reparto.items():
+            nombre = escape(coin_id.replace("-", " ").title())
+            texto.append(f"<b>{nombre}</b> {pct:.0f}%")
+    texto += [
+        "",
+        f"<i>Aviso cuando alguna se aleje {_puntos(ideal.margen)}. "
+        "Para quitarlo: /ideal no</i>",
+    ]
+    return "\n".join(texto)
 
 
 def formatear_aviso_rsi(coin_id: str, r: Rsi, currency: str) -> str:

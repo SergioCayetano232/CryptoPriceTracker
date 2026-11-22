@@ -177,6 +177,9 @@ AVISO_721 = "aviso_721"
 FANTASMA = "fantasma"
 # Con el *, ninguna cripto se puede llamar así.
 NOTA_HERENCIA = "*nota"
+# El reparto de /ideal, en JSON, y si ya se avisó de que la cartera se alejó.
+IDEAL = "reparto_ideal"
+IDEAL_AVISADO = "reparto_ideal_avisado"
 # El id del mensaje fijado de /envivo. Sin fila, no hay ninguno.
 ENVIVO = "envivo"
 
@@ -819,6 +822,47 @@ def guardar_concentracion(db_path: str, coin_id: str | None) -> None:
         conn.execute(
             "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
             (CONCENTRADA, coin_id),
+        )
+
+
+def reparto_ideal(db_path: str) -> str | None:
+    """Lo guardado con /ideal, tal cual. None si no hay."""
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT valor FROM ajustes WHERE clave = ?", (IDEAL,)
+        ).fetchone()
+    return fila["valor"] if fila else None
+
+
+def guardar_reparto_ideal(db_path: str, texto: str | None) -> None:
+    """None lo quita. Uno nuevo empieza sin avisar: el aviso era del de antes."""
+    with _connect(db_path) as conn:
+        conn.execute("DELETE FROM ajustes WHERE clave = ?", (IDEAL_AVISADO,))
+        if texto is None:
+            conn.execute("DELETE FROM ajustes WHERE clave = ?", (IDEAL,))
+            return
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (IDEAL, texto),
+        )
+
+
+def ideal_avisado(db_path: str) -> bool:
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT 1 FROM ajustes WHERE clave = ?", (IDEAL_AVISADO,)
+        ).fetchone()
+    return fila is not None
+
+
+def marcar_ideal_avisado(db_path: str, avisado: bool) -> None:
+    with _connect(db_path) as conn:
+        if not avisado:
+            conn.execute("DELETE FROM ajustes WHERE clave = ?", (IDEAL_AVISADO,))
+            return
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (IDEAL_AVISADO, "1"),
         )
 
 
