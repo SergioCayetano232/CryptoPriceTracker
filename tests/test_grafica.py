@@ -172,3 +172,36 @@ def test_comparar_dibuja_y_rechaza_demasiadas():
         dibujar_comparar([(f"c{i}", serie) for i in range(7)], 24)
     with pytest.raises(GraficaError):
         dibujar_comparar([], 24)
+
+
+@pytest.mark.parametrize(
+    "donde, sale",
+    [(0.0, "left"), (0.11, "left"), (0.5, "center"), (0.89, "right"), (1.0, "right")],
+)
+def test_alineacion_de_las_etiquetas_en_los_bordes(donde, sale):
+    from crypto_tracker.grafica import _alineacion
+
+    assert _alineacion(donde) == sale
+
+
+def test_las_etiquetas_de_los_bordes_van_hacia_dentro(monkeypatch):
+    # El mínimo al principio y el máximo al final, como en una subida.
+    from matplotlib.axes import Axes
+
+    from crypto_tracker.grafica import dibujar
+
+    puestas = []
+    original = Axes.annotate
+
+    def annotate(self, texto, *a, **k):
+        puestas.append((texto, k.get("ha")))
+        return original(self, texto, *a, **k)
+
+    monkeypatch.setattr(Axes, "annotate", annotate)
+    ahora = datetime(2026, 11, 23, tzinfo=timezone.utc)
+    serie = [(ahora - timedelta(hours=100 - i), 1000.0 + i) for i in range(100)]
+
+    dibujar("bitcoin", serie, "eur", 100)
+
+    assert ("€1.099,00", "right") in puestas
+    assert ("€1.000,00", "left") in puestas

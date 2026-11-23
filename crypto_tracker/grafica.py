@@ -106,15 +106,17 @@ def dibujar(
         )
 
     if techo != suelo:
+        tramo = (fechas[-1] - fechas[0]).total_seconds()
         for precio, arriba in ((techo, True), (suelo, False)):
             i = precios.index(precio)
             ax.scatter([fechas[i]], [precio], s=16, color=color, zorder=3)
+            donde = (fechas[i] - fechas[0]).total_seconds() / tramo if tramo else 0.5
             ax.annotate(
                 f"{simbolo}{_num(precio)}",
                 (fechas[i], precio),
                 xytext=(0, 7 if arriba else -7),
                 textcoords="offset points",
-                ha="center",
+                ha=_alineacion(donde),
                 va="bottom" if arriba else "top",
                 fontsize=8,
                 color=SUAVE,
@@ -804,6 +806,20 @@ def _reparto_tarjeta(fig, trozos: list[Trozo]) -> None:
             fontsize=10,
             color=CLARO,
         )
+
+
+# Lo cerca de un borde (de 0 a 1) a partir de lo cual la etiqueta va hacia dentro.
+BORDE = 0.12
+
+
+def _alineacion(donde: float) -> str:
+    """Centrada sobre el punto, salvo en los bordes: a la izquierda pisaba los
+    números del eje y a la derecha se salía de la gráfica."""
+    if donde < BORDE:
+        return "left"
+    if donde > 1 - BORDE:
+        return "right"
+    return "center"
 
 
 def _corto(coin_id: str) -> str:
