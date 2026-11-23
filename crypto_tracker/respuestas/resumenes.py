@@ -8,6 +8,7 @@ from .. import (
     alerts,
     aniversario,
     anual,
+    aviso_renta,
     backup,
     botones,
     cartera,
@@ -17,6 +18,7 @@ from .. import (
     diario,
     envivo,
     grafica,
+    impuestos,
     mensual,
     mes,
     miedo,
@@ -390,6 +392,47 @@ def aviso_compensar(config: Config, ahora: datetime | None = None) -> None:
         database.guardar_resumen(config.database_path, hoy, database.AVISO_COMPENSAR)
     except database.DatabaseError as e:
         logger.error("No se pudo apuntar el aviso de compensar: %s", e)
+
+
+def aviso_de_la_renta(config: Config, ahora: datetime | None = None) -> None:
+    """En abril, si el año pasado vendiste o cobraste staking, que toca declararlo."""
+    config = _con_cambios(config)
+    if config.resumen_diario is None:
+        return
+
+    ahora = ahora or datetime.now().astimezone()
+    try:
+        ultimo = database.ultimo_resumen(config.database_path, database.AVISO_RENTA)
+    except database.DatabaseError as e:
+        logger.error("No se pudo leer el aviso de la Renta: %s", e)
+        return
+    if not aviso_renta.toca_aviso(ahora, config.resumen_diario, ultimo):
+        return
+    if _silenciado(config):
+        return
+
+    hoy = ahora.astimezone().date()
+    año = hoy.year - 1
+    todos = database.get_movimientos(config.database_path, None)
+    i = impuestos.calcular(todos, año)
+    recibido = impuestos.recompensas_de(todos, año)
+    if aviso_renta.hay_que_declarar(i, recibido):
+        if not telegram.send_message(
+            config.telegram_token,
+            config.telegram_chat_id,
+            alerts.formatear_aviso_renta(i, config.vs_currency, recibido),
+            botones=botones.para_renta(año) if i.ventas else None,
+        ):
+            logger.error("No se pudo enviar el aviso de la Renta, lo reintento luego")
+            return
+        logger.info("Aviso de la Renta de %d enviado", año)
+    else:
+        logger.info("Toca el aviso de la Renta, pero en %d no hay nada", año)
+    # Apuntado también sin nada que declarar: si no, lo miraría cada ciclo hasta el 15.
+    try:
+        database.guardar_resumen(config.database_path, hoy, database.AVISO_RENTA)
+    except database.DatabaseError as e:
+        logger.error("No se pudo apuntar el aviso de la Renta: %s", e)
 
 
 def resumen_mensual(config: Config, ahora: datetime | None = None) -> None:

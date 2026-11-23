@@ -1444,6 +1444,16 @@ def formatear_modelo721(m: Modelo721, currency: str, hoy: date) -> str:
     return "\n".join(lineas)
 
 
+def formatear_aviso_renta(i: Impuestos, currency: str, recibido: float) -> str:
+    """En abril, lo de /impuestos del año pasado con el plazo."""
+    return (
+        f"🧾 <b>Ya puedes hacer la Renta de {i.año}</b>\n\n"
+        + formatear_impuestos(i, currency, recibido)
+        + "\n\n<i>Va en ganancias y pérdidas por transmisión de monedas virtuales. "
+        "El plazo suele acabar el 30 de junio.</i>"
+    )
+
+
 def formatear_aviso_721(valor: float, hoy: date) -> str:
     """El aviso de cuando la cartera pasa del límite del 721."""
     return (

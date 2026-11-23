@@ -115,6 +115,7 @@ from .mensajes.cartera import (
     formatear_arrepentido,
     formatear_aviso_721,
     formatear_aviso_ideal,
+    formatear_aviso_renta,
     formatear_aviso_rsi,
     formatear_bajon,
     formatear_binance,

@@ -193,6 +193,15 @@ def para_pienso(comando: str, coin_id: str) -> list[list[tuple[str, str]]]:
     return [f for f in filas if all(_cabe(b) for b in f)]
 
 
+def para_renta(año: int) -> list[list[tuple[str, str]]]:
+    return [
+        [
+            ("📄 Informe en PDF", f"/informe {año}"),
+            ("📊 Ventas en CSV", f"/impuestos {año} csv"),
+        ]
+    ]
+
+
 def tarjeta_anual(año: int) -> list[list[tuple[str, str]]]:
     return [[("🖼️ En imagen para enseñar", f"/anual {año} tarjeta")]]
 

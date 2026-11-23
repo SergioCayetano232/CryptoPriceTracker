@@ -177,6 +177,8 @@ LIMITE_COMPRAS = "limite_compras"
 CONCENTRADA = "concentracion_cartera"
 # El día que se mandó en diciembre lo de /compensar, para no repetirlo.
 AVISO_COMPENSAR = "aviso_compensar"
+# El día que se avisó en abril de que ya se puede hacer la Renta.
+AVISO_RENTA = "aviso_renta"
 # El día que se avisó de que la cartera pasaba del límite del modelo 721.
 AVISO_721 = "aviso_721"
 # La cartera de mentira de /fantasma, entera en JSON.

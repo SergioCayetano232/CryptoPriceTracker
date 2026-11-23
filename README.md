@@ -748,6 +748,11 @@ Hacienda**: si llevas ganancia vendiendo este año y algo de tu cartera va en
 pérdidas, lo mismo que `/compensar`, a tiempo de venderlo antes del 1 de enero.
 Si no hay nada que ahorrar, no te llega nada.
 
+Y entre el 1 y el 15 de abril, cuando abre la campaña, **la Renta**: si el año
+pasado vendiste algo o cobraste staking, lo mismo que `/impuestos` de ese año,
+con dos botones para sacar el informe en PDF y el CSV venta a venta. Las
+pérdidas también salen, que si no las declaras no las puedes restar luego.
+
 **Que no te despierte:**
 ```
 HORAS_TRANQUILAS=23-8
@@ -1119,6 +1124,7 @@ crypto_tracker/
   permuta.py     lo que pagas a Hacienda al cambiar una cripto por otra, para /permuta
   sivendo.py     lo que ganarías y pagarías antes de vender, para /sivendo
   compensar.py   qué vender en pérdidas, para /compensar
+  aviso_renta.py cuándo avisar en abril de que toca la Renta
   modelo721.py   si te toca declarar las criptos de fuera, para /modelo721
   primera.py     tu primera compra, para /primera
   pelotazo.py    tu mejor y tu peor compra, para /pelotazo
