@@ -68,7 +68,7 @@ COMANDOS = {
     "deshacer": "Quitar la última compra o venta que apuntaste",
     "corregir": "Cambiar una compra o venta antigua (ej: /corregir 12 importe 700)",
     "alerta": "Avísame una vez a un precio o un % (ej: /alerta btc 70000 o +10% 7d)",
-    "escalera": "Vender por tramos al subir (ej: /escalera btc 80k 90k 100k)",
+    "escalera": "Vender por tramos al subir, o comprar al bajar (ej: /ayuda escalera)",
     "stop": "Avísame al perder o ganar un % sobre lo que pagué (ej: /stop eth -15%)",
     "alertas": "Las alertas que tienes puestas",
     "ultimo": "Cuándo te avisó por última vez cada una y cuánto se ha movido",
@@ -638,6 +638,8 @@ EJEMPLOS = {
     "escalera": [
         ("/escalera btc 80000 90000 100000", "vender un tercio en cada precio"),
         ("/escalera btc 80k 90k 50%", "solo la mitad de lo que tienes"),
+        ("/escalera compra btc 60k 55k 50k con 900", "300 en cada bajada"),
+        ("/escalera compra eth 2000 1800", "solo el aviso, sin decir cuánto"),
     ],
     "herencia": [
         ("/herencia", "el papel en un .txt para guardar o imprimir"),

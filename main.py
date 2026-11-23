@@ -46,6 +46,7 @@ from crypto_tracker import (
     database,
     dato,
     diario,
+    escalera,
     ethereum,
     excusa,
     extremos,
@@ -89,6 +90,7 @@ from crypto_tracker.respuestas.alertas import (
     _crear_alerta,
     _dejar,
     _escalera,
+    _escalera_compra,
     _juntas,
     _rezagada,
     _stop,
@@ -1432,6 +1434,13 @@ def _con_cartera(hacer: Callable[[Config, str], Respuesta]):
     return con_cartera
 
 
+def _comando_escalera(config: Config, argumento: str) -> Respuesta:
+    # La de compra no pide cartera: puede ser justo para empezar a tenerla.
+    if escalera.es_compra(argumento):
+        return _escalera_compra(_con_cambios(config), argumento)
+    return _con_cartera(_escalera)(config, argumento)
+
+
 def _comando_mute(config: Config, argumento: str) -> Respuesta:
     if not argumento:
         # A secas, si ya estaba callado, mejor decirlo que alargarlo sin querer.
@@ -1651,7 +1660,7 @@ COMANDOS: dict[str, Callable[[Config, str], Respuesta]] = {
     "emociones": lambda c, a: _emociones(c),
     "tormenta": lambda c, a: _calma(c, a),
     "herencia": lambda c, a: _herencia(c, a),
-    "escalera": _con_cartera(lambda c, a: _escalera(c, a)),
+    "escalera": _comando_escalera,
     "stop": _con_cartera(lambda c, a: _stop(c, a)),
     "vigilar": _comando_vigilar,
     "dejar": lambda c, a: _dejar(c, simbolos.varias(a)),

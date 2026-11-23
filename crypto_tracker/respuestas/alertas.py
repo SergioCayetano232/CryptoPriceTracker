@@ -524,6 +524,52 @@ def _escalera(config: Config, argumento: str) -> str:
     return alerts.con_fuente(alerts.formatear_escalera(e, numeros, config.vs_currency))
 
 
+def _escalera_compra(config: Config, argumento: str) -> str:
+    try:
+        coin_id, precios, gasto = escalera.interpretar_compra(argumento)
+    except escalera.EscaleraError as e:
+        return telegram.escape(str(e))
+
+    ahora = _precio_o_pedirlo(config, coin_id)
+    if isinstance(ahora, str):
+        return ahora
+    antes = movimientos.buscar(config.cartera, coin_id)
+    try:
+        e = escalera.calcular_compra(coin_id, precios, gasto, ahora, antes)
+    except escalera.EscaleraError as error:
+        return telegram.escape(str(error))
+
+    pendientes = database.get_puntuales(config.database_path, config.vs_currency)
+    for x in e.escalones:
+        igual = puntuales.repetida(pendientes, coin_id, x.precio, False)
+        if igual:
+            return (
+                f"Ya tienes una alerta a ese precio, la número {igual.id}. "
+                f"Quítala con /quitar {igual.id} o elige otros escalones."
+            )
+
+    numeros = []
+    for i, x in enumerate(e.escalones, 1):
+        cuanto = None
+        if x.gasto is not None:
+            simbolo = alerts.SIMBOLOS.get(config.vs_currency, "")
+            cuanto = f"{simbolo}{alerts._num(x.gasto)}"
+        alerta = database.crear_puntual(
+            config.database_path,
+            coin_id,
+            x.precio,
+            False,
+            config.vs_currency,
+            None,
+            escalera.nota_compra(i, len(e.escalones), cuanto),
+        )
+        numeros.append(alerta.id)
+    logger.info("Escalera de compra de %s creada: %s", coin_id, numeros)
+    return alerts.con_fuente(
+        alerts.formatear_escalera_compra(e, numeros, config.vs_currency)
+    )
+
+
 def _stop_movil(
     config: Config, coin_id: str, porcentaje: float, valor: cartera.Valor
 ) -> str:

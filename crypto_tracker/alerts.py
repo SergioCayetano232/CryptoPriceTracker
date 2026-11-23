@@ -309,6 +309,7 @@ from .mensajes.seguimiento import (
     formatear_emociones,
     formatear_encuesta_puesta,
     formatear_escalera,
+    formatear_escalera_compra,
     formatear_fantasma,
     formatear_fantasma_nueva,
     formatear_juntas,

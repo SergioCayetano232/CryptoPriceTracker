@@ -5,7 +5,16 @@ from datetime import datetime, timezone
 import pytest
 
 from crypto_tracker.config import Posicion
-from crypto_tracker.escalera import EscaleraError, calcular, interpretar, nota
+from crypto_tracker.escalera import (
+    EscaleraError,
+    calcular,
+    calcular_compra,
+    es_compra,
+    interpretar,
+    interpretar_compra,
+    nota,
+    nota_compra,
+)
 from crypto_tracker.movimientos import Movimiento
 
 CUANDO = datetime(2026, 6, 1, tzinfo=timezone.utc)
@@ -106,3 +115,94 @@ def test_calcular_con_el_primero_ya_pasado():
 
 def test_nota():
     assert nota(2, 3, "0,1") == "Escalera 2/3: vende 0,1"
+
+
+# --- de compra ---
+
+
+def test_es_compra():
+    assert es_compra("compra btc 60k 50k")
+    assert not es_compra("btc 80k 90k")
+    assert not es_compra("")
+
+
+@pytest.mark.parametrize(
+    "texto, sale",
+    [
+        ("compra btc 60000 50000", ("bitcoin", [60000, 50000], None)),
+        ("compra btc 50k 60k 55k con 900", ("bitcoin", [60000, 55000, 50000], 900)),
+        ("compra eth 2000 1800 con 300€", ("ethereum", [2000, 1800], 300)),
+    ],
+)
+def test_interpretar_compra(texto, sale):
+    assert interpretar_compra(texto) == sale
+
+
+@pytest.mark.parametrize(
+    "texto, error",
+    [
+        ("compra", "al menos dos precios"),
+        ("compra btc 60000 con 900", "al menos dos precios"),
+        ("compra btc 60k 50k con", "va al final"),
+        ("compra btc 60k con 900 50k", "va al final"),
+        ("compra btc 60k 50k con mucho", "'mucho' no es una cantidad"),
+        ("compra btc 60k 50k con 0", "'0' no es una cantidad"),
+    ],
+)
+def test_interpretar_compra_mal(texto, error):
+    with pytest.raises(EscaleraError, match=error):
+        interpretar_compra(texto)
+
+
+def test_calcular_compra_reparte_el_dinero():
+    e = calcular_compra("bitcoin", [60000, 50000], 1000, 66000, None)
+
+    assert [x.gasto for x in e.escalones] == [500, 500]
+    assert [x.cantidad for x in e.escalones] == pytest.approx([1 / 120, 0.01])
+    # Media armónica: 1000 entre lo que compras, no la media de los precios.
+    assert e.media == pytest.approx(1000 / (1 / 120 + 0.01))
+    assert e.media_despues == e.media
+
+
+def test_calcular_compra_baja_tu_precio_medio():
+    # 0,1 BTC a 70.000 de media y 1.000 más a 60k y 40k.
+    e = calcular_compra(
+        "bitcoin", [60000, 40000], 1000, 66000, Posicion("bitcoin", 0.1, 7000)
+    )
+
+    assert e.media_antes == pytest.approx(70000)
+    comprado = 500 / 60000 + 500 / 40000
+    assert e.media_despues == pytest.approx(8000 / (0.1 + comprado))
+
+
+def test_calcular_compra_sin_dinero():
+    e = calcular_compra(
+        "bitcoin", [60000, 50000], None, 66000, Posicion("bitcoin", 0.1, 7000)
+    )
+
+    assert e.escalones[0].cantidad is None
+    assert e.comprado is None
+    assert e.media_despues is None
+
+
+def test_calcular_compra_sin_saber_lo_que_costo_lo_de_antes():
+    e = calcular_compra("bitcoin", [60000, 50000], 1000, 66000, Posicion("bitcoin", 1))
+
+    assert e.media is not None
+    assert e.media_antes is None
+    assert e.media_despues is None
+
+
+def test_calcular_compra_con_el_primero_por_encima():
+    with pytest.raises(EscaleraError, match="por debajo del precio de ahora"):
+        calcular_compra("bitcoin", [70000, 50000], 1000, 66000, None)
+
+
+def test_la_de_venta_por_debajo_sugiere_la_de_compra():
+    with pytest.raises(EscaleraError, match="/escalera compra"):
+        calcular(Posicion("bitcoin", 0.2, 10000), [50000, 60000], 100, 66000, 0)
+
+
+def test_nota_compra():
+    assert nota_compra(1, 2, "€500,00") == "Escalera de compra 1/2: mete €500,00"
+    assert nota_compra(2, 2, None) == "Escalera de compra 2/2"

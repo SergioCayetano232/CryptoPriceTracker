@@ -13,7 +13,7 @@ from ..emocion import EMOCIONES, Emociones, en_frase
 from ..emocion import Grupo as GrupoEmocion
 from ..encuesta import BANDA as BANDA_ENCUESTA
 from ..encuesta import Encuesta, limites, se_cierra
-from ..escalera import Escalera
+from ..escalera import Escalera, EscaleraCompra
 from ..fantasma import BITCOIN as BITCOIN_FANTASMA
 from ..fantasma import EMPATE as EMPATE_FANTASMA
 from ..fantasma import Fantasma
@@ -879,6 +879,51 @@ def formatear_escalera(e: Escalera, numeros: list[int], currency: str) -> str:
         lineas.append(
             f"<i>Ojo: va en {currency.upper()}, y Hacienda lo quiere en euros.</i>"
         )
+    return "\n".join(lineas)
+
+
+def formatear_escalera_compra(
+    e: EscaleraCompra, numeros: list[int], currency: str
+) -> str:
+    """Respuesta al poner una /escalera compra."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    nombre = escape(e.coin_id.replace("-", " ").title())
+    lineas = [f"🪜 <b>Escalera de compra de {nombre}</b>"]
+    if e.gasto is None:
+        lineas.append(f"Te aviso al bajar, en {len(e.escalones)} escalones:")
+    else:
+        lineas.append(
+            f"Metes {simbolo}{_num(e.gasto)} en {len(e.escalones)} escalones:"
+        )
+    lineas.append("")
+    for i, x in enumerate(e.escalones, 1):
+        bajada = (x.precio / e.ahora - 1) * 100
+        linea = f"{i}. A <b>{simbolo}{_num(x.precio)}</b> ({_signo(bajada)})"
+        if x.gasto is not None:
+            # Redondeo a satoshis: 300/60000 sale con colas de 17 decimales.
+            cantidad = texto_cantidad(round(x.cantidad, 8))
+            linea += f": mete {simbolo}{_num(x.gasto)} → {cantidad}"
+        lineas.append(linea)
+
+    lineas += ["", f"Ahora está a {simbolo}{_num(e.ahora)}."]
+    if e.comprado is not None:
+        lineas.append(
+            f"Si baja hasta abajo del todo, tendrías "
+            f"{texto_cantidad(round(e.comprado, 8))} más, a "
+            f"<b>{simbolo}{_num(e.media)}</b> de media"
+        )
+        if e.media_antes is not None and e.media_despues is not None:
+            lineas.append(
+                f"Tu precio medio pasaría de {simbolo}{_num(e.media_antes)} "
+                f"a <b>{simbolo}{_num(e.media_despues)}</b>"
+            )
+
+    cuales = ", ".join(str(n) for n in numeros[:-1]) + f" y {numeros[-1]}"
+    lineas += [
+        "",
+        f"Te aviso al llegar a cada uno: son las alertas {cuales} de /alertas.",
+        "<i>No compro nada. Cuando compres, apúntalo con /compra.</i>",
+    ]
     return "\n".join(lineas)
 
 
