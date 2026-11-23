@@ -110,3 +110,14 @@ def test_la_version_es_la_del_pyproject():
     assert f"CryptoPriceTracker {version.numero()} ·" in pagina(
         _panel(), AHORA, parado=False
     )
+
+
+def test_en_el_movil_la_ganancia_va_a_la_derecha_aunque_no_haya_mini():
+    # Sin histórico la mini es un <span>: contando spans, la regla del móvil
+    # movía el valor en vez de la ganancia.
+    html = pagina(_panel(), AHORA, parado=False)
+
+    assert "sin histórico" in html
+    assert 'class="num num--sube ganancia">€1.000,00' in html
+    assert ".lista--cartera .fila > .ganancia { grid-column: 2; }" in html
+    assert "nth-of-type" not in html

@@ -148,10 +148,10 @@ def _grafica(p: Panel) -> str:
 def _fila(f: Fila, moneda: str) -> str:
     tono = _tono(f.porcentaje)
     ganancia = (
-        f'<span class="num num--{tono}">{_dinero(f.ganancia, moneda)}'
+        f'<span class="num num--{tono} ganancia">{_dinero(f.ganancia, moneda)}'
         f"<small>{_pct(f.porcentaje)}</small></span>"
         if f.ganancia is not None
-        else '<span class="num num--neutro">—<small>sin coste</small></span>'
+        else '<span class="num num--neutro ganancia">—<small>sin coste</small></span>'
     )
     return f"""
 <li class="fila">
@@ -643,7 +643,8 @@ code {
   .fila .mini { display: none; }
   .fila .peso { grid-column: 1 / -1; flex-direction: row; align-items: center; }
   .fila .peso__barra { flex: 1; }
-  .lista--cartera .fila > .num:nth-of-type(2) { grid-column: 2; }
+  /* Por clase: contando spans fallaba cuando la mini es el "sin histórico". */
+  .lista--cartera .fila > .ganancia { grid-column: 2; }
   .grafica svg { height: 150px; }
 }
 
