@@ -7,6 +7,7 @@ from .. import (
     aleatoria,
     alerts,
     avisados,
+    aviso_tendencias,
     binance,
     botones,
     cartera,
@@ -153,13 +154,32 @@ def _ath(config: Config, argumento: str) -> str:
     )
 
 
-def _tendencias(config: Config) -> str | comandos.ConBotones:
+def _tendencias(config: Config, argumento: str = "") -> str | comandos.ConBotones:
+    try:
+        avisar = aviso_tendencias.interpretar(argumento)
+    except aviso_tendencias.AvisoError as e:
+        return telegram.escape(str(e))
+    if avisar is True:
+        if database.aviso_tendencias(config.database_path) is None:
+            database.guardar_aviso_tendencias(
+                config.database_path, aviso_tendencias.Estado()
+            )
+        return (
+            "🔥 Hecho. Si una de tu cartera o de las que vigilo entra en lo que más "
+            "se busca, te aviso (lo miro cada 6 h y de cada una, una vez a la "
+            "semana como mucho). Para quitarlo: /tendencias avisa no"
+        )
+    if avisar is False:
+        database.guardar_aviso_tendencias(config.database_path, None)
+        return "Hecho, ya no te aviso de las tendencias."
+
     try:
         lista = coingecko.tendencias_hoy(config.vs_currency)
     except coingecko.CoinGeckoError as e:
         return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
 
-    texto = alerts.formatear_tendencias(lista)
+    avisando = database.aviso_tendencias(config.database_path) is not None
+    texto = alerts.formatear_tendencias(lista, avisando)
     if not lista:
         return texto
     return comandos.ConBotones(alerts.con_fuente(texto), botones.para_tendencias(lista))

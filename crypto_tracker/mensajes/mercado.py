@@ -4,6 +4,7 @@ from datetime import date, datetime
 from typing import TYPE_CHECKING
 
 from ..avisados import Ultimo
+from ..aviso_tendencias import Nueva
 from ..cartera import Valor
 from ..comisionred import TAMAÑO as TAMAÑO_ENVIO
 from ..comisionred import ComisionRed, en_dinero, media_hora
@@ -201,7 +202,7 @@ def formatear_maximos(
     return "\n".join(texto)
 
 
-def formatear_tendencias(lista: list[Tendencia]) -> str:
+def formatear_tendencias(lista: list[Tendencia], avisando: bool = True) -> str:
     """/tendencias: una por linea, con su puesto y como va en 24 h."""
     if not lista:
         return "CoinGecko no me ha dado tendencias ahora mismo. Prueba en un rato."
@@ -218,7 +219,32 @@ def formatear_tendencias(lista: list[Tendencia]) -> str:
         texto.append(linea)
 
     texto += ["", "<i>Toca una para ver su precio y ponerle una alerta</i>"]
+    if not avisando:
+        texto.append(
+            "<i>Para que te avise si sale una de las tuyas: /tendencias avisa</i>"
+        )
     return "\n".join(texto)
+
+
+def formatear_aviso_tendencias(lista: list[Nueva]) -> str:
+    """Cuando algo tuyo entra en lo que más se busca."""
+    lineas = []
+    for n in lista:
+        t = n.tendencia
+        linea = f"{n.lugar}. <b>{escape(t.nombre)}</b>"
+        if t.variacion is not None:
+            linea += f"  {_flecha(t.variacion)} {t.variacion:+.2f}% en 24 h"
+        lineas.append(linea)
+    if len(lista) == 1:
+        titulo = f"🔥 <b>{escape(lista[0].tendencia.nombre)} está de moda</b>"
+    else:
+        titulo = f"🔥 <b>{len(lista)} de las tuyas están de moda</b>"
+    return (
+        f"{titulo}\nEn lo que más se busca hoy en CoinGecko:\n\n"
+        + "\n".join(lineas)
+        + "\n\n<i>Que se hable de una no dice si va a subir: a veces el ruido "
+        "llega cuando ya ha subido. La lista entera, en /tendencias</i>"
+    )
 
 
 def formatear_top(suben: list[Movida], bajan: list[Movida], currency: str) -> str:

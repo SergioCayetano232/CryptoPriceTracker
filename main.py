@@ -274,6 +274,7 @@ from crypto_tracker.respuestas.revisiones import (
     revisar_rezagadas,
     revisar_rsi,
     revisar_salvo,
+    revisar_tendencias,
     revisar_volumen,
 )
 
@@ -489,6 +490,7 @@ def ejecutar_ciclo(
     revisar_721(config, valor, calladas, sueltos)
     revisar_direcciones(config, precios, sueltos)
     revisar_comisionred(config, sueltos)
+    revisar_tendencias(config, calladas, sueltos)
     if calladas:
         avisos = [a for a in avisos if a.coin_id not in calladas]
         hechas = [p for p in hechas if p.coin_id not in calladas]
@@ -1703,7 +1705,7 @@ COMANDOS: dict[str, Callable[[Config, str], Respuesta]] = {
     "calendario": lambda c, a: _calendario(c, a),
     "rentabilidad": lambda c, a: _rentabilidad(c),
     "ath": lambda c, a: _ath(c, a),
-    "tendencias": lambda c, a: _tendencias(c),
+    "tendencias": lambda c, a: _tendencias(c, a),
     "dominancia": lambda c, a: _dominancia(c),
     "mercado": lambda c, a: _mercado(c),
     "top": lambda c, a: _top(c),

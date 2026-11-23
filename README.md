@@ -387,6 +387,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/gasolina` | Cuántos litros de gasolina te da tu cartera, a unos 1,80 el litro, y cuántos depósitos de 50 litros son |
 | `/sueldo` | Cuántos meses (o años) de salario mínimo es tu cartera, con el SMI de 2026: 1.221 € en 14 pagas. Solo en euros |
 | `/tendencias` | Las 7 criptos que más se buscan hoy en CoinGecko, con un botón en cada una para ver su precio y ponerle una alerta |
+| `/tendencias avisa` | Te avisa cuando una de tu cartera o de las que vigilas entra en esa lista. Lo mira cada 6 horas (unas 120 consultas al mes) y de cada cripto avisa una vez a la semana como mucho. `/tendencias avisa no` lo quita |
 | `/top` | Las 5 que más suben y las 5 que más bajan hoy de las 100 más grandes, con su precio |
 | `/aleatoria` | Una de las 100 más grandes al azar, con su puesto, su precio y cómo va hoy. No saca las que ya vigilas ni las estables. Con un botón para pedir otra |
 | `/caraocruz` | ¿Compro o vendo? Lo decide una moneda al aire (`/caraocruz btc`, con la cripto). Es de broma y no gasta consultas |
@@ -1016,6 +1017,7 @@ crypto_tracker/
   dca.py         las compras periódicas de /dca
   maximo.py      el máximo histórico de /ath
   tendencias.py  lo que más se busca, para /tendencias
+  aviso_tendencias.py  cuándo avisar de que algo tuyo está de moda
   aleatoria.py   una de las más grandes al azar, para /aleatoria
   caraocruz.py   la moneda al aire de /caraocruz
   ppt.py         piedra, papel o tijera, para /ppt

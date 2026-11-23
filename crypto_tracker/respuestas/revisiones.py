@@ -13,6 +13,7 @@ from functools import partial
 from .. import (
     alertaratio,
     alerts,
+    aviso_tendencias,
     avisorsi,
     bajon,
     buzon,
@@ -578,6 +579,55 @@ def revisar_comisionred(config: Config, sueltos: buzon.Buzon | None = None) -> N
     )
     if not _avisar(config, texto, sueltos, avisada):
         logger.error("No se pudo avisar de la comisión de red")
+
+
+def revisar_tendencias(
+    config: Config,
+    calladas: set[str],
+    sueltos: buzon.Buzon | None = None,
+    ahora: datetime | None = None,
+) -> None:
+    """Con /tendencias avisa: si algo tuyo entra en lo que más se busca."""
+    try:
+        estado = database.aviso_tendencias(config.database_path)
+    except database.DatabaseError as e:
+        logger.error("No se pudo leer el aviso de tendencias: %s", e)
+        return
+    ahora = ahora or datetime.now(timezone.utc)
+    if estado is None or _silenciado(config):
+        return
+    if not aviso_tendencias.toca_mirar(estado, ahora):
+        return
+
+    def guardar(avisadas: list[str] = ()) -> None:
+        try:
+            database.guardar_aviso_tendencias(
+                config.database_path, aviso_tendencias.mirado(estado, ahora, avisadas)
+            )
+        except database.DatabaseError as e:
+            logger.error("No se pudo apuntar el aviso de tendencias: %s", e)
+
+    try:
+        lista = coingecko.tendencias_hoy(config.vs_currency)
+    except coingecko.CoinGeckoError as e:
+        # Apunto la hora igual: si CoinGecko falla, no insisto en cada ciclo.
+        logger.warning("No se pudieron mirar las tendencias: %s", e)
+        guardar()
+        return
+
+    mias = {p.coin_id for p in config.cartera} | {w.coin_id for w in config.watchlist}
+    nuevas = aviso_tendencias.nuevas(lista, mias - calladas, estado, ahora)
+    if not nuevas:
+        guardar()
+        return
+    ids = [n.tendencia.coin_id for n in nuevas]
+    if not _avisar(
+        config,
+        alerts.formatear_aviso_tendencias(nuevas),
+        sueltos,
+        partial(guardar, ids),
+    ):
+        logger.error("No se pudo avisar de las tendencias")
 
 
 def revisar_rsi(

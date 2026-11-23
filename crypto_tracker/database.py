@@ -9,6 +9,9 @@ from pathlib import Path
 
 from .alertaratio import AlertaRatio
 from .avisados import Aviso
+from .aviso_tendencias import Estado as EstadoTendencias
+from .aviso_tendencias import a_texto as texto_tendencias
+from .aviso_tendencias import de_texto as leer_tendencias
 from .cada import Programado
 from .cada import a_texto as texto_cada
 from .cada import de_texto as leer_cada
@@ -190,6 +193,8 @@ IDEAL = "reparto_ideal"
 IDEAL_AVISADO = "reparto_ideal_avisado"
 # A cuántos sat/vB avisar de que mover bitcoin está barato. Sin fila, sin aviso.
 AVISO_COMISIONRED = "aviso_comisionred"
+# Lo de /tendencias avisa, en JSON. Sin fila, no está puesto.
+AVISO_TENDENCIAS = "aviso_tendencias"
 # La última encuesta de /encuesta, en JSON. Sin fila, no la tienes puesta.
 ENCUESTA = "encuesta"
 # El id del mensaje fijado de /envivo. Sin fila, no hay ninguno.
@@ -934,6 +939,25 @@ def guardar_limite_compras(db_path: str, limite: float | None) -> None:
         conn.execute(
             "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
             (LIMITE_COMPRAS, repr(limite)),
+        )
+
+
+def aviso_tendencias(db_path: str) -> EstadoTendencias | None:
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT valor FROM ajustes WHERE clave = ?", (AVISO_TENDENCIAS,)
+        ).fetchone()
+    return leer_tendencias(fila["valor"]) if fila else None
+
+
+def guardar_aviso_tendencias(db_path: str, e: EstadoTendencias | None) -> None:
+    with _connect(db_path) as conn:
+        if e is None:
+            conn.execute("DELETE FROM ajustes WHERE clave = ?", (AVISO_TENDENCIAS,))
+            return
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (AVISO_TENDENCIAS, texto_tendencias(e)),
         )
 
 

@@ -191,7 +191,7 @@ COMANDOS = {
     "carnet": "Cuántos carnets de conducir te da tu cartera",
     "navidad": "Los días que faltan para Navidad y tu cartera en cestas",
     "nochevieja": "Lo que queda de año y tu cartera en botellas de cava",
-    "tendencias": "Las criptos que más se buscan hoy",
+    "tendencias": "Las que más se buscan hoy, y aviso si sale una tuya",
     "top": "Las 5 que más suben y las 5 que más bajan hoy",
     "aleatoria": "Una de las 100 más grandes al azar, para descubrir alguna",
     "caraocruz": "¿Compro o vendo? Una moneda al aire (ej: /caraocruz btc)",
@@ -657,6 +657,11 @@ EJEMPLOS = {
         ("/anual", "cómo va tu cartera desde el 1 de enero, con gráfica"),
         ("/anual 2025", "el resumen de ese año: mejor mes, compras, ventas…"),
         ("/anual 2025 tarjeta", "en una imagen para enseñar, solo con %"),
+    ],
+    "tendencias": [
+        ("/tendencias", "las que más se buscan hoy en CoinGecko"),
+        ("/tendencias avisa", "te aviso si entra una de las tuyas"),
+        ("/tendencias avisa no", "dejar de avisarte"),
     ],
     "tesis": [
         ("/tesis sol el ETF lo va a subir", "te pregunto a los 30 días"),

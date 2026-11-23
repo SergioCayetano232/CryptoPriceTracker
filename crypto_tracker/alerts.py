@@ -221,6 +221,7 @@ from .mensajes.mercado import (
     _lado_sesgo,
     formatear_aleatoria,
     formatear_aviso_comisionred,
+    formatear_aviso_tendencias,
     formatear_busqueda,
     formatear_comisionred,
     formatear_comparar,
