@@ -185,6 +185,7 @@ TEMAS = [
             "top",
             "aleatoria",
             "funding",
+            "oi",
             "spread",
             "glosario",
             "halving",

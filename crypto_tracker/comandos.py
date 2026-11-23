@@ -215,6 +215,7 @@ COMANDOS = {
     "comisionred": "Lo que cuesta mover bitcoin, y aviso al bajar (ej: /comisionred 5)",
     "direccion": "Vigila una dirección de bitcoin o ethereum y avisa si se mueve",
     "funding": "Si los de futuros apuestan a que sube o baja (ej: /funding btc)",
+    "oi": "Cuánto hay apostado en futuros y si entra o sale (ej: /oi btc)",
     "spread": "El precio de CoinGecko contra el de Binance (ej: /spread btc eth)",
     "buscar": "Encuentra el id de una cripto (ej: /buscar btc)",
     "copia": "Lo que vigilo y tu cartera, listo para pegar en el .env",
@@ -315,6 +316,8 @@ ALIAS = {
     "direcciones": "direccion",
     "monedero": "direccion",
     "financiacion": "funding",
+    "interesabierto": "oi",
+    "openinterest": "oi",
     "meses": "estacional",
     "estacionalidad": "estacional",
     "financiación": "funding",
@@ -922,6 +925,10 @@ EJEMPLOS = {
     ],
     "invitar": [
         ("/invitar", "un código de un solo uso que caduca en 24 h"),
+    ],
+    "oi": [
+        ("/oi btc", "lo apostado en futuros de Binance y cómo ha cambiado"),
+        ("/oi", "a secas, la primera que vigilo"),
     ],
     "funding": [
         ("/funding btc", "lo que pagan los de futuros de bitcoin y si está apalancado"),

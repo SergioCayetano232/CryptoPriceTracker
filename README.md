@@ -413,6 +413,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/spread btc eth` | El precio de ahora en CoinGecko y en Binance, uno al lado del otro, y cuánto se separan (la que más, arriba). Con ⚠️ si pasa del 3%, que suele ser un dato malo: con esas el bot no te avisa hasta que cuadran. A secas, las que vigilas. Gasta una consulta. Solo en euros o dólares |
 | `/funding btc` | Lo que pagan cada 8 horas en los futuros de Binance los que apuestan a que sube a los que apuestan a que baja, la media de la semana y un nivel: de "muchos apostando a que baja" a "muy apalancado al alza", que es cuando suelen venir las caídas bruscas. A secas, la primera que vigilo. No gasta consultas de CoinGecko. También `/financiacion` |
 | `/funding btc avisa` | Te avisa cuando el funding de esa cripto se va a uno de los dos extremos: muy apalancado al alza (así suelen venir las caídas bruscas) o muchos apostando a que baja (a veces rebota de golpe). Mira la media de la semana, una vez por hora, y avisa al entrar en el extremo, no mientras sigue ahí. `/funding btc no` lo quita |
+| `/oi btc` | Cuánto hay apostado en los futuros de Binance (el interés abierto) y cómo ha cambiado en 24 h, 7 y 30 días, con una barrita del mes. Lo cruza con el precio de la semana: si entra dinero mientras sube, si sube solo porque cierran los que apostaban a la baja, si se desinfla... Va en contratos y no en dólares, para que la subida del precio no parezca dinero nuevo. No gasta consultas de CoinGecko. También `/interesabierto` |
 | `/direccion bc1q... frío` | Vigila esa dirección de bitcoin con ese nombre y, mientras está en `--loop`, te avisa en cuanto entra o sale algo, sin esperar a que se confirme: cuánto, en BTC y en dinero, y con cuánto se queda. Sirve para tu monedero frío o para seguir a una ballena. Hasta 10. `/direccion` a secas, las que vigilo con lo que tiene cada una; `/direccion quitar frío`, deja de vigilarla. Las mira en mempool.space, así que ellos ven qué direcciones consultas. También `/monedero` |
 | `/direccion 0x... ledger` | Lo mismo con una de ethereum (las que empiezan por `0x`). Avisa cuando cambia su saldo en ETH, ya confirmado, unos segundos después del bloque. Solo mira el ETH, no los tokens como USDT. La consulta va a un nodo público (publicnode.com), que ve qué direcciones miras, y el enlace a etherscan.io. Para que el aviso lleve su valor en dinero, vigila también ethereum o tenla en la cartera |
 | `/buscar btc` | Encuentra el id de CoinGecko de una cripto |
@@ -975,6 +976,7 @@ crypto_tracker/
   comisionred.py lo que cuesta mover bitcoin, de mempool.space, para /comisionred
   spread.py      CoinGecko contra Binance, para /spread
   funding.py     lo que se pagan los de futuros en Binance, para /funding
+  oi.py          lo apostado en futuros de Binance, para /oi
   direccion.py   vigila direcciones de bitcoin (mempool.space) y ethereum, para /direccion
   database.py    guarda el histórico
   usuarios.py    los invitados de /invitar, cada uno con su archivo

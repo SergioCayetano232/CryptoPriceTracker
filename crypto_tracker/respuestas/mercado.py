@@ -23,6 +23,7 @@ from .. import (
     hoy,
     miedo,
     moneda,
+    oi,
     redondo,
     simbolos,
     spread,
@@ -339,6 +340,33 @@ def _direccion(config: Config, argumento: str) -> str:
     return alerts.formatear_direccion_nueva(
         nueva, _precios_de(config, [nueva]), config.vs_currency
     )
+
+
+def _oi(config: Config, argumento: str) -> str:
+    if len(argumento.split()) > 1:
+        return f"De una en una. Por ejemplo: {oi.EJEMPLO}"
+    if argumento:
+        coin_id = simbolos.a_id(argumento)
+    else:
+        vigiladas = _con_cambios(config).watchlist
+        if not vigiladas:
+            return f"¿De cuál? Por ejemplo: {oi.EJEMPLO}"
+        coin_id = vigiladas[0].coin_id
+
+    par = funding.par(coin_id, argumento)
+    try:
+        datos = oi.pedir(par)
+    except funding.FundingError as e:
+        if str(e) == "sin futuros":
+            return (
+                f"<b>{telegram.escape(coin_id)}</b> no tiene futuros en Binance. "
+                "Prueba con su símbolo, como /oi btc"
+            )
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+    resultado = oi.leer(par, datos)
+    if resultado is None:
+        return "Binance no me ha dado lo apostado. Prueba en un rato."
+    return alerts.formatear_oi(resultado, coin_id)
 
 
 def _funding(config: Config, argumento: str) -> str | comandos.ConBotones:

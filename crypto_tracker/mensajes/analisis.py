@@ -33,8 +33,10 @@ from ..macd import SEÑAL as SEÑAL_MACD
 from ..maximo import hace
 from ..media import lado_de_todas
 from ..mejor import Extremo
+from ..mercado import grande
 from ..mitad import Cartera as CarteraMitad
 from ..movimientos import texto_cantidad
+from ..oi import Interes, lectura
 from ..perdido import Perdido
 from ..periodo import nombre as nombre_periodo
 from ..puntuales import CARTERA
@@ -1254,6 +1256,42 @@ def formatear_aviso_funding(f: Funding) -> str:
         "calme y vuelva a pasar</i>"
     )
     return "\n".join(texto)
+
+
+def formatear_oi(i: Interes, coin_id: str) -> str:
+    """Respuesta de /oi."""
+    simbolo = escape(i.par.removesuffix("USDT"))
+    contratos = [d.contratos for d in i.dias]
+    lineas = [
+        f"📊 <b>Futuros de {_nombre(coin_id)}</b> · {escape(i.par)} en Binance",
+        f"Apostado ahora: <b>{_num(i.hoy.contratos)} {simbolo}</b> "
+        f"(unos {grande(i.hoy.valor)} de dólares)",
+    ]
+    if len(contratos) >= MINIMO_BARRAS:
+        lineas.append(f"<code>{sparkline(muestrear(contratos, BARRAS_MOVIL))}</code>")
+    tramos = [
+        f"{nombre}: {_signo(c)}"
+        for dias, nombre in ((1, "24 h"), (7, "7 días"), (30, "30 días"))
+        if (c := i.cambio(dias)) is not None
+    ]
+    lineas.append(" · ".join(tramos))
+    if i.maximo and len(contratos) > 7:
+        lineas.append("🔝 Lo más alto del último mes")
+
+    emoji, que_pasa = lectura(i)
+    dias = min(7, len(i.dias) - 1)
+    semana = "la semana" if dias == 7 else f"{_veces(dias, 'día', 'días')}"
+    lineas += [
+        "",
+        f"{emoji} <b>{que_pasa}</b>",
+        f"En {semana}, lo apostado {_signo(i.cambio(dias))} y el precio "
+        f"{_signo(i.cambio_precio(dias))}.",
+        "",
+        "<i>Cuento contratos y no dólares, para que una subida del precio no "
+        "parezca dinero nuevo. Hacia qué lado apuestan: "
+        f"/funding {simbolo.lower()}</i>",
+    ]
+    return "\n".join(lineas)
 
 
 def formatear_funding(f: Funding, avisa: bool = False) -> str:

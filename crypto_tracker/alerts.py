@@ -41,6 +41,7 @@ from .mensajes.analisis import (
     formatear_media,
     formatear_mitad,
     formatear_movimiento_direccion,
+    formatear_oi,
     formatear_perdido,
     formatear_racha,
     formatear_rango,
