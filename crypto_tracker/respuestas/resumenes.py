@@ -25,6 +25,7 @@ from .. import (
     proximo,
     puntuales,
     semanal,
+    tarjeta_anual,
     telegram,
 )
 from ..config import Config
@@ -336,6 +337,11 @@ def resumen_anual(config: Config, ahora: datetime | None = None) -> None:
         config.telegram_token,
         config.telegram_chat_id,
         alerts.formatear_anual(resultado, config.vs_currency, ahora.date()),
+        botones=(
+            botones.tarjeta_anual(año)
+            if tarjeta_anual.calcular(resultado, ahora.date())
+            else None
+        ),
     ):
         logger.error("No se pudo enviar el resumen anual, lo reintento luego")
         return
@@ -544,17 +550,22 @@ def _mes(config: Config) -> str | comandos.Foto:
     )
 
 
-def _anual(config: Config, argumento: str = "") -> str | comandos.Foto:
+def _anual(config: Config, argumento: str = "") -> Respuesta:
     ahora = datetime.now(timezone.utc)
+    quiere_tarjeta, argumento = tarjeta_anual.pedida(argumento)
+    if quiere_tarjeta:
+        return _tarjeta_anual(config, argumento)
     if argumento:
         try:
             año = anual.interpretar(argumento, date.today().year)
         except anual.AnualError as e:
             return telegram.escape(str(e))
         config = _con_cambios(config)
-        return alerts.formatear_anual(
-            _leer_año(config, año), config.vs_currency, date.today()
-        )
+        a = _leer_año(config, año)
+        texto = alerts.formatear_anual(a, config.vs_currency, date.today())
+        if tarjeta_anual.calcular(a, date.today()) is None:
+            return texto
+        return comandos.ConBotones(texto, botones.tarjeta_anual(año))
     return _desde_el_principio(
         config,
         mes.horas_del_ano(ahora),
@@ -562,6 +573,30 @@ def _anual(config: Config, argumento: str = "") -> str | comandos.Foto:
         "año",
         "Desde el 1 de enero",
     )
+
+
+def _tarjeta_anual(config: Config, argumento: str) -> str | comandos.Foto:
+    hoy = date.today()
+    try:
+        año = anual.interpretar(argumento, hoy.year) if argumento else hoy.year
+    except anual.AnualError as e:
+        return telegram.escape(str(e))
+    config = _con_cambios(config)
+    a = _leer_año(config, año)
+    t = tarjeta_anual.calcular(a, hoy)
+    if t is None:
+        return (
+            f"De {año} no tengo con qué hacerla: ni precios guardados de tu cartera "
+            f"ni compras con las que comparar. Lo que haya, en /anual {año}"
+        )
+    texto = alerts.formatear_anual(a, config.vs_currency, hoy)
+    try:
+        png = grafica.dibujar_tarjeta_anual(t)
+    except Exception as e:
+        logger.warning("Mando la tarjeta de %d sin imagen: %s", año, e)
+        return texto
+    pie = f"🎆 Tu {año} en cripto, para enseñar: solo porcentajes, sin cifras."
+    return comandos.Foto(png, pie, texto)
 
 
 def _desde_el_principio(

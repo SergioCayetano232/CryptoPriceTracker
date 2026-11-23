@@ -193,6 +193,10 @@ def para_pienso(comando: str, coin_id: str) -> list[list[tuple[str, str]]]:
     return [f for f in filas if all(_cabe(b) for b in f)]
 
 
+def tarjeta_anual(año: int) -> list[list[tuple[str, str]]]:
+    return [[("🖼️ En imagen para enseñar", f"/anual {año} tarjeta")]]
+
+
 def para_tesis(numero: int) -> list[list[tuple[str, str]]]:
     return [
         [("✅ Se cumplió", f"/tesis si {numero}"), ("❌ No", f"/tesis no {numero}")]

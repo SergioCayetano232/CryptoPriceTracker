@@ -653,6 +653,11 @@ EJEMPLOS = {
         ("/escalera compra btc 60k 55k 50k con 900", "300 en cada bajada"),
         ("/escalera compra eth 2000 1800", "solo el aviso, sin decir cuánto"),
     ],
+    "anual": [
+        ("/anual", "cómo va tu cartera desde el 1 de enero, con gráfica"),
+        ("/anual 2025", "el resumen de ese año: mejor mes, compras, ventas…"),
+        ("/anual 2025 tarjeta", "en una imagen para enseñar, solo con %"),
+    ],
     "tesis": [
         ("/tesis sol el ETF lo va a subir", "te pregunto a los 30 días"),
         ("/tesis btc 90d se acaba la sequía", "a los 90 días"),

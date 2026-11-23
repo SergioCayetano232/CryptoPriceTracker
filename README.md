@@ -202,7 +202,8 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/semana bitcoin` | La semana de una sola: lo mismo que `/historico bitcoin 7d` |
 | `/mes` | Cómo va tu cartera desde el día 1 del mes, con gráfica, no en los últimos 30 días como `/cartera 30d`. No gasta consultas. También `/mensual` |
 | `/anual` | Lo mismo desde el 1 de enero, para compararlo con la bolsa. Con `HISTORY_DAYS=90`, que es lo que viene, a partir de abril no tiene el año entero y te lo dice: pon `366`. También `/año` y `/ytd` |
-| `/anual 2025` | Tu resumen de ese año: la cartera, la mejor y la peor cripto, el mejor y el peor mes, compras, ventas, lo ganado vendiendo y tu mejor y peor compra. Te llega solo el 1 de enero si tienes resumen diario |
+| `/anual 2025` | Tu resumen de ese año: la cartera, la mejor y la peor cripto, el mejor y el peor mes, compras, ventas, lo ganado vendiendo y tu mejor y peor compra. Te llega solo el 1 de enero si tienes resumen diario, con un botón para pedirlo en imagen |
+| `/anual 2025 tarjeta` | Tu año en una imagen cuadrada para enseñar, solo con porcentajes: el % de la cartera, los 12 meses en verde y rojo, la que mejor fue, el mejor mes, cuántas compras y ventas y tu mejor compra. Si solo hay precios desde mitad de año, lo pone. `/anual tarjeta` a secas, la del año en curso |
 | `/compra bitcoin 0.01 600` | Apunta en la cartera que has comprado 0,01 por 600 € |
 | `/compra bitcoin 0.01 @60000` | Lo mismo, con el precio de cada una en vez del total |
 | `/compra bitcoin 0.01 600 com 1.5` | Con la comisión al final, en dinero o en % (`com 0.1%`). En la compra se suma a lo que te costó; en `/venta ... com 1`, se resta de lo que te dieron. Así `/ganancias` e `/impuestos` salen con lo que pagaste de verdad |
@@ -1139,6 +1140,7 @@ crypto_tracker/
   horas.py       la hora más barata y la más cara, para /horas
   reparto.py     qué parte de la cartera es cada una, para /reparto
   tarjeta.py     tu cartera en %, para la imagen de /tarjeta
+  tarjeta_anual.py  tu año en %, para la imagen de /anual 2025 tarjeta
   rango.py       el máximo, el mínimo y la media de /rango
   soporte.py     dónde ha girado varias veces, para /soporte
   dia.py         a cuánto estaba un día concreto, para /dia

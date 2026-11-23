@@ -10,6 +10,7 @@ from .periodo import nombre as nombre_periodo
 from .reparto import OTRAS, Trozo
 from .simbolos import de_id
 from .tarjeta import Tarjeta
+from .tarjeta_anual import TarjetaAnual
 
 VERDE = "#16a34a"
 ROJO = "#dc2626"
@@ -482,6 +483,116 @@ def dibujar_tarjeta(t: Tarjeta) -> bytes:
     salida = io.BytesIO()
     fig.savefig(salida, format="png", facecolor=NOCHE)
     return salida.getvalue()
+
+
+INICIALES = "EFMAMJJASOND"
+
+
+def dibujar_tarjeta_anual(t: TarjetaAnual) -> bytes:
+    """Como /tarjeta, pero del año entero. Tampoco lleva ni una cifra en dinero."""
+    try:
+        import numpy as np
+        from matplotlib.figure import Figure
+    except ImportError as e:
+        raise GraficaError(
+            "Falta matplotlib. Ejecuta: pip install -r requirements.txt"
+        ) from e
+
+    if t.total is not None:
+        grande, debajo = _pct_tarjeta(t.total), "mi cartera en el año"
+        if t.desde:
+            debajo = f"mi cartera desde el {t.desde:%d/%m}"
+        bueno = t.total >= 0
+    else:
+        grande, debajo = f"{t.verdes} de {t.juzgadas}", "compras van ganando"
+        bueno = t.verdes * 2 >= t.juzgadas
+    color = VERDE_NOCHE if bueno else ROJO_NOCHE
+
+    fig = Figure(figsize=(7.2, 7.2), dpi=150, facecolor=NOCHE)
+    _brillo(fig, np, color)
+
+    fig.text(
+        0.08, 0.92, f"MI {t.año} EN CRIPTO", fontsize=11, weight="bold", color=APAGADO
+    )
+    if t.hasta:
+        fig.text(
+            0.92,
+            0.92,
+            f"hasta el {t.hasta:%d/%m}",
+            fontsize=11,
+            color=APAGADO,
+            ha="right",
+        )
+    fig.text(0.075, 0.76, grande, fontsize=62, weight="bold", color=color)
+    fig.text(0.08, 0.70, debajo, fontsize=13, color=CLARO)
+
+    if t.meses:
+        _meses_tarjeta(fig, t.meses)
+
+    datos = []
+    if t.mejor:
+        coin_id, cambio = t.mejor
+        titulo = "LA QUE MÁS SUBIÓ" if cambio > 0 else "LA QUE MEJOR FUE"
+        datos.append((titulo, f"{_corto(coin_id)} {_pct_tarjeta(cambio)}"))
+    if t.mejor_mes:
+        mes, cambio = t.mejor_mes
+        datos.append(("MEJOR MES", f"{MESES[mes - 1].title()} {_pct_tarjeta(cambio)}"))
+    if t.compras or t.ventas:
+        compras = f"{t.compras} compra{'s' if t.compras != 1 else ''}"
+        ventas = f"{t.ventas} venta{'s' if t.ventas != 1 else ''}"
+        datos.append(("MOVIMIENTOS", f"{compras} · {ventas}"))
+    if t.mejor_compra:
+        coin_id, cambio = t.mejor_compra
+        datos.append(("MEJOR COMPRA", f"{_corto(coin_id)} {_pct_tarjeta(cambio)}"))
+    # Sin la gráfica de meses suben al hueco que deja, si no queda un vacío.
+    arriba = 0.25 if t.meses else 0.52
+    for i, (titulo, valor) in enumerate(datos[:4]):
+        x = 0.08 + (i % 2) * 0.44
+        y = arriba - (i // 2) * 0.10
+        fig.text(x, y + 0.035, titulo, fontsize=8.5, weight="bold", color=APAGADO)
+        fig.text(x, y, valor, fontsize=15, weight="bold", color=CLARO)
+
+    fig.text(
+        0.5,
+        0.04,
+        "Solo porcentajes, sin cifras · CryptoPriceTracker",
+        fontsize=8,
+        color=APAGADO,
+        ha="center",
+        alpha=0.7,
+    )
+    salida = io.BytesIO()
+    fig.savefig(salida, format="png", facecolor=NOCHE)
+    return salida.getvalue()
+
+
+def _meses_tarjeta(fig, meses: dict[int, float]) -> None:
+    ax = fig.add_axes((0.08, 0.40, 0.84, 0.22))
+    ax.set_facecolor("none")
+    tope = max(abs(v) for v in meses.values()) or 1
+    for i in range(12):
+        cambio = meses.get(i + 1)
+        if cambio is None:
+            # Sin precios ese mes: una raya, para que no parezca un 0%.
+            ax.bar(
+                i,
+                tope * 0.02,
+                bottom=-tope * 0.01,
+                width=0.62,
+                color=APAGADO,
+                alpha=0.3,
+            )
+            continue
+        color = VERDE_NOCHE if cambio >= 0 else ROJO_NOCHE
+        ax.bar(i, cambio, width=0.62, color=color, lw=0)
+    ax.axhline(0, color=APAGADO, lw=0.8, alpha=0.5)
+    ax.set_ylim(-tope * 1.15, tope * 1.15)
+    ax.set_xlim(-0.6, 11.6)
+    ax.set_xticks(range(12), list(INICIALES))
+    ax.tick_params(axis="x", colors=APAGADO, length=0, labelsize=9)
+    ax.set_yticks([])
+    for borde in ax.spines.values():
+        borde.set_visible(False)
 
 
 def _brillo(fig, np, color: str) -> None:

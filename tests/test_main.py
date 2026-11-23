@@ -10070,6 +10070,72 @@ def test_anual_de_un_año(con_semana, enviados):
     assert "de €6.000,00 a <b>€8.100,00</b>" in enviados[0]
 
 
+def test_anual_de_un_año_ofrece_la_tarjeta(con_semana, con_botones):
+    _año_guardado(con_semana)
+
+    main.atender(con_semana, _mensaje("/anual 2025"))
+
+    [(_, botones)] = con_botones
+    assert botones == [[("🖼️ En imagen para enseñar", "/anual 2025 tarjeta")]]
+
+
+def test_anual_sin_nada_no_ofrece_la_tarjeta(con_semana, con_botones):
+    main.atender(con_semana, _mensaje("/anual 2024"))
+
+    [(texto, botones)] = con_botones
+    assert "De 2024 no tengo nada" in texto
+    assert botones is None
+
+
+def test_anual_tarjeta(con_semana, enviados, sin_fotos_de_verdad):
+    _año_guardado(con_semana)
+
+    main.atender(con_semana, _mensaje("/anual 2025 tarjeta"))
+
+    [(png, pie)] = sin_fotos_de_verdad
+    assert png.startswith(b"\x89PNG")
+    assert pie == "🎆 Tu 2025 en cripto, para enseñar: solo porcentajes, sin cifras."
+    assert enviados == []
+
+
+def test_anual_tarjeta_sin_imagen_manda_el_texto(
+    con_semana, enviados, sin_fotos_de_verdad, monkeypatch
+):
+    _año_guardado(con_semana)
+
+    def rota(t):
+        raise main.grafica.GraficaError("sin matplotlib")
+
+    monkeypatch.setattr(main.grafica, "dibujar_tarjeta_anual", rota)
+
+    main.atender(con_semana, _mensaje("/anual tarjeta 2025"))
+
+    assert sin_fotos_de_verdad == []
+    assert "🎆 <b>Tu 2025 en cripto</b>" in enviados[0]
+
+
+def test_anual_tarjeta_sin_nada(con_semana, enviados, sin_fotos_de_verdad):
+    main.atender(con_semana, _mensaje("/anual 2024 tarjeta"))
+
+    assert sin_fotos_de_verdad == []
+    assert "De 2024 no tengo con qué hacerla" in enviados[0]
+
+
+def test_anual_tarjeta_mal_escrita(con_semana, enviados):
+    main.atender(con_semana, _mensaje("/anual 3000 tarjeta"))
+
+    assert "Dime un año entre 2009 y" in enviados[0]
+
+
+def test_el_resumen_del_año_ofrece_la_tarjeta(con_semana, con_botones):
+    _año_guardado(con_semana)
+
+    main.resumen_anual(con_semana, UNO_DE_ENERO)
+
+    [(_, botones)] = con_botones
+    assert botones == [[("🖼️ En imagen para enseñar", "/anual 2025 tarjeta")]]
+
+
 def test_anual_de_un_año_mal_escrito(con_semana, enviados):
     main.atender(con_semana, _mensaje("/anual 3000"))
 
