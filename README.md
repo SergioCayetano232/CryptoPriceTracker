@@ -425,7 +425,8 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/mute bitcoin 2h` | Calla solo esa cripto; las demás siguen avisando. Sus `/alerta` esperan a que vuelva |
 | `/unmute` | Vuelve a avisar, también de las que callaste una a una, y te cuenta lo que te has perdido: cuánto se ha movido cada una que vigilas mientras callaba, entre qué precios, y tu cartera. Si el silencio se acaba solo, te llega lo mismo al acabarse |
 | `/unmute bitcoin` | Vuelve a avisar solo de esa |
-| `/ayuda` | La lista de comandos |
+| `/ayuda` | Los comandos por temas (tu cartera, avisos, Hacienda…), con un botón para cada uno |
+| `/ayuda avisos` | Los de un tema. `/ayuda todo` saca la lista entera de golpe |
 | `/ayuda alerta` | Ese comando con ejemplos de todo lo que admite |
 
 En los comandos vale el símbolo de las más conocidas en vez del id: `/precio btc`,
@@ -1175,6 +1176,7 @@ crypto_tracker/
   aniversario.py las compras que cumplen años, para el resumen del día
   cuota.py       cuenta las consultas a CoinGecko
   comandos.py    entiende lo que le escribes
+  temas.py       los temas en que se reparte /ayuda
   lenguaje.py    frases sin barra, como "avísame si btc baja de 60000"
   respuestas/    lo que contesta a cada comando, por temas
     base.py          lo que comparten todos

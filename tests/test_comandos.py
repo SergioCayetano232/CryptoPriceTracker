@@ -8,6 +8,7 @@ from crypto_tracker.comandos import (
     EJEMPLOS,
     MENU,
     NO_ENTIENDO,
+    ConBotones,
     ayuda,
     interpretar,
     no_entiendo,
@@ -105,9 +106,36 @@ def test_no_entiendo_sin_nada_parecido(nombre):
     assert no_entiendo(nombre) == NO_ENTIENDO
 
 
-def test_ayuda_a_secas_es_la_lista():
-    assert ayuda() == AYUDA
+def test_ayuda_a_secas_son_los_temas():
+    r = ayuda()
+
+    assert isinstance(r, ConBotones)
+    assert "Elige un tema" in r.texto
+    assert "/status" in r.texto
+    assert r.botones[0][0] == ("📌 Lo básico", "/ayuda basico")
+
+
+def test_ayuda_todo_es_la_lista_entera():
+    assert ayuda("todo") == AYUDA
+    assert ayuda("TODO") == AYUDA
     assert "/ayuda alerta" in AYUDA
+
+
+def test_ayuda_de_un_tema():
+    r = ayuda("avisos")
+
+    assert r.texto.startswith("<b>🔔 Avisos</b>\n\n/alerta — ")
+    assert f"\n/escalera — {COMANDOS['escalera']}" in r.texto
+    assert "\n/rsi — " not in r.texto
+    assert r.texto.endswith("Con ejemplos de uno: /ayuda alerta")
+    assert r.botones == [[("⬅️ Otros temas", "/ayuda")]]
+
+
+def test_ayuda_de_un_tema_a_un_invitado():
+    texto = ayuda("sistema", frozenset({"invitar", "usuarios"})).texto
+
+    assert "/ajustes — " in texto
+    assert "/invitar — " not in texto
 
 
 @pytest.mark.parametrize("pedido", ["alerta", "/alerta", "ALERTA", "alert"])

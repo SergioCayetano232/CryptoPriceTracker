@@ -1,0 +1,267 @@
+"""Los temas de /ayuda: con más de 170 comandos, la lista de golpe no se lee."""
+
+from dataclasses import dataclass
+
+# Ninguna clave puede ser un comando ni un alias: /ayuda cartera ya es la de
+# /cartera, por eso el tema se llama "dinero".
+TODO = "todo"
+
+
+@dataclass(frozen=True)
+class Tema:
+    clave: str
+    titulo: str
+    comandos: tuple[str, ...]
+
+
+TEMAS = [
+    Tema(
+        "basico",
+        "📌 Lo básico",
+        (
+            "status",
+            "precio",
+            "hoy",
+            "resumen",
+            "horario",
+            "envivo",
+            "ath",
+            "vigilar",
+            "dejar",
+            "buscar",
+        ),
+    ),
+    Tema(
+        "dinero",
+        "💼 Tu cartera",
+        (
+            "cartera",
+            "reparto",
+            "tarjeta",
+            "riesgo",
+            "futuro",
+            "sharpe",
+            "rebalanceo",
+            "ideal",
+            "semana",
+            "mes",
+            "anual",
+            "record",
+            "primera",
+            "pelotazo",
+            "hodl",
+            "apodo",
+            "vsbtc",
+            "vsbolsa",
+            "deposito",
+            "inflacion",
+        ),
+    ),
+    Tema(
+        "apuntar",
+        "✍️ Compras y ventas",
+        (
+            "compra",
+            "venta",
+            "recompensa",
+            "movimientos",
+            "deshacer",
+            "corregir",
+            "importar",
+            "binance",
+            "exportar",
+            "compras",
+            "timing",
+            "ganancias",
+            "arrepentido",
+            "rentabilidad",
+            "emocion",
+            "emociones",
+            "sesgo",
+            "pienso",
+            "fantasma",
+            "herencia",
+        ),
+    ),
+    Tema(
+        "fiscal",
+        "🧾 Hacienda",
+        (
+            "impuestos",
+            "informe",
+            "comisiones",
+            "sivendo",
+            "permuta",
+            "compensar",
+            "modelo721",
+        ),
+    ),
+    Tema(
+        "avisos",
+        "🔔 Avisos",
+        (
+            "alerta",
+            "alertas",
+            "quitar",
+            "ultimo",
+            "escalera",
+            "stop",
+            "recordar",
+            "cada",
+            "rezagada",
+            "juntas",
+            "direccion",
+            "comisionred",
+            "ruido",
+            "voto",
+            "mute",
+            "unmute",
+        ),
+    ),
+    Tema(
+        "analisis",
+        "📈 Gráficas y análisis",
+        (
+            "historico",
+            "comparar",
+            "semaforo",
+            "media",
+            "racha",
+            "extremo",
+            "calendario",
+            "verdes",
+            "diasemana",
+            "diames",
+            "estacional",
+            "horas",
+            "rango",
+            "soporte",
+            "dia",
+            "cuando",
+            "redondo",
+            "rsi",
+            "bollinger",
+            "macd",
+            "estocastico",
+            "tormenta",
+            "fibonacci",
+            "caida",
+            "sube",
+            "volatilidad",
+            "backtest",
+            "quieta",
+            "correlacion",
+            "ratio",
+        ),
+    ),
+    Tema(
+        "calculos",
+        "🧮 Cuentas",
+        (
+            "convertir",
+            "si",
+            "dca",
+            "objetivo",
+            "promediar",
+            "posicion",
+            "limite",
+            "apy",
+            "plan",
+            "meta",
+            "equilibrio",
+            "doble",
+            "mitad",
+        ),
+    ),
+    Tema(
+        "panorama",
+        "🌍 El mercado",
+        (
+            "mercado",
+            "dominancia",
+            "miedo",
+            "tendencias",
+            "top",
+            "aleatoria",
+            "funding",
+            "spread",
+            "glosario",
+            "halving",
+            "cumple",
+            "whitepaper",
+            "merge",
+            "ethereum",
+            "adios",
+            "pizza",
+            "mundo",
+            "millonario",
+            "sat",
+        ),
+    ),
+    Tema(
+        "ratos",
+        "🎲 Para pasar el rato",
+        (
+            "prediccion",
+            "encuesta",
+            "liga",
+            "quiz",
+            "adivina",
+            "equivale",
+            "enletras",
+            "ballena",
+            "emoji",
+            "tiempo",
+            "navidad",
+            "nochevieja",
+            "caraocruz",
+            "dado",
+            "ppt",
+            "bola",
+            "tarot",
+            "horoscopo",
+            "galleta",
+            "chiste",
+            "dato",
+            "frase",
+            "refran",
+            "consejo",
+            "excusa",
+        ),
+    ),
+    Tema(
+        "sistema",
+        "⚙️ El bot",
+        (
+            "ajustes",
+            "bot",
+            "version",
+            "consultas",
+            "copia",
+            "backup",
+            "rellenar",
+            "invitar",
+            "usuarios",
+            "expulsar",
+            "ayuda",
+        ),
+    ),
+]
+
+POR_CLAVE = {t.clave: t for t in TEMAS}
+
+
+def buscar(texto: str) -> Tema | None:
+    return POR_CLAVE.get(texto.strip().lower())
+
+
+def visibles(tema: Tema, ocultas: frozenset[str] = frozenset()) -> list[str]:
+    """Los del tema que puede usar quien pregunta: a un invitado no le salen todos."""
+    return [c for c in tema.comandos if c not in ocultas]
+
+
+def botones(ocultas: frozenset[str] = frozenset()) -> list[list[tuple[str, str]]]:
+    """Dos por fila, que en el móvil con tres se cortan los nombres."""
+    lista = [(t.titulo, f"/ayuda {t.clave}") for t in TEMAS if visibles(t, ocultas)]
+    lista.append(("📜 Todo de golpe", f"/ayuda {TODO}"))
+    return [lista[i : i + 2] for i in range(0, len(lista), 2)]

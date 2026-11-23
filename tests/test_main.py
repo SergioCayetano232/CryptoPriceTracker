@@ -12594,9 +12594,9 @@ def test_inline_del_invitado_con_lo_suyo(config, a_quien, monkeypatch):
 def test_la_ayuda_del_invitado_sin_lo_tuyo(config, a_quien):
     _con_invitado(config, a_quien)
 
-    main.atender(config, _de(555, "/ayuda"))
+    main.atender(config, _de(555, "/ayuda todo"))
     suya = a_quien[-1][1]
-    main.atender(config, _mensaje("/ayuda"))
+    main.atender(config, _mensaje("/ayuda todo"))
     tuya = a_quien[-1][1]
 
     for orden in ("/invitar", "/usuarios", "/expulsar", "/binance", "/consultas"):
@@ -12606,6 +12606,10 @@ def test_la_ayuda_del_invitado_sin_lo_tuyo(config, a_quien):
 
     main.atender(config, _de(555, "/ayuda invitar"))
     assert a_quien[-1][1] == "Eso solo lo puede usar quien lleva el bot."
+
+    main.atender(config, _de(555, "/ayuda sistema"))
+    assert "\n/ajustes — " in a_quien[-1][1]
+    assert "\n/invitar — " not in a_quien[-1][1]
 
 
 def test_dominancia_del_invitado_con_tu_historico(config, a_quien, monkeypatch):

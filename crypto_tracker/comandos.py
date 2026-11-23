@@ -4,7 +4,7 @@ import difflib
 import html
 from dataclasses import dataclass
 
-from . import equivale, lenguaje, simbolos
+from . import equivale, lenguaje, simbolos, temas
 
 # Lo que sale en el menu de Telegram al escribir "/".
 COMANDOS = {
@@ -610,6 +610,17 @@ def _lista(ocultas: frozenset[str] = frozenset()) -> str:
 
 AYUDA = _lista()
 
+
+def _lista_tema(tema: temas.Tema, ocultas: frozenset[str]) -> str:
+    nombres = temas.visibles(tema, ocultas)
+    lineas = [f"/{c} — {COMANDOS[c]}" for c in nombres]
+    return (
+        f"<b>{tema.titulo}</b>\n\n"
+        + "\n".join(lineas)
+        + f"\n\nCon ejemplos de uno: /ayuda {nombres[0]}"
+    )
+
+
 # Para /ayuda alerta. Solo los que tienen varias formas; el resto con su linea basta.
 EJEMPLOS = {
     "precio": [
@@ -1031,13 +1042,31 @@ def no_entiendo(nombre: str, argumento: str = "") -> str:
     return f"No te entiendo. ¿Querías decir {sugerencia}?"
 
 
-def ayuda(argumento: str = "", ocultas: frozenset[str] = frozenset()) -> str:
-    """/ayuda a secas, la lista. /ayuda alerta, ese con sus ejemplos.
+INICIO = (
+    "🤖 <b>¿Qué quieres hacer?</b> Elige un tema.\n\n"
+    "Para empezar: /status, /precio btc o /alerta btc 70000\n"
+    "De uno en concreto, con ejemplos: /ayuda alerta\n"
+    "También sin barra: «avísame si btc baja de 60000» o «cuánto vale eth»."
+)
+
+VOLVER = [[("⬅️ Otros temas", "/ayuda")]]
+
+
+def ayuda(
+    argumento: str = "", ocultas: frozenset[str] = frozenset()
+) -> "str | ConBotones":
+    """/ayuda a secas, los temas. /ayuda avisos, los de ese tema. /ayuda alerta,
+    ese con sus ejemplos. /ayuda todo, la lista entera como antes.
 
     ocultas son los que no puede usar quien pregunta: a un invitado no le
     enseño /invitar ni /binance."""
     if not argumento.strip():
+        return ConBotones(INICIO, temas.botones(ocultas))
+    if argumento.strip().lower() == temas.TODO:
         return _lista(ocultas) if ocultas else AYUDA
+    tema = temas.buscar(argumento)
+    if tema:
+        return ConBotones(_lista_tema(tema, ocultas), VOLVER)
 
     pedido = argumento.split()[0].lstrip("/").lower()
     nombre = ALIAS.get(pedido, pedido)
