@@ -698,11 +698,13 @@ def _cuando(config: Config, argumento: str) -> str:
     return alerts.formatear_cuando(coin_id, resultado, config.vs_currency)
 
 
-def _correlacion(config: Config, argumento: str) -> str:
+def _correlacion(config: Config, argumento: str) -> str | comandos.Foto:
     try:
         ids, horas = correlacion.interpretar(argumento)
     except periodo.PeriodoError as e:
         return telegram.escape(str(e))
+    if ids == [correlacion.TODAS]:
+        return _correlaciones(_con_cambios(config), horas)
     if not ids:
         ids = [w.coin_id for w in _con_cambios(config).watchlist[:2]]
         if len(ids) < 2:
@@ -723,6 +725,35 @@ def _correlacion(config: Config, argumento: str) -> str:
             "que vigilo: míralas con /vigilar"
         )
     return alerts.formatear_correlacion(*ids, resultado, horas)
+
+
+def _correlaciones(config: Config, horas: float) -> str | comandos.Foto:
+    ids = correlacion.juntar(
+        [w.coin_id for w in config.watchlist], [p.coin_id for p in config.cartera]
+    )
+    if len(ids) < 2:
+        return (
+            "Solo vigilas una cripto y no hay con qué compararla. Añade otra: /vigilar"
+        )
+    series = {
+        c: volatilidad.por_dias(
+            database.get_serie(config.database_path, c, horas, config.vs_currency)
+        )
+        for c in ids
+    }
+    m = correlacion.matriz(series)
+    if not m.con_valor:
+        return (
+            f"Necesito al menos {correlacion.MINIMO} días seguidos con precios "
+            f"({periodo.nombre(horas)}) de dos de ellas, y no los tengo todavía."
+        )
+    texto = alerts.formatear_correlaciones(m, horas)
+    try:
+        png = grafica.dibujar_correlaciones(m, periodo.nombre(horas))
+    except Exception as e:
+        logger.warning("Mando /correlacion todas sin imagen: %s", e)
+        return texto
+    return comandos.Foto(png, texto, texto)
 
 
 def _ratio(config: Config, argumento: str) -> str:

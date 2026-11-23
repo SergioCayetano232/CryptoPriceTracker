@@ -5,7 +5,14 @@ from datetime import date, timedelta
 import pytest
 
 from crypto_tracker.alerts import formatear_correlacion
-from crypto_tracker.correlacion import Correlacion, calcular, interpretar
+from crypto_tracker.correlacion import (
+    MAX_TODAS,
+    Correlacion,
+    calcular,
+    interpretar,
+    juntar,
+    matriz,
+)
 from crypto_tracker.periodo import PeriodoError
 
 HOY = date(2026, 10, 13)
@@ -99,3 +106,64 @@ def test_formatear(valor, esperado):
     assert f"<b>{valor:+.2f}</b>".replace(".", ",") in texto
     assert esperado in texto
     assert "Con 29 días" in texto
+
+
+# --- todas contra todas ---
+
+
+@pytest.mark.parametrize(
+    "texto, sale",
+    [
+        ("todas", (["todas"], 30 * 24)),
+        ("TODAS 90d", (["todas"], 90 * 24)),
+    ],
+)
+def test_interpretar_todas(texto, sale):
+    assert interpretar(texto) == sale
+
+
+def test_juntar():
+    assert juntar(["bitcoin", "ethereum"], ["ethereum", "solana"]) == [
+        "bitcoin",
+        "ethereum",
+        "solana",
+    ]
+    assert len(juntar([f"c{i}" for i in range(20)])) == MAX_TODAS
+
+
+def test_matriz():
+    al_reves = tuple(200 - p for p in SUBE_BAJA)
+    m = matriz(
+        {
+            "bitcoin": _dias(*SUBE_BAJA),
+            "ethereum": _dias(*(p * 2 for p in SUBE_BAJA)),
+            "tether": _dias(*al_reves),
+            "nueva": _dias(10, 11),  # sin días suficientes
+        }
+    )
+
+    assert m.ids == ["bitcoin", "ethereum", "tether", "nueva"]
+    assert len(m.parejas) == 6
+    assert m.de("bitcoin", "bitcoin") == 1.0
+    assert m.de("bitcoin", "ethereum") == pytest.approx(1)
+    # Da igual el orden en que se pregunte.
+    assert m.de("tether", "bitcoin") == m.de("bitcoin", "tether")
+    assert m.de("bitcoin", "tether") < -0.9
+    assert m.de("bitcoin", "nueva") is None
+
+    a, b, valor = m.con_valor[0]
+    assert {a, b} == {"bitcoin", "ethereum"}
+    assert len(m.con_valor) == 3
+    assert m.con_valor[-1][2] < -0.9
+
+
+def test_matriz_media():
+    m = matriz(
+        {
+            "bitcoin": _dias(*SUBE_BAJA),
+            "ethereum": _dias(*(p * 2 for p in SUBE_BAJA)),
+        }
+    )
+
+    assert m.media == pytest.approx(1)
+    assert matriz({"bitcoin": _dias(*SUBE_BAJA), "nueva": _dias(1, 2)}).media is None

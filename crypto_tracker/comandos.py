@@ -780,6 +780,7 @@ EJEMPLOS = {
         ("/correlacion btc eth", "si suben y bajan a la vez, en 30 días"),
         ("/correlacion btc sol 90d", "del tramo que digas"),
         ("/correlacion", "a secas, las dos primeras que vigilo"),
+        ("/correlacion todas", "todas contra todas, en una imagen"),
     ],
     "convertir": [
         ("/convertir 0.05 bitcoin", "cuánto es en dinero"),

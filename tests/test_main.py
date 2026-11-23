@@ -6612,6 +6612,78 @@ def test_correlacion_sin_precios(config, enviados):
     assert "al menos 7 días seguidos con precios de <b>bitcoin</b> y" in enviados[0]
 
 
+SUBE_BAJA = [100, 110, 99, 105, 120, 108, 112, 101, 115]
+
+
+def _correlacionadas(config):
+    # bitcoin y ethereum iguales, solana al revés, cardano sin días suficientes.
+    for dias, precio in enumerate(SUBE_BAJA):
+        minutos = (8 - dias) * 24 * 60
+        _precio_de(config, "bitcoin", float(precio), minutos)
+        _precio_de(config, "ethereum", precio / 20, minutos)
+        _precio_de(config, "solana", 300.0 - precio, minutos)
+    _precio_de(config, "cardano", 0.5, 60)
+
+
+def test_correlacion_todas(con_semana, enviados, sin_fotos_de_verdad, monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
+    _correlacionadas(con_semana)
+    # bitcoin y solana de la cartera, ethereum y cardano vigiladas.
+    config = replace(
+        con_semana,
+        watchlist=[Watch("ethereum", percent=5), Watch("cardano", percent=5)],
+    )
+
+    main.atender(config, _mensaje("/correlacion todas"))
+
+    [(png, pie)] = sin_fotos_de_verdad
+    assert png.startswith(b"\x89PNG")
+    assert pie.startswith("🔗 <b>Cómo se mueven juntas</b>, últimos 30 días")
+    assert "Las que más: Ethereum y Bitcoin (+1,00)" in pie
+    assert "Las que menos:" in pie and "Solana" in pie.split("Las que menos:")[1]
+    assert "<i>Sin días suficientes para comparar: Cardano</i>" in pie
+    assert enviados == []
+
+
+def test_correlacion_todas_sin_imagen(config, enviados, monkeypatch):
+    from dataclasses import replace
+
+    _correlacionadas(config)
+    config = replace(
+        config, watchlist=[Watch("bitcoin", percent=5), Watch("ethereum", percent=5)]
+    )
+
+    def rota(*a):
+        raise main.grafica.GraficaError("sin matplotlib")
+
+    monkeypatch.setattr(main.grafica, "dibujar_correlaciones", rota)
+
+    main.atender(config, _mensaje("/correlacion todas 90d"))
+
+    assert "Cómo se mueven juntas</b>, últimos 90 días" in enviados[0]
+    assert "De media +1,00: se mueven casi como una sola" in enviados[0]
+
+
+def test_correlacion_todas_con_una_sola(config, enviados):
+    main.atender(config, _mensaje("/correlacion todas"))
+
+    assert "Solo vigilas una cripto" in enviados[0]
+
+
+def test_correlacion_todas_sin_precios(config, enviados):
+    from dataclasses import replace
+
+    config = replace(
+        config, watchlist=[Watch("bitcoin", percent=5), Watch("ethereum", percent=5)]
+    )
+
+    main.atender(config, _mensaje("/correlacion todas"))
+
+    assert "Necesito al menos 7 días seguidos" in enviados[0]
+
+
 # --- /copia ---
 
 

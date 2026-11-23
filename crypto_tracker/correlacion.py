@@ -1,4 +1,4 @@
-"""/correlacion: si dos criptos suben y bajan a la vez."""
+"""/correlacion: si dos criptos suben y bajan a la vez, o todas contra todas."""
 
 import math
 from dataclasses import dataclass
@@ -14,6 +14,10 @@ EJEMPLO = "/correlacion btc eth 30d"
 # Con menos cambios de día, una casualidad ya da una correlación muy alta.
 MINIMO = 7
 
+TODAS = "todas"
+# Con más, las casillas no caben en el móvil ni con dos decimales.
+MAX_TODAS = 8
+
 
 @dataclass(frozen=True)
 class Correlacion:
@@ -22,11 +26,14 @@ class Correlacion:
 
 
 def interpretar(argumento: str) -> tuple[list[str], float]:
-    """'btc eth 7d' -> (['bitcoin', 'ethereum'], 168). Sin criptos, []."""
+    """'btc eth 7d' -> (['bitcoin', 'ethereum'], 168). Sin criptos, [].
+    'todas 90d' -> (['todas'], 2160): las que vigilo y las de tu cartera."""
     partes = argumento.split()
     horas = POR_DEFECTO
     if partes and es_tramo(partes[-1]):
         horas = leer(partes.pop())
+    if [p.lower() for p in partes] == [TODAS]:
+        return [TODAS], horas
     if len(partes) not in (0, 2):
         raise PeriodoError(f"De dos en dos. Escríbelo así: {EJEMPLO}")
     ids = [a_id(p) for p in partes]
@@ -63,3 +70,42 @@ def calcular(
     if not vx or not vy:
         return None
     return Correlacion(cov / math.sqrt(vx * vy), len(comunes))
+
+
+@dataclass(frozen=True)
+class Matriz:
+    ids: list[str]
+    # Cada pareja una vez, en el orden de ids. None si no hay días en común.
+    parejas: dict[tuple[str, str], Correlacion | None]
+
+    def de(self, una: str, otra: str) -> float | None:
+        if una == otra:
+            return 1.0
+        c = self.parejas.get((una, otra)) or self.parejas.get((otra, una))
+        return None if c is None else c.valor
+
+    @property
+    def con_valor(self) -> list[tuple[str, str, float]]:
+        """Las parejas que se han podido medir, de más juntas a menos."""
+        lista = [(a, b, c.valor) for (a, b), c in self.parejas.items() if c]
+        return sorted(lista, key=lambda x: x[2], reverse=True)
+
+    @property
+    def media(self) -> float | None:
+        valores = [v for _, _, v in self.con_valor]
+        return sum(valores) / len(valores) if valores else None
+
+
+def juntar(*listas: list[str]) -> list[str]:
+    """Las de varias listas sin repetir, en orden y hasta MAX_TODAS."""
+    return list(dict.fromkeys(c for lista in listas for c in lista))[:MAX_TODAS]
+
+
+def matriz(series: dict[str, list[tuple[date, float]]]) -> Matriz:
+    ids = list(series)
+    parejas = {
+        (a, b): calcular(series[a], series[b])
+        for i, a in enumerate(ids)
+        for b in ids[i + 1 :]
+    }
+    return Matriz(ids, parejas)

@@ -21,6 +21,7 @@ from .mensajes.analisis import (
     formatear_conversion,
     formatear_copia,
     formatear_correlacion,
+    formatear_correlaciones,
     formatear_cuando,
     formatear_diames,
     formatear_diasemana,

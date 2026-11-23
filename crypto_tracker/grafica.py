@@ -5,6 +5,7 @@ from datetime import datetime
 
 from .alerts import SIMBOLOS, _num
 from .calendario import Mes, semanas
+from .correlacion import Matriz
 from .mes import MESES
 from .periodo import nombre as nombre_periodo
 from .reparto import OTRAS, Trozo
@@ -482,6 +483,94 @@ def dibujar_tarjeta(t: Tarjeta) -> bytes:
     )
     salida = io.BytesIO()
     fig.savefig(salida, format="png", facecolor=NOCHE)
+    return salida.getvalue()
+
+
+# Los extremos de /correlacion todas: al revés en azul, a la vez en naranja.
+JUNTAS = "#eb6834"
+AL_REVES = "#2a78d6"
+
+
+def dibujar_correlaciones(m: Matriz, periodo: str) -> bytes:
+    """Todas contra todas, con el número en cada casilla."""
+    try:
+        from matplotlib.figure import Figure
+        from matplotlib.patches import Rectangle
+    except ImportError as e:
+        raise GraficaError(
+            "Falta matplotlib. Ejecuta: pip install -r requirements.txt"
+        ) from e
+
+    # En pulgadas: con 3 o con 8 criptos, los márgenes no cambian.
+    n = len(m.ids)
+    rejilla = 0.75 * n
+    ancho = max(5.6, 1.4 + rejilla)
+    alto = 1.3 + rejilla + 0.6
+    fig = Figure(figsize=(ancho, alto), dpi=150, facecolor=FONDO)
+    fig.text(
+        0.3 / ancho,
+        1 - 0.25 / alto,
+        "Cómo se mueven juntas",
+        fontsize=14,
+        weight="bold",
+        color=TEXTO,
+        va="top",
+    )
+    fig.text(
+        0.3 / ancho,
+        1 - 0.6 / alto,
+        periodo.capitalize(),
+        fontsize=10,
+        color=SUAVE,
+        va="top",
+    )
+    ax = fig.add_axes((1.1 / ancho, 0.6 / alto, rejilla / ancho, rejilla / alto))
+    nombres = [_corto(c) for c in m.ids]
+    for fila, una in enumerate(m.ids):
+        for col, otra in enumerate(m.ids):
+            valor = m.de(una, otra)
+            if fila == col:
+                fondo, texto, letra = "#f8fafc", "", SUAVE
+            elif valor is None:
+                fondo, texto, letra = REJILLA, "—", SUAVE
+            else:
+                fondo = _mezcla(
+                    JUNTAS if valor >= 0 else AL_REVES, 0.08 + 0.92 * abs(valor)
+                )
+                texto = f"{valor:+.2f}".replace(".", ",")
+                # En las casillas oscuras el negro no se lee.
+                letra = FONDO if abs(valor) >= 0.55 else TEXTO
+            ax.add_patch(
+                Rectangle((col, fila), 0.94, 0.94, facecolor=fondo, edgecolor="none")
+            )
+            ax.text(
+                col + 0.47,
+                fila + 0.5,
+                texto,
+                ha="center",
+                va="center",
+                fontsize=9 if n > 6 else 10.5,
+                color=letra,
+                weight="bold",
+            )
+    ax.set_xlim(-0.03, n)
+    ax.set_ylim(n, -0.03)
+    ax.set_xticks([i + 0.47 for i in range(n)], nombres)
+    ax.set_yticks([i + 0.47 for i in range(n)], nombres)
+    ax.xaxis.tick_top()
+    ax.tick_params(length=0, labelsize=9, colors=TEXTO)
+    for borde in ax.spines.values():
+        borde.set_visible(False)
+
+    fig.text(
+        0.3 / ancho,
+        0.22 / alto,
+        "+1 se mueven igual · 0 nada que ver · −1 una sube si la otra baja",
+        fontsize=8.5,
+        color=SUAVE,
+    )
+    salida = io.BytesIO()
+    fig.savefig(salida, format="png", facecolor=FONDO)
     return salida.getvalue()
 
 

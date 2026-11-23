@@ -8,7 +8,7 @@ from ..backtest import Backtest
 from ..bollinger import PERIODO as PERIODO_BOLLINGER
 from ..bollinger import Bandas
 from ..caida import Caida
-from ..correlacion import Correlacion
+from ..correlacion import Correlacion, Matriz
 from ..cuando import Cuando
 from ..diames import POCOS_MESES as POCOS_MESES_DIAMES
 from ..diames import DiasMes
@@ -311,6 +311,35 @@ def formatear_correlacion(una: str, otra: str, c: Correlacion, horas: float) -> 
         f"<i>Con {c.dias} días. +1 es que se mueven igual, 0 que no tienen nada que "
         "ver y -1 que una sube cuando la otra baja</i>"
     )
+
+
+def formatear_correlaciones(m: Matriz, horas: float) -> str:
+    """Pie de /correlacion todas: lo que hay que mirar de la imagen."""
+    pares = m.con_valor
+
+    def par(a: str, b: str, v: float) -> str:
+        valor = f"{v:+.2f}".replace(".", ",")
+        return f"{_nombre(a)} y {_nombre(b)} ({valor})"
+
+    lineas = [f"🔗 <b>Cómo se mueven juntas</b>, {nombre_periodo(horas)}", ""]
+    lineas.append(f"Las que más: {par(*pares[0])}")
+    if len(pares) > 1:
+        lineas.append(f"Las que menos: {par(*pares[-1])}")
+    media = m.media
+    if media >= 0.7:
+        como = "se mueven casi como una sola, tenerlas todas reparte poco el riesgo"
+    elif media >= 0.4:
+        como = "suelen ir juntas"
+    else:
+        como = "van bastante por libre"
+    lineas += ["", f"De media {f'{media:+.2f}'.replace('.', ',')}: {como}"]
+
+    medidas = {c for a, b, _ in pares for c in (a, b)}
+    sin_datos = [c for c in m.ids if c not in medidas]
+    if sin_datos:
+        nombres = ", ".join(_nombre(c) for c in sin_datos)
+        lineas.append(f"<i>Sin días suficientes para comparar: {nombres}</i>")
+    return "\n".join(lineas)
 
 
 def formatear_ratio(una: str, otra: str, r: Ratio, horas: float) -> str:
