@@ -193,6 +193,12 @@ def para_pienso(comando: str, coin_id: str) -> list[list[tuple[str, str]]]:
     return [f for f in filas if all(_cabe(b) for b in f)]
 
 
+def para_tesis(numero: int) -> list[list[tuple[str, str]]]:
+    return [
+        [("✅ Se cumplió", f"/tesis si {numero}"), ("❌ No", f"/tesis no {numero}")]
+    ]
+
+
 def emociones(movimiento_id: int) -> list[list[tuple[str, str]]]:
     """Con qué ánimo la has hecho: un toque y queda apuntado para /emociones."""
     botones = [

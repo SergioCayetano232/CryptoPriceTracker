@@ -29,6 +29,9 @@ from .prediccion import Prediccion
 from .puntuales import Puntual
 from .recordar import Recordatorio, a_texto, de_texto
 from .rezagada import Rezagada
+from .tesis import Tesis
+from .tesis import a_texto as texto_tesis
+from .tesis import de_texto as leer_tesis
 from .usuarios import Invitado
 from .voto import Voto
 
@@ -1430,6 +1433,40 @@ def get_piensos(db_path: str) -> list[Pienso]:
             continue
         lista.append(p)
     return lista
+
+
+def guardar_tesis(db_path: str, t: Tesis) -> None:
+    with _connect(db_path) as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (f"tesis:{t.numero}", texto_tesis(t)),
+        )
+
+
+def get_tesis(db_path: str) -> list[Tesis]:
+    with _connect(db_path) as conn:
+        filas = conn.execute(
+            "SELECT clave, valor FROM ajustes WHERE clave LIKE 'tesis:%'"
+        ).fetchall()
+
+    lista = []
+    for fila in filas:
+        numero = fila["clave"].removeprefix("tesis:")
+        t = leer_tesis(int(numero), fila["valor"]) if numero.isdigit() else None
+        if t is None:
+            logger.warning("Una /tesis que no se entiende: %r", fila["valor"])
+            continue
+        lista.append(t)
+    # Por número y no por clave: como texto, la 10 iría antes que la 2.
+    return sorted(lista, key=lambda t: t.numero)
+
+
+def quitar_tesis(db_path: str, numero: int) -> bool:
+    with _connect(db_path) as conn:
+        cursor = conn.execute(
+            "DELETE FROM ajustes WHERE clave = ?", (f"tesis:{numero}",)
+        )
+    return cursor.rowcount > 0
 
 
 def quitar_pienso(db_path: str, coin_id: str) -> bool:

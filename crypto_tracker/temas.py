@@ -79,6 +79,7 @@ TEMAS = [
             "emociones",
             "sesgo",
             "pienso",
+            "tesis",
             "fantasma",
             "herencia",
         ),

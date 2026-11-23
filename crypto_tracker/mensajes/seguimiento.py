@@ -35,6 +35,8 @@ from ..rezagada import EJEMPLO as EJEMPLO_REZAGADA
 from ..rezagada import Rezagada
 from ..stop import Stop
 from ..telegram import escape
+from ..tesis import EJEMPLO as EJEMPLO_TESIS
+from ..tesis import Tesis, marcador, pendientes
 from .base import (
     SIMBOLOS,
     _barra_progreso,
@@ -560,6 +562,100 @@ def formatear_pensado(p: Pienso, precio: float, currency: str) -> str:
     else:
         texto += "Está más o menos igual: pensarlo no te ha costado nada."
     return texto + "\nSi la haces, dale al botón y la apunto en la cartera."
+
+
+def _cita(texto: str, largo: int | None = None) -> str:
+    if largo and len(texto) > largo:
+        texto = texto[: largo - 1].rstrip() + "…"
+    return f"«{escape(texto)}»"
+
+
+def _aciertos(aciertos: int, juzgadas: int) -> str:
+    return f"Aciertas {aciertos} de {juzgadas} ({aciertos / juzgadas * 100:.0f}%)"
+
+
+def formatear_tesis_nueva(t: Tesis, currency: str) -> str:
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    return (
+        f"🧐 <b>Apuntada, tesis {t.numero}</b>\n"
+        f"<b>{_nombre(t.coin_id)}</b> a {simbolo}{_num(t.precio)}:\n"
+        f"{_cita(t.texto)}\n\n"
+        f"El {t.vence.astimezone():%d/%m} te la recuerdo con el precio de entonces "
+        "y me dices si acertaste.\n"
+        f"Para quitarla: /tesis quitar {t.numero}"
+    )
+
+
+def formatear_tesis_vencida(t: Tesis, precio: float, currency: str) -> str:
+    """La pregunta cuando se cumple el plazo."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    cambio = t.cambio(precio)
+    return (
+        f"🧐 <b>¿Acertaste con {_nombre(t.coin_id)}?</b>\n"
+        f"Hace {t.dias} días escribiste:\n"
+        f"{_cita(t.texto)}\n\n"
+        f"Entonces {simbolo}{_num(t.precio)} → ahora <b>{simbolo}{_num(precio)}</b> "
+        f"({_flecha(cambio)} {_signo(cambio)})\n"
+        f"<i>{_matiz(cambio)} Tú decides.</i>"
+    )
+
+
+def _matiz(cambio: float) -> str:
+    # El precio no es el juez: puedes acertar en el porqué y que baje igual.
+    if cambio >= IGUAL_PIENSO:
+        return "Que haya subido no quiere decir que fuera por lo que pensabas."
+    if cambio <= -IGUAL_PIENSO:
+        return "Que haya bajado no quiere decir que te equivocaras en el fondo."
+    return "El precio está igual: lo que cuenta es si pasó lo que decías."
+
+
+def formatear_tesis_juzgada(t: Tesis, aciertos: int, juzgadas: int) -> str:
+    if t.acerto:
+        texto = f"✅ Apuntado: la {t.numero} se cumplió."
+    else:
+        texto = f"❌ Apuntado: la {t.numero} no se cumplió. De estas se aprende más."
+    return f"{texto}\n{_aciertos(aciertos, juzgadas)}. Todas en /tesis"
+
+
+def formatear_tesis(lista: list[Tesis]) -> str:
+    """/tesis a secas."""
+    if not lista:
+        return (
+            "No tienes ninguna tesis. La próxima vez que compres, apunta por qué: "
+            f"{EJEMPLO_TESIS}\nTe la recuerdo a los 30 días y vemos si acertaste."
+        )
+    lineas = ["🧐 <b>Tus tesis</b>"]
+    aciertos, juzgadas = marcador(lista)
+    if juzgadas:
+        lineas.append(_aciertos(aciertos, juzgadas))
+
+    esperando = pendientes(lista)
+    if esperando:
+        lineas += ["", "<b>Esperando</b>"]
+        lineas += [
+            f"{t.numero}. <b>{_nombre(t.coin_id)}</b>, te pregunto el "
+            f"{t.vence.astimezone():%d/%m} · {_cita(t.texto, 50)}"
+            for t in esperando
+        ]
+    sin_contestar = [t for t in lista if t.preguntada and t.acerto is None]
+    if sin_contestar:
+        lineas += ["", "<b>Por contestar</b>"]
+        lineas += [
+            f"{t.numero}. <b>{_nombre(t.coin_id)}</b> {_signo(t.cambio(t.final))} · "
+            f"/tesis si {t.numero} o /tesis no {t.numero}"
+            for t in sin_contestar
+        ]
+    # Las últimas: con meses de uso, todas juntas serían un muro.
+    juzgadas_ya = [t for t in lista if t.acerto is not None][-5:]
+    if juzgadas_ya:
+        lineas += ["", "<b>Las últimas</b>"]
+        lineas += [
+            f"{'✅' if t.acerto else '❌'} {t.numero}. <b>{_nombre(t.coin_id)}</b> "
+            f"{_signo(t.cambio(t.final))} · {_cita(t.texto, 50)}"
+            for t in juzgadas_ya
+        ]
+    lineas += ["", f"Para quitar una: /tesis quitar {lista[-1].numero}"]
+    return "\n".join(lineas)
 
 
 def texto_condicion(c: Condicion) -> str:

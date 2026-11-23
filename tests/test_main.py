@@ -11177,6 +11177,152 @@ def test_pienso_si_sigue_igual(config, con_botones, monkeypatch):
     assert "Está más o menos igual" in con_botones[-1][0]
 
 
+# --- /tesis ---
+
+
+def test_tesis_nueva(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"solana": 150.0})
+
+    main.atender(config, _mensaje("/tesis sol el ETF <lo> va a subir"))
+
+    texto = enviados[0]
+    assert "🧐 <b>Apuntada, tesis 1</b>" in texto
+    assert "<b>Solana</b> a €150,00:\n«el ETF &lt;lo&gt; va a subir»" in texto
+    assert "Para quitarla: /tesis quitar 1" in texto
+    [t] = database.get_tesis(config.database_path)
+    assert (t.coin_id, t.precio, t.dias, t.texto) == (
+        "solana",
+        150.0,
+        30,
+        "el ETF <lo> va a subir",
+    )
+
+
+def test_tesis_el_ciclo_entero(config, con_botones, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+    main.atender(config, _mensaje("/tesis btc 7d se acaba la sequía"))
+    con_botones.clear()
+    ahora = datetime.now(timezone.utc)
+    _precio(monkeypatch, {"bitcoin": 66000.0})
+
+    main.tesis_vencidas(config, ahora + timedelta(days=6))
+    assert con_botones == []
+    main.tesis_vencidas(config, ahora + timedelta(days=7, minutes=1))
+    main.tesis_vencidas(config, ahora + timedelta(days=8))
+
+    [(texto, botones)] = con_botones
+    assert "🧐 <b>¿Acertaste con Bitcoin?</b>" in texto
+    assert "Hace 7 días escribiste:\n«se acaba la sequía»" in texto
+    assert "Entonces €60.000,00 → ahora <b>€66.000,00</b> (🔺 +10,0%)" in texto
+    assert "Que haya subido no quiere decir" in texto
+    assert botones == [[("✅ Se cumplió", "/tesis si 1"), ("❌ No", "/tesis no 1")]]
+
+    main.atender(config, _mensaje(botones[0][0][1]))
+    assert "✅ Apuntado: la 1 se cumplió.\nAciertas 1 de 1 (100%)" in con_botones[-1][0]
+    [t] = database.get_tesis(config.database_path)
+    assert (t.final, t.acerto) == (66000.0, True)
+
+
+def test_tesis_no_se_juzga_antes_de_tiempo(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+    main.atender(config, _mensaje("/tesis btc sube"))
+
+    main.atender(config, _mensaje("/tesis si 1"))
+
+    assert "La 1 aún no toca" in enviados[-1]
+    assert database.get_tesis(config.database_path)[0].acerto is None
+
+
+def test_tesis_callado_espera(config, con_botones, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+    main.atender(config, _mensaje("/tesis btc 7d sube"))
+    con_botones.clear()
+    database.silenciar_hasta(
+        config.database_path, datetime.now(timezone.utc) + timedelta(days=30)
+    )
+
+    main.tesis_vencidas(config, datetime.now(timezone.utc) + timedelta(days=8))
+
+    assert con_botones == []
+    assert not database.get_tesis(config.database_path)[0].preguntada
+
+
+def test_tesis_lista_y_marcador(config, enviados, monkeypatch):
+    from crypto_tracker.tesis import Tesis
+
+    hace = datetime.now(timezone.utc) - timedelta(days=40)
+    for t in [
+        Tesis(1, "bitcoin", "acerté", 50000.0, hace, final=60000.0, acerto=True),
+        Tesis(2, "ethereum", "fallé", 3000.0, hace, final=2400.0, acerto=False),
+        Tesis(3, "solana", "sin contestar", 100.0, hace, final=110.0),
+        Tesis(4, "bitcoin", "x" * 80, 60000.0, datetime.now(timezone.utc)),
+    ]:
+        database.guardar_tesis(config.database_path, t)
+
+    main.atender(config, _mensaje("/tesis"))
+
+    texto = enviados[0]
+    assert "Aciertas 1 de 2 (50%)" in texto
+    assert "4. <b>Bitcoin</b>, te pregunto el" in texto
+    assert "«" + "x" * 49 + "…»" in texto
+    assert "3. <b>Solana</b> +10,0% · /tesis si 3 o /tesis no 3" in texto
+    assert "✅ 1. <b>Bitcoin</b> +20,0% · «acerté»" in texto
+    assert "❌ 2. <b>Ethereum</b> -20,0% · «fallé»" in texto
+    assert texto.endswith("Para quitar una: /tesis quitar 4")
+
+
+@pytest.mark.parametrize(
+    "ahora, matiz",
+    [
+        (54000.0, "Que haya bajado no quiere decir que te equivocaras"),
+        (60100.0, "El precio está igual"),
+    ],
+)
+def test_tesis_vencida_sin_subir(config, con_botones, monkeypatch, ahora, matiz):
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+    main.atender(config, _mensaje("/tesis btc 7d sube"))
+    _precio(monkeypatch, {"bitcoin": ahora})
+
+    main.tesis_vencidas(config, datetime.now(timezone.utc) + timedelta(days=8))
+
+    assert matiz in con_botones[-1][0]
+    assert "Que haya subido" not in con_botones[-1][0]
+
+
+def test_tesis_vacia_y_quitar(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+    main.atender(config, _mensaje("/tesis"))
+    main.atender(config, _mensaje("/tesis btc sube"))
+
+    main.atender(config, _mensaje("/tesis quitar 1"))
+    main.atender(config, _mensaje("/tesis quitar 1"))
+
+    assert "No tienes ninguna tesis" in enviados[0]
+    assert enviados[2] == "Hecho, quitada la 1."
+    assert "No tienes ninguna con ese número" in enviados[3]
+    assert database.get_tesis(config.database_path) == []
+
+
+def test_tesis_tope(config, enviados, monkeypatch):
+    from crypto_tracker.tesis import MAXIMO
+
+    _precio(monkeypatch, {"bitcoin": 60000.0})
+    for _ in range(MAXIMO):
+        main.atender(config, _mensaje("/tesis btc sube"))
+    enviados.clear()
+
+    main.atender(config, _mensaje("/tesis btc otra más"))
+
+    assert f"Ya tienes {MAXIMO} esperando" in enviados[0]
+    assert len(database.get_tesis(config.database_path)) == MAXIMO
+
+
+def test_tesis_mal_escrita(config, enviados):
+    main.atender(config, _mensaje("/tesis btc"))
+
+    assert "¿Y por qué?" in enviados[0]
+
+
 # --- /timing ---
 
 

@@ -1,4 +1,4 @@
-"""Lo que el bot te vuelve a preguntar más tarde: /recordar, /pienso y /prediccion."""
+"""Lo que el bot te vuelve a preguntar más tarde: /recordar, /pienso, /tesis..."""
 
 import logging
 import math
@@ -17,10 +17,17 @@ from .. import (
     prediccion,
     recordar,
     telegram,
+    tesis,
     usuarios,
 )
 from ..config import Config
-from .base import _con_cambios, _indicador, _silenciado, _sin_sonido
+from .base import (
+    _con_cambios,
+    _indicador,
+    _precio_o_pedirlo,
+    _silenciado,
+    _sin_sonido,
+)
 
 logger = logging.getLogger("crypto_tracker")
 
@@ -360,6 +367,91 @@ def _precio_del_cierre(
         logger.warning("Sin precio del domingo de %s: %s", p.coin_id, e)
         return None
     return prediccion.precio_del_cierre(bajados, p.cierre)
+
+
+def _tesis(config: Config, argumento: str) -> str:
+    lista = database.get_tesis(config.database_path)
+    if not argumento:
+        return alerts.formatear_tesis(lista)
+    try:
+        pedido = tesis.interpretar(argumento)
+    except tesis.TesisError as e:
+        return telegram.escape(str(e))
+
+    if isinstance(pedido, tesis.Quitar):
+        if database.quitar_tesis(config.database_path, pedido.numero):
+            return f"Hecho, quitada la {pedido.numero}."
+        return "No tienes ninguna con ese número. Mira /tesis"
+
+    if isinstance(pedido, tesis.Veredicto):
+        t = next((t for t in lista if t.numero == pedido.numero), None)
+        if t is None:
+            return "No tienes ninguna con ese número. Mira /tesis"
+        if not t.preguntada:
+            return (
+                f"La {t.numero} aún no toca: te pregunto el "
+                f"{t.vence.astimezone():%d/%m}. Juzgarla antes es hacer trampa."
+            )
+        t = replace(t, acerto=pedido.acerto)
+        database.guardar_tesis(config.database_path, t)
+        lista = [t if x.numero == t.numero else x for x in lista]
+        return alerts.formatear_tesis_juzgada(t, *tesis.marcador(lista))
+
+    if len(tesis.pendientes(lista)) >= tesis.MAXIMO:
+        return (
+            f"Ya tienes {tesis.MAXIMO} esperando. Quita alguna antes: /tesis quitar 3"
+        )
+    precio = _precio_o_pedirlo(config, pedido.coin_id)
+    if isinstance(precio, str):
+        return precio
+    t = tesis.Tesis(
+        tesis.siguiente(lista),
+        pedido.coin_id,
+        pedido.texto,
+        precio,
+        datetime.now(timezone.utc),
+        pedido.dias,
+    )
+    database.guardar_tesis(config.database_path, t)
+    logger.info("Tesis %d de %s apuntada", t.numero, t.coin_id)
+    return alerts.con_fuente(alerts.formatear_tesis_nueva(t, config.vs_currency))
+
+
+def tesis_vencidas(config: Config, ahora: datetime | None = None) -> None:
+    """Cuando se cumple el plazo de una /tesis, te pregunto si acertaste."""
+    ahora = ahora or datetime.now(timezone.utc)
+    try:
+        tocan = tesis.tocan(database.get_tesis(config.database_path), ahora)
+    except database.DatabaseError as e:
+        logger.error("No se pudieron leer las /tesis: %s", e)
+        return
+    if not tocan or _silenciado(config):
+        return
+
+    ids = list(dict.fromkeys(t.coin_id for t in tocan))
+    try:
+        precios = coingecko.get_prices(ids, config.vs_currency)
+    except coingecko.CoinGeckoError as e:
+        logger.warning("Sin precio para las /tesis: %s", e)
+        return
+
+    for t in tocan:
+        precio = precios.get(t.coin_id)
+        if precio is None:
+            continue
+        if not telegram.send_message(
+            config.telegram_token,
+            config.telegram_chat_id,
+            alerts.con_fuente(
+                alerts.formatear_tesis_vencida(t, precio, config.vs_currency)
+            ),
+            botones=botones.para_tesis(t.numero),
+        ):
+            logger.error("No se pudo preguntar por la /tesis %d", t.numero)
+            continue
+        # Con el precio de hoy guardado: la lista enseña cómo acabó, no cómo va.
+        database.guardar_tesis(config.database_path, replace(t, final=precio))
+        logger.info("/tesis %d preguntada", t.numero)
 
 
 def pensados(config: Config, ahora: datetime | None = None) -> None:

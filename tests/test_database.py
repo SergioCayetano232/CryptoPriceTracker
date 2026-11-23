@@ -1162,3 +1162,36 @@ def test_invitados(db):
     assert database.quitar_invitado(db, "555")
     assert not database.quitar_invitado(db, "555")
     assert not database.es_invitado(db, "555")
+
+
+# --- /tesis ---
+
+
+def test_tesis_guardar_leer_y_quitar(db):
+    from crypto_tracker.tesis import Tesis
+
+    cuando = datetime(2026, 11, 1, tzinfo=timezone.utc)
+    for n in (2, 10, 1):
+        database.guardar_tesis(db, Tesis(n, "bitcoin", f"la {n}", 60000.0, cuando))
+
+    assert [t.numero for t in database.get_tesis(db)] == [1, 2, 10]
+
+    database.guardar_tesis(
+        db, Tesis(2, "bitcoin", "la 2", 60000.0, cuando, final=70000.0, acerto=True)
+    )
+    assert database.get_tesis(db)[1].acerto is True
+
+    assert database.quitar_tesis(db, 10)
+    assert not database.quitar_tesis(db, 10)
+    assert [t.numero for t in database.get_tesis(db)] == [1, 2]
+
+
+def test_tesis_rota_no_tumba_las_demas(db):
+    from crypto_tracker.tesis import Tesis
+
+    cuando = datetime(2026, 11, 1, tzinfo=timezone.utc)
+    database.guardar_tesis(db, Tesis(1, "bitcoin", "bien", 60000.0, cuando))
+    with database._connect(db) as conn:
+        conn.execute("INSERT INTO ajustes VALUES ('tesis:2', 'basura')")
+
+    assert [t.texto for t in database.get_tesis(db)] == ["bien"]

@@ -242,6 +242,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/liga` | La clasificación de `/prediccion` entre tú y la gente a la que has invitado: un punto por acertar si sube o baja y otro por acercarte más que decir «se queda igual». A igualdad de puntos, gana quien menos se va. Solo se ven los nombres y los puntos, no lo que tiene nadie. `/liga semana`, solo la del último domingo |
 | `/encuesta` | Cada lunes te manda una encuesta de Telegram con dónde estará el domingo la primera cripto que vigilas, en cuatro tramos de un 5%. Lo que votes se apunta como tu `/prediccion` de esa semana, con el centro del tramo, y cuenta para tu marcador y para la `/liga`. Se cierra sola un día antes del domingo; si retiras el voto, se quita la predicción. Al ponerla te manda ya la primera. No gasta consultas. `/encuesta no` la quita |
 | `/pienso btc 500` | Antes de comprar: te dice cómo está ahora (lo que ha subido en 24 h, el miedo y codicia y el RSI) y a las 24 h te pregunta si sigues queriendo, con el precio de entonces y un botón ✅ que la apunta en la cartera, o ❌ para dejarlo. `/pienso` a secas, lo que te estás pensando; `/pienso btc no`, lo olvida |
+| `/tesis sol el ETF lo va a subir` | Apunta por qué compras, con el precio de ese momento. A los 30 días (o los que digas: `/tesis btc 90d ...`) te la recuerda con el precio de entonces y te pregunta con dos botones si se cumplió. `/tesis` a secas enseña las que esperan y cuántas aciertas. El precio no decide por ti: puedes acertar en el porqué y que baje igual |
 | `/recordar lunes 50 btc` | Cada lunes, a la hora del resumen (o a las 9:00 si no tienes), te recuerda tu compra con el precio y lo que te dan los 50 €, y un botón ✅ que la apunta en la cartera. `/recordar` a secas, los que tienes; `/recordar btc no`, lo quita |
 | `/alerta bitcoin 70000` | Te avisa una vez cuando llegue a ese precio |
 | `/alerta bitcoin +10%` | Te avisa una vez cuando suba un 10% desde ahora |
@@ -1092,6 +1093,7 @@ crypto_tracker/
   sat.py         lo que vale un satoshi, para /sat
   puntuales.py   las alertas de /alerta
   pienso.py      las compras que te estás pensando, para /pienso
+  tesis.py       por qué compraste y si acertaste, para /tesis
   fantasma.py    la cartera de mentira de /fantasma
   herencia.py    lo que tienes y dónde, para /herencia, sin claves
   escalera.py    vender por tramos al subir o comprar al bajar, para /escalera

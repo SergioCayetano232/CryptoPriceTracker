@@ -58,6 +58,7 @@ COMANDOS = {
     "rezagada": "Avísame si una va peor que otra en 7 días (ej: /rezagada eth btc 10)",
     "juntas": "Avísame si dos que van a la vez se separan (ej: /juntas btc eth)",
     "pienso": "Antes de comprar, 24 h para pensarlo (ej: /pienso btc 500)",
+    "tesis": "Por qué compras, y al mes vemos si acertaste (ej: /tesis sol el ETF)",
     "fantasma": "Una cartera de mentira para probar (ej: /fantasma compra btc 200)",
     "herencia": "Lo que tienes y dónde, para tu familia, sin claves",
     "emociones": "Con qué ánimo compras y vendes, y qué te sale de cada uno",
@@ -651,6 +652,13 @@ EJEMPLOS = {
         ("/escalera btc 80k 90k 50%", "solo la mitad de lo que tienes"),
         ("/escalera compra btc 60k 55k 50k con 900", "300 en cada bajada"),
         ("/escalera compra eth 2000 1800", "solo el aviso, sin decir cuánto"),
+    ],
+    "tesis": [
+        ("/tesis sol el ETF lo va a subir", "te pregunto a los 30 días"),
+        ("/tesis btc 90d se acaba la sequía", "a los 90 días"),
+        ("/tesis", "las que tienes y cuántas aciertas"),
+        ("/tesis si 3", "la 3 se cumplió (o /tesis no 3)"),
+        ("/tesis quitar 3", "borrarla"),
     ],
     "herencia": [
         ("/herencia", "el papel en un .txt para guardar o imprimir"),

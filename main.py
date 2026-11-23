@@ -230,10 +230,12 @@ from crypto_tracker.respuestas.recordatorios import (
     _pienso,
     _prediccion,
     _recordar,
+    _tesis,
     cerrar_predicciones,
     encuesta_semanal,
     pensados,
     recordatorios,
+    tesis_vencidas,
     voto_encuesta,
 )
 from crypto_tracker.respuestas.resumenes import (
@@ -960,6 +962,7 @@ def tareas() -> tuple[Callable[[Config], None], ...]:
         recordatorios,
         programados,
         pensados,
+        tesis_vencidas,
         cerrar_predicciones,
         encuesta_semanal,
         copia_semanal,
@@ -1652,6 +1655,7 @@ COMANDOS: dict[str, Callable[[Config, str], Respuesta]] = {
     "rezagada": lambda c, a: _rezagada(c, a),
     "juntas": lambda c, a: _juntas(c, a),
     "pienso": lambda c, a: _pienso(c, a),
+    "tesis": lambda c, a: _tesis(c, a),
     "prediccion": lambda c, a: _prediccion(c, a),
     "liga": lambda c, a: _liga(c, a),
     "encuesta": lambda c, a: _encuesta(c, a),
