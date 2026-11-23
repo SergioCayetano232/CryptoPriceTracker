@@ -355,6 +355,89 @@ def test_historico(config, enviados, sin_fotos_de_verdad):
     assert enviados == []
 
 
+@pytest.fixture
+def fotos_con_botones(monkeypatch):
+    lista = []
+    monkeypatch.setattr(
+        telegram,
+        "send_photo",
+        lambda token, chat, png, pie="", **kw: (
+            lista.append((png, pie, kw.get("botones"))) or True
+        ),
+    )
+    return lista
+
+
+def _horas_de_precios(config, horas):
+    # Uno cada 15 minutos, subiendo y bajando, para que salgan velas de verdad.
+    for i in range(horas * 4):
+        precio = 60000.0 + (i % 7) * 100 - (i % 3) * 150
+        _guardar(config, "bitcoin", precio, horas - i / 4)
+
+
+def test_historico_ofrece_las_velas(config, fotos_con_botones):
+    _horas_de_precios(config, 20)
+
+    main.atender(config, _mensaje("/historico btc"))
+
+    [(png, _, botones)] = fotos_con_botones
+    assert png.startswith(b"\x89PNG")
+    assert botones == [[("🕯️ En velas", "/historico btc velas")]]
+
+
+def test_historico_en_velas(config, fotos_con_botones, monkeypatch):
+    _horas_de_precios(config, 20)
+    dibujadas = []
+    original = grafica.dibujar_velas
+    monkeypatch.setattr(
+        grafica,
+        "dibujar_velas",
+        lambda *a: dibujadas.append(a) or original(*a),
+    )
+
+    main.atender(config, _mensaje("/historico velas btc"))
+
+    [(png, pie, botones)] = fotos_con_botones
+    assert png.startswith(b"\x89PNG")
+    assert "Bitcoin" in pie
+    assert botones == [[("📈 En línea", "/historico btc")]]
+    coin_id, lista, cada, _, horas = dibujadas[0]
+    assert (coin_id, cada, horas) == ("bitcoin", 1, 24)
+    assert len(lista) >= 20
+
+
+def test_historico_en_velas_a_secas_usa_la_primera(config, fotos_con_botones):
+    _horas_de_precios(config, 20)
+
+    main.atender(config, _mensaje("/historico velas"))
+
+    assert fotos_con_botones[0][2] == [[("📈 En línea", "/historico bitcoin")]]
+
+
+def test_historico_en_velas_con_pocas(config, enviados, fotos_con_botones):
+    for precio in (60000.0, 61000.0, 62000.0):
+        database.save_prices(config.database_path, {"bitcoin": precio}, "eur")
+
+    main.atender(config, _mensaje("/historico btc 7d velas"))
+
+    assert fotos_con_botones == []
+    assert "solo sale 1 vela," in enviados[0]
+    assert "/historico btc 7d" in enviados[0]
+
+
+def test_historico_en_velas_sin_imagen(config, enviados, monkeypatch):
+    def falla(*a):
+        raise grafica.GraficaError("Falta matplotlib")
+
+    monkeypatch.setattr(grafica, "dibujar_velas", falla)
+    _horas_de_precios(config, 20)
+
+    main.atender(config, _mensaje("/historico btc velas"))
+
+    assert "Bitcoin" in enviados[0]
+    assert "<code>" in enviados[0]
+
+
 def test_historico_sin_matplotlib_manda_texto(config, enviados, monkeypatch):
     def falla(*a):
         raise grafica.GraficaError("Falta matplotlib")

@@ -770,6 +770,7 @@ EJEMPLOS = {
     "historico": [
         ("/historico bitcoin", "gráfica de las últimas 24 h"),
         ("/historico bitcoin 7d", "del tramo que digas (12h, 7d, 30d...)"),
+        ("/historico bitcoin 7d velas", "en velas: verde si cerró más alto"),
         ("/historico", "a secas, la primera que vigilo"),
     ],
     "comparar": [

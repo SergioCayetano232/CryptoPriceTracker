@@ -73,6 +73,7 @@ from crypto_tracker import (
     tarot,
     telegram,
     usuarios,
+    velas,
     version,
     whitepaper,
 )
@@ -1867,6 +1868,7 @@ def programados(config: Config, ahora: datetime | None = None) -> None:
 
 
 def _historico(config: Config, argumento: str) -> str | comandos.Foto:
+    en_velas, argumento = velas.pedidas(argumento)
     try:
         coin_id, horas = periodo.interpretar(argumento)
     except periodo.PeriodoError as e:
@@ -1909,14 +1911,36 @@ def _historico(config: Config, argumento: str) -> str | comandos.Foto:
             )
         )
 
+    # El botón repite lo que escribiste, cambiando solo la forma.
+    comando = f"/historico {argumento or coin_id}"
+    if en_velas:
+        cada = velas.tamaño(horas)
+        lista = velas.agrupar(serie, cada)
+        if len(lista) < velas.MINIMO:
+            salen = "sale 1 vela" if len(lista) == 1 else f"salen {len(lista)} velas"
+            return (
+                f"Con los precios que tengo ({periodo.nombre(horas)}) solo {salen}, "
+                "y así no se ve nada. Míralo en línea, "
+                f"{telegram.escape(comando)}, o vuelve cuando lleve más días "
+                "guardando precios."
+            )
+        boton = ("📈 En línea", comando)
+    else:
+        boton = ("🕯️ En velas", f"{comando} velas")
+
     try:
-        png = grafica.dibujar(coin_id, serie, config.vs_currency, horas)
+        if en_velas:
+            png = grafica.dibujar_velas(coin_id, lista, cada, config.vs_currency, horas)
+        else:
+            png = grafica.dibujar(coin_id, serie, config.vs_currency, horas)
     except Exception as e:
         # Sin imagen no pasa nada: el texto ya lleva lo importante.
         logger.warning("Mando /historico sin imagen: %s", e)
         return mensaje(con_linea=True)
 
-    return comandos.Foto(png, mensaje(con_linea=False), mensaje(con_linea=True))
+    return comandos.Foto(
+        png, mensaje(con_linea=False), mensaje(con_linea=True), [[boton]]
+    )
 
 
 def _avisar_salud(config: Config, texto: str) -> bool:

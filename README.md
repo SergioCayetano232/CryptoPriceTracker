@@ -267,6 +267,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/historico bitcoin` | Imagen con la gráfica de las últimas 24 h, máximo y mínimo |
 | `/historico bitcoin 7d` | Lo mismo, del tramo que digas (`12h`, `7d`, `30d`...) |
 | `/historico` | Sin decir cuál, la primera que vigilas (también `/historico 7d`) |
+| `/historico bitcoin 7d velas` | En velas: cada una con la apertura, el máximo, el mínimo y el cierre de su rato (1 hora hasta 48 h, 4 horas hasta 10 días y 1 día en adelante), verde si cerró por encima de donde abrió. Las velas van seguidas aunque falten días por medio. Debajo de cada gráfica hay un botón para pasar de línea a velas y al revés |
 | `/media bitcoin` | Su media de 7, 30 y 90 días y si el precio de ahora está por encima o por debajo de cada una, y si lo está de todas (`/media bitcoin 14d`, solo la de esos días). Sale de lo guardado y no gasta consultas |
 | `/racha bitcoin` | Cuántos días seguidos lleva subiendo o bajando y cuánto lleva en esa racha. Sale de lo guardado y no gasta consultas |
 | `/racha cartera` | Lo mismo con tu cartera entera, con lo que tienes hoy a los precios del final de cada día |
@@ -1164,6 +1165,7 @@ crypto_tracker/
   bollinger.py   las bandas de 20 días, para /bollinger
   macd.py        las medias de 12 y 26 días contra la de 9, para /macd
   estocastico.py dónde está dentro del rango de 14 días, para /estocastico
+  velas.py       el precio agrupado en velas, para /historico ... velas
   fibonacci.py   los niveles entre el máximo y el mínimo, para /fibonacci
   futuro.py      entre qué cifras puede estar tu cartera, para /futuro
   sharpe.py      lo que gana la cartera para lo que se mueve, para /sharpe

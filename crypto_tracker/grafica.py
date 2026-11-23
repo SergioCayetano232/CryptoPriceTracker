@@ -12,6 +12,7 @@ from .reparto import OTRAS, Trozo
 from .simbolos import de_id
 from .tarjeta import Tarjeta
 from .tarjeta_anual import TarjetaAnual
+from .velas import Vela
 
 VERDE = "#16a34a"
 ROJO = "#dc2626"
@@ -138,28 +139,90 @@ def dibujar(
     ax.margins(x=0.01)
 
     nombre = titulo or coin_id.replace("-", " ").title()
-    fig.text(0.08, 0.89, nombre, fontsize=16, weight="bold", color=TEXTO)
     periodo = subtitulo or nombre_periodo(horas)
-    fig.text(0.08, 0.83, periodo[0].upper() + periodo[1:], fontsize=9, color=SUAVE)
-    fig.text(
-        0.94,
-        0.89,
-        f"{simbolo}{_num(ahora)}",
-        fontsize=16,
-        weight="bold",
-        color=TEXTO,
-        ha="right",
-    )
-    fig.text(
-        0.94,
-        0.83,
-        detalle,
-        fontsize=10,
-        weight="bold",
-        color=color,
-        ha="right",
-    )
+    _cabecera(fig, nombre, periodo, f"{simbolo}{_num(ahora)}", detalle, color)
 
+    salida = io.BytesIO()
+    fig.savefig(salida, format="png", facecolor=FONDO)
+    return salida.getvalue()
+
+
+def _cabecera(fig, nombre: str, periodo: str, precio: str, detalle: str, color: str):
+    """El nombre y el tramo a la izquierda; el precio y el % a la derecha."""
+    fig.text(0.08, 0.89, nombre, fontsize=16, weight="bold", color=TEXTO)
+    fig.text(0.08, 0.83, periodo[0].upper() + periodo[1:], fontsize=9, color=SUAVE)
+    fig.text(0.94, 0.89, precio, fontsize=16, weight="bold", color=TEXTO, ha="right")
+    fig.text(0.94, 0.83, detalle, fontsize=10, weight="bold", color=color, ha="right")
+
+
+def dibujar_velas(
+    coin_id: str, velas: list[Vela], cada: int, currency: str, horas: float
+) -> bytes:
+    """Como dibujar(), pero en velas: verde si cerró por encima de donde abrió."""
+    try:
+        from matplotlib.figure import Figure
+        from matplotlib.ticker import FuncFormatter
+    except ImportError as e:
+        raise GraficaError(
+            "Falta matplotlib. Ejecuta: pip install -r requirements.txt"
+        ) from e
+
+    if not velas:
+        raise GraficaError("No hay velas que dibujar")
+
+    primero, ahora = velas[0].apertura, velas[-1].cierre
+    techo = max(v.alto for v in velas)
+    suelo = min(v.bajo for v in velas)
+    variacion = (ahora - primero) / primero * 100 if primero else 0.0
+    color = VERDE if ahora >= primero else ROJO
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+    margen = (techo - suelo) * 0.12 or abs(techo) * 0.01 or 1
+
+    fig = Figure(figsize=(8, 4.5), dpi=150, facecolor=FONDO)
+    izquierda = _margen_eje(techo + margen)
+    ax = fig.add_axes((izquierda, 0.1, 0.94 - izquierda, 0.67))
+    ax.set_facecolor(FONDO)
+    ax.set_ylim(suelo - margen, techo + margen)
+
+    # Una detrás de otra, sin dejar hueco donde no hay precios, como en los
+    # exchanges: con días sueltos en 90 días salían rayitas perdidas.
+    ancho = 0.7
+    for x, v in enumerate(velas):
+        tono = VERDE if v.sube else ROJO
+        ax.vlines(x, v.bajo, v.alto, color=tono, linewidth=1)
+        alto_cuerpo = abs(v.cierre - v.apertura) or (techo - suelo) * 0.002
+        ax.bar(
+            x,
+            alto_cuerpo,
+            bottom=min(v.apertura, v.cierre),
+            width=ancho,
+            color=tono,
+            linewidth=0,
+            zorder=3,
+        )
+
+    for lado in ("top", "right", "left"):
+        ax.spines[lado].set_visible(False)
+    ax.spines["bottom"].set_color(REJILLA)
+    ax.grid(axis="y", color=REJILLA, linewidth=0.8)
+    ax.set_axisbelow(True)
+    ax.tick_params(colors=SUAVE, labelsize=8, length=0, pad=6)
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: _eje(v)))
+    marcas = list(range(0, len(velas), max(1, round(len(velas) / 6))))
+    ax.set_xticks(
+        marcas, [velas[i].inicio.strftime(_formato_eje(horas)) for i in marcas]
+    )
+    ax.set_xlim(-0.7, len(velas) - 0.3)
+
+    tramo = "1 hora" if cada == 1 else "1 día" if cada == 24 else f"{cada} horas"
+    _cabecera(
+        fig,
+        coin_id.replace("-", " ").title(),
+        f"{nombre_periodo(horas)} · cada vela, {tramo}",
+        f"{simbolo}{_num(ahora)}",
+        f"{variacion:+.2f}%",
+        color,
+    )
     salida = io.BytesIO()
     fig.savefig(salida, format="png", facecolor=FONDO)
     return salida.getvalue()
