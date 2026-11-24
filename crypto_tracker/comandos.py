@@ -223,6 +223,7 @@ COMANDOS = {
     "oi": "Cuánto hay apostado en futuros y si entra o sale (ej: /oi btc)",
     "longshort": "Cuántos apuestan a que sube y a que baja (ej: /longshort btc)",
     "profundidad": "Cuánto dinero hace falta para moverla un 2% (ej: /profundidad btc)",
+    "premium": "Si en Coinbase pagan más que en Binance: si compra EE. UU.",
     "spread": "El precio de CoinGecko contra el de Binance (ej: /spread btc eth)",
     "buscar": "Encuentra el id de una cripto (ej: /buscar btc)",
     "copia": "Lo que vigilo y tu cartera, listo para pegar en el .env",
@@ -335,6 +336,7 @@ ALIAS = {
     "interesabierto": "oi",
     "largos": "longshort",
     "liquidez": "profundidad",
+    "prima": "premium",
     "ordenes": "profundidad",
     "órdenes": "profundidad",
     "cortos": "longshort",
@@ -956,6 +958,10 @@ EJEMPLOS = {
     "oi": [
         ("/oi btc", "lo apostado en futuros de Binance y cómo ha cambiado"),
         ("/oi", "a secas, la primera que vigilo"),
+    ],
+    "premium": [
+        ("/premium", "lo que se paga de más por bitcoin en Coinbase"),
+        ("/premium eth", "lo mismo con otra que esté en los dos"),
     ],
     "profundidad": [
         ("/profundidad btc", "lo que costaría moverla un 0,5, un 1 y un 2%"),

@@ -27,6 +27,7 @@ from .. import (
     miedo,
     moneda,
     oi,
+    premium,
     profundidad,
     redondo,
     simbolos,
@@ -423,6 +424,32 @@ def _oi(config: Config, argumento: str) -> str:
     if resultado is None:
         return "Binance no me ha dado lo apostado. Prueba en un rato."
     return alerts.formatear_oi(resultado, coin_id)
+
+
+def _premium(config: Config, argumento: str) -> str | comandos.ConBotones:
+    if len(argumento.split()) > 1:
+        return f"De una en una. Por ejemplo: {premium.EJEMPLO}"
+    # Es cosa de bitcoin, que es lo que compran los fondos; a secas va con él.
+    coin_id = simbolos.a_id(argumento) if argumento else "bitcoin"
+    simbolo = funding.par(coin_id, argumento).removesuffix("USDT")
+    try:
+        velas = premium.pedir(simbolo)
+    except premium.PremiumError as e:
+        if str(e) == "sin datos":
+            return (
+                f"<b>{telegram.escape(coin_id)}</b> no está en Coinbase y en Binance "
+                f"a la vez. Prueba con su símbolo, como {premium.EJEMPLO}"
+            )
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+    resultado = premium.leer(simbolo, *velas)
+    if resultado is None:
+        return (
+            "Coinbase y Binance no me han dado precios que cuadren. Prueba en un rato."
+        )
+    return comandos.ConBotones(
+        alerts.formatear_premium(resultado),
+        botones.actualizar(f"/premium {argumento}".strip()),
+    )
 
 
 def _profundidad(config: Config, argumento: str) -> str | comandos.ConBotones:

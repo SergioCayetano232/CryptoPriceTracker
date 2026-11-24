@@ -193,6 +193,7 @@ TEMAS = [
             "oi",
             "longshort",
             "profundidad",
+            "premium",
             "spread",
             "glosario",
             "halving",

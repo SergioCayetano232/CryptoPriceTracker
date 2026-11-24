@@ -43,6 +43,7 @@ from ..movimientos import texto_cantidad
 from ..oi import Interes, lectura
 from ..perdido import Perdido
 from ..periodo import nombre as nombre_periodo
+from ..premium import Premium
 from ..profundidad import Profundidad
 from ..puntuales import CARTERA
 from ..racha import Racha
@@ -1307,6 +1308,47 @@ def _millones(valor: float, corto: bool) -> str:
     else:
         texto = f"{valor / 1e3:.0f} mil"
     return f"+{texto}" if corto else texto
+
+
+def formatear_premium(p: Premium) -> str:
+    """Respuesta de /premium."""
+
+    def pct(valor: float) -> str:
+        # Una media de -0,001 saldría "-0,00%".
+        return "0,00%" if abs(valor) < 0.005 else _pct2(valor)
+
+    primas = [h.prima for h in p.horas]
+    dias = round(len(p.horas) / 24)
+    lineas = [
+        f"🇺🇸 <b>Prima de Coinbase: {pct(p.ahora)}</b> · {escape(p.simbolo)}",
+        f"Coinbase: ${_num(p.coinbase)} · Binance: ${_num(p.binance)}",
+    ]
+    if len(primas) >= MINIMO_BARRAS:
+        lineas.append(f"<code>{sparkline(muestrear(primas, BARRAS_MOVIL))}</code>")
+    if dias >= 1:
+        lineas.append(
+            f"En {_veces(dias, 'día', 'días')}: media {pct(p.media)}, "
+            f"entre {pct(min(primas))} y {pct(max(primas))}"
+        )
+
+    if p.lado == "compran":
+        lectura = (
+            "🟢 <b>Se paga más en Coinbase</b>: compran con ganas en EE. UU., "
+            "que es donde compran los fondos"
+        )
+    elif p.lado == "venden":
+        lectura = "🔴 <b>Se paga menos en Coinbase</b>: venden más en EE. UU."
+    else:
+        lectura = "😐 <b>Casi igual en los dos</b>: nada que destacar"
+    lineas += [
+        "",
+        lectura,
+        "",
+        "<i>Coinbase es donde compran los grandes de EE. UU. y Binance, el resto. "
+        "Al de Binance le quito lo que el USDT se separa del dólar, que si no "
+        "parecería prima y no lo es.</i>",
+    ]
+    return "\n".join(lineas)
 
 
 def formatear_profundidad(p: Profundidad, coin_id: str) -> str:
