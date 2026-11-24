@@ -183,6 +183,8 @@ def test_mute_y_unmute(config, enviados):
 
 def _con_botones(monkeypatch):
     mandados = []
+    # Al pulsar un botón se le confirma a Telegram; aquí no hay a quién.
+    monkeypatch.setattr(telegram, "answer_callback", lambda token, cid: True)
     monkeypatch.setattr(
         telegram,
         "send_message",
@@ -319,8 +321,17 @@ def test_los_ejemplos_de_la_ayuda_se_entienden(
 ):
     from dataclasses import replace
 
+    import requests
+
     from crypto_tracker.config import parse_cartera
 
+    def sin_red(*a, **k):
+        raise requests.ConnectionError("sin red en los tests")
+
+    # Muchos van a Binance, mempool.space... Sin red contestan que no pueden, y
+    # eso vale: lo que miro es que entienda lo que se le escribe.
+    monkeypatch.setattr(requests.Session, "request", sin_red)
+    monkeypatch.setattr(coingecko.time, "sleep", lambda s: None)
     _precio(monkeypatch, {"bitcoin": 63000.0, "solana": 150.0, "ethereum": 3000.0})
     con_cartera = replace(config, cartera=parse_cartera("bitcoin:0.1:5000"))
 
@@ -4165,7 +4176,7 @@ def test_exportar_movimientos(config, enviados, archivos, monkeypatch):
     assert enviados == []
 
 
-def test_exportar_movimientos_mas_de_diez(config, archivos, monkeypatch):
+def test_exportar_movimientos_mas_de_diez(config, enviados, archivos, monkeypatch):
     config = _con_cartera(config, Posicion("bitcoin", 1, 1000))
     _precio(monkeypatch, {})
     for _ in range(12):
@@ -4176,7 +4187,7 @@ def test_exportar_movimientos_mas_de_diez(config, archivos, monkeypatch):
     assert archivos[0][0].decode("utf-8-sig").count("\r\n") == 13
 
 
-def test_exportar_movimientos_uno_en_singular(config, archivos, monkeypatch):
+def test_exportar_movimientos_uno_en_singular(config, enviados, archivos, monkeypatch):
     config = _con_cartera(config, Posicion("bitcoin", 1, 1000))
     _precio(monkeypatch, {})
     main.atender(config, _mensaje("/compra bitcoin 0.01 800"))
@@ -6333,6 +6344,7 @@ def test_semana_sin_imagen_manda_texto(con_semana, enviados, monkeypatch):
 def con_teclado(monkeypatch):
     """Lo que se manda junto con los botones, sea texto o foto."""
     mandados = []
+    monkeypatch.setattr(telegram, "answer_callback", lambda token, cid: True)
     monkeypatch.setattr(
         telegram,
         "send_message",
@@ -7544,7 +7556,7 @@ def test_ultimo_no_apunta_lo_que_no_llega(config, monkeypatch):
     assert database.ultimos_avisos(config.database_path) == {}
 
 
-def test_ultimo_no_apunta_lo_callado(config, monkeypatch):
+def test_ultimo_no_apunta_lo_callado(config, enviados, monkeypatch):
     monkeypatch.setattr(coingecko, "get_prices", lambda ids, cur: {"bitcoin": 90000.0})
     main.atender(config, _mensaje("/mute 2h"))
 
@@ -13084,6 +13096,7 @@ def test_el_invitado_no_usa_lo_tuyo(config, a_quien):
 
 
 def test_usuarios_y_expulsar(config, a_quien, monkeypatch):
+    monkeypatch.setattr(telegram, "answer_callback", lambda token, cid: True)
     mandados = []
     codigo = _invitar(config, a_quien)
     main.atender(config, _de(555, f"/start {codigo}"))
@@ -13206,7 +13219,7 @@ def test_si_falla_lo_de_un_invitado_sigues_tu(config, a_quien, monkeypatch, capl
     assert main._pulso.ultimo_bien is not None  # el tuyo fue bien
 
 
-def test_un_id_que_no_existe_no_se_pide_aparte(config, monkeypatch):
+def test_un_id_que_no_existe_no_se_pide_aparte(config, enviados, monkeypatch):
     pedidas = _precio(monkeypatch, {"bitcoin": 60000.0})
     pedidos = main.pedir_precios(["bitcoin", "no-existe"], "eur")
     pedidas.clear()
