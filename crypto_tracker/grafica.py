@@ -6,6 +6,7 @@ from datetime import datetime
 from .alerts import SIMBOLOS, _num
 from .calendario import Mes, semanas
 from .correlacion import Matriz
+from .mapa import Mapa, repartir
 from .mes import MESES
 from .periodo import nombre as nombre_periodo
 from .reparto import OTRAS, Trozo
@@ -549,6 +550,126 @@ def dibujar_tarjeta(t: Tarjeta) -> bytes:
     salida = io.BytesIO()
     fig.savefig(salida, format="png", facecolor=NOCHE)
     return salida.getvalue()
+
+
+# Lo que se mueve en un día una de las grandes: de ahí para arriba, color a tope.
+TOPE_MAPA = 8
+QUIETA = "#334155"
+VERDE_MAPA = "#15803d"
+ROJO_MAPA = "#b91c1c"
+# Por debajo de este tamaño de letra ya no se lee: mejor el recuadro sin nada.
+LETRA_MINIMA = 6
+
+
+def dibujar_mapa(m: Mapa, mias: set[str]) -> bytes:
+    """Un recuadro por cripto, del tamaño de lo que vale y del color de su día."""
+    try:
+        from matplotlib.figure import Figure
+        from matplotlib.patches import Rectangle
+    except ImportError as e:
+        raise GraficaError(
+            "Falta matplotlib. Ejecuta: pip install -r requirements.txt"
+        ) from e
+
+    ancho, alto = 8.0, 8.6
+    fig = Figure(figsize=(ancho, alto), dpi=150, facecolor=NOCHE)
+    color = VERDE_NOCHE if m.media >= 0 else ROJO_NOCHE
+    fig.text(0.04, 0.955, "El mercado hoy", fontsize=17, weight="bold", color=CLARO)
+    fig.text(
+        0.96,
+        0.955,
+        _pct_tarjeta(m.media),
+        fontsize=17,
+        weight="bold",
+        color=color,
+        ha="right",
+    )
+    debajo = (
+        f"Las {len(m.casillas)} más grandes en 24 h, cada una del tamaño de lo que vale"
+    )
+    fig.text(0.04, 0.927, debajo, fontsize=9, color=APAGADO)
+    if mias & {c.coin_id for c in m.casillas}:
+        fig.text(
+            0.96, 0.927, "Con borde, las tuyas", fontsize=9, color=APAGADO, ha="right"
+        )
+
+    # En pulgadas, para que repartir saque cuadrados de verdad y no estirados.
+    izq, abajo, w, h = 0.3, 0.3, ancho - 0.6, alto * 0.9 - 0.35
+    ax = fig.add_axes((izq / ancho, abajo / alto, w / ancho, h / alto))
+    ax.set_xlim(0, w)
+    ax.set_ylim(h, 0)
+    ax.axis("off")
+
+    rects = repartir([c.capital for c in m.casillas], w, h)
+    for c, (x, y, cw, ch) in zip(m.casillas, rects, strict=True):
+        ax.add_patch(
+            Rectangle(
+                (x, y),
+                cw,
+                ch,
+                facecolor=_color_mapa(c.variacion),
+                edgecolor=NOCHE,
+                lw=1.5,
+            )
+        )
+        if c.coin_id in mias:
+            hueco = 0.04
+            ax.add_patch(
+                Rectangle(
+                    (x + hueco, y + hueco),
+                    cw - 2 * hueco,
+                    ch - 2 * hueco,
+                    fill=False,
+                    edgecolor=CLARO,
+                    lw=1.6,
+                )
+            )
+
+        # Que el nombre quepa a lo ancho y, con el % debajo, a lo alto.
+        letra = min(30, ch * 72 / 3.2, cw * 0.75 * 72 / (0.68 * max(len(c.simbolo), 3)))
+        if letra < LETRA_MINIMA:
+            continue
+        cabe_pct = letra * 0.62 >= LETRA_MINIMA
+        ax.text(
+            x + cw / 2,
+            y + ch / 2,
+            c.simbolo,
+            fontsize=letra,
+            weight="bold",
+            color=CLARO,
+            ha="center",
+            va="bottom" if cabe_pct else "center",
+        )
+        if not cabe_pct:
+            continue
+        ax.text(
+            x + cw / 2,
+            y + ch / 2 + 0.02,
+            _pct_tarjeta(c.variacion),
+            fontsize=letra * 0.62,
+            color=CLARO,
+            ha="center",
+            va="top",
+        )
+
+    salida = io.BytesIO()
+    fig.savefig(salida, format="png", facecolor=NOCHE)
+    return salida.getvalue()
+
+
+def _color_mapa(variacion: float) -> str:
+    if variacion == 0:
+        return QUIETA
+    fuerza = 0.3 + 0.7 * min(abs(variacion) / TOPE_MAPA, 1)
+    return _hacia(QUIETA, VERDE_MAPA if variacion > 0 else ROJO_MAPA, fuerza)
+
+
+def _hacia(desde: str, hasta: str, fuerza: float) -> str:
+    """De un color a otro: con fuerza 1 sale el segundo tal cual."""
+    a = [int(desde[i : i + 2], 16) for i in (1, 3, 5)]
+    b = [int(hasta[i : i + 2], 16) for i in (1, 3, 5)]
+    r, g, bl = (round(x + (y - x) * fuerza) for x, y in zip(a, b, strict=True))
+    return f"#{r:02x}{g:02x}{bl:02x}"
 
 
 # Los extremos de /correlacion todas: al revés en azul, a la vez en naranja.

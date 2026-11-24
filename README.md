@@ -390,6 +390,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/tendencias` | Las 7 criptos que más se buscan hoy en CoinGecko, con un botón en cada una para ver su precio y ponerle una alerta |
 | `/tendencias avisa` | Te avisa cuando una de tu cartera o de las que vigilas entra en esa lista. Lo mira cada 6 horas (unas 120 consultas al mes) y de cada cripto avisa una vez a la semana como mucho. `/tendencias avisa no` lo quita |
 | `/top` | Las 5 que más suben y las 5 que más bajan hoy de las 100 más grandes, con su precio |
+| `/mapa` | Una imagen con las 30 más grandes en recuadros, cada uno del tamaño de lo que vale y en verde o en rojo según cuánto se ha movido en 24 h: cuanto más fuerte el color, más se ha movido. Las que vigilas o tienes en la cartera llevan borde. Arriba, lo que se ha movido el conjunto, pesando cada una por lo que vale. Sin estables ni copias de otra, como en `/altseason`. Gasta una consulta. También `/calor` |
 | `/aleatoria` | Una de las 100 más grandes al azar, con su puesto, su precio y cómo va hoy. No saca las que ya vigilas ni las estables. Con un botón para pedir otra |
 | `/caraocruz` | ¿Compro o vendo? Lo decide una moneda al aire (`/caraocruz btc`, con la cripto). Es de broma y no gasta consultas |
 | `/dado` | Qué hacer con tu cripto según un dado: del 1 (vende todo) al 6 (compra más). También con la cripto, `/dado sol`. De broma, como `/caraocruz` |
@@ -1041,6 +1042,7 @@ crypto_tracker/
   mercado.py     el mercado entero, para /mercado
   dominancia.py  cómo cambia la parte de bitcoin, para /dominancia
   altseason.py   cuántas grandes le ganan a bitcoin, para /altseason
+  mapa.py        las grandes en recuadros por tamaño, para /mapa
   halving.py     cuánto falta para el próximo halving, para /halving
   cumple.py      los años de Bitcoin, para /cumple
   whitepaper.py  los años del whitepaper, para /whitepaper

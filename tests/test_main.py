@@ -4405,6 +4405,81 @@ def test_altseason_sin_conexion(config, enviados, monkeypatch):
     assert "No he podido mirarlo ahora mismo: Sin conexion" in enviados[0]
 
 
+# --- /mapa ---
+
+
+def _mapa(monkeypatch):
+    from crypto_tracker.mapa import Casilla, Mapa
+
+    m = Mapa(
+        [
+            Casilla("bitcoin", "BTC", 1200.0, -2.0),
+            Casilla("ethereum", "ETH", 200.0, 5.0),
+            Casilla("solana", "SOL", 100.0, -9.5),
+        ]
+    )
+    monkeypatch.setattr(coingecko, "mapa_hoy", lambda: m)
+
+
+def test_mapa(config, enviados, sin_fotos_de_verdad, monkeypatch):
+    _mapa(monkeypatch)
+
+    main.atender(config, _mensaje("/mapa"))
+
+    png, pie = sin_fotos_de_verdad[0]
+    assert png.startswith(b"\x89PNG")
+    # (-2400 + 1000 - 950) / 1500
+    assert "El mercado en 24 h: -1,6%" in pie
+    assert "🔺 1 sube y 🔻 2 bajan" in pie
+    assert "La que más sube: ETH +5,0%" in pie
+    assert "La que más baja: SOL -9,5%" in pie
+    assert enviados == []
+
+
+def test_mapa_sin_imagen_manda_texto(config, enviados, monkeypatch):
+    _mapa(monkeypatch)
+
+    def falla(*a, **k):
+        raise grafica.GraficaError("Falta matplotlib")
+
+    monkeypatch.setattr(grafica, "dibujar_mapa", falla)
+
+    main.atender(config, _mensaje("/calor"))
+
+    assert "El mercado en 24 h" in enviados[0]
+
+
+def test_mapa_marca_las_tuyas(config, monkeypatch):
+    _mapa(monkeypatch)
+    marcadas = []
+    monkeypatch.setattr(
+        grafica, "dibujar_mapa", lambda m, mias: marcadas.append(mias) or b"png"
+    )
+
+    main.responder(config, "mapa", "")
+
+    assert marcadas == [{"bitcoin"}]
+
+
+def test_mapa_sin_datos(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "mapa_hoy", lambda: None)
+
+    main.atender(config, _mensaje("/mapa"))
+
+    assert "no me ha dado la lista" in enviados[0]
+
+
+def test_mapa_sin_conexion(config, enviados, monkeypatch):
+    def falla():
+        raise coingecko.CoinGeckoError("Sin conexion con CoinGecko")
+
+    monkeypatch.setattr(coingecko, "mapa_hoy", falla)
+
+    main.atender(config, _mensaje("/mapa"))
+
+    assert "No he podido mirarlo ahora mismo: Sin conexion" in enviados[0]
+
+
 # --- /top ---
 
 

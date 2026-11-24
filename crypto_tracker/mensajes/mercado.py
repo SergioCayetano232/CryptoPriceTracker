@@ -12,6 +12,7 @@ from ..comisionred import ComisionRed, en_dinero, media_hora
 from ..comparar import Resultado
 from ..comparar import media as media_comparar
 from ..copia import numero as numero_env
+from ..mapa import Mapa
 from ..maximo import Maximo, hace
 from ..mercado import Mercado, grande
 from ..miedo import NOMBRES as NOMBRES_MIEDO
@@ -313,6 +314,28 @@ def formatear_altseason(t: Temporada, mias: list[str]) -> str:
         f"de bitcoin. Cuento las {CUANTAS} más grandes sin estables ni copias de "
         "otras. Hacia dónde va el dinero: /dominancia</i>",
     ]
+    return "\n".join(texto)
+
+
+def formatear_mapa(m: Mapa) -> str:
+    """El pie de /mapa, y lo que se manda si la imagen no sale."""
+    mas = max(m.casillas, key=lambda c: c.variacion)
+    menos = min(m.casillas, key=lambda c: c.variacion)
+    suben = f"{m.suben} {'sube' if m.suben == 1 else 'suben'}"
+    bajan = f"{m.bajan} {'baja' if m.bajan == 1 else 'bajan'}"
+    texto = [
+        f"🗺 <b>El mercado en 24 h: {_signo(m.media)}</b>",
+        f"De las {len(m.casillas)} más grandes, 🔺 {suben} y 🔻 {bajan}.",
+    ]
+    if mas.variacion > 0:
+        texto.append(f"La que más sube: {escape(mas.simbolo)} {_signo(mas.variacion)}")
+    if menos.variacion < 0:
+        texto.append(
+            f"La que más baja: {escape(menos.simbolo)} {_signo(menos.variacion)}"
+        )
+    texto.append(
+        "<i>El total pesa cada una por lo que vale: si bitcoin cae, se nota más.</i>"
+    )
     return "\n".join(texto)
 
 

@@ -184,6 +184,7 @@ TEMAS = [
             "miedo",
             "tendencias",
             "top",
+            "mapa",
             "aleatoria",
             "funding",
             "oi",

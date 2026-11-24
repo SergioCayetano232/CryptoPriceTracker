@@ -603,6 +603,35 @@ def test_altseason_hoy_en_dolares_y_con_el_mes(monkeypatch):
     assert pedido["params"]["per_page"] == 100
 
 
+def test_mapa_hoy(monkeypatch):
+    pedido = {}
+
+    def get(url, params=None, headers=None, timeout=None):
+        pedido.update(url=url, params=params)
+        return RespuestaFalsa(
+            [
+                {
+                    "id": "bitcoin",
+                    "symbol": "btc",
+                    "name": "Bitcoin",
+                    "current_price": 60000,
+                    "market_cap": 1.2e12,
+                    "price_change_percentage_24h": -1.5,
+                    "price_change_percentage_30d_in_currency": -26.0,
+                }
+            ]
+        )
+
+    monkeypatch.setattr(requests, "get", get)
+
+    m = coingecko.mapa_hoy()
+
+    assert pedido["url"].endswith("/coins/markets")
+    assert pedido["params"]["vs_currency"] == "usd"
+    assert pedido["params"]["per_page"] == 60
+    assert [(c.simbolo, c.variacion) for c in m.casillas] == [("BTC", -1.5)]
+
+
 def test_mercado_global(monkeypatch):
     pedido = {}
 

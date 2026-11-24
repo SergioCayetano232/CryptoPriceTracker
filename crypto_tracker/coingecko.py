@@ -8,7 +8,7 @@ from urllib.parse import quote
 
 import requests
 
-from . import altseason, estables, mercado, precio, rellenar, tendencias, top
+from . import altseason, estables, mapa, mercado, precio, rellenar, tendencias, top
 from .maximo import Maximo, leer
 
 logger = logging.getLogger(__name__)
@@ -128,6 +128,18 @@ def altseason_hoy() -> altseason.Temporada | None:
         "price_change_percentage": f"{altseason.DIAS}d",
     }
     return altseason.leer(_con_reintentos(lambda: _pedir(MARKETS_URL, params)))
+
+
+def mapa_hoy() -> mapa.Mapa | None:
+    """Las grandes con lo que valen y su 24 h, en dólares como /altseason."""
+    params = {
+        "vs_currency": "usd",
+        "order": "market_cap_desc",
+        "per_page": mapa.PEDIR,
+        "page": 1,
+        "price_change_percentage": "30d",
+    }
+    return mapa.leer(_con_reintentos(lambda: _pedir(MARKETS_URL, params)))
 
 
 def mercado_global(vs_currency: str = "eur") -> mercado.Mercado:

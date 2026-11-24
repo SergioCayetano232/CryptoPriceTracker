@@ -20,6 +20,7 @@ from .. import (
     direccion,
     dominancia,
     funding,
+    grafica,
     hoy,
     miedo,
     moneda,
@@ -208,6 +209,24 @@ def _altseason(config: Config) -> str:
         return "CoinGecko no me ha dado la lista ahora mismo. Prueba en un rato."
     mias = [w.coin_id for w in _con_cambios(config).watchlist]
     return alerts.con_fuente(alerts.formatear_altseason(temporada, mias))
+
+
+def _mapa(config: Config) -> str | comandos.Foto:
+    try:
+        resultado = coingecko.mapa_hoy()
+    except coingecko.CoinGeckoError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+    if resultado is None:
+        return "CoinGecko no me ha dado la lista ahora mismo. Prueba en un rato."
+    texto = alerts.con_fuente(alerts.formatear_mapa(resultado))
+    mias = {w.coin_id for w in _con_cambios(config).watchlist}
+    mias |= {p.coin_id for p in _con_cambios(config).cartera}
+    try:
+        png = grafica.dibujar_mapa(resultado, mias)
+    except Exception as e:
+        logger.warning("Mando /mapa sin imagen: %s", e)
+        return texto
+    return comandos.Foto(png, texto, texto)
 
 
 def _ultimo(config: Config) -> str:

@@ -205,3 +205,33 @@ def test_las_etiquetas_de_los_bordes_van_hacia_dentro(monkeypatch):
 
     assert ("€1.099,00", "right") in puestas
     assert ("€1.000,00", "left") in puestas
+
+
+def test_mapa_sale_un_png_con_una_o_con_treinta():
+    from crypto_tracker.grafica import dibujar_mapa
+    from crypto_tracker.mapa import Casilla, Mapa
+
+    una = Mapa([Casilla("bitcoin", "BTC", 1.0, 0.0)])
+    treinta = Mapa(
+        [Casilla(f"c{i}", f"C{i}", 1e12 / (i + 1) ** 2, i - 15.0) for i in range(30)]
+    )
+
+    assert dibujar_mapa(una, set()).startswith(b"\x89PNG")
+    assert dibujar_mapa(treinta, {"c0", "c29"}).startswith(b"\x89PNG")
+
+
+@pytest.mark.parametrize(
+    "variacion, sale",
+    [(0, "#334155"), (8, "#15803d"), (-20, "#b91c1c")],
+)
+def test_color_del_mapa(variacion, sale):
+    from crypto_tracker.grafica import _color_mapa
+
+    assert _color_mapa(variacion) == sale
+
+
+def test_en_el_mapa_lo_que_se_mueve_poco_sale_flojo():
+    from crypto_tracker.grafica import _color_mapa
+
+    assert _color_mapa(0.5) not in {"#334155", "#15803d"}
+    assert _color_mapa(0.5) != _color_mapa(4)

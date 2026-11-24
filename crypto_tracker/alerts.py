@@ -227,6 +227,7 @@ from .mensajes.mercado import (
     formatear_busqueda,
     formatear_comisionred,
     formatear_comparar,
+    formatear_mapa,
     formatear_maximo,
     formatear_maximos,
     formatear_mercado,
