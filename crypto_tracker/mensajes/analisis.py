@@ -43,6 +43,7 @@ from ..movimientos import texto_cantidad
 from ..oi import Interes, lectura
 from ..perdido import Perdido
 from ..periodo import nombre as nombre_periodo
+from ..profundidad import Profundidad
 from ..puntuales import CARTERA
 from ..racha import Racha
 from ..rango import Rango, barra
@@ -1295,6 +1296,52 @@ def formatear_oi(i: Interes, coin_id: str) -> str:
         "<i>Cuento contratos y no dólares, para que una subida del precio no "
         "parezca dinero nuevo. Hacia qué lado apuestan: "
         f"/funding {simbolo.lower()}</i>",
+    ]
+    return "\n".join(lineas)
+
+
+def _millones(valor: float, corto: bool) -> str:
+    """'12,3 M', '850 mil', con '+' delante si el libro no llegaba."""
+    if valor >= 1e6:
+        texto = f"{valor / 1e6:.1f} M".replace(".", ",")
+    else:
+        texto = f"{valor / 1e3:.0f} mil"
+    return f"+{texto}" if corto else texto
+
+
+def formatear_profundidad(p: Profundidad, coin_id: str) -> str:
+    """Respuesta de /profundidad."""
+    simbolo = escape(p.par.removesuffix("USDT"))
+    filas = [f"{'':5} {'subir':>9} {'bajar':>9}"]
+    for t in p.tramos:
+        pct = f"{t.pct:g}%".replace(".", ",")
+        subir = _millones(t.subir, t.subir_corto)
+        bajar = _millones(t.bajar, t.bajar_corto)
+        filas.append(f"{pct:5} {subir:>9} {bajar:>9}")
+
+    lineas = [
+        f"🧱 <b>Profundidad de {_nombre(coin_id)}</b> · {escape(p.par)} en Binance",
+        f"Precio: ${_num(p.precio)}",
+        "",
+        "Dólares que habría que comprar o vender de golpe para moverlo:",
+        "<code>" + "\n".join(filas) + "</code>",
+    ]
+    if any(t.subir_corto or t.bajar_corto for t in p.tramos):
+        lineas.append("<i>Con + es que el libro se acaba antes: hace falta más.</i>")
+
+    if p.lado == "compran":
+        lectura = "🛡 <b>Hay más esperando para comprar</b>: hacia abajo aguanta más"
+    elif p.lado == "venden":
+        lectura = "🧱 <b>Hay más esperando para vender</b>: hacia arriba le cuesta más"
+    else:
+        lectura = "⚖️ <b>Parecido a los dos lados</b>"
+    lineas += [
+        "",
+        lectura,
+        "",
+        "<i>Solo cuenta Binance al contado, y las órdenes se ponen y se quitan en "
+        "segundos: es una foto de ahora. Cuánto hay apostado en futuros: "
+        f"/oi {simbolo.lower()}</i>",
     ]
     return "\n".join(lineas)
 

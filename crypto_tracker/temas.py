@@ -192,6 +192,7 @@ TEMAS = [
             "funding",
             "oi",
             "longshort",
+            "profundidad",
             "spread",
             "glosario",
             "halving",

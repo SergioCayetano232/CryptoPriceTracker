@@ -222,6 +222,7 @@ COMANDOS = {
     "funding": "Si los de futuros apuestan a que sube o baja (ej: /funding btc)",
     "oi": "Cuánto hay apostado en futuros y si entra o sale (ej: /oi btc)",
     "longshort": "Cuántos apuestan a que sube y a que baja (ej: /longshort btc)",
+    "profundidad": "Cuánto dinero hace falta para moverla un 2% (ej: /profundidad btc)",
     "spread": "El precio de CoinGecko contra el de Binance (ej: /spread btc eth)",
     "buscar": "Encuentra el id de una cripto (ej: /buscar btc)",
     "copia": "Lo que vigilo y tu cartera, listo para pegar en el .env",
@@ -333,6 +334,9 @@ ALIAS = {
     "financiacion": "funding",
     "interesabierto": "oi",
     "largos": "longshort",
+    "liquidez": "profundidad",
+    "ordenes": "profundidad",
+    "órdenes": "profundidad",
     "cortos": "longshort",
     "openinterest": "oi",
     "meses": "estacional",
@@ -952,6 +956,10 @@ EJEMPLOS = {
     "oi": [
         ("/oi btc", "lo apostado en futuros de Binance y cómo ha cambiado"),
         ("/oi", "a secas, la primera que vigilo"),
+    ],
+    "profundidad": [
+        ("/profundidad btc", "lo que costaría moverla un 0,5, un 1 y un 2%"),
+        ("/profundidad", "a secas, la primera que vigilo"),
     ],
     "longshort": [
         ("/longshort btc", "cuántos apuestan a cada lado en los futuros de Binance"),

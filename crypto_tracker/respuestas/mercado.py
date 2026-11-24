@@ -27,6 +27,7 @@ from .. import (
     miedo,
     moneda,
     oi,
+    profundidad,
     redondo,
     simbolos,
     spread,
@@ -422,6 +423,36 @@ def _oi(config: Config, argumento: str) -> str:
     if resultado is None:
         return "Binance no me ha dado lo apostado. Prueba en un rato."
     return alerts.formatear_oi(resultado, coin_id)
+
+
+def _profundidad(config: Config, argumento: str) -> str | comandos.ConBotones:
+    if len(argumento.split()) > 1:
+        return f"De una en una. Por ejemplo: {profundidad.EJEMPLO}"
+    if argumento:
+        coin_id = simbolos.a_id(argumento)
+    else:
+        vigiladas = _con_cambios(config).watchlist
+        if not vigiladas:
+            return f"¿De cuál? Por ejemplo: {profundidad.EJEMPLO}"
+        coin_id = vigiladas[0].coin_id
+
+    par = funding.par(coin_id, argumento)
+    try:
+        datos = profundidad.pedir(par)
+    except profundidad.ProfundidadError as e:
+        if str(e) == "sin datos":
+            return (
+                f"Binance no tiene <b>{telegram.escape(coin_id)}</b> contra el dólar. "
+                f"Prueba con su símbolo, como {profundidad.EJEMPLO}"
+            )
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+    resultado = profundidad.leer(par, datos)
+    if resultado is None:
+        return "Binance no me ha dado las órdenes ahora mismo. Prueba en un rato."
+    texto = alerts.formatear_profundidad(resultado, coin_id)
+    return comandos.ConBotones(
+        texto, botones.actualizar(f"/profundidad {argumento}".strip())
+    )
 
 
 def _longshort(config: Config, argumento: str) -> str:
