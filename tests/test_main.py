@@ -4541,6 +4541,90 @@ def test_sectores_sin_conexion(config, enviados, monkeypatch):
     assert "No he podido mirarlo ahora mismo: Sin conexion" in enviados[0]
 
 
+# --- /dificultad ---
+
+
+def _dificultad(monkeypatch, cambio=9.0, potencia=None):
+    from crypto_tracker import dificultad
+
+    ajuste = {
+        "progressPercent": 81.99,
+        "difficultyChange": cambio,
+        "estimatedRetargetDate": int((time.time() + 55.5 * 3600) * 1000),
+        "remainingBlocks": 363,
+        "previousRetarget": -9.13,
+        "timeAvg": 551000,
+    }
+    horas = {
+        "hashrates": [
+            {"timestamp": 1_790_000_000 + i * 86400, "avgHashrate": v * 1e18}
+            for i, v in enumerate(potencia or [])
+        ]
+    }
+    monkeypatch.setattr(dificultad, "pedir", lambda: (ajuste, horas))
+
+
+def test_dificultad(config, monkeypatch):
+    mandados = _con_botones(monkeypatch)
+    _dificultad(monkeypatch, potencia=[1000] * 31 + [1126])
+
+    main.atender(config, _mensaje("/dificultad"))
+
+    texto, teclado = mandados[0]
+    assert "Próximo ajuste en 2 días y 7 h: el " in texto
+    assert "<code>▓▓▓▓▓▓▓▓░░</code> 81% de 2.016 bloques" in texto
+    assert "🔺 Se espera un <b>+9,0%</b>: sale un bloque cada 9 min 11 s" in texto
+    assert "El anterior fue -9,1%" in texto
+    assert "Potencia de minado: <b>1.126 EH/s</b>" in texto
+    assert "En 30 días: +12,6%" in texto
+    assert "🏭 <b>Entran mineros</b>" in texto
+    assert teclado == [[("🔄 Actualizar", "/dificultad")]]
+
+
+def test_dificultad_bajando_y_sin_hashrate(config, monkeypatch):
+    mandados = _con_botones(monkeypatch)
+    _dificultad(monkeypatch, cambio=-4.0)
+
+    main.atender(config, _mensaje("/hashrate"))
+
+    texto = mandados[0][0]
+    assert "🔻 Se espera un <b>-4,0%</b>" in texto
+    assert "💤 <b>Se van mineros</b>" in texto
+    assert "Potencia de minado" not in texto
+
+
+def test_dificultad_capitulacion(config, monkeypatch):
+    mandados = _con_botones(monkeypatch)
+    _dificultad(monkeypatch, potencia=[1000] * 31 + [850])
+
+    main.atender(config, _mensaje("/dificultad"))
+
+    assert "🪫 <b>Se apagan muchas máquinas</b>" in mandados[0][0]
+
+
+def test_dificultad_sin_datos(config, enviados, monkeypatch):
+    from crypto_tracker import dificultad
+
+    monkeypatch.setattr(dificultad, "pedir", lambda: ({}, {}))
+
+    main.atender(config, _mensaje("/dificultad"))
+
+    assert "no me ha dado el ajuste" in enviados[0]
+
+
+def test_dificultad_sin_conexion(config, enviados, monkeypatch):
+    from crypto_tracker import dificultad
+
+    def falla():
+        raise dificultad.DificultadError("mempool.space no contesta")
+
+    monkeypatch.setattr(dificultad, "pedir", falla)
+
+    main.atender(config, _mensaje("/dificultad"))
+
+    assert "No he podido mirarlo ahora mismo: mempool.space" in enviados[0]
+
+
 # --- /top ---
 
 

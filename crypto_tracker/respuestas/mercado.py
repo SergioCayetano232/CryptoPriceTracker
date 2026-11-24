@@ -17,6 +17,7 @@ from .. import (
     convertir,
     database,
     dia,
+    dificultad,
     direccion,
     dominancia,
     funding,
@@ -296,6 +297,18 @@ def _comisionred(config: Config, argumento: str = "") -> str | comandos.ConBoton
     if datos is None:
         return texto
     return comandos.ConBotones(texto, botones.actualizar("/comisionred"))
+
+
+def _dificultad(config: Config) -> str | comandos.ConBotones:
+    try:
+        ajuste, potencia = dificultad.pedir()
+    except dificultad.DificultadError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+    datos = dificultad.leer(ajuste, potencia)
+    if datos is None:
+        return "mempool.space no me ha dado el ajuste ahora mismo. Prueba en un rato."
+    texto = alerts.formatear_dificultad(datos)
+    return comandos.ConBotones(texto, botones.actualizar("/dificultad"))
 
 
 def _avisar_comisionred(

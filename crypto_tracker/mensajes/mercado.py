@@ -12,6 +12,7 @@ from ..comisionred import ComisionRed, en_dinero, media_hora
 from ..comparar import Resultado
 from ..comparar import media as media_comparar
 from ..copia import numero as numero_env
+from ..dificultad import BLOQUES, MINUTOS, Dificultad, falta
 from ..mapa import Mapa
 from ..maximo import Maximo, hace
 from ..mercado import Mercado, grande
@@ -22,6 +23,7 @@ from ..miedo import nombre as nombre_miedo
 from ..movimientos import texto_cantidad
 from ..periodo import nombre as nombre_periodo
 from ..quieta import Quieta
+from ..recordar import DIAS as NOMBRES_DIAS
 from ..sectores import Sector
 from ..semanal import Semana
 from ..sesgo import MINIMO as MINIMO_SESGO
@@ -364,6 +366,57 @@ def formatear_sectores(lista: list[Sector]) -> str:
         "",
         "<i>Cada sector va por lo que valen juntas todas sus criptos, y una puede "
         "estar en varios: HYPE cuenta en DeFi, en exchanges y en futuros.</i>",
+    ]
+    return "\n".join(texto)
+
+
+def formatear_dificultad(d: Dificultad, ahora: datetime | None = None) -> str:
+    """/dificultad: el próximo ajuste y cómo va la potencia de minado."""
+    ahora = ahora or datetime.now(d.cuando.tzinfo)
+    cuando = d.cuando.astimezone()
+    dia = f"el {NOMBRES_DIAS[cuando.weekday()]} {cuando.day} hacia las {cuando:%H:%M}"
+    minutos, segundos = divmod(round(d.cada * 60), 60)
+    ritmo = f"{minutos} min {segundos} s" if segundos else f"{minutos} min"
+    texto = [
+        "⛏ <b>Dificultad de bitcoin</b>",
+        f"Próximo ajuste en {falta(d.cuando, ahora)}: {dia}",
+        f"{_barra_progreso(d.progreso)} de {BLOQUES:,} bloques".replace(",", "."),
+        "",
+        f"{_flecha(d.cambio)} Se espera un <b>{_signo(d.cambio)}</b>: "
+        f"sale un bloque cada {ritmo}, en vez de {MINUTOS}",
+    ]
+    if d.anterior is not None:
+        texto.append(f"El anterior fue {_signo(d.anterior)}")
+
+    if d.potencia:
+        potencia = f"{d.potencia[-1]:,.0f}".replace(",", ".")
+        texto += ["", f"Potencia de minado: <b>{potencia} EH/s</b>"]
+        if len(d.potencia) >= MINIMO_BARRAS:
+            barras = sparkline(muestrear(d.potencia, BARRAS_MOVIL))
+            texto.append(f"<code>{barras}</code>")
+        if d.potencia_mes is not None:
+            texto.append(f"En 30 días: {_signo(d.potencia_mes)}")
+
+    if d.capitulacion:
+        lectura = (
+            "🪫 <b>Se apagan muchas máquinas</b>: cuando cae tanto en un mes, suele "
+            "ser que a los mineros no les salen las cuentas"
+        )
+    elif d.cambio > 0:
+        lectura = (
+            "🏭 <b>Entran mineros</b>: los bloques salen antes de tiempo y la red "
+            "lo pone más difícil"
+        )
+    else:
+        lectura = (
+            "💤 <b>Se van mineros</b>: los bloques tardan y la red lo pone más fácil"
+        )
+    texto += [
+        "",
+        lectura,
+        "",
+        "<i>Cada 2.016 bloques, unas dos semanas, la red ajusta la dificultad para "
+        "que salga un bloque cada 10 minutos. Viene de mempool.space.</i>",
     ]
     return "\n".join(texto)
 

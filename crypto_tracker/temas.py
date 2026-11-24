@@ -113,6 +113,7 @@ TEMAS = [
             "juntas",
             "direccion",
             "comisionred",
+            "dificultad",
             "ruido",
             "voto",
             "mute",
