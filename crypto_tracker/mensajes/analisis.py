@@ -33,9 +33,11 @@ from ..longshort import lectura as lectura_longshort
 from ..macd import LENTA, RAPIDA, Macd
 from ..macd import SEÑAL as SEÑAL_MACD
 from ..maximo import hace
+from ..mayer import BURBUJA, Mayer
 from ..media import lado_de_todas
 from ..mejor import Extremo
 from ..mercado import grande
+from ..mes import MESES as NOMBRES_MESES
 from ..mitad import Cartera as CarteraMitad
 from ..movimientos import texto_cantidad
 from ..oi import Interes, lectura
@@ -1332,6 +1334,56 @@ def formatear_longshort(ls: LongShort, coin_id: str) -> str:
         "<i>Cuento cuentas, no dinero: uno con 10 € vale lo mismo que una ballena. "
         "Cuando casi todos van al mismo lado, el precio suele ir a pillarlos. "
         f"Cuánto hay apostado: /oi {simbolo.lower()}</i>",
+    ]
+    return "\n".join(lineas)
+
+
+def formatear_mayer(m: Mayer, coin_id: str) -> str:
+    """Respuesta de /mayer."""
+
+    def multiple(valor: float) -> str:
+        return f"{valor:.2f}".replace(".", ",")
+
+    def mes(d) -> str:
+        return f"{NOMBRES_MESES[d.cuando.month - 1][:3]} {d.cuando.year}"
+
+    def dolares(valor: float) -> str:
+        # En bitcoin los céntimos sobran; en una de céntimos, no.
+        return (
+            f"${valor:,.0f}".replace(",", ".") if valor >= 1000 else f"${_num(valor)}"
+        )
+
+    hoy = m.hoy
+    emoji, zona = m.zona
+    lineas = [
+        f"📐 <b>Múltiplo de Mayer de {_nombre(coin_id)}: {multiple(hoy.multiple)}</b>",
+        f"Precio: {dolares(hoy.precio)} · media de 200 días: {dolares(m.media)}",
+    ]
+    ultimo_año = [d.multiple for d in m.dias[-365:]]
+    if len(ultimo_año) >= MINIMO_BARRAS:
+        lineas.append(f"<code>{sparkline(muestrear(ultimo_año, BARRAS_MOVIL))}</code>")
+    lineas += [
+        "",
+        f"{emoji} <b>{zona}</b>",
+        f"Desde {m.dias[0].cuando.year}, el {m.por_debajo:.0f}% de los días "
+        "estuvo más bajo que hoy.",
+        f"Lo más alto: {multiple(m.maximo.multiple)} en {mes(m.maximo)} · "
+        f"lo más bajo: {multiple(m.minimo.multiple)} en {mes(m.minimo)}",
+    ]
+    if hoy.multiple < 1:
+        lineas.append(
+            f"Para volver a su media tendría que subir a {dolares(m.media)} "
+            f"({_signo((m.media / hoy.precio - 1) * 100)})."
+        )
+    if hoy.multiple < BURBUJA:
+        lineas.append(
+            f"Zona de burbuja (2,4): a partir de {dolares(m.media * BURBUJA)}."
+        )
+    lineas += [
+        "",
+        "<i>El precio entre su media de 200 días, en dólares. Por debajo de 1 "
+        "está más barato que de media en los últimos siete meses; por encima de "
+        "2,4 solía ser burbuja. Se pensó para bitcoin: en otras dice menos.</i>",
     ]
     return "\n".join(lineas)
 

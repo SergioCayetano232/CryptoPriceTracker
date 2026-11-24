@@ -134,6 +134,7 @@ TEMAS = [
             "diasemana",
             "diames",
             "estacional",
+            "mayer",
             "horas",
             "rango",
             "soporte",

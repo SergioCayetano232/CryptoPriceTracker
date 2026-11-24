@@ -28,6 +28,7 @@ from .. import (
     horas,
     hubiera,
     macd,
+    mayer,
     media,
     mejor,
     miedo,
@@ -849,6 +850,30 @@ def _estacional(config: Config, argumento: str) -> str:
             "tiene ningún mes entero"
         )
     return alerts.formatear_estacional(coin_id, resultado)
+
+
+def _mayer(config: Config, argumento: str) -> str:
+    if len(argumento.split()) > 1:
+        return f"De una en una. Por ejemplo: {mayer.EJEMPLO}"
+    # Se pensó para bitcoin, así que a secas va con él y no con la primera tuya.
+    coin_id = simbolos.a_id(argumento) if argumento else "bitcoin"
+    try:
+        velas = mayer.pedir(funding.par(coin_id, argumento))
+    except mayer.MayerError as e:
+        if str(e) == "sin datos":
+            return (
+                f"Binance no tiene <b>{telegram.escape(coin_id)}</b> contra el dólar. "
+                f"Prueba con su símbolo, como {mayer.EJEMPLO}"
+            )
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+
+    resultado = mayer.calcular(funding.par(coin_id, argumento), velas)
+    if resultado is None:
+        return (
+            f"<b>{telegram.escape(coin_id)}</b> lleva menos de 200 días en Binance: "
+            "aún no tiene media con la que comparar"
+        )
+    return alerts.formatear_mayer(resultado, coin_id)
 
 
 def _comparar(config: Config, argumento: str) -> str | comandos.Foto:

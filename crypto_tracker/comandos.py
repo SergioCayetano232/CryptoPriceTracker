@@ -83,6 +83,7 @@ COMANDOS = {
     "diasemana": "Qué día de la semana suele subir más (ej: /diasemana btc 90d)",
     "diames": "Qué día del mes suele salir más barato (ej: /diames btc)",
     "estacional": "Qué meses del año suele subir o bajar (ej: /estacional btc)",
+    "mayer": "Si bitcoin está caro o barato frente a su media de 200 días",
     "horas": "A qué hora suele estar más barata (ej: /horas btc 30d)",
     "rango": "Entre qué precios se ha movido y dónde está hoy (ej: /rango btc 30d)",
     "soporte": "Dónde ha girado varias veces arriba y abajo (ej: /soporte btc)",
@@ -332,6 +333,8 @@ ALIAS = {
     "openinterest": "oi",
     "meses": "estacional",
     "estacionalidad": "estacional",
+    "multiplo": "mayer",
+    "múltiplo": "mayer",
     "financiación": "funding",
     "comisiónred": "comisionred",
     "market": "mercado",
@@ -930,6 +933,10 @@ EJEMPLOS = {
     "estacional": [
         ("/estacional btc", "cada mes desde 2017, y si sube más de lo que baja"),
         ("/estacional", "a secas, la primera que vigilo"),
+    ],
+    "mayer": [
+        ("/mayer", "el de bitcoin, y en qué parte de su historia está"),
+        ("/mayer eth", "el de otra, aunque se pensó para bitcoin"),
     ],
     "spread": [
         ("/spread btc eth", "lo que da cada uno de esas y cuánto se separan"),
