@@ -12213,7 +12213,10 @@ def test_importar_dos_veces_no_repite(config, enviados, con_csv):
     assert len(database.get_movimientos(config.database_path)) == 2
 
 
-def test_importar_no_las_mete_antes_de_lo_apuntado(config, enviados, con_csv):
+def test_importar_no_las_mete_antes_de_lo_apuntado(
+    config, enviados, con_csv, monkeypatch
+):
+    _precio(monkeypatch, {"bitcoin": 60000.0})
     main.atender(config, _mensaje("/compra bitcoin 0.01 500"))
     main.atender(config, _archivo())
 
@@ -14142,7 +14145,8 @@ def test_un_voto_fuera_de_plazo_no_cuenta(config, enviados, encuestas):
     assert database.get_predicciones(config.database_path, "eur") == []
 
 
-def test_el_voto_del_invitado_va_a_su_archivo(config, a_quien, encuestas):
+def test_el_voto_del_invitado_va_a_su_archivo(config, a_quien, encuestas, monkeypatch):
+    _precio(monkeypatch, {"solana": 200.0})
     _con_invitado(config, a_quien)
     main.atender(config, _de(555, "/vigilar solana %5"))
     database.save_prices(_archivo_de(config, 555), {"solana": 200.0}, "eur")
