@@ -414,6 +414,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/sesgo` | Con qué humor del mercado compras y vendes: cuántas de tus compras y ventas fueron con miedo extremo, miedo, neutral, codicia o codicia extrema (el índice de alternative.me del día de cada una), y cómo van hoy las compras de cada grupo. Te dice si sueles comprar con codicia o vender con miedo, a partir de tres. Solo cuenta las de `/compra` y `/venta`, que llevan fecha. También `/humor` |
 | `/comisionred` | Lo que cuesta ahora mover bitcoin, con prisa y sin ella, en dinero y en sat/vB, para un envío normal de una entrada y dos salidas. Te dice si está barata, normal o cara comparada con lo normal de la semana. Viene de mempool.space y no gasta consultas de CoinGecko. También `/mempool` |
 | `/dificultad` | Cuándo toca el próximo ajuste de dificultad de bitcoin (cada 2.016 bloques, unas dos semanas), cuánto falta y cuánto se espera que suba o baje, con lo que cambió el anterior. Debajo, la potencia de minado (el hashrate) con una barrita de tres meses y cómo ha cambiado en 30 días: si cae un 10% o más, avisa de que muchos mineros están apagando máquinas. Viene de mempool.space y no gasta consultas de CoinGecko. También `/hashrate` y `/mineria` |
+| `/lightning` | Cómo está la red Lightning, la de pagos rápidos y baratos que va encima de bitcoin: cuánto bitcoin tiene dentro (en BTC y en dólares), cuántos nodos y canales, cómo ha cambiado todo en 30 días y lo nuevo de las últimas 24 h. Dice si crece o encoge (desde un 5% en el mes). Solo cuenta lo público. Viene de 1ml.com, porque mempool.space dejó de actualizarlo en agosto de 2026. No gasta consultas de CoinGecko. También `/ln` |
 | `/comisionred 5` | Te avisa una vez cuando el envío de media hora baje a 5 sat/vB o menos, para pasar bitcoin a tu monedero cuando sale barato. Lo mira en cada consulta, en mempool.space. Si ya está así, te lo dice y no pone nada. `/comisionred no` lo quita |
 | `/spread btc eth` | El precio de ahora en CoinGecko y en Binance, uno al lado del otro, y cuánto se separan (la que más, arriba). Con ⚠️ si pasa del 3%, que suele ser un dato malo: con esas el bot no te avisa hasta que cuadran. A secas, las que vigilas. Gasta una consulta. Solo en euros o dólares |
 | `/funding btc` | Lo que pagan cada 8 horas en los futuros de Binance los que apuestan a que sube a los que apuestan a que baja, la media de la semana y un nivel: de "muchos apostando a que baja" a "muy apalancado al alza", que es cuando suelen venir las caídas bruscas. A secas, la primera que vigilo. No gasta consultas de CoinGecko. También `/financiacion` |
@@ -984,6 +985,7 @@ crypto_tracker/
   binance.py     precios de respaldo por si CoinGecko no contesta
   comisionred.py lo que cuesta mover bitcoin, de mempool.space, para /comisionred
   dificultad.py  el próximo ajuste y la potencia de minado, para /dificultad
+  lightning.py   cuánto bitcoin hay en Lightning, de 1ml.com, para /lightning
   spread.py      CoinGecko contra Binance, para /spread
   funding.py     lo que se pagan los de futuros en Binance, para /funding
   oi.py          lo apostado en futuros de Binance, para /oi

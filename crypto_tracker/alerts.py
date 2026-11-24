@@ -233,6 +233,7 @@ from .mensajes.mercado import (
     formatear_comisionred,
     formatear_comparar,
     formatear_dificultad,
+    formatear_lightning,
     formatear_mapa,
     formatear_maximo,
     formatear_maximos,

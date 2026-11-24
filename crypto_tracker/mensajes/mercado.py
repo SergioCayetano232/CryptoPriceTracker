@@ -13,6 +13,7 @@ from ..comparar import Resultado
 from ..comparar import media as media_comparar
 from ..copia import numero as numero_env
 from ..dificultad import BLOQUES, MINUTOS, Dificultad, falta
+from ..lightning import Lightning
 from ..mapa import Mapa
 from ..maximo import Maximo, hace
 from ..mercado import Mercado, grande
@@ -417,6 +418,50 @@ def formatear_dificultad(d: Dificultad, ahora: datetime | None = None) -> str:
         "",
         "<i>Cada 2.016 bloques, unas dos semanas, la red ajusta la dificultad para "
         "que salga un bloque cada 10 minutos. Viene de mempool.space.</i>",
+    ]
+    return "\n".join(texto)
+
+
+def formatear_lightning(ln: Lightning) -> str:
+    """/lightning: cuánto bitcoin hay en la red y si crece o encoge."""
+
+    def entero(valor: float) -> str:
+        return f"{valor:,.0f}".replace(",", ".")
+
+    def mes(cambio: float | None) -> str:
+        return "" if cambio is None else f" · {_flecha(cambio)} {_signo(cambio)}"
+
+    capacidad = f"Capacidad: <b>{entero(ln.capacidad)} BTC</b>"
+    if ln.dolares:
+        capacidad += f", unos {grande(ln.dolares)} de dólares"
+    texto = ["⚡ <b>Red Lightning</b>", capacidad]
+    if ln.capacidad_mes is not None:
+        texto.append(
+            f"{_flecha(ln.capacidad_mes)} {_signo(ln.capacidad_mes)} en 30 días"
+        )
+    texto += [
+        "",
+        f"Nodos: {entero(ln.nodos)}{mes(ln.nodos_mes)}",
+        f"Canales: {entero(ln.canales)}{mes(ln.canales_mes)}",
+    ]
+    if ln.nodos_nuevos is not None and ln.canales_nuevos is not None:
+        texto.append(
+            f"En 24 h: {ln.nodos_nuevos} nodos y {ln.canales_nuevos} canales nuevos"
+        )
+    por_canal = f"{ln.por_canal:.3f}".replace(".", ",")
+    texto.append(f"Cada canal tiene de media {por_canal} BTC")
+
+    lectura = {
+        "crece": "🌱 <b>Crece</b>: entra bitcoin en Lightning",
+        "encoge": "🪫 <b>Encoge</b>: se cierran canales y sale bitcoin de Lightning",
+    }.get(ln.hacia, "😐 <b>Estable</b>: ni entra ni sale mucho")
+    texto += [
+        "",
+        lectura,
+        "",
+        "<i>Lightning es la red de pagos rápidos y baratos que va encima de bitcoin. "
+        "Solo se ve lo público: los canales privados no cuentan. Viene de "
+        "1ml.com.</i>",
     ]
     return "\n".join(texto)
 

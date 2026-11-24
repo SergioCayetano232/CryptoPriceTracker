@@ -114,6 +114,7 @@ TEMAS = [
             "direccion",
             "comisionred",
             "dificultad",
+            "lightning",
             "ruido",
             "voto",
             "mute",

@@ -24,6 +24,7 @@ from .. import (
     grafica,
     hoy,
     kimchi,
+    lightning,
     longshort,
     miedo,
     moneda,
@@ -312,6 +313,17 @@ def _dificultad(config: Config) -> str | comandos.ConBotones:
         return "mempool.space no me ha dado el ajuste ahora mismo. Prueba en un rato."
     texto = alerts.formatear_dificultad(datos)
     return comandos.ConBotones(texto, botones.actualizar("/dificultad"))
+
+
+def _lightning(config: Config) -> str | comandos.ConBotones:
+    try:
+        datos = lightning.leer(lightning.pedir())
+    except lightning.LightningError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+    if datos is None:
+        return "1ml.com no me ha dado cómo está la red. Prueba en un rato."
+    texto = alerts.formatear_lightning(datos)
+    return comandos.ConBotones(texto, botones.actualizar("/lightning"))
 
 
 def _avisar_comisionred(
