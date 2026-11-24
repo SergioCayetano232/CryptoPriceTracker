@@ -4480,6 +4480,67 @@ def test_mapa_sin_conexion(config, enviados, monkeypatch):
     assert "No he podido mirarlo ahora mismo: Sin conexion" in enviados[0]
 
 
+# --- /sectores ---
+
+
+def _sectores(monkeypatch, cambios):
+    from crypto_tracker.sectores import Sector
+
+    lista = [Sector(n, "A, B", c, 1e9) for n, c in cambios]
+    monkeypatch.setattr(coingecko, "sectores_hoy", lambda: lista)
+
+
+def test_sectores(config, monkeypatch):
+    mandados = _con_botones(monkeypatch)
+    _sectores(monkeypatch, [("Memes", 5.2), ("DeFi", 0.0), ("Privacidad", -7.9)])
+
+    main.atender(config, _mensaje("/sectores"))
+
+    texto, teclado = mandados[0]
+    assert "🔺 <b>Memes</b> +5,2% <i>A, B</i>" in texto
+    assert "➖ <b>DeFi</b> +0,0%" in texto
+    assert texto.index("Memes") < texto.index("DeFi") < texto.index("Privacidad")
+    assert "Tira del mercado <b>Memes</b> y se queda atrás <b>Privacidad</b>" in texto
+    assert teclado == [[("🔄 Actualizar", "/sectores")]]
+
+
+def test_sectores_todos_bajan(config, monkeypatch):
+    _sectores(monkeypatch, [("Memes", -1.0), ("Privacidad", -7.9)])
+    mandados = _con_botones(monkeypatch)
+
+    main.atender(config, _mensaje("/narrativas"))
+
+    assert "Hoy bajan todos. Lo que menos, <b>Memes</b>" in mandados[0][0]
+
+
+def test_sectores_todos_suben(config, monkeypatch):
+    mandados = _con_botones(monkeypatch)
+    _sectores(monkeypatch, [("Memes", 3.0), ("Privacidad", 0.0)])
+
+    main.atender(config, _mensaje("/sectores"))
+
+    assert "Hoy suben todos" in mandados[0][0]
+
+
+def test_sectores_sin_datos(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "sectores_hoy", lambda: [])
+
+    main.atender(config, _mensaje("/sectores"))
+
+    assert "no me ha dado los sectores" in enviados[0]
+
+
+def test_sectores_sin_conexion(config, enviados, monkeypatch):
+    def falla():
+        raise coingecko.CoinGeckoError("Sin conexion con CoinGecko")
+
+    monkeypatch.setattr(coingecko, "sectores_hoy", falla)
+
+    main.atender(config, _mensaje("/sectores"))
+
+    assert "No he podido mirarlo ahora mismo: Sin conexion" in enviados[0]
+
+
 # --- /top ---
 
 

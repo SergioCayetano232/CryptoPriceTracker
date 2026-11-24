@@ -185,6 +185,7 @@ TEMAS = [
             "tendencias",
             "top",
             "mapa",
+            "sectores",
             "aleatoria",
             "funding",
             "oi",

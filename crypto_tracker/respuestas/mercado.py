@@ -230,6 +230,17 @@ def _mapa(config: Config) -> str | comandos.Foto:
     return comandos.Foto(png, texto, texto)
 
 
+def _sectores(config: Config) -> str | comandos.ConBotones:
+    try:
+        lista = coingecko.sectores_hoy()
+    except coingecko.CoinGeckoError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+    if not lista:
+        return "CoinGecko no me ha dado los sectores ahora mismo. Prueba en un rato."
+    texto = alerts.con_fuente(alerts.formatear_sectores(lista))
+    return comandos.ConBotones(texto, botones.actualizar("/sectores"))
+
+
 def _ultimo(config: Config) -> str:
     vigiladas = [w.coin_id for w in _con_cambios(config).watchlist]
     if not vigiladas:

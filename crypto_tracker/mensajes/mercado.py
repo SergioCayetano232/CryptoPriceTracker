@@ -22,6 +22,7 @@ from ..miedo import nombre as nombre_miedo
 from ..movimientos import texto_cantidad
 from ..periodo import nombre as nombre_periodo
 from ..quieta import Quieta
+from ..sectores import Sector
 from ..semanal import Semana
 from ..sesgo import MINIMO as MINIMO_SESGO
 from ..sesgo import Lado, Sesgo
@@ -336,6 +337,34 @@ def formatear_mapa(m: Mapa) -> str:
     texto.append(
         "<i>El total pesa cada una por lo que vale: si bitcoin cae, se nota más.</i>"
     )
+    return "\n".join(texto)
+
+
+def formatear_sectores(lista: list[Sector]) -> str:
+    """/sectores: todos, del que más sube al que más baja."""
+    texto = ["🧩 <b>Qué sube y qué baja hoy</b> · <i>por sectores, en 24 h</i>", ""]
+    for s in lista:
+        texto.append(
+            f"{_flecha(s.cambio)} <b>{s.nombre}</b> {_signo(s.cambio)} "
+            f"<i>{s.ejemplos}</i>"
+        )
+    primero, ultimo = lista[0], lista[-1]
+    if primero.cambio > 0 > ultimo.cambio:
+        resumen = (
+            f"Tira del mercado <b>{primero.nombre}</b> "
+            f"y se queda atrás <b>{ultimo.nombre}</b>"
+        )
+    elif ultimo.cambio >= 0:
+        resumen = "Hoy suben todos"
+    else:
+        resumen = f"Hoy bajan todos. Lo que menos, <b>{primero.nombre}</b>"
+    texto += [
+        "",
+        f"🏁 {resumen}.",
+        "",
+        "<i>Cada sector va por lo que valen juntas todas sus criptos, y una puede "
+        "estar en varios: HYPE cuenta en DeFi, en exchanges y en futuros.</i>",
+    ]
     return "\n".join(texto)
 
 

@@ -632,6 +632,20 @@ def test_mapa_hoy(monkeypatch):
     assert [(c.simbolo, c.variacion) for c in m.casillas] == [("BTC", -1.5)]
 
 
+def test_sectores_hoy(monkeypatch):
+    pedido = {}
+
+    def get(url, params=None, headers=None, timeout=None):
+        pedido["url"] = url
+        return RespuestaFalsa([{"id": "meme-token", "market_cap": 1e9}])
+
+    monkeypatch.setattr(requests, "get", get)
+
+    # Con uno solo se queda corto: mejor nada que media lista.
+    assert coingecko.sectores_hoy() == []
+    assert pedido["url"].endswith("/coins/categories")
+
+
 def test_mercado_global(monkeypatch):
     pedido = {}
 

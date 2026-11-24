@@ -8,7 +8,17 @@ from urllib.parse import quote
 
 import requests
 
-from . import altseason, estables, mapa, mercado, precio, rellenar, tendencias, top
+from . import (
+    altseason,
+    estables,
+    mapa,
+    mercado,
+    precio,
+    rellenar,
+    sectores,
+    tendencias,
+    top,
+)
 from .maximo import Maximo, leer
 
 logger = logging.getLogger(__name__)
@@ -18,6 +28,7 @@ SEARCH_URL = "https://api.coingecko.com/api/v3/search"
 MARKETS_URL = "https://api.coingecko.com/api/v3/coins/markets"
 TRENDING_URL = "https://api.coingecko.com/api/v3/search/trending"
 GLOBAL_URL = "https://api.coingecko.com/api/v3/global"
+CATEGORIES_URL = "https://api.coingecko.com/api/v3/coins/categories"
 CHART_URL = "https://api.coingecko.com/api/v3/coins/{id}/market_chart"
 
 # Si la API tarda mas que esto, cortamos. Sin timeout una peticion puede
@@ -140,6 +151,11 @@ def mapa_hoy() -> mapa.Mapa | None:
         "price_change_percentage": "30d",
     }
     return mapa.leer(_con_reintentos(lambda: _pedir(MARKETS_URL, params)))
+
+
+def sectores_hoy() -> list[sectores.Sector]:
+    """Cómo van hoy los sectores que se entienden, el que más sube primero."""
+    return sectores.leer(_con_reintentos(lambda: _pedir(CATEGORIES_URL, {})))
 
 
 def mercado_global(vs_currency: str = "eur") -> mercado.Mercado:
