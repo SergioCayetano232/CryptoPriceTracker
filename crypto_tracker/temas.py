@@ -194,6 +194,7 @@ TEMAS = [
             "longshort",
             "profundidad",
             "premium",
+            "kimchi",
             "spread",
             "glosario",
             "halving",

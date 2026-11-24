@@ -28,6 +28,7 @@ from ..fibonacci import Fibonacci
 from ..funding import Funding
 from ..futuro import Futuro
 from ..horas import Horas
+from ..kimchi import Kimchi
 from ..longshort import LongShort
 from ..longshort import lectura as lectura_longshort
 from ..macd import LENTA, RAPIDA, Macd
@@ -1308,6 +1309,47 @@ def _millones(valor: float, corto: bool) -> str:
     else:
         texto = f"{valor / 1e3:.0f} mil"
     return f"+{texto}" if corto else texto
+
+
+def formatear_kimchi(k: Kimchi) -> str:
+    """Respuesta de /kimchi."""
+
+    def pct(valor: float) -> str:
+        return "0,00%" if abs(valor) < 0.005 else _pct2(valor)
+
+    def entero(valor: float) -> str:
+        return f"{valor:,.0f}".replace(",", ".")
+
+    primas = [d.prima for d in k.dias]
+    cambio = f"{k.cambio:,.2f}".replace(",", "x").replace(".", ",").replace("x", ".")
+    lineas = [
+        f"🇰🇷 <b>Prima kimchi: {pct(k.ahora)}</b> · {escape(k.simbolo)}",
+        f"Upbit: ₩{entero(k.wones)} · Binance: ${_num(k.dolares)}",
+        f"<i>A {cambio} wones el dólar</i>",
+    ]
+    if len(primas) >= MINIMO_BARRAS:
+        lineas.append(f"<code>{sparkline(muestrear(primas, BARRAS_MOVIL))}</code>")
+    if len(primas) >= 7:
+        lineas.append(
+            f"En {_veces(len(primas), 'día', 'días')}: media {pct(k.media)}, "
+            f"entre {pct(min(primas))} y {pct(max(primas))}"
+        )
+
+    lectura = {
+        "euforia": "🔥 <b>Euforia en Corea</b>: en los techos de 2018 y de 2021 "
+        "llegó a pasar del 20%",
+        "ganas": "🌶 <b>Pagan bastante más en Corea</b>: allí hay ganas de comprar",
+        "descuento": "🧊 <b>Más barato en Corea</b>: allí venden o no hay interés",
+    }.get(k.nivel, "😐 <b>Lo normal</b>: en Corea suele ir algo por encima")
+    lineas += [
+        "",
+        lectura,
+        "",
+        "<i>Corea pone trabas a sacar dinero del país, así que su precio puede "
+        "separarse del resto. El cambio es el del BCE, que no da fines de semana: "
+        "esos días vale el del viernes.</i>",
+    ]
+    return "\n".join(lineas)
 
 
 def formatear_premium(p: Premium) -> str:

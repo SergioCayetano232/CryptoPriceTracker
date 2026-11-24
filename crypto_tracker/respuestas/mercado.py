@@ -23,6 +23,7 @@ from .. import (
     funding,
     grafica,
     hoy,
+    kimchi,
     longshort,
     miedo,
     moneda,
@@ -424,6 +425,31 @@ def _oi(config: Config, argumento: str) -> str:
     if resultado is None:
         return "Binance no me ha dado lo apostado. Prueba en un rato."
     return alerts.formatear_oi(resultado, coin_id)
+
+
+def _kimchi(config: Config, argumento: str) -> str | comandos.ConBotones:
+    if len(argumento.split()) > 1:
+        return f"De una en una. Por ejemplo: {kimchi.EJEMPLO}"
+    coin_id = simbolos.a_id(argumento) if argumento else "bitcoin"
+    simbolo = funding.par(coin_id, argumento).removesuffix("USDT")
+    try:
+        datos = kimchi.pedir(simbolo, date.today())
+    except kimchi.KimchiError as e:
+        if str(e) == "sin datos":
+            return (
+                f"<b>{telegram.escape(coin_id)}</b> no está en Upbit y en Binance "
+                f"a la vez. Prueba con su símbolo, como {kimchi.EJEMPLO}"
+            )
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+    resultado = kimchi.leer(simbolo, *datos)
+    if resultado is None:
+        return (
+            "Upbit, Binance y el cambio no me han dado días que cuadren. Prueba luego."
+        )
+    return comandos.ConBotones(
+        alerts.formatear_kimchi(resultado),
+        botones.actualizar(f"/kimchi {argumento}".strip()),
+    )
 
 
 def _premium(config: Config, argumento: str) -> str | comandos.ConBotones:
