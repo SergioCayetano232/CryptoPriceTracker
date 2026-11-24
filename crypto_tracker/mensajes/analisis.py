@@ -28,6 +28,8 @@ from ..fibonacci import Fibonacci
 from ..funding import Funding
 from ..futuro import Futuro
 from ..horas import Horas
+from ..longshort import LongShort
+from ..longshort import lectura as lectura_longshort
 from ..macd import LENTA, RAPIDA, Macd
 from ..macd import SEÑAL as SEÑAL_MACD
 from ..maximo import hace
@@ -59,6 +61,7 @@ from .base import (
     MINIMO_BARRAS,
     POR_BTC,
     SIMBOLOS,
+    _barra_progreso,
     _decimal,
     _flecha,
     _nombre,
@@ -1290,6 +1293,45 @@ def formatear_oi(i: Interes, coin_id: str) -> str:
         "<i>Cuento contratos y no dólares, para que una subida del precio no "
         "parezca dinero nuevo. Hacia qué lado apuestan: "
         f"/funding {simbolo.lower()}</i>",
+    ]
+    return "\n".join(lineas)
+
+
+def formatear_longshort(ls: LongShort, coin_id: str) -> str:
+    """Respuesta de /longshort."""
+    simbolo = escape(ls.par.removesuffix("USDT"))
+
+    def pct(valor: float) -> str:
+        return f"{valor:.0f}%"
+
+    lineas = [
+        f"⚖️ <b>Largos y cortos de {_nombre(coin_id)}</b> · {escape(ls.par)} en Binance",
+        f"🔺 {pct(ls.hoy.largos)} apuesta a que sube · "
+        f"🔻 {pct(ls.hoy.cortos)} a que baja",
+        # Redondeada antes: la barra corta hacia abajo y saldría 70% junto a un 71%.
+        _barra_progreso(round(ls.hoy.largos)),
+    ]
+    largos = [r.largos for r in ls.todos]
+    if len(largos) >= MINIMO_BARRAS:
+        lineas.append(f"<code>{sparkline(muestrear(largos, BARRAS_MOVIL))}</code>")
+    if len(largos) >= 7:
+        lineas.append(
+            f"Media de {_veces(len(largos), 'día', 'días')}: {pct(ls.media)} a que sube"
+        )
+    if ls.grandes is not None:
+        lineas.append(
+            f"Los que más mueven: {pct(ls.grandes.largos)} a que sube, "
+            "contando por dinero"
+        )
+
+    emoji, que_pasa = lectura_longshort(ls)
+    lineas += [
+        "",
+        f"{emoji} <b>{que_pasa}</b>",
+        "",
+        "<i>Cuento cuentas, no dinero: uno con 10 € vale lo mismo que una ballena. "
+        "Cuando casi todos van al mismo lado, el precio suele ir a pillarlos. "
+        f"Cuánto hay apostado: /oi {simbolo.lower()}</i>",
     ]
     return "\n".join(lineas)
 

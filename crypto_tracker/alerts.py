@@ -37,6 +37,7 @@ from .mensajes.analisis import (
     formatear_funding,
     formatear_futuro,
     formatear_horas,
+    formatear_longshort,
     formatear_macd,
     formatear_media,
     formatear_mitad,

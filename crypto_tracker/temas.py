@@ -188,6 +188,7 @@ TEMAS = [
             "aleatoria",
             "funding",
             "oi",
+            "longshort",
             "spread",
             "glosario",
             "halving",
