@@ -283,6 +283,7 @@ from crypto_tracker.respuestas.revisiones import (
     revisar_funding,
     revisar_ideal,
     revisar_juntas,
+    revisar_longshort,
     revisar_rezagadas,
     revisar_rsi,
     revisar_salvo,
@@ -492,6 +493,7 @@ def ejecutar_ciclo(
     revisar_rezagadas(config, precios, sueltos)
     revisar_juntas(config, sueltos)
     revisar_funding(config, calladas, sueltos)
+    revisar_longshort(config, calladas, sueltos)
     revisar_alertas_ratio(config, precios, calladas, sueltos)
     revisar_rsi(config, vigiladas, calladas, sueltos)
     revisar_cruces(config, vigiladas, calladas, sueltos)

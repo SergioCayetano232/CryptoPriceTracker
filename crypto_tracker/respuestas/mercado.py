@@ -521,6 +521,7 @@ def _profundidad(config: Config, argumento: str) -> str | comandos.ConBotones:
 
 
 def _longshort(config: Config, argumento: str) -> str:
+    argumento, orden = funding.separar(argumento)
     if len(argumento.split()) > 1:
         return f"De una en una. Por ejemplo: {longshort.EJEMPLO}"
     if argumento:
@@ -532,6 +533,10 @@ def _longshort(config: Config, argumento: str) -> str:
         coin_id = vigiladas[0].coin_id
 
     par = funding.par(coin_id, argumento)
+    if orden == funding.QUITAR:
+        if database.quitar_longshort(config.database_path, par):
+            return f"Hecho, ya no te aviso de los largos de {telegram.escape(coin_id)}."
+        return f"No tenías ese aviso. Para ponerlo: {longshort.EJEMPLO_AVISO}"
     try:
         todos, grandes = longshort.pedir(par)
     except funding.FundingError as e:
@@ -544,7 +549,23 @@ def _longshort(config: Config, argumento: str) -> str:
     resultado = longshort.leer(par, todos, grandes)
     if resultado is None:
         return "Binance no me ha dado cuántos apuestan a cada lado. Prueba en un rato."
-    return alerts.formatear_longshort(resultado, coin_id)
+    if orden == funding.AVISA:
+        # Si ya está en un lado lo apunto: avisar de lo que acabas de ver sobra.
+        database.guardar_longshort(
+            config.database_path,
+            longshort.Vigilado(
+                par, coin_id, longshort.extremo(resultado), datetime.now(timezone.utc)
+            ),
+        )
+        _, ahora = longshort.lectura(resultado)
+        return (
+            f"🔔 Hecho: te aviso cuando en <b>{telegram.escape(coin_id)}</b> se vaya "
+            "más gente de lo normal a apostar a un lado. Ahora: "
+            f"{ahora.lower()}.\n"
+            f"Para quitarlo: /longshort {telegram.escape(coin_id)} no"
+        )
+    avisa = any(v.par == par for v in database.get_longshort(config.database_path))
+    return alerts.formatear_longshort(resultado, coin_id, avisa)
 
 
 def _funding(config: Config, argumento: str) -> str | comandos.ConBotones:

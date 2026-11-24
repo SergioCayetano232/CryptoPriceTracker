@@ -30,6 +30,7 @@ from .. import (
     funding,
     ideal,
     juntas,
+    longshort,
     modelo721,
     puntuales,
     record,
@@ -802,6 +803,55 @@ def revisar_funding(
             partial(apuntar, v, donde),
         ):
             logger.error("No se pudo avisar del funding de %s", v.par)
+
+
+def revisar_longshort(
+    config: Config,
+    calladas: set[str],
+    sueltos: buzon.Buzon | None = None,
+    ahora: datetime | None = None,
+) -> None:
+    """Los de /longshort btc avisa: una vez al irse más gente de lo normal a un lado."""
+    if _silenciado(config):
+        return
+    try:
+        lista = database.get_longshort(config.database_path)
+    except database.DatabaseError as e:
+        logger.error("No se pudieron leer los avisos de largos y cortos: %s", e)
+        return
+    ahora = ahora or datetime.now(timezone.utc)
+
+    def apuntar(v: longshort.Vigilado, donde: str) -> None:
+        try:
+            database.guardar_longshort(
+                config.database_path, replace(v, extremo=donde, mirado=ahora)
+            )
+        except database.DatabaseError as e:
+            logger.error("No se pudo apuntar los largos de %s: %s", v.par, e)
+
+    for v in lista:
+        if v.coin_id in calladas or not longshort.toca_mirar(v, ahora):
+            continue
+        try:
+            datos = longshort.leer(v.par, *longshort.pedir(v.par))
+        except funding.FundingError as e:
+            logger.warning("No se pudo mirar los largos de %s: %s", v.par, e)
+            datos = None
+        if datos is None:
+            # Apunto la hora igual: si Binance falla, no insisto en cada ciclo.
+            apuntar(v, v.extremo)
+            continue
+
+        avisar, donde = longshort.toca(v, datos)
+        if not avisar:
+            apuntar(v, donde)
+        elif not _avisar(
+            config,
+            alerts.formatear_aviso_longshort(datos),
+            sueltos,
+            partial(apuntar, v, donde),
+        ):
+            logger.error("No se pudo avisar de los largos de %s", v.par)
 
 
 def revisar_juntas(config: Config, sueltos: buzon.Buzon | None = None) -> None:

@@ -1431,7 +1431,23 @@ def formatear_profundidad(p: Profundidad, coin_id: str) -> str:
     return "\n".join(lineas)
 
 
-def formatear_longshort(ls: LongShort, coin_id: str) -> str:
+def formatear_aviso_longshort(ls: LongShort) -> str:
+    """El aviso de /longshort btc avisa, al irse más gente de lo normal a un lado."""
+    simbolo = escape(ls.par.removesuffix("USDT"))
+    emoji, que_pasa = lectura_longshort(ls)
+    return "\n".join(
+        [
+            f"{emoji} <b>{simbolo}: {que_pasa.lower()}</b>",
+            f"🔺 {ls.hoy.largos:.0f}% apuesta a que sube, cuando lo normal del mes "
+            f"es un {ls.media:.0f}%",
+            "Cuando casi todos van al mismo lado, el precio suele ir a pillarlos.",
+            f"<i>El detalle, en /longshort {simbolo.lower()}. No repito hasta que "
+            "se calme y vuelva a pasar</i>",
+        ]
+    )
+
+
+def formatear_longshort(ls: LongShort, coin_id: str, avisa: bool = False) -> str:
     """Respuesta de /longshort."""
     simbolo = escape(ls.par.removesuffix("USDT"))
 
@@ -1459,9 +1475,14 @@ def formatear_longshort(ls: LongShort, coin_id: str) -> str:
         )
 
     emoji, que_pasa = lectura_longshort(ls)
+    lineas += ["", f"{emoji} <b>{que_pasa}</b>"]
+    if avisa:
+        lineas += [
+            "",
+            "🔔 Te aviso si se va más gente de lo normal a un lado. Para quitarlo: "
+            f"/longshort {simbolo.lower()} no",
+        ]
     lineas += [
-        "",
-        f"{emoji} <b>{que_pasa}</b>",
         "",
         "<i>Cuento cuentas, no dinero: uno con 10 € vale lo mismo que una ballena. "
         "Cuando casi todos van al mismo lado, el precio suele ir a pillarlos. "

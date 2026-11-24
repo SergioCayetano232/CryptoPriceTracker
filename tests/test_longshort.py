@@ -72,6 +72,38 @@ def test_lo_raro_del_mes_va_antes_que_la_separacion():
     assert lectura(_ls([70] * 9 + [80], 60))[0] == "🐂"
 
 
+def test_extremo():
+    assert longshort.extremo(_ls([70] * 9 + [80])) == longshort.ALCISTA
+    assert longshort.extremo(_ls([70] * 9 + [60])) == longshort.BAJISTA
+    assert longshort.extremo(_ls([70] * 10)) == ""
+    assert longshort.extremo(_ls([60, 80])) == ""
+
+
+def test_avisa_al_entrar_en_un_lado_y_no_mientras_sigue():
+    alcista = _ls([70] * 9 + [80])
+    nada = _ls([70] * 10)
+    v = longshort.Vigilado("BTCUSDT", "bitcoin")
+
+    assert longshort.toca(v, alcista) == (True, longshort.ALCISTA)
+    ya = longshort.Vigilado("BTCUSDT", "bitcoin", longshort.ALCISTA)
+    assert longshort.toca(ya, alcista) == (False, longshort.ALCISTA)
+    # Al calmarse se olvida, para avisar si vuelve.
+    assert longshort.toca(ya, nada) == (False, "")
+    assert longshort.toca(ya, _ls([70] * 9 + [60])) == (True, longshort.BAJISTA)
+
+
+def test_toca_mirar_cada_cuatro_horas():
+    from datetime import datetime, timedelta, timezone
+
+    ahora = datetime(2026, 11, 24, 12, tzinfo=timezone.utc)
+    v = longshort.Vigilado("BTCUSDT", "bitcoin")
+
+    assert longshort.toca_mirar(v, ahora)
+    hace = lambda h: longshort.Vigilado("BTCUSDT", "bitcoin", mirado=ahora - h)  # noqa: E731
+    assert not longshort.toca_mirar(hace(timedelta(hours=3)), ahora)
+    assert longshort.toca_mirar(hace(timedelta(hours=4)), ahora)
+
+
 def test_pedir_sin_futuros(monkeypatch):
     monkeypatch.setattr(longshort, "_get", lambda url, params: [])
 
@@ -205,3 +237,144 @@ def test_longshort_de_dos_en_dos(config, enviados):
     main.atender(config, _mensaje("/longshort btc eth"))
 
     assert "De una en una" in enviados[0]
+
+
+# --- el aviso ---
+
+from datetime import datetime, timedelta, timezone  # noqa: E402
+
+from crypto_tracker.respuestas import revisiones  # noqa: E402
+
+
+def _dentro_de(horas):
+    return datetime.now(timezone.utc) + timedelta(hours=horas)
+
+
+def _cambiante(monkeypatch, hoy=70):
+    """Binance con un mes a 70 y el último día a lo que diga estado["hoy"]."""
+    estado = {"hoy": hoy, "pedidas": 0}
+
+    def pedir(par):
+        estado["pedidas"] += 1
+        if isinstance(estado["hoy"], Exception):
+            raise estado["hoy"]
+        todos = [_dato(d, 70) for d in range(9)] + [_dato(9, estado["hoy"])]
+        return todos, []
+
+    monkeypatch.setattr(longshort, "pedir", pedir)
+    return estado
+
+
+def _avisos(enviados):
+    return [t for t in enviados if "No repito" in t]
+
+
+def test_poner_el_aviso(config, enviados, monkeypatch):
+    _cambiante(monkeypatch)
+
+    main.atender(config, _mensaje("/longshort btc avisa"))
+
+    assert "🔔 Hecho: te aviso cuando en <b>bitcoin</b>" in enviados[0]
+    assert "Ahora: lo de siempre, ni más ni menos que otros días." in enviados[0]
+    [v] = database.get_longshort(config.database_path)
+    assert (v.par, v.coin_id, v.extremo) == ("BTCUSDT", "bitcoin", "")
+
+
+def test_avisa_una_vez_al_entrar_y_otra_si_vuelve(config, enviados, monkeypatch):
+    estado = _cambiante(monkeypatch)
+    main.atender(config, _mensaje("/longshort btc avisa"))
+    enviados.clear()
+
+    for horas, hoy in ((4, 80), (8, 81), (12, 70), (16, 60)):
+        estado["hoy"] = hoy
+        revisiones.revisar_longshort(config, set(), None, _dentro_de(horas))
+
+    avisos = _avisos(enviados)
+    assert len(avisos) == 2
+    assert "🐂 <b>BTC: más gente que de costumbre apuesta a que sube</b>" in avisos[0]
+    assert "🔺 80% apuesta a que sube, cuando lo normal del mes es un 71%" in avisos[0]
+    assert "🐻" in avisos[1]
+
+
+def test_no_pregunta_antes_de_cuatro_horas(config, enviados, monkeypatch):
+    estado = _cambiante(monkeypatch)
+    main.atender(config, _mensaje("/longshort btc avisa"))
+    antes = estado["pedidas"]
+
+    revisiones.revisar_longshort(config, set(), None, _dentro_de(3))
+
+    assert estado["pedidas"] == antes
+
+
+def test_si_ya_estaba_en_un_lado_no_avisa_de_eso(config, enviados, monkeypatch):
+    _cambiante(monkeypatch, hoy=80)
+    main.atender(config, _mensaje("/longshort btc avisa"))
+    enviados.clear()
+
+    revisiones.revisar_longshort(config, set(), None, _dentro_de(4))
+
+    assert enviados == []
+
+
+def test_si_binance_falla_sigue_puesto(config, enviados, monkeypatch):
+    estado = _cambiante(monkeypatch)
+    main.atender(config, _mensaje("/longshort btc avisa"))
+    enviados.clear()
+    estado["hoy"] = FundingError("Binance no contesta")
+
+    revisiones.revisar_longshort(config, set(), None, _dentro_de(4))
+
+    assert enviados == []
+    assert len(database.get_longshort(config.database_path)) == 1
+
+
+def test_callada_no_avisa(config, enviados, monkeypatch):
+    estado = _cambiante(monkeypatch)
+    main.atender(config, _mensaje("/longshort btc avisa"))
+    enviados.clear()
+    estado["hoy"] = 80
+
+    revisiones.revisar_longshort(config, {"bitcoin"}, None, _dentro_de(4))
+    assert enviados == []
+
+    revisiones.revisar_longshort(config, set(), None, _dentro_de(4))
+    assert len(_avisos(enviados)) == 1
+
+
+def test_quitar_el_aviso(config, enviados, monkeypatch):
+    _cambiante(monkeypatch)
+    main.atender(config, _mensaje("/longshort btc avisa"))
+
+    main.atender(config, _mensaje("/longshort btc no"))
+    main.atender(config, _mensaje("/longshort btc no"))
+
+    assert "ya no te aviso de los largos de bitcoin" in enviados[1]
+    assert "No tenías ese aviso" in enviados[2]
+    assert database.get_longshort(config.database_path) == []
+
+
+def test_sin_aviso_no_lo_menciona_y_con_aviso_si(config, enviados, monkeypatch):
+    _cambiante(monkeypatch)
+
+    main.atender(config, _mensaje("/longshort btc"))
+    main.atender(config, _mensaje("/longshort btc avisa"))
+    main.atender(config, _mensaje("/longshort btc"))
+
+    assert "🔔" not in enviados[0]
+    assert "🔔 Te aviso si se va más gente de lo normal" in enviados[2]
+    assert "/longshort btc no" in enviados[2]
+
+
+def test_el_ciclo_lo_revisa(config, enviados, monkeypatch):
+    llamadas = []
+    monkeypatch.setattr(
+        main, "revisar_longshort", lambda c, calladas, sueltos: llamadas.append(c)
+    )
+    # Sin precios el ciclo se para antes de llegar a las revisiones.
+    monkeypatch.setattr(
+        main.coingecko, "get_prices", lambda ids, cur: {"solana": 150.0}
+    )
+
+    main.ejecutar_ciclo(config, {})
+
+    assert llamadas == [config]

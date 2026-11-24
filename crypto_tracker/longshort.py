@@ -1,7 +1,7 @@
 """/longshort: cuántos apuestan a que sube y cuántos a que baja en Binance."""
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from .funding import FundingError, _get
 
@@ -18,6 +18,12 @@ FUERA_DE_LO_NORMAL = 5.0
 SEPARADOS = 10.0
 
 EJEMPLO = "/longshort btc"
+EJEMPLO_AVISO = "/longshort btc avisa"
+
+# Binance lo da por días: mirarlo cada cuatro horas ya es de sobra.
+CADA = timedelta(hours=4)
+
+ALCISTA, BAJISTA = "alcista", "bajista"
 
 
 @dataclass(frozen=True)
@@ -57,6 +63,16 @@ class LongShort:
         return self.hoy.largos - self.grandes.largos
 
 
+@dataclass(frozen=True)
+class Vigilado:
+    """Uno de /longshort btc avisa."""
+
+    par: str
+    coin_id: str
+    extremo: str = ""  # ALCISTA o BAJISTA si ya se avisó de que está ahí
+    mirado: datetime | None = None  # la última vez que se preguntó a Binance
+
+
 def pedir(par: str) -> tuple[list, list]:
     todos = _get(TODOS_URL, {"symbol": par, "period": "1d", "limit": DIAS})
     # Como en /oi: con un par sin futuros no da error, da la lista vacía.
@@ -93,15 +109,36 @@ def leer(par: str, todos, grandes) -> LongShort | None:
     return LongShort(par, lista, de_grandes[-1] if de_grandes else None)
 
 
+def extremo(ls: LongShort) -> str:
+    """ALCISTA o BAJISTA si hay más gente de lo normal a un lado; si no, ''."""
+    # Con menos de una semana no hay "lo normal" con que comparar.
+    if len(ls.todos) < 7:
+        return ""
+    if ls.frente_al_mes >= FUERA_DE_LO_NORMAL:
+        return ALCISTA
+    return BAJISTA if ls.frente_al_mes <= -FUERA_DE_LO_NORMAL else ""
+
+
+def toca_mirar(v: Vigilado, ahora: datetime) -> bool:
+    return v.mirado is None or ahora - v.mirado >= CADA
+
+
+def toca(v: Vigilado, ls: LongShort) -> tuple[bool, str]:
+    """(toca avisar, dónde queda). Avisa al entrar en un lado, no mientras sigue."""
+    donde = extremo(ls)
+    return bool(donde) and donde != v.extremo, donde
+
+
 def lectura(ls: LongShort) -> tuple[str, str]:
     """(emoji, qué pasa). Primero lo raro del mes, que es lo que más dice."""
     separacion = ls.separacion
-    if len(ls.todos) >= 7 and ls.frente_al_mes >= FUERA_DE_LO_NORMAL:
+    lado = extremo(ls)
+    if lado == ALCISTA:
         return "🐂", "Más gente que de costumbre apuesta a que sube"
-    if len(ls.todos) >= 7 and ls.frente_al_mes <= -FUERA_DE_LO_NORMAL:
+    if lado == BAJISTA:
         return "🐻", "Más gente que de costumbre apuesta a que baja"
     if separacion is not None and separacion >= SEPARADOS:
         return "🐟", "Los pequeños van más a la subida que los grandes"
     if separacion is not None and separacion <= -SEPARADOS:
         return "🐋", "Los grandes van más a la subida que los pequeños"
-    return "😐", "Lo de siempre: ni más ni menos que otros días"
+    return "😐", "Lo de siempre, ni más ni menos que otros días"

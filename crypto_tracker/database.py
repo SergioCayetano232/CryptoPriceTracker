@@ -24,6 +24,7 @@ from .fantasma import a_texto as texto_fantasma
 from .fantasma import de_texto as leer_fantasma
 from .funding import Vigilado
 from .juntas import Pareja
+from .longshort import Vigilado as VigiladoLongShort
 from .movimientos import Movimiento
 from .pienso import Pienso
 from .pienso import a_texto as texto_pienso
@@ -1322,6 +1323,43 @@ def quitar_funding(db_path: str, par: str) -> bool:
     with _connect(db_path) as conn:
         cursor = conn.execute(
             "DELETE FROM ajustes WHERE clave = ?", (f"funding:{par}",)
+        )
+    return cursor.rowcount > 0
+
+
+def guardar_longshort(db_path: str, v: VigiladoLongShort) -> None:
+    mirado = v.mirado.isoformat(timespec="seconds") if v.mirado else ""
+    with _connect(db_path) as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (f"longshort:{v.par}", f"{v.coin_id}|{v.extremo}|{mirado}"),
+        )
+
+
+def get_longshort(db_path: str) -> list[VigiladoLongShort]:
+    """Los de /longshort btc avisa."""
+    with _connect(db_path) as conn:
+        filas = conn.execute(
+            "SELECT clave, valor FROM ajustes WHERE clave LIKE 'longshort:%' "
+            "ORDER BY clave"
+        ).fetchall()
+    lista = []
+    for f in filas:
+        try:
+            coin_id, donde, mirado = f["valor"].split("|")
+            cuando = datetime.fromisoformat(mirado) if mirado else None
+        except ValueError:
+            logger.warning("Un aviso de largos y cortos raro: %r", f["valor"])
+            continue
+        par = f["clave"].split(":", 1)[1]
+        lista.append(VigiladoLongShort(par, coin_id, donde, cuando))
+    return lista
+
+
+def quitar_longshort(db_path: str, par: str) -> bool:
+    with _connect(db_path) as conn:
+        cursor = conn.execute(
+            "DELETE FROM ajustes WHERE clave = ?", (f"longshort:{par}",)
         )
     return cursor.rowcount > 0
 

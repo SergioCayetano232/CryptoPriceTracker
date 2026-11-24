@@ -15,6 +15,7 @@ from .mensajes.analisis import (
     _saldo,
     formatear_arcoiris,
     formatear_aviso_funding,
+    formatear_aviso_longshort,
     formatear_backtest,
     formatear_bollinger,
     formatear_caida,

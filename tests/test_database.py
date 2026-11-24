@@ -1005,6 +1005,27 @@ def test_avisos_de_funding(db):
     assert [v.par for v in database.get_funding(db)] == ["ETHUSDT"]
 
 
+def test_avisos_de_longshort(db):
+    from crypto_tracker.longshort import Vigilado
+
+    mirado = datetime(2026, 11, 22, 12, 0, tzinfo=timezone.utc)
+    database.guardar_longshort(db, Vigilado("BTCUSDT", "bitcoin"))
+    database.guardar_longshort(db, Vigilado("ETHUSDT", "ethereum", "alcista", mirado))
+    # Que no se mezclen con los de /funding, que van en la misma tabla.
+    from crypto_tracker.funding import Vigilado as DeFunding
+
+    database.guardar_funding(db, DeFunding("SOLUSDT", "solana"))
+
+    assert database.get_longshort(db) == [
+        Vigilado("BTCUSDT", "bitcoin", "", None),
+        Vigilado("ETHUSDT", "ethereum", "alcista", mirado),
+    ]
+    assert database.quitar_longshort(db, "BTCUSDT")
+    assert not database.quitar_longshort(db, "BTCUSDT")
+    assert [v.par for v in database.get_longshort(db)] == ["ETHUSDT"]
+    assert [v.par for v in database.get_funding(db)] == ["SOLUSDT"]
+
+
 def test_encuesta_guardada(db):
     assert database.encuesta(db) is None
 

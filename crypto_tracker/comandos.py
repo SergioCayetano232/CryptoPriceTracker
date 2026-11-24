@@ -982,6 +982,8 @@ EJEMPLOS = {
     "longshort": [
         ("/longshort btc", "cuántos apuestan a cada lado en los futuros de Binance"),
         ("/longshort", "a secas, la primera que vigilo"),
+        ("/longshort btc avisa", "te aviso si se va más gente de lo normal a un lado"),
+        ("/longshort btc no", "quitar el aviso"),
     ],
     "funding": [
         ("/funding btc", "lo que pagan los de futuros de bitcoin y si está apalancado"),
