@@ -200,6 +200,7 @@ from crypto_tracker.respuestas.datos import (
 )
 from crypto_tracker.respuestas.mercado import (
     _aleatoria,
+    _altseason,
     _ath,
     _comisionred,
     _convertir,
@@ -1710,6 +1711,7 @@ COMANDOS: dict[str, Callable[[Config, str], Respuesta]] = {
     "dominancia": lambda c, a: _dominancia(c),
     "mercado": lambda c, a: _mercado(c),
     "top": lambda c, a: _top(c),
+    "altseason": lambda c, a: _altseason(c),
     "aleatoria": lambda c, a: _aleatoria(c),
     "glosario": lambda c, a: alerts.formatear_glosario(a),
     "frase": lambda c, a: alerts.formatear_frase(frase.elegir()),

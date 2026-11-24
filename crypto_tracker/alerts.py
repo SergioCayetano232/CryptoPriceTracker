@@ -221,6 +221,7 @@ from .mensajes.mercado import (
     HUMOR_VENTAS,
     _lado_sesgo,
     formatear_aleatoria,
+    formatear_altseason,
     formatear_aviso_comisionred,
     formatear_aviso_tendencias,
     formatear_busqueda,

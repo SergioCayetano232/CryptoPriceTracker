@@ -8,7 +8,7 @@ from urllib.parse import quote
 
 import requests
 
-from . import estables, mercado, precio, rellenar, tendencias, top
+from . import altseason, estables, mercado, precio, rellenar, tendencias, top
 from .maximo import Maximo, leer
 
 logger = logging.getLogger(__name__)
@@ -115,6 +115,19 @@ def top_hoy(vs_currency: str = "eur") -> list[top.Movida]:
         "page": 1,
     }
     return top.leer(_con_reintentos(lambda: _pedir(MARKETS_URL, params)))
+
+
+def altseason_hoy() -> altseason.Temporada | None:
+    """Las grandes con lo que han hecho en 30 días, siempre en dólares."""
+    # En dólares para poder quitar por precio lo que va pegado a uno.
+    params = {
+        "vs_currency": "usd",
+        "order": "market_cap_desc",
+        "per_page": altseason.PEDIR,
+        "page": 1,
+        "price_change_percentage": f"{altseason.DIAS}d",
+    }
+    return altseason.leer(_con_reintentos(lambda: _pedir(MARKETS_URL, params)))
 
 
 def mercado_global(vs_currency: str = "eur") -> mercado.Mercado:

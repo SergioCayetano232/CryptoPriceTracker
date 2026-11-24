@@ -586,6 +586,23 @@ def test_top_hoy(monkeypatch):
     assert [(m.coin_id, m.variacion) for m in lista] == [("solana", 12.5)]
 
 
+def test_altseason_hoy_en_dolares_y_con_el_mes(monkeypatch):
+    pedido = {}
+
+    def get(url, params=None, headers=None, timeout=None):
+        pedido.update(url=url, params=params)
+        return RespuestaFalsa([])
+
+    monkeypatch.setattr(requests, "get", get)
+
+    assert coingecko.altseason_hoy() is None
+
+    assert pedido["url"].endswith("/coins/markets")
+    assert pedido["params"]["vs_currency"] == "usd"
+    assert pedido["params"]["price_change_percentage"] == "30d"
+    assert pedido["params"]["per_page"] == 100
+
+
 def test_mercado_global(monkeypatch):
     pedido = {}
 

@@ -199,6 +199,17 @@ def _top(config: Config) -> str | comandos.ConBotones:
     return comandos.ConBotones(alerts.con_fuente(texto), botones.actualizar("/top"))
 
 
+def _altseason(config: Config) -> str:
+    try:
+        temporada = coingecko.altseason_hoy()
+    except coingecko.CoinGeckoError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+    if temporada is None:
+        return "CoinGecko no me ha dado la lista ahora mismo. Prueba en un rato."
+    mias = [w.coin_id for w in _con_cambios(config).watchlist]
+    return alerts.con_fuente(alerts.formatear_altseason(temporada, mias))
+
+
 def _ultimo(config: Config) -> str:
     vigiladas = [w.coin_id for w in _con_cambios(config).watchlist]
     if not vigiladas:

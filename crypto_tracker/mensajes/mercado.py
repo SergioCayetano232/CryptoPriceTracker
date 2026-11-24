@@ -3,6 +3,7 @@
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
+from ..altseason import ALTCOINS, BITCOIN, CUANTAS, DIAS, Moneda, Temporada
 from ..avisados import Ultimo
 from ..aviso_tendencias import Nueva
 from ..cartera import Valor
@@ -30,12 +31,14 @@ from .base import (
     BARRAS_MOVIL,
     MINIMO_BARRAS,
     SIMBOLOS,
+    _barra_progreso,
     _es,
     _flecha,
     _ganancia,
     _nombre,
     _num,
     _peso,
+    _signo,
     describir,
     muestrear,
     sparkline,
@@ -267,6 +270,49 @@ def formatear_top(suben: list[Movida], bajan: list[Movida], currency: str) -> st
                 f"<b>{nombre}</b>  {m.variacion:+.2f}%  "
                 f"<i>{simbolo}{_num(m.precio)}</i>"
             )
+    return "\n".join(texto)
+
+
+def formatear_altseason(t: Temporada, mias: list[str]) -> str:
+    """/altseason. mias, las que vigilas, por si alguna está entre las grandes."""
+    if t.toca == "altcoins":
+        lectura = "🌈 <b>Temporada de altcoins</b>: casi todas le ganan a bitcoin"
+    elif t.toca == "bitcoin":
+        lectura = "🟠 <b>Temporada de bitcoin</b>: casi ninguna le gana"
+    else:
+        lectura = "⚖️ <b>Ni de altcoins ni de bitcoin</b>: unas sí y otras no"
+
+    def lista(monedas: list[Moneda]) -> str:
+        return " · ".join(f"{escape(m.simbolo)} {_signo(m.cambio)}" for m in monedas)
+
+    gana = "le gana" if len(t.ganan) == 1 else "le ganan"
+    texto = [
+        f"🌈 <b>Índice de altseason: {t.indice}</b>",
+        _barra_progreso(t.indice),
+        f"{len(t.ganan)} de {len(t.monedas)} {gana} a bitcoin en {DIAS} días, "
+        f"que lleva {_signo(t.bitcoin)}.",
+        "",
+        lectura,
+        "",
+        f"🔺 Las que más: {lista(t.mejores())}",
+        f"🔻 Las que menos: {lista(t.peores())}",
+    ]
+    tuyas = [m for m in t.monedas if m.coin_id in mias]
+    if tuyas:
+        texto.append(
+            "👀 De las tuyas: "
+            + " · ".join(
+                f"{escape(m.simbolo)} {_signo(m.cambio)} "
+                f"{'✅' if m.cambio > t.bitcoin else '❌'}"
+                for m in tuyas
+            )
+        )
+    texto += [
+        "",
+        f"<i>Con {ALTCOINS} o más es temporada de altcoins y con {BITCOIN} o menos, "
+        f"de bitcoin. Cuento las {CUANTAS} más grandes sin estables ni copias de "
+        "otras. Hacia dónde va el dinero: /dominancia</i>",
+    ]
     return "\n".join(texto)
 
 

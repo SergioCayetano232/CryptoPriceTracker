@@ -180,6 +180,7 @@ TEMAS = [
         (
             "mercado",
             "dominancia",
+            "altseason",
             "miedo",
             "tendencias",
             "top",

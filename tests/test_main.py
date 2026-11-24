@@ -4350,6 +4350,61 @@ def test_tendencias_sin_conexion(config, enviados, monkeypatch):
     assert "No he podido mirarlo ahora mismo: Sin conexion" in enviados[0]
 
 
+# --- /altseason ---
+
+
+def _altseason(monkeypatch, bitcoin=-10.0):
+    from crypto_tracker.altseason import Moneda, Temporada
+
+    monedas = [Moneda("solana", "SOL", 20.0), Moneda("ethereum", "ETH", -30.0)]
+    monedas += [Moneda(f"a{i}", f"A{i}", -20.0) for i in range(48)]
+    monkeypatch.setattr(coingecko, "altseason_hoy", lambda: Temporada(bitcoin, monedas))
+
+
+def test_altseason(config, enviados, monkeypatch):
+    _altseason(monkeypatch)
+
+    main.atender(config, _mensaje("/altseason"))
+
+    texto = enviados[0]
+    assert "Índice de altseason: 2</b>" in texto
+    assert "1 de 50 le gana a bitcoin en 30 días, que lleva -10,0%" in texto
+    assert "Temporada de bitcoin" in texto
+    assert "Las que más: SOL +20,0%" in texto
+    assert "Las que menos: ETH -30,0%" in texto
+    assert "De las tuyas" not in texto  # bitcoin no cuenta
+
+
+def test_altseason_marca_las_tuyas(config, enviados, monkeypatch):
+    _precio(monkeypatch, {"solana": 150.0, "ethereum": 3000.0})
+    _altseason(monkeypatch)
+    main.atender(config, _mensaje("/vigilar solana 5%"))
+    main.atender(config, _mensaje("/vigilar ethereum 5%"))
+
+    main.atender(config, _mensaje("/temporada"))
+
+    assert "De las tuyas: SOL +20,0% ✅ · ETH -30,0% ❌" in enviados[-1]
+
+
+def test_altseason_sin_datos(config, enviados, monkeypatch):
+    monkeypatch.setattr(coingecko, "altseason_hoy", lambda: None)
+
+    main.atender(config, _mensaje("/altseason"))
+
+    assert "no me ha dado la lista" in enviados[0]
+
+
+def test_altseason_sin_conexion(config, enviados, monkeypatch):
+    def falla():
+        raise coingecko.CoinGeckoError("Sin conexion con CoinGecko")
+
+    monkeypatch.setattr(coingecko, "altseason_hoy", falla)
+
+    main.atender(config, _mensaje("/altseason"))
+
+    assert "No he podido mirarlo ahora mismo: Sin conexion" in enviados[0]
+
+
 # --- /top ---
 
 

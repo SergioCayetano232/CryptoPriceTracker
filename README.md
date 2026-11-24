@@ -322,6 +322,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/rellenar btc 90d` | Baja de CoinGecko los precios pasados que no tiene, para que `/rsi`, `/media`, `/racha` y compañía funcionen sin esperar semanas. Solo mete lo que falta, así que se puede repetir. Sin tramo, todo lo que quepa en `HISTORY_DAYS` (hasta un año); a secas, las que vigilas. Hasta 90 días viene un precio por hora y con más, uno al día. Gasta una consulta por cripto |
 | `/mercado` | Lo que vale todo el mercado cripto, cómo va en 24 h y qué parte es de Bitcoin, Ethereum y las estables |
 | `/dominancia` | Qué parte de todo el mercado es bitcoin y cuántos puntos ha ganado o perdido en 24 h, 7 y 30 días, para saber si el dinero se va a las altcoins o vuelve a bitcoin. Debajo, la parte de Ethereum, las estables y el resto. CoinGecko solo da la de ahora, así que en `--loop` guarda una foto al día (una consulta más al día) y compara con esas: los primeros días no tiene con qué. También `/altcoins` |
+| `/altseason` | Si es temporada de altcoins: cuántas de las 50 más grandes le han ganado a bitcoin en 30 días, de 0 a 100. Con 75 o más es temporada de altcoins y con 25 o menos, de bitcoin. Debajo, las tres que más y las tres que menos, y si alguna de las tuyas le gana. No cuenta estables, oro ni copias de otra (como WBTC o stETH). El índice de siempre mira 90 días, pero CoinGecko solo da 30 en esta consulta, así que este salta antes. Gasta una consulta. También `/temporada` |
 | `/halving` | Cuántos días faltan para el próximo halving de Bitcoin, cuánto va de ciclo y cuánto bajará lo que se paga por bloque. La fecha es aproximada y no gasta consultas |
 | `/cumple` | Los años de Bitcoin, los días que lleva funcionando y cuánto falta para su cumpleaños (el 3 de enero) |
 | `/whitepaper` | Los años del whitepaper de Bitcoin, los días desde que Satoshi lo publicó y cuánto falta para que cumpla (el 31 de octubre) |
@@ -1039,6 +1040,7 @@ crypto_tracker/
   glosario.py    las palabras que explica /glosario
   mercado.py     el mercado entero, para /mercado
   dominancia.py  cómo cambia la parte de bitcoin, para /dominancia
+  altseason.py   cuántas grandes le ganan a bitcoin, para /altseason
   halving.py     cuánto falta para el próximo halving, para /halving
   cumple.py      los años de Bitcoin, para /cumple
   whitepaper.py  los años del whitepaper, para /whitepaper
