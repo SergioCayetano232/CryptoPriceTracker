@@ -4,6 +4,7 @@ import io
 from datetime import datetime
 
 from .alerts import SIMBOLOS, _num
+from .arcoiris import FRANJAS, Arcoiris
 from .calendario import Mes, semanas
 from .correlacion import Matriz
 from .mapa import Mapa, repartir
@@ -655,6 +656,95 @@ def dibujar_mapa(m: Mapa, mias: set[str]) -> bytes:
     salida = io.BytesIO()
     fig.savefig(salida, format="png", facecolor=NOCHE)
     return salida.getvalue()
+
+
+# De abajo arriba, del azul de "casi regalado" al granate de "burbuja máxima".
+COLORES_ARCOIRIS = (
+    "#3b4cc0",
+    "#4f8fd6",
+    "#36b3a0",
+    "#5cb85c",
+    "#c9d64a",
+    "#f2c94c",
+    "#f2994a",
+    "#e05a47",
+    "#b81d52",
+)
+# Un año más allá de hoy, para ver hacia dónde van las franjas.
+ADELANTE = 365
+
+
+def dibujar_arcoiris(a: Arcoiris) -> bytes:
+    """El precio de bitcoin encima de las nueve franjas, en escala logarítmica."""
+    try:
+        from datetime import timedelta
+
+        from matplotlib.dates import DateFormatter, YearLocator
+        from matplotlib.figure import Figure
+        from matplotlib.ticker import FuncFormatter
+    except ImportError as e:
+        raise GraficaError(
+            "Falta matplotlib. Ejecuta: pip install -r requirements.txt"
+        ) from e
+
+    hoy, precio = a.hoy
+    primero = a.dias[0][0]
+    fechas = [
+        primero + timedelta(days=i) for i in range((hoy - primero).days + ADELANTE + 1)
+    ]
+    curva = [a.curva(f) for f in fechas]
+
+    fig = Figure(figsize=(8, 6.2), dpi=150, facecolor=NOCHE)
+    franja = a.franja
+    fig.text(
+        0.06, 0.94, "Bitcoin en el arcoíris", fontsize=16, weight="bold", color=CLARO
+    )
+    fig.text(
+        0.94,
+        0.94,
+        FRANJAS[franja],
+        fontsize=14,
+        weight="bold",
+        color=COLORES_ARCOIRIS[franja],
+        ha="right",
+    )
+    fig.text(
+        0.06,
+        0.905,
+        f"Desde {primero.year}, contra su curva de largo plazo · escala logarítmica",
+        fontsize=9,
+        color=APAGADO,
+    )
+
+    ax = fig.add_axes((0.11, 0.1, 0.85, 0.76), facecolor=NOCHE)
+    for i, color in enumerate(COLORES_ARCOIRIS):
+        abajo = [c * 10 ** a.bordes[i] for c in curva]
+        arriba = [c * 10 ** a.bordes[i + 1] for c in curva]
+        ax.fill_between(fechas, abajo, arriba, color=color, alpha=0.75, lw=0)
+    ax.plot([d for d, _ in a.dias], [p for _, p in a.dias], color=CLARO, lw=1.1)
+    ax.plot([hoy], [precio], "o", color=CLARO, markersize=6, markeredgecolor=NOCHE)
+
+    ax.set_yscale("log")
+    ax.set_xlim(fechas[0], fechas[-1])
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: _dolares_eje(v)))
+    ax.yaxis.set_minor_formatter(FuncFormatter(lambda v, _: ""))
+    ax.xaxis.set_major_locator(YearLocator(2))
+    ax.xaxis.set_major_formatter(DateFormatter("%Y"))
+    ax.tick_params(colors=APAGADO, labelsize=8)
+    ax.tick_params(which="minor", length=0)
+    for lado in ax.spines.values():
+        lado.set_visible(False)
+    ax.grid(axis="y", color=APAGADO, alpha=0.15, lw=0.6)
+
+    salida = io.BytesIO()
+    fig.savefig(salida, format="png", facecolor=NOCHE)
+    return salida.getvalue()
+
+
+def _dolares_eje(valor: float) -> str:
+    if valor >= 1000:
+        return f"${valor / 1000:,.0f}k".replace(",", ".")
+    return f"${valor:,.0f}"
 
 
 def _color_mapa(variacion: float) -> str:

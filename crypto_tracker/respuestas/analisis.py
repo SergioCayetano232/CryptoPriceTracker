@@ -5,6 +5,7 @@ from datetime import date, datetime, timedelta, timezone
 
 from .. import (
     alerts,
+    arcoiris,
     backtest,
     bollinger,
     botones,
@@ -874,6 +875,25 @@ def _mayer(config: Config, argumento: str) -> str:
             "aún no tiene media con la que comparar"
         )
     return alerts.formatear_mayer(resultado, coin_id)
+
+
+def _arcoiris(config: Config, argumento: str) -> str | comandos.Foto:
+    if argumento and simbolos.a_id(argumento) != "bitcoin":
+        return "El arcoíris solo tiene sentido con bitcoin: /arcoiris"
+    try:
+        velas = mayer.pedir("BTCUSDT")
+    except mayer.MayerError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+    resultado = arcoiris.calcular(velas)
+    if resultado is None:
+        return "Binance no me ha dado bastantes días para la curva. Prueba en un rato."
+    texto = alerts.formatear_arcoiris(resultado)
+    try:
+        png = grafica.dibujar_arcoiris(resultado)
+    except Exception as e:
+        logger.warning("Mando /arcoiris sin imagen: %s", e)
+        return texto
+    return comandos.Foto(png, texto, texto)
 
 
 def _comparar(config: Config, argumento: str) -> str | comandos.Foto:

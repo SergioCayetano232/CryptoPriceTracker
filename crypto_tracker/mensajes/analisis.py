@@ -3,6 +3,7 @@
 import math
 from datetime import date, datetime
 
+from ..arcoiris import FRANJAS, Arcoiris
 from ..backtest import INICIAL as INICIAL_BACKTEST
 from ..backtest import Backtest
 from ..bollinger import PERIODO as PERIODO_BOLLINGER
@@ -1465,6 +1466,36 @@ def formatear_longshort(ls: LongShort, coin_id: str) -> str:
         "<i>Cuento cuentas, no dinero: uno con 10 € vale lo mismo que una ballena. "
         "Cuando casi todos van al mismo lado, el precio suele ir a pillarlos. "
         f"Cuánto hay apostado: /oi {simbolo.lower()}</i>",
+    ]
+    return "\n".join(lineas)
+
+
+def formatear_arcoiris(a: Arcoiris) -> str:
+    """El pie de /arcoiris, y lo que se manda si la imagen no sale."""
+
+    def dolares(valor: float) -> str:
+        return f"${valor:,.0f}".replace(",", ".")
+
+    cuando, precio = a.hoy
+    franja = a.franja
+    lineas = [
+        f"🌈 <b>Bitcoin en el arcoíris: {FRANJAS[franja]}</b>",
+        f"Precio: {dolares(precio)} · su curva: {dolares(a.curva(cuando))} "
+        f"({_signo(a.sobre_curva)})",
+        f"Franja {franja + 1} de {len(FRANJAS)}, contando desde abajo.",
+    ]
+    if franja < len(FRANJAS) - 1:
+        arriba = a.precio_borde(cuando, franja + 1)
+        lineas.append(f"Sube a «{FRANJAS[franja + 1]}» desde {dolares(arriba)}")
+    if franja > 0:
+        abajo = a.precio_borde(cuando, franja)
+        lineas.append(f"Baja a «{FRANJAS[franja - 1]}» por debajo de {dolares(abajo)}")
+    lineas += [
+        "",
+        f"<i>La curva sale de ajustar los precios diarios de Binance desde "
+        f"{a.dias[0][0].year} a una ley de potencias: el precio frente a los días "
+        "desde el primer bloque. Las franjas reparten a partes iguales entre lo más "
+        "bajo y lo más alto que ha estado. Es un dibujo, no una predicción.</i>",
     ]
     return "\n".join(lineas)
 

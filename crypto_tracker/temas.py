@@ -137,6 +137,7 @@ TEMAS = [
             "diames",
             "estacional",
             "mayer",
+            "arcoiris",
             "horas",
             "rango",
             "soporte",
