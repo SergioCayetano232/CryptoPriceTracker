@@ -30,6 +30,7 @@ from .. import (
     longshort,
     miedo,
     moneda,
+    mvrv,
     oi,
     premium,
     profundidad,
@@ -329,6 +330,18 @@ def _dificultad(config: Config) -> str | comandos.ConBotones:
         return "mempool.space no me ha dado el ajuste ahora mismo. Prueba en un rato."
     texto = alerts.formatear_dificultad(datos)
     return comandos.ConBotones(texto, botones.actualizar("/dificultad"))
+
+
+def _mvrv(config: Config) -> str | comandos.ConBotones:
+    try:
+        datos = mvrv.leer(mvrv.pedir())
+    except mvrv.MvrvError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+    if datos is None:
+        return "CoinMetrics no me ha dado el MVRV. Prueba en un rato."
+    return comandos.ConBotones(
+        alerts.formatear_mvrv(datos), botones.actualizar("/mvrv")
+    )
 
 
 def _hashribbons(config: Config) -> str | comandos.ConBotones:

@@ -250,6 +250,7 @@ from .mensajes.mercado import (
     formatear_maximos,
     formatear_mercado,
     formatear_miedo,
+    formatear_mvrv,
     formatear_no_encuentro,
     formatear_precio,
     formatear_precios,

@@ -19,11 +19,13 @@ from ..lightning import Lightning
 from ..mapa import Mapa
 from ..maximo import Maximo, hace
 from ..mercado import Mercado, grande
+from ..mes import MESES as NOMBRES_MESES
 from ..miedo import NOMBRES as NOMBRES_MIEDO
 from ..miedo import Indice
 from ..miedo import hace as dia_miedo
 from ..miedo import nombre as nombre_miedo
 from ..movimientos import texto_cantidad
+from ..mvrv import Mvrv
 from ..periodo import nombre as nombre_periodo
 from ..quieta import Quieta
 from ..recordar import DIAS as NOMBRES_DIAS
@@ -374,6 +376,53 @@ def formatear_sectores(lista: list[Sector]) -> str:
 
 
 ULTIMAS_CAPITULACIONES = 4
+
+
+def formatear_mvrv(m: Mvrv) -> str:
+    """Respuesta de /mvrv."""
+
+    def dolares(valor: float) -> str:
+        return f"${valor:,.0f}".replace(",", ".")
+
+    def numero(valor: float) -> str:
+        return _es(f"{valor:.2f}")
+
+    def mes(dia) -> str:
+        return f"{NOMBRES_MESES[dia.cuando.month - 1][:3]} {dia.cuando.year}"
+
+    hoy = m.hoy
+    emoji, zona = m.zona
+    lineas = [
+        f"🧾 <b>MVRV de bitcoin: {numero(hoy.mvrv)}</b>",
+        f"Precio: {dolares(hoy.precio)} · precio realizado: {dolares(hoy.realizado)}",
+        f"De media, los que tienen bitcoin van {_signo(hoy.ganancia)}.",
+    ]
+    ultimo_año = [d.z for d in m.dias[-365:]]
+    if len(ultimo_año) >= MINIMO_BARRAS:
+        lineas.append(f"<code>{sparkline(muestrear(ultimo_año, BARRAS_MOVIL))}</code>")
+    lineas += [
+        "",
+        f"{emoji} <b>{zona}</b>",
+        f"Z-score: {numero(hoy.z)}",
+    ]
+    if hoy.z >= 0:
+        lineas.append(
+            f"Para bajar a 0 tendría que caer a {dolares(hoy.realizado)} "
+            f"({_signo((hoy.realizado / hoy.precio - 1) * 100)})."
+        )
+    lineas += [
+        f"Desde {m.dias[0].cuando.year}, el {m.por_debajo:.0f}% de los días "
+        "estuvo más bajo.",
+        f"Lo más alto: {numero(m.maximo.z)} en {mes(m.maximo)} · "
+        f"lo más bajo: {numero(m.minimo.z)} en {mes(m.minimo)}",
+        "",
+        "<i>El precio realizado es lo que costó cada bitcoin la última vez que se "
+        "movió: lo que pagaron de verdad los que lo tienen. El Z-score mide cuánto "
+        "se separa el precio de eso: por debajo de 0 fueron los fondos y por "
+        "encima de 7, los techos de 2013 y 2017 (en 2021 no llegó). Datos de "
+        f"CoinMetrics, del {hoy.cuando:%d/%m}.</i>",
+    ]
+    return "\n".join(lineas)
 
 
 def formatear_hashribbons(r: Ribbons) -> str:
