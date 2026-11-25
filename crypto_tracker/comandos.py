@@ -12,6 +12,7 @@ COMANDOS = {
     "hoy": "Cómo van desde las 00:00, no en 24 h (ej: /hoy o /hoy btc eth)",
     "resumen": "El resumen del día sin esperar, con el índice de miedo",
     "horario": "A qué hora te mando el resumen (ej: /horario 8:30 o /horario no)",
+    "dormir": "Horas en que los avisos no suenan (ej: /dormir 23-8 o /dormir no)",
     "envivo": "Un mensaje fijado arriba que se actualiza solo (/envivo no lo quita)",
     "precio": "Lo que vale una cripto, varias o, a secas, las que vigilo",
     "ath": "El máximo y el mínimo histórico (ej: /ath bitcoin)",
@@ -586,6 +587,7 @@ ALIAS = {
     "satoshi": "sat",
     "summary": "resumen",
     "schedule": "horario",
+    "tranquilas": "dormir",
     "vivo": "envivo",
     "live": "envivo",
     "fijado": "envivo",
@@ -1107,6 +1109,11 @@ EJEMPLOS = {
         ("/horario", "a qué hora te mando el resumen"),
         ("/horario 8:30", "cambiarla"),
         ("/horario no", "quitarlo"),
+    ],
+    "dormir": [
+        ("/dormir", "las horas en que no suenan"),
+        ("/dormir 23-8", "cambiarlas"),
+        ("/dormir no", "que suenen siempre"),
     ],
     "envivo": [
         ("/envivo", "lo pongo y lo fijo arriba; si ya estaba, lo bajo al final"),

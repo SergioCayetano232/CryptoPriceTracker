@@ -24,6 +24,7 @@ TEMAS = [
             "hoy",
             "resumen",
             "horario",
+            "dormir",
             "envivo",
             "ath",
             "vigilar",

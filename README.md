@@ -179,6 +179,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/hoy` | Cómo van desde las 00:00 en vez de en las últimas 24 h, con el máximo y el mínimo de hoy (`/hoy btc eth`, solo esas). Sale de lo guardado y no gasta consultas |
 | `/resumen` | El resumen del día cuando lo pidas, con el índice de miedo y codicia y las compras que cumplen años hoy. No quita el de la hora de siempre |
 | `/horario 8:30` | Cambia la hora del resumen del día (y del de los domingos). `/horario no` lo quita; a secas, te dice cuál tienes |
+| `/dormir 23-8` | Las horas en que los avisos llegan sin sonar, lo mismo que `HORAS_TRANQUILAS` pero desde Telegram, y manda sobre el `.env`. Vale `/dormir 23:30 7:00` o `/dormir de 0 a 7`. `/dormir no` hace que suenen siempre; a secas, te dice cuáles tienes. También `/tranquilas` |
 | `/envivo` | Un mensaje fijado arriba del chat con tus precios y tu cartera, que el bot va editando en cada consulta en vez de mandarte otro. No suena ni gasta consultas. `/envivo no` lo quita; si lo borras tú, deja de actualizarlo solo |
 | `/precio solana` | Lo que vale una cripto ahora y cómo va en la última hora, en 24 h, en 7 y en 30 días, aunque no la vigiles, entre qué precios se ha movido en 24 h, lo que vale en sats, cuánto se ha emitido ya de su máximo (si tiene), su máximo histórico con lo que le falta para volver, su puesto por capitalización y cuánto se ha negociado en 24 h (y qué parte es de lo que vale). Debajo, unas barritas `▁▃▅▇` con la forma de las últimas 24 h, si tiene precios guardados. Si la tienes en la cartera, también lo que vale lo tuyo |
 | `/precio btc eth sol` | Lo mismo de varias a la vez, una por línea (hasta 10) |
@@ -777,6 +778,9 @@ HORAS_TRANQUILAS=23-8
 De 11 de la noche a 8 de la mañana los avisos llegan sin sonar ni vibrar. No
 se pierde ninguno: por la mañana los tienes todos. Lo que le preguntes por
 Telegram sí suena, que si escribes es que estás despierto.
+
+Desde Telegram lo cambias con `/dormir 0-7` o lo quitas con `/dormir no`, y
+manda sobre el `.env`.
 
 **Ver el histórico de una cripto:**
 ```

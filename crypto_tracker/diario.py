@@ -39,6 +39,27 @@ def leer_hora(texto: str) -> time | None:
     return hora
 
 
+def leer_dormir(texto: str) -> tuple[time, time] | None:
+    """Lo de /dormir: '23-8', '23:30 7' o 'de 23 a 8'. 'no' es que suenen siempre."""
+    texto = texto.strip().lower()
+    if texto in SIN_RESUMEN:
+        return None
+    partes = texto.removeprefix("de ").replace(" a ", " ").replace("-", " ").split()
+    error = ConfigError(
+        f"No entiendo '{texto}'. Por ejemplo: /dormir 23-8, /dormir 23:30 7:00 "
+        "o /dormir no para que suenen siempre"
+    )
+    if len(partes) != 2:
+        raise error
+    try:
+        inicio, fin = parse_hora(partes[0]), parse_hora(partes[1])
+    except ConfigError:
+        raise error from None
+    if inicio == fin:
+        raise ConfigError("Empieza y acaba a la misma hora. Por ejemplo: /dormir 23-8")
+    return inicio, fin
+
+
 def es_hora_tranquila(ahora: time, inicio: time, fin: time) -> bool:
     """True si `ahora` cae dentro del tramo, aunque cruce la medianoche."""
     if inicio < fin:

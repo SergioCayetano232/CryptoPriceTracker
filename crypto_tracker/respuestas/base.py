@@ -2,7 +2,7 @@
 
 import logging
 from dataclasses import replace
-from datetime import datetime
+from datetime import datetime, time
 
 from .. import (
     alertaratio,
@@ -60,7 +60,17 @@ def _con_cambios(config: Config) -> Config:
         cambiada = False
     if cambiada:
         config = replace(config, resumen_diario=hora)
-    return config
+    return replace(config, horas_tranquilas=_horas_tranquilas(config))
+
+
+def _horas_tranquilas(config: Config) -> tuple[time, time] | None:
+    """Las de /dormir si las cambiaste por Telegram; si no, las del .env."""
+    try:
+        cambiada, tramo = database.horas_dormir(config.database_path)
+    except database.DatabaseError as e:
+        logger.error("No se pudieron leer las horas de /dormir: %s", e)
+        cambiada = False
+    return tramo if cambiada else config.horas_tranquilas
 
 
 Respuesta = str | comandos.Foto | comandos.Archivo | comandos.ConBotones
@@ -179,12 +189,13 @@ def _silenciado(config: Config) -> datetime | None:
 
 
 def _sin_sonido(config: Config, ahora: datetime | None = None) -> bool:
-    """True si estamos en HORAS_TRANQUILAS: los avisos llegan, pero sin sonar."""
-    if config.horas_tranquilas is None:
+    """True si estamos en las horas tranquilas: los avisos llegan, pero sin sonar."""
+    tramo = _horas_tranquilas(config)
+    if tramo is None:
         return False
 
     ahora = ahora or datetime.now().astimezone()
-    return diario.es_hora_tranquila(ahora.time(), *config.horas_tranquilas)
+    return diario.es_hora_tranquila(ahora.time(), *tramo)
 
 
 def _alertas_ratio(config: Config) -> list[alertaratio.AlertaRatio]:

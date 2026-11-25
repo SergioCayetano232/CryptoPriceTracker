@@ -174,6 +174,8 @@ ULTIMA_COPIA = "ultima_copia"
 
 # La hora del resumen puesta con /horario, encima de la del .env. Vacio es sin resumen.
 HORA_RESUMEN = "hora_resumen"
+# Las horas sin sonido puestas con /dormir, encima de HORAS_TRANQUILAS. Vacío es nunca.
+HORAS_DORMIR = "horas_dormir"
 BAJON = "bajon_cartera"
 # Lo que te permites comprar al mes, puesto con /limite. Sin fila, sin límite.
 LIMITE_COMPRAS = "limite_compras"
@@ -709,6 +711,35 @@ def hora_resumen(db_path: str) -> tuple[bool, time | None]:
         return True, time.fromisoformat(fila["valor"])
     except ValueError:
         logger.warning("La hora del resumen no se entiende: %r", fila["valor"])
+        return False, None
+
+
+def guardar_dormir(db_path: str, tramo: tuple[time, time] | None) -> None:
+    """Lo de /dormir. None es que suenen siempre."""
+    valor = f"{tramo[0]:%H:%M}-{tramo[1]:%H:%M}" if tramo else ""
+    with _connect(db_path) as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)",
+            (HORAS_DORMIR, valor),
+        )
+
+
+def horas_dormir(db_path: str) -> tuple[bool, tuple[time, time] | None]:
+    """(si la cambiaste con /dormir, el tramo). Sin cambiar, manda el del .env."""
+    with _connect(db_path) as conn:
+        fila = conn.execute(
+            "SELECT valor FROM ajustes WHERE clave = ?", (HORAS_DORMIR,)
+        ).fetchone()
+
+    if not fila:
+        return False, None
+    if not fila["valor"]:
+        return True, None
+    try:
+        inicio, fin = fila["valor"].split("-")
+        return True, (time.fromisoformat(inicio), time.fromisoformat(fin))
+    except ValueError:
+        logger.warning("Las horas de /dormir no se entienden: %r", fila["valor"])
         return False, None
 
 

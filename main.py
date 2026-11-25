@@ -1641,6 +1641,7 @@ COMANDOS: dict[str, Callable[[Config, str], Respuesta]] = {
     "mute": _comando_mute,
     "unmute": _comando_unmute,
     "horario": lambda c, a: _horario(c, a),
+    "dormir": lambda c, a: _dormir(c, a),
     "envivo": lambda c, a: _envivo(c, a),
     "semana": _comando_semana,
     "cartera": _con_cartera(lambda c, a: _cartera(c, a)),
@@ -1836,6 +1837,29 @@ def _horario(config: Config, argumento: str) -> str:
     if hora is None:
         return "🔕 Ya no te mando el resumen del día. Para volver: /horario 9:00"
     return f"☀️ Hecho, te mando el resumen cada día a las <b>{hora:%H:%M}</b>."
+
+
+def _dormir(config: Config, argumento: str) -> str:
+    if not argumento:
+        tramo = _con_cambios(config).horas_tranquilas
+        if tramo is None:
+            return "🔔 Ahora los avisos suenan siempre. Para que no: /dormir 23-8"
+        return (
+            f"🌙 De {tramo[0]:%H:%M} a {tramo[1]:%H:%M} los avisos llegan sin sonar.\n"
+            "Para cambiarlo: /dormir 0-7. Para que suenen siempre: /dormir no"
+        )
+
+    try:
+        tramo = diario.leer_dormir(argumento)
+    except ConfigError as e:
+        return telegram.escape(str(e))
+    database.guardar_dormir(config.database_path, tramo)
+    if tramo is None:
+        return "🔔 Hecho, los avisos suenan siempre. Para volver: /dormir 23-8"
+    return (
+        f"🌙 Hecho: de {tramo[0]:%H:%M} a {tramo[1]:%H:%M} te llegan sin sonar. "
+        "No te pierdes ninguno, solo no te despiertan."
+    )
 
 
 def _cada(config: Config, argumento: str) -> str:
