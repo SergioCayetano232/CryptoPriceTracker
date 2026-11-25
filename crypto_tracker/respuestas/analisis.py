@@ -21,6 +21,7 @@ from .. import (
     dca,
     diames,
     diasemana,
+    dvol,
     estacional,
     estocastico,
     fibonacci,
@@ -897,6 +898,24 @@ def _arcoiris(config: Config, argumento: str) -> str | comandos.Foto:
         logger.warning("Mando /arcoiris sin imagen: %s", e)
         return texto
     return comandos.Foto(png, texto, texto)
+
+
+def _dvol(config: Config, argumento: str) -> str | comandos.ConBotones:
+    coin_id = simbolos.a_id(argumento) if argumento else "bitcoin"
+    moneda = dvol.MONEDAS.get(coin_id)
+    if moneda is None:
+        return "Deribit solo tiene índice de bitcoin y de ethereum: /dvol o /dvol eth"
+    try:
+        datos = dvol.pedir(moneda)
+    except dvol.DvolError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+    resultado = dvol.leer(moneda, datos)
+    if resultado is None:
+        return "Deribit no me ha dado el índice. Prueba en un rato."
+    return comandos.ConBotones(
+        alerts.formatear_dvol(resultado, coin_id),
+        botones.actualizar(f"/dvol {argumento}".strip()),
+    )
 
 
 def _cme(config: Config, argumento: str) -> str | comandos.ConBotones:

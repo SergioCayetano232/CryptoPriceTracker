@@ -19,6 +19,7 @@ from ..direccion import EJEMPLO as EJEMPLO_DIRECCION
 from ..direccion import Saldo, Vigilada, a_moneda, coin_id, es_eth, ver
 from ..doble import Cartera as CarteraDoble
 from ..dominancia import Dominancia
+from ..dvol import Dvol
 from ..equilibrio import Cartera, Equilibrio
 from ..estacional import MESES as MESES_ESTACIONAL
 from ..estacional import POCOS_AÑOS, Estacional
@@ -1571,6 +1572,47 @@ def formatear_mayer(m: Mayer, coin_id: str) -> str:
         "<i>El precio entre su media de 200 días, en dólares. Por debajo de 1 "
         "está más barato que de media en los últimos siete meses; por encima de "
         "2,4 solía ser burbuja. Se pensó para bitcoin: en otras dice menos.</i>",
+    ]
+    return "\n".join(lineas)
+
+
+def formatear_dvol(d: Dvol, coin_id: str) -> str:
+    """Respuesta de /dvol."""
+
+    def valor(x: float) -> str:
+        return f"{x:.1f}".replace(".", ",")
+
+    def mes(dia) -> str:
+        return f"{NOMBRES_MESES[dia.cuando.month - 1][:3]} {dia.cuando.year}"
+
+    def mas_menos(x: float) -> str:
+        return f"±{x:.1f}%".replace(".", ",")
+
+    hoy = d.hoy
+    emoji, zona = d.zona
+    lineas = [f"🎢 <b>DVOL de {_nombre(coin_id)}: {valor(hoy.valor)}</b>"]
+    if len(d.dias) >= MINIMO_BARRAS:
+        valores = [x.valor for x in d.dias]
+        lineas.append(f"<code>{sparkline(muestrear(valores, BARRAS_MOVIL))}</code>")
+    lineas += ["", f"{emoji} <b>{zona}</b>"]
+    antes = d.hace_semana
+    if antes:
+        cambio = f"{hoy.valor - antes.valor:+.1f}".replace(".", ",")
+        lineas.append(f"Hace una semana: {valor(antes.valor)} ({cambio})")
+    lineas += [
+        f"En el último año, el {d.por_debajo:.0f}% de los días estuvo más bajo.",
+        f"Lo más alto: {valor(d.maximo.valor)} en {mes(d.maximo)} · "
+        f"lo más bajo: {valor(d.minimo.valor)} en {mes(d.minimo)}",
+        "",
+        f"Las opciones cuentan con que se mueva {mas_menos(d.esperado(1))} en un "
+        f"día, {mas_menos(d.esperado(7))} en una semana o "
+        f"{mas_menos(d.esperado(30))} en un mes. Dos de cada tres veces se queda "
+        "dentro.",
+        "",
+        "<i>El índice de volatilidad de Deribit, donde se negocian casi todas las "
+        "opciones de cripto: lo que el mercado espera que se mueva en un año, en %. "
+        "Es como el VIX de la bolsa: sube con el miedo, y suele ser cuando el "
+        "precio cae.</i>",
     ]
     return "\n".join(lineas)
 

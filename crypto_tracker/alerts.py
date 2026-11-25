@@ -32,6 +32,7 @@ from .mensajes.analisis import (
     formatear_direcciones,
     formatear_doble,
     formatear_dominancia,
+    formatear_dvol,
     formatear_equilibrio,
     formatear_estacional,
     formatear_estocastico,
