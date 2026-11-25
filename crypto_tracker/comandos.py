@@ -90,6 +90,7 @@ COMANDOS = {
     "picycle": "Si bitcoin está cerca de su techo según el Pi Cycle Top",
     "cme": "El hueco del fin de semana en los futuros del CME y si se ha cerrado",
     "dvol": "Lo que las opciones esperan que se mueva bitcoin (ej: /dvol eth)",
+    "maxpain": "Las opciones que vencen el viernes y su max pain (ej: /maxpain eth)",
     "horas": "A qué hora suele estar más barata (ej: /horas btc 30d)",
     "rango": "Entre qué precios se ha movido y dónde está hoy (ej: /rango btc 30d)",
     "soporte": "Dónde ha girado varias veces arriba y abajo (ej: /soporte btc)",
@@ -365,6 +366,8 @@ ALIAS = {
     "gap": "cme",
     "vix": "dvol",
     "opciones": "dvol",
+    "vencimiento": "maxpain",
+    "dolor": "maxpain",
     "múltiplo": "mayer",
     "financiación": "funding",
     "comisiónred": "comisionred",
@@ -965,6 +968,10 @@ EJEMPLOS = {
     "estacional": [
         ("/estacional btc", "cada mes desde 2017, y si sube más de lo que baja"),
         ("/estacional", "a secas, la primera que vigilo"),
+    ],
+    "maxpain": [
+        ("/maxpain", "el vencimiento de este viernes en bitcoin"),
+        ("/maxpain eth", "el de ethereum"),
     ],
     "dvol": [
         ("/dvol", "el de bitcoin y cuánto esperan que se mueva"),

@@ -31,6 +31,7 @@ from .. import (
     horas,
     hubiera,
     macd,
+    maxpain,
     mayer,
     media,
     mejor,
@@ -898,6 +899,24 @@ def _arcoiris(config: Config, argumento: str) -> str | comandos.Foto:
         logger.warning("Mando /arcoiris sin imagen: %s", e)
         return texto
     return comandos.Foto(png, texto, texto)
+
+
+def _maxpain(config: Config, argumento: str) -> str | comandos.ConBotones:
+    coin_id = simbolos.a_id(argumento) if argumento else "bitcoin"
+    moneda = maxpain.MONEDAS.get(coin_id)
+    if moneda is None:
+        return "Deribit solo tiene opciones de bitcoin y de ethereum: /maxpain eth"
+    try:
+        datos = maxpain.pedir(moneda)
+    except maxpain.MaxPainError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+    resultado = maxpain.leer(moneda, datos, datetime.now(timezone.utc))
+    if resultado is None:
+        return "Deribit no me ha dado opciones del viernes. Prueba en un rato."
+    return comandos.ConBotones(
+        alerts.formatear_maxpain(resultado, coin_id),
+        botones.actualizar(f"/maxpain {argumento}".strip()),
+    )
 
 
 def _dvol(config: Config, argumento: str) -> str | comandos.ConBotones:

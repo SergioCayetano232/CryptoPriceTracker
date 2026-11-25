@@ -37,6 +37,7 @@ from ..longshort import lectura as lectura_longshort
 from ..macd import LENTA, RAPIDA, Macd
 from ..macd import SEÑAL as SEÑAL_MACD
 from ..maximo import hace
+from ..maxpain import MaxPain, Vencimiento
 from ..mayer import BURBUJA, Mayer
 from ..media import lado_de_todas
 from ..mejor import Extremo
@@ -1572,6 +1573,61 @@ def formatear_mayer(m: Mayer, coin_id: str) -> str:
         "<i>El precio entre su media de 200 días, en dólares. Por debajo de 1 "
         "está más barato que de media en los últimos siete meses; por encima de "
         "2,4 solía ser burbuja. Se pensó para bitcoin: en otras dice menos.</i>",
+    ]
+    return "\n".join(lineas)
+
+
+def formatear_maxpain(m: MaxPain, coin_id: str) -> str:
+    """Respuesta de /maxpain."""
+
+    def dolares(valor: float) -> str:
+        return f"${valor:,.0f}".replace(",", ".")
+
+    def cuanto(v: Vencimiento) -> str:
+        monedas = f"{v.abiertas:,.0f}".replace(",", ".")
+        total = v.abiertas * v.precio
+        if total < 1e6:
+            return f"{monedas} {v.moneda} en opciones ({dolares(total)})"
+        millones = f"{total / 1e6:,.0f}".replace(",", ".")
+        return f"{monedas} {v.moneda} en opciones ({millones} millones de $)"
+
+    def cuando(v: Vencimiento) -> str:
+        local = v.vence.astimezone()
+        return f"el {DIAS_SEMANA[local.weekday()]} {local:%d/%m} a las {local:%H:%M}"
+
+    v = m.viernes
+    dolor = v.max_pain
+    lado = "por encima" if v.precio >= dolor else "por debajo"
+    distancia = f"{abs(v.precio / dolor - 1) * 100:.1f}%".replace(".", ",")
+    lineas = [
+        f"🎯 <b>Max pain de {_nombre(coin_id)}: {dolares(dolor)}</b>",
+        f"Vencen {cuando(v)}: {cuanto(v)}.",
+        f"Ahora está a {dolares(v.precio)}, un {distancia} {lado}.",
+        "",
+    ]
+    if v.put_call is not None:
+        apuesta = (
+            "más apuestas a que sube" if v.put_call < 1 else "más seguros contra caídas"
+        )
+        ratio = f"{v.put_call:.2f}".replace(".", ",")
+        lineas.append(f"Puts entre calls: {ratio}, {apuesta}.")
+    calls, puts = v.mas_abiertas(True), v.mas_abiertas(False)
+    if calls is not None and puts is not None:
+        lineas.append(
+            f"Donde más calls hay: {dolares(calls)} · más puts: {dolares(puts)}"
+        )
+    if m.gordo.vence != v.vence:
+        lineas += [
+            "",
+            f"El grande de verdad vence {cuando(m.gordo)}: {cuanto(m.gordo)}, "
+            f"con el max pain en {dolares(m.gordo.max_pain)}.",
+        ]
+    lineas += [
+        "",
+        "<i>El precio de vencimiento con el que menos cobran los que compraron "
+        "opciones. Se dice que el precio tiende a acercarse a él los días antes, "
+        "sobre todo en los vencimientos grandes, pero no siempre pasa. Con las "
+        "opciones abiertas en Deribit.</i>",
     ]
     return "\n".join(lineas)
 

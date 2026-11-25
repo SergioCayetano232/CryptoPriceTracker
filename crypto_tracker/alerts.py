@@ -44,6 +44,7 @@ from .mensajes.analisis import (
     formatear_kimchi,
     formatear_longshort,
     formatear_macd,
+    formatear_maxpain,
     formatear_mayer,
     formatear_media,
     formatear_mitad,

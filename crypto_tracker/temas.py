@@ -143,6 +143,7 @@ TEMAS = [
             "picycle",
             "cme",
             "dvol",
+            "maxpain",
             "horas",
             "rango",
             "soporte",
