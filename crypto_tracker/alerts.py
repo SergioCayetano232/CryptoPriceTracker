@@ -20,6 +20,7 @@ from .mensajes.analisis import (
     formatear_bollinger,
     formatear_caida,
     formatear_cambio,
+    formatear_cme,
     formatear_conversion,
     formatear_copia,
     formatear_correlacion,

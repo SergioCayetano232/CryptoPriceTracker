@@ -9,6 +9,7 @@ from ..backtest import Backtest
 from ..bollinger import PERIODO as PERIODO_BOLLINGER
 from ..bollinger import Bandas
 from ..caida import Caida
+from ..cme import Cme
 from ..correlacion import Correlacion, Matriz
 from ..cuando import Cuando
 from ..diames import POCOS_MESES as POCOS_MESES_DIAMES
@@ -54,6 +55,7 @@ from ..rango import Rango, barra
 from ..ratio import Ratio
 from ..rebalanceo import EJEMPLO as EJEMPLO_REBALANCEO
 from ..rebalanceo import Paso
+from ..recordar import DIAS as DIAS_SEMANA
 from ..reparto import OTRAS, Trozo, demasiado
 from ..rsi import PERIODO, SOBRECOMPRA, SOBREVENTA, Rsi, hasta_zona
 from ..semaforo import AMBAR, VERDE, Voto
@@ -1569,6 +1571,75 @@ def formatear_mayer(m: Mayer, coin_id: str) -> str:
         "<i>El precio entre su media de 200 días, en dólares. Por debajo de 1 "
         "está más barato que de media en los últimos siete meses; por encima de "
         "2,4 solía ser burbuja. Se pensó para bitcoin: en otras dice menos.</i>",
+    ]
+    return "\n".join(lineas)
+
+
+def formatear_cme(c: Cme) -> str:
+    """Respuesta de /cme."""
+
+    def dolares(valor: float) -> str:
+        return f"${valor:,.0f}".replace(",", ".")
+
+    def cuando(momento: datetime) -> str:
+        local = momento.astimezone()
+        return f"el {DIAS_SEMANA[local.weekday()]} {local:%d/%m} a las {local:%H:%M}"
+
+    def horas(h: float) -> str:
+        if h < 1:
+            return "en la primera hora"
+        if h < 48:
+            return f"{h:.0f} h después"
+        return f"{h / 24:.0f} días después"
+
+    lineas = ["🕳️ <b>Hueco del CME de bitcoin</b>"]
+    if c.parado:
+        cerro, antes = c.parado
+        ahora = _signo((c.precio / antes - 1) * 100)
+        lineas += [
+            f"🔒 El CME está parado desde {cuando(cerro)}, cuando bitcoin "
+            f"estaba a {dolares(antes)}.",
+            f"Si abriera ahora, el hueco sería de {ahora}.",
+        ]
+    h = c.ultimo
+    if h:
+        lado = "hacia arriba" if h.tamaño >= 0 else "hacia abajo"
+        if c.parado:
+            lineas.append("")
+        lineas += [
+            f"El último: cerró {cuando(h.viernes)} a {dolares(h.antes)} y abrió "
+            f"{cuando(h.domingo)} a {dolares(h.despues)}, un hueco de "
+            f"{_signo(h.tamaño)} {lado}.",
+        ]
+        if h.horas is not None:
+            lineas.append(f"✅ Cerrado {cuando(h.cerrado)}, {horas(h.horas)}.")
+        else:
+            lineas.append(
+                f"⏳ Sigue abierto: para cerrarlo tendría que volver a "
+                f"{dolares(h.antes)} ({_signo((h.antes / c.precio - 1) * 100)} "
+                "desde ahora)."
+            )
+
+    if c.pendientes:
+        lineas += ["", "De antes siguen sin cerrar:"]
+        for p in c.pendientes:
+            lineas.append(
+                f"· {dolares(p.antes)}, del {p.viernes.astimezone():%d/%m} "
+                f"({_signo((p.antes / c.precio - 1) * 100)})"
+            )
+    if len(c.huecos) > 1:
+        rapidos = sum(1 for x in c.cerrados if x.horas is not None and x.horas < 48)
+        lineas += [
+            "",
+            f"De los {len(c.huecos)} últimos fines de semana se cerraron "
+            f"{len(c.cerrados)}, {rapidos} de ellos en menos de dos días.",
+        ]
+    lineas += [
+        "",
+        "<i>Los futuros de bitcoin del CME paran el fin de semana. Si el domingo "
+        "abren lejos del viernes queda un hueco, y se dice que el precio suele "
+        "volver a cerrarlo. Lo miro con el bitcoin de Binance y sin festivos, "
+        "así que es aproximado.</i>",
     ]
     return "\n".join(lineas)
 

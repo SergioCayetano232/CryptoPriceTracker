@@ -12,6 +12,7 @@ from .. import (
     caida,
     calendario,
     cartera,
+    cme,
     comandos,
     comparar,
     correlacion,
@@ -896,6 +897,21 @@ def _arcoiris(config: Config, argumento: str) -> str | comandos.Foto:
         logger.warning("Mando /arcoiris sin imagen: %s", e)
         return texto
     return comandos.Foto(png, texto, texto)
+
+
+def _cme(config: Config, argumento: str) -> str | comandos.ConBotones:
+    if argumento and simbolos.a_id(argumento) != "bitcoin":
+        return "El CME solo tiene futuros de bitcoin que se miren tanto: /cme"
+    try:
+        datos = cme.pedir()
+    except cme.CmeError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+    resultado = cme.leer(datos, datetime.now(timezone.utc))
+    if resultado is None or not (resultado.huecos or resultado.parado):
+        return "Binance no me ha dado bastantes horas de bitcoin. Prueba en un rato."
+    return comandos.ConBotones(
+        alerts.formatear_cme(resultado), botones.actualizar("/cme")
+    )
 
 
 def _picycle(config: Config, argumento: str) -> str:
