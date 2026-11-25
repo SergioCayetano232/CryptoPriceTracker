@@ -140,6 +140,7 @@ TEMAS = [
             "mayer",
             "arcoiris",
             "suelo",
+            "picycle",
             "horas",
             "rango",
             "soporte",

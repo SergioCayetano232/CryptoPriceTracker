@@ -48,6 +48,7 @@ from .mensajes.analisis import (
     formatear_movimiento_direccion,
     formatear_oi,
     formatear_perdido,
+    formatear_picycle,
     formatear_premium,
     formatear_profundidad,
     formatear_racha,

@@ -34,6 +34,7 @@ from .. import (
     mejor,
     miedo,
     periodo,
+    picycle,
     puntuales,
     quieta,
     racha,
@@ -895,6 +896,19 @@ def _arcoiris(config: Config, argumento: str) -> str | comandos.Foto:
         logger.warning("Mando /arcoiris sin imagen: %s", e)
         return texto
     return comandos.Foto(png, texto, texto)
+
+
+def _picycle(config: Config, argumento: str) -> str:
+    if argumento and simbolos.a_id(argumento) != "bitcoin":
+        return "El Pi Cycle se pensó para los techos de bitcoin: /picycle"
+    try:
+        velas = mayer.pedir("BTCUSDT")
+    except mayer.MayerError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+    resultado = picycle.calcular(velas)
+    if resultado is None:
+        return "Binance no me ha dado 350 días de bitcoin. Prueba en un rato."
+    return alerts.formatear_picycle(resultado)
 
 
 def _suelo(config: Config, argumento: str) -> str:

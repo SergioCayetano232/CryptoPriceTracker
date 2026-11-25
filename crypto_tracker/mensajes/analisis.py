@@ -45,6 +45,7 @@ from ..movimientos import texto_cantidad
 from ..oi import Interes, lectura
 from ..perdido import Perdido
 from ..periodo import nombre as nombre_periodo
+from ..picycle import PiCycle
 from ..premium import Premium
 from ..profundidad import Profundidad
 from ..puntuales import CARTERA
@@ -1568,6 +1569,58 @@ def formatear_mayer(m: Mayer, coin_id: str) -> str:
         "<i>El precio entre su media de 200 días, en dólares. Por debajo de 1 "
         "está más barato que de media en los últimos siete meses; por encima de "
         "2,4 solía ser burbuja. Se pensó para bitcoin: en otras dice menos.</i>",
+    ]
+    return "\n".join(lineas)
+
+
+def formatear_picycle(p: PiCycle) -> str:
+    """Respuesta de /picycle."""
+
+    def dolares(valor: float) -> str:
+        return f"${valor:,.0f}".replace(",", ".")
+
+    hoy = p.hoy
+    emoji, zona = p.zona
+    lineas = [
+        "🥧 <b>Pi Cycle Top de bitcoin</b>",
+        f"Media de 111 días: {dolares(hoy.rapida)} · "
+        f"el doble de la de 350: {dolares(hoy.lenta)}",
+    ]
+    ultimo_año = [d.ratio for d in p.dias[-365:]]
+    if len(ultimo_año) >= MINIMO_BARRAS:
+        lineas.append(f"<code>{sparkline(muestrear(ultimo_año, BARRAS_MOVIL))}</code>")
+    lineas += ["", f"{emoji} <b>{zona}</b>"]
+    if hoy.ratio < 1:
+        lineas.append(
+            f"La rápida está al {hoy.ratio * 100:.0f}% de la otra: "
+            f"le falta subir un {p.falta:.0f}% para cruzarse."
+        )
+    cruces = p.cruces
+    if cruces:
+        lineas.append("")
+        lineas.append(
+            f"Desde {p.dias[0].cuando.year} se han cruzado "
+            + ("una vez:" if len(cruces) == 1 else f"{len(cruces)} veces:")
+        )
+        for c in cruces:
+            dias = (c.maximo.cuando - c.dia.cuando).days
+            maximo = dolares(c.maximo.precio)
+            if dias == 0:
+                tras = "y ahí fue el máximo"
+            elif dias == 1:
+                tras = f"y el máximo llegó al día siguiente, a {maximo}"
+            else:
+                tras = f"y el máximo llegó {dias} días después, a {maximo}"
+            precio = dolares(c.dia.precio)
+            lineas.append(f"· {c.dia.cuando:%d/%m/%Y} con bitcoin a {precio}, {tras}")
+    else:
+        lineas.append(f"Desde {p.dias[0].cuando.year} no se han cruzado nunca.")
+    lineas += [
+        "",
+        "<i>Cuando la media de 111 días pasa por encima del doble de la de 350, "
+        "bitcoin solía estar en su techo: acertó en 2013, 2017 y abril de 2021, "
+        "pero no avisó del de noviembre de 2021. Con las velas de Binance, "
+        "en dólares.</i>",
     ]
     return "\n".join(lineas)
 
