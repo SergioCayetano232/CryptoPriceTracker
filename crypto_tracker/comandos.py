@@ -89,6 +89,7 @@ COMANDOS = {
     "suelo": "Bitcoin frente a su media de 200 semanas, el suelo de cada ciclo",
     "picycle": "Si bitcoin está cerca de su techo según el Pi Cycle Top",
     "ahr999": "Si con bitcoin toca comprar fuerte, hacer DCA o esperar",
+    "paciencia": "Cuántas veces salía bien comprar y aguantar (ej: /paciencia eth)",
     "cme": "El hueco del fin de semana en los futuros del CME y si se ha cerrado",
     "dvol": "Lo que las opciones esperan que se mueva bitcoin (ej: /dvol eth)",
     "maxpain": "Las opciones que vencen el viernes y su max pain (ej: /maxpain eth)",
@@ -369,6 +370,7 @@ ALIAS = {
     "pi": "picycle",
     "techo": "picycle",
     "ahr": "ahr999",
+    "aguante": "paciencia",
     "hueco": "cme",
     "gap": "cme",
     "vix": "dvol",
@@ -983,6 +985,10 @@ EJEMPLOS = {
     "dvol": [
         ("/dvol", "el de bitcoin y cuánto esperan que se mueva"),
         ("/dvol eth", "el de ethereum"),
+    ],
+    "paciencia": [
+        ("/paciencia", "bitcoin: a 1 mes, 6 meses y hasta 4 años"),
+        ("/paciencia eth", "lo mismo con otra"),
     ],
     "mayer": [
         ("/mayer", "el de bitcoin, y en qué parte de su historia está"),

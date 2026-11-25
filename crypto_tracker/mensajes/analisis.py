@@ -47,6 +47,7 @@ from ..mes import MESES as NOMBRES_MESES
 from ..mitad import Cartera as CarteraMitad
 from ..movimientos import texto_cantidad
 from ..oi import Interes, lectura
+from ..paciencia import Paciencia
 from ..perdido import Perdido
 from ..periodo import nombre as nombre_periodo
 from ..picycle import PiCycle
@@ -1862,6 +1863,62 @@ def formatear_ahr999(a: Ahr999) -> str:
         "esperar. La curva es la que publicó su autor en 2019 y desde 2022 va "
         "bastante por encima del precio, así que ahora sale más bajo que antes. "
         "Con las velas de Binance, en dólares.</i>",
+    ]
+    return "\n".join(lineas)
+
+
+def formatear_paciencia(p: Paciencia, coin_id: str) -> str:
+    """Respuesta de /paciencia."""
+
+    def dolares(valor: float) -> str:
+        return (
+            f"${valor:,.0f}".replace(",", ".") if valor >= 1000 else f"${_num(valor)}"
+        )
+
+    def veces(pct: float) -> str:
+        # Que un 99,7% no salga como 100: con una sola pérdida ya no es "siempre".
+        if 99.5 <= pct < 100:
+            return "más del 99%"
+        return f"el {pct:.0f}%"
+
+    primero = p.plazos[0].compras[0].cuando
+    lineas = [
+        f"⏳ <b>Comprar {_nombre(coin_id)} un día cualquiera y aguantar</b>",
+        f"Cada día desde el {primero:%d/%m/%Y} como día de compra:",
+        "",
+    ]
+    for plazo in p.plazos:
+        lineas.append(
+            f"· {plazo.nombre}: ganabas {veces(plazo.ganaba)} de las veces "
+            f"(lo típico: {_signo(plazo.mediana)})"
+        )
+
+    largo = p.plazos[-1]
+    peor = largo.peor
+    lineas.append("")
+    if peor.cambio > 0:
+        lineas.append(
+            f"Nadie que aguantara {largo.nombre} ha perdido: lo peor fue comprar el "
+            f"{peor.cuando:%d/%m/%Y} a {dolares(peor.precio)}, y aun así iba "
+            f"{_signo(peor.cambio)}."
+        )
+    else:
+        lineas.append(
+            f"Aguantando {largo.nombre}, lo peor fue comprar el "
+            f"{peor.cuando:%d/%m/%Y} a {dolares(peor.precio)}: {_signo(peor.cambio)}."
+        )
+    if p.hace:
+        plazo, compra = p.hace
+        lineas.append(
+            f"Si compraste hace {plazo.nombre} ({compra.cuando:%d/%m/%Y}, a "
+            f"{dolares(compra.precio)}), hoy vas {_signo(compra.cambio)}."
+        )
+    lineas += [
+        "",
+        "<i>Mira cuánto valía cada compra al acabar el plazo, no lo que pasó por "
+        "el camino. Lo típico es la mediana: la mitad de las veces fue mejor y la "
+        "otra mitad, peor. Lo de antes no asegura lo que viene. Con las velas de "
+        "Binance, en dólares.</i>",
     ]
     return "\n".join(lineas)
 

@@ -143,6 +143,7 @@ TEMAS = [
             "suelo",
             "picycle",
             "ahr999",
+            "paciencia",
             "cme",
             "dvol",
             "maxpain",

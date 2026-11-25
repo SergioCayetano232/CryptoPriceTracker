@@ -37,6 +37,7 @@ from .. import (
     media,
     mejor,
     miedo,
+    paciencia,
     periodo,
     picycle,
     puntuales,
@@ -977,6 +978,28 @@ def _ahr999(config: Config, argumento: str) -> str:
     if resultado is None:
         return "Binance no me ha dado 200 días de bitcoin. Prueba en un rato."
     return alerts.formatear_ahr999(resultado)
+
+
+def _paciencia(config: Config, argumento: str) -> str:
+    if len(argumento.split()) > 1:
+        return f"De una en una. Por ejemplo: {paciencia.EJEMPLO}"
+    coin_id = simbolos.a_id(argumento) if argumento else "bitcoin"
+    par = funding.par(coin_id, argumento)
+    try:
+        velas = mayer.pedir(par)
+    except mayer.MayerError as e:
+        if str(e) == "sin datos":
+            return (
+                f"Binance no tiene <b>{telegram.escape(coin_id)}</b> contra el dólar. "
+                f"Prueba con su símbolo, como {paciencia.EJEMPLO}"
+            )
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+    resultado = paciencia.calcular(velas)
+    if resultado is None:
+        return (
+            f"<b>{telegram.escape(coin_id)}</b> lleva muy poco en Binance: ni dos meses"
+        )
+    return alerts.formatear_paciencia(resultado, coin_id)
 
 
 def _suelo(config: Config, argumento: str) -> str:

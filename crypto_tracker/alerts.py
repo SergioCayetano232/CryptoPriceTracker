@@ -51,6 +51,7 @@ from .mensajes.analisis import (
     formatear_mitad,
     formatear_movimiento_direccion,
     formatear_oi,
+    formatear_paciencia,
     formatear_perdido,
     formatear_picycle,
     formatear_premium,
