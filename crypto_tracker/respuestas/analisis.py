@@ -13,6 +13,7 @@ from .. import (
     caida,
     calendario,
     cartera,
+    ciclo,
     cme,
     comandos,
     comparar,
@@ -29,6 +30,7 @@ from .. import (
     funding,
     futuro,
     grafica,
+    hashribbons,
     horas,
     hubiera,
     macd,
@@ -37,6 +39,7 @@ from .. import (
     media,
     mejor,
     miedo,
+    mvrv,
     paciencia,
     periodo,
     picycle,
@@ -965,6 +968,60 @@ def _picycle(config: Config, argumento: str) -> str:
     if resultado is None:
         return "Binance no me ha dado 350 días de bitcoin. Prueba en un rato."
     return alerts.formatear_picycle(resultado)
+
+
+def _ciclo(config: Config, argumento: str) -> str | comandos.ConBotones:
+    if argumento and simbolos.a_id(argumento) != "bitcoin":
+        return "Los indicadores de ciclo son de bitcoin: /ciclo"
+    votos = []
+    faltan = []
+
+    # Con una sola descarga de Binance salen cinco.
+    de_binance = [
+        ("Mayer", lambda v: mayer.calcular("BTCUSDT", v), ciclo.de_mayer),
+        ("arcoíris", arcoiris.calcular, ciclo.de_arcoiris),
+        ("200 semanas", suelo.calcular, ciclo.de_suelo),
+        ("Pi Cycle", picycle.calcular, ciclo.de_picycle),
+        ("ahr999", ahr999.calcular, ciclo.de_ahr999),
+    ]
+    try:
+        velas = mayer.pedir("BTCUSDT")
+    except mayer.MayerError as e:
+        logger.warning("/ciclo sin las velas de Binance: %s", e)
+        velas = None
+    for nombre, calcular, votar in de_binance:
+        resultado = calcular(velas) if velas is not None else None
+        if resultado is None:
+            faltan.append(nombre)
+        else:
+            votos.append(votar(resultado))
+
+    try:
+        resultado = mvrv.leer(mvrv.pedir())
+    except mvrv.MvrvError as e:
+        logger.warning("/ciclo sin el MVRV: %s", e)
+        resultado = None
+    if resultado is None:
+        faltan.append("MVRV")
+    else:
+        votos.append(ciclo.de_mvrv(resultado))
+
+    try:
+        resultado = hashribbons.leer(hashribbons.pedir())
+    except hashribbons.HashRibbonsError as e:
+        logger.warning("/ciclo sin las hash ribbons: %s", e)
+        resultado = None
+    if resultado is None:
+        faltan.append("hash ribbons")
+    else:
+        votos.append(ciclo.de_hashribbons(resultado))
+
+    if not votos:
+        return "No he podido mirar ninguno ahora mismo. Prueba en un rato."
+    return comandos.ConBotones(
+        alerts.formatear_ciclo(votos, ciclo.veredicto(votos), faltan),
+        botones.actualizar("/ciclo"),
+    )
 
 
 def _ahr999(config: Config, argumento: str) -> str:

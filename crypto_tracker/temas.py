@@ -139,6 +139,7 @@ TEMAS = [
             "diasemana",
             "diames",
             "estacional",
+            "ciclo",
             "mayer",
             "arcoiris",
             "suelo",

@@ -10,6 +10,7 @@ from ..backtest import Backtest
 from ..bollinger import PERIODO as PERIODO_BOLLINGER
 from ..bollinger import Bandas
 from ..caida import Caida
+from ..ciclo import FONDO, TECHO
 from ..cme import Cme
 from ..correlacion import Correlacion, Matriz
 from ..cuando import Cuando
@@ -1223,6 +1224,40 @@ _LUCES = {
     AMBAR: ("🟡", "luz ámbar", "Señales mezcladas, nada claro"),
 }
 _ROJA = ("🔴", "luz roja", "Más señales en contra de comprar que a favor")
+
+
+def formatear_ciclo(votos: list[Voto], veredicto: str, faltan: list[str]) -> str:
+    """Respuesta de /ciclo. faltan son los que no se pudieron mirar."""
+    fondo = sum(v.valor > 0 for v in votos)
+    techo = sum(v.valor < 0 for v in votos)
+    if veredicto == FONDO:
+        cabecera = "🟢 <b>Bitcoin, cerca de un fondo de ciclo</b>"
+        resumen = "La mayoría de los de largo plazo dicen que está barato."
+    elif veredicto == TECHO:
+        cabecera = "🔴 <b>Bitcoin, cerca de un techo de ciclo</b>"
+        resumen = "La mayoría de los de largo plazo dicen que está caro."
+    else:
+        cabecera = "🟡 <b>Bitcoin, a mitad de ciclo</b>"
+        resumen = "Ni unos ni otros dicen claramente que esté barato o caro."
+    texto = [
+        cabecera,
+        resumen,
+        f"<i>{fondo} dicen barato · {techo} dicen caro · "
+        f"{len(votos) - fondo - techo} en medio</i>",
+        "",
+    ]
+    for v in votos:
+        marca = "🟢" if v.valor > 0 else "🔴" if v.valor < 0 else "⚪"
+        texto.append(f"{marca} <b>{escape(v.nombre)}</b>: {escape(v.motivo)}")
+    texto.append("")
+    if faltan:
+        texto.append(f"<i>Sin datos de {escape(', '.join(faltan))}</i>")
+    texto.append(
+        "<i>Junta lo que dicen, no es un consejo: ninguno acierta solo. El detalle "
+        "de cada uno: /mayer, /arcoiris, /suelo, /picycle, /ahr999, /mvrv y "
+        "/hashribbons</i>"
+    )
+    return "\n".join(texto)
 
 
 def formatear_semaforo(
