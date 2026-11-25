@@ -97,6 +97,7 @@ from crypto_tracker.respuestas.alertas import (
     _stop,
 )
 from crypto_tracker.respuestas.analisis import (
+    _ahr999,
     _arcoiris,
     _backtest,
     _bollinger,
@@ -1763,6 +1764,7 @@ COMANDOS: dict[str, Callable[[Config, str], Respuesta]] = {
     "arcoiris": lambda c, a: _arcoiris(c, a),
     "suelo": lambda c, a: _suelo(c, a),
     "picycle": lambda c, a: _picycle(c, a),
+    "ahr999": lambda c, a: _ahr999(c, a),
     "cme": lambda c, a: _cme(c, a),
     "dvol": lambda c, a: _dvol(c, a),
     "maxpain": lambda c, a: _maxpain(c, a),

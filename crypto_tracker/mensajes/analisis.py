@@ -3,6 +3,7 @@
 import math
 from datetime import date, datetime
 
+from ..ahr999 import COMPRAR, ESPERAR, Ahr999
 from ..arcoiris import FRANJAS, Arcoiris
 from ..backtest import INICIAL as INICIAL_BACKTEST
 from ..backtest import Backtest
@@ -1790,6 +1791,77 @@ def formatear_picycle(p: PiCycle) -> str:
         "bitcoin solía estar en su techo: acertó en 2013, 2017 y abril de 2021, "
         "pero no avisó del de noviembre de 2021. Con las velas de Binance, "
         "en dólares.</i>",
+    ]
+    return "\n".join(lineas)
+
+
+def formatear_ahr999(a: Ahr999) -> str:
+    """Respuesta de /ahr999."""
+
+    def dolares(valor: float) -> str:
+        return f"${valor:,.0f}".replace(",", ".")
+
+    def indice(valor: float) -> str:
+        return f"{valor:.2f}".replace(".", ",")
+
+    def mes(dia) -> str:
+        return f"{NOMBRES_MESES[dia.cuando.month - 1][:3]} {dia.cuando.year}"
+
+    hoy = a.hoy
+    emoji, zona = a.zona
+    lineas = [f"🧮 <b>Índice ahr999 de bitcoin: {indice(hoy.indice)}</b>"]
+    ultimo_año = [d.indice for d in a.dias[-365:]]
+    if len(ultimo_año) >= MINIMO_BARRAS:
+        lineas.append(f"<code>{sparkline(muestrear(ultimo_año, BARRAS_MOVIL))}</code>")
+    lineas += [
+        "",
+        f"{emoji} <b>{zona}</b>",
+        f"Precio: {dolares(hoy.precio)} · coste de comprar a diario 200 días: "
+        f"{dolares(hoy.coste)} ({_signo((hoy.precio / hoy.coste - 1) * 100)})",
+        f"Según su curva de crecimiento debería valer {dolares(hoy.crecimiento)}.",
+    ]
+    if hoy.indice < COMPRAR:
+        lineas.append(
+            f"Pasaría a la de DCA por encima de {dolares(hoy.precio_para(COMPRAR))}."
+        )
+    elif hoy.indice < ESPERAR:
+        lineas.append(
+            f"Comprar fuerte: por debajo de {dolares(hoy.precio_para(COMPRAR))} · "
+            f"esperar: por encima de {dolares(hoy.precio_para(ESPERAR))}"
+        )
+    else:
+        lineas.append(
+            f"Volvería a la de DCA por debajo de {dolares(hoy.precio_para(ESPERAR))}."
+        )
+    desde = f"Desde {a.dias[0].cuando.year}"
+    if a.por_debajo >= 1:
+        historia = (
+            f"{desde}, el {a.por_debajo:.0f}% de los días estuvo más bajo que hoy."
+        )
+    elif a.mas_bajos == 0:
+        historia = f"{desde} nunca había estado tan bajo."
+    else:
+        if a.mas_bajos == 1:
+            cuantos = "un día estuvo más bajo"
+        else:
+            cuantos = f"{a.mas_bajos} días estuvieron más bajos"
+        historia = f"{desde} solo {cuantos} que hoy, de {len(a.dias)}."
+    lineas += [
+        "",
+        historia,
+        f"Lo más bajo: {indice(a.minimo.indice)} en {mes(a.minimo)}",
+    ]
+    antes = a.ultima_vez(COMPRAR)
+    if antes is not None and hoy.indice >= COMPRAR:
+        lineas.append(f"La última vez en zona de comprar fuerte: {mes(antes)}")
+    lineas += [
+        "",
+        "<i>El precio entre lo que costó comprar a diario los últimos 200 días, por "
+        "el precio entre lo que debería valer según una curva de crecimiento. Por "
+        "debajo de 0,45, comprar fuerte; hasta 1,2, poco a poco; por encima, "
+        "esperar. La curva es la que publicó su autor en 2019 y desde 2022 va "
+        "bastante por encima del precio, así que ahora sale más bajo que antes. "
+        "Con las velas de Binance, en dólares.</i>",
     ]
     return "\n".join(lineas)
 

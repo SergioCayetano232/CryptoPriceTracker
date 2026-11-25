@@ -4,6 +4,7 @@ import logging
 from datetime import date, datetime, timedelta, timezone
 
 from .. import (
+    ahr999,
     alerts,
     arcoiris,
     backtest,
@@ -963,6 +964,19 @@ def _picycle(config: Config, argumento: str) -> str:
     if resultado is None:
         return "Binance no me ha dado 350 días de bitcoin. Prueba en un rato."
     return alerts.formatear_picycle(resultado)
+
+
+def _ahr999(config: Config, argumento: str) -> str:
+    if argumento and simbolos.a_id(argumento) != "bitcoin":
+        return "El ahr999 se pensó solo para bitcoin: /ahr999"
+    try:
+        velas = mayer.pedir("BTCUSDT")
+    except mayer.MayerError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+    resultado = ahr999.calcular(velas)
+    if resultado is None:
+        return "Binance no me ha dado 200 días de bitcoin. Prueba en un rato."
+    return alerts.formatear_ahr999(resultado)
 
 
 def _suelo(config: Config, argumento: str) -> str:
