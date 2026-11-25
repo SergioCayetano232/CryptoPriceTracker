@@ -22,6 +22,7 @@ from .. import (
     dominancia,
     funding,
     grafica,
+    hashribbons,
     hoy,
     kimchi,
     lightning,
@@ -313,6 +314,17 @@ def _dificultad(config: Config) -> str | comandos.ConBotones:
         return "mempool.space no me ha dado el ajuste ahora mismo. Prueba en un rato."
     texto = alerts.formatear_dificultad(datos)
     return comandos.ConBotones(texto, botones.actualizar("/dificultad"))
+
+
+def _hashribbons(config: Config) -> str | comandos.ConBotones:
+    try:
+        datos = hashribbons.leer(hashribbons.pedir())
+    except hashribbons.HashRibbonsError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+    if datos is None:
+        return "mempool.space no me ha dado 60 días de hashrate. Prueba en un rato."
+    texto = alerts.formatear_hashribbons(datos)
+    return comandos.ConBotones(texto, botones.actualizar("/hashribbons"))
 
 
 def _lightning(config: Config) -> str | comandos.ConBotones:

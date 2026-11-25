@@ -115,6 +115,7 @@ TEMAS = [
             "direccion",
             "comisionred",
             "dificultad",
+            "hashribbons",
             "lightning",
             "ruido",
             "voto",

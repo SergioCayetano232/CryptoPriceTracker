@@ -13,6 +13,7 @@ from ..comparar import Resultado
 from ..comparar import media as media_comparar
 from ..copia import numero as numero_env
 from ..dificultad import BLOQUES, MINUTOS, Dificultad, falta
+from ..hashribbons import Ribbons
 from ..lightning import Lightning
 from ..mapa import Mapa
 from ..maximo import Maximo, hace
@@ -369,6 +370,79 @@ def formatear_sectores(lista: list[Sector]) -> str:
         "estar en varios: HYPE cuenta en DeFi, en exchanges y en futuros.</i>",
     ]
     return "\n".join(texto)
+
+
+ULTIMAS_CAPITULACIONES = 4
+
+
+def formatear_hashribbons(r: Ribbons) -> str:
+    """Respuesta de /hashribbons."""
+
+    def eh(valor: float) -> str:
+        return f"{valor:,.0f}".replace(",", ".") + " EH/s"
+
+    def fecha(dia: date) -> str:
+        return f"{dia:%d/%m/%Y}"
+
+    hoy = r.hoy
+    lineas = [
+        "⛏️ <b>Hash ribbons de bitcoin</b>",
+        f"Hashrate de 30 días: {eh(hoy.corta)} · de 60 días: {eh(hoy.larga)} "
+        f"({_signo(hoy.distancia)})",
+    ]
+    ultimo_año = [d.distancia for d in r.dias[-365:]]
+    if len(ultimo_año) >= MINIMO_BARRAS:
+        lineas.append(f"<code>{sparkline(muestrear(ultimo_año, BARRAS_MOVIL))}</code>")
+    lineas.append("")
+
+    capitulaciones = r.capitulaciones
+    estado = r.estado
+    if estado == "capitula":
+        c = capitulaciones[-1]
+        lineas += [
+            "🔴 <b>Los mineros están capitulando</b>",
+            f"Desde el {fecha(c.desde)} ({c.dias(hoy.cuando)} días). Muchos apagan "
+            "máquinas porque no les salen las cuentas, y suelen vender bitcoin para "
+            "aguantar.",
+        ]
+    elif estado == "cruzando":
+        lineas += [
+            "🟡 <b>Las medias se acaban de cruzar a la baja</b>",
+            f"Desde el {fecha(capitulaciones[-1].desde)}. Si dura más de una semana "
+            "es capitulación; muchas veces se queda en nada.",
+        ]
+    elif estado == "señal":
+        c = capitulaciones[-1]
+        lineas += [
+            "🟢 <b>Se acabó la capitulación: señal de compra</b>",
+            f"Terminó el {fecha(c.hasta)} tras {c.dias(c.hasta)} días. Es "
+            "cuando el indicador dice comprar: en otros ciclos llegó cerca de los "
+            "fondos.",
+        ]
+    else:
+        lineas += [
+            "⚪ <b>Minado sano</b>",
+            "Los mineros siguen enchufando máquinas: no hay capitulación.",
+        ]
+
+    pasadas = r.pasadas
+    if pasadas:
+        veces = "una vez" if len(pasadas) == 1 else f"{len(pasadas)} veces"
+        titulo = f"Desde {r.dias[0].cuando.year} han capitulado {veces}"
+        if len(pasadas) > ULTIMAS_CAPITULACIONES:
+            titulo += ". Las últimas"
+        lineas += ["", titulo + ":"]
+        for c in pasadas[-ULTIMAS_CAPITULACIONES:]:
+            dias = c.dias(c.hasta)
+            lineas.append(f"· del {fecha(c.desde)} al {fecha(c.hasta)} ({dias} días)")
+    lineas += [
+        "",
+        "<i>Cuando la media de 30 días del hashrate cae por debajo de la de 60, los "
+        "mineros están apagando máquinas. El final de esa racha ha coincidido con "
+        "los fondos de otros ciclos. Junto las rachas separadas por menos de una "
+        "semana y no cuento las que duran menos. Con los datos de mempool.space.</i>",
+    ]
+    return "\n".join(lineas)
 
 
 def formatear_dificultad(d: Dificultad, ahora: datetime | None = None) -> str:
