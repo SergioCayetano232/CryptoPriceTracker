@@ -22,6 +22,7 @@ from .. import (
     dominancia,
     funding,
     grafica,
+    gwei,
     hashribbons,
     hoy,
     kimchi,
@@ -302,6 +303,20 @@ def _comisionred(config: Config, argumento: str = "") -> str | comandos.ConBoton
     if datos is None:
         return texto
     return comandos.ConBotones(texto, botones.actualizar("/comisionred"))
+
+
+def _gwei(config: Config) -> str | comandos.ConBotones:
+    try:
+        datos = gwei.leer(gwei.pedir())
+    except gwei.GweiError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+    if datos is None:
+        return "El nodo de Ethereum no me ha dado el gas. Prueba en un rato."
+    precio = database.get_last_price(config.database_path, "ethereum")
+    if precio is None:
+        precio = (_consultar(config, ["ethereum"]) or {}).get("ethereum")
+    texto = alerts.formatear_gwei(datos, precio, config.vs_currency)
+    return comandos.ConBotones(texto, botones.actualizar("/gwei"))
 
 
 def _dificultad(config: Config) -> str | comandos.ConBotones:

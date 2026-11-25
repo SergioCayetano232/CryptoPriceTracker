@@ -13,6 +13,7 @@ from ..comparar import Resultado
 from ..comparar import media as media_comparar
 from ..copia import numero as numero_env
 from ..dificultad import BLOQUES, MINUTOS, Dificultad, falta
+from ..gwei import OPERACIONES, Gas
 from ..hashribbons import Ribbons
 from ..lightning import Lightning
 from ..mapa import Mapa
@@ -593,6 +594,39 @@ def _cuesta_envio(sats: int, precio_btc: float | None, simbolo: str) -> str:
     if dinero < 0.01:
         return f"menos de 1 céntimo ({sats} sats)"
     return f"{simbolo}{_es(f'{dinero:,.2f}')}"
+
+
+def formatear_gwei(g: Gas, precio_eth: float | None, currency: str) -> str:
+    """Respuesta de /gwei. Sin precio de ethereum, solo en ETH."""
+    simbolo = SIMBOLOS.get(currency.lower(), currency.upper() + " ")
+
+    def gwei(valor: float) -> str:
+        # Ahora suele ir por debajo de 1: con dos decimales se ve si cambia.
+        return _es(f"{valor:.2f}" if valor < 10 else f"{valor:.0f}") + " gwei"
+
+    def cuesta(eth: float) -> str:
+        if not precio_eth:
+            return f"{_es(f'{eth:.6f}')} ETH"
+        dinero = eth * precio_eth
+        if dinero < 0.01:
+            return "menos de 1 céntimo"
+        return f"{simbolo}{_es(f'{dinero:,.2f}')}"
+
+    normal = g.normal
+    texto = [f"⛽ <b>Gas de Ethereum: {gwei(normal.gwei)}</b>", ""]
+    for nombre, gas in OPERACIONES:
+        texto.append(f"{nombre}: <b>{cuesta(normal.eth(gas))}</b>")
+    texto += ["", "Según la prisa:"]
+    for t in g.tarifas:
+        texto.append(f"{t.emoji} {t.nombre}: {gwei(t.gwei)}")
+    texto += [
+        "",
+        f"<i>El gas es lo que pagas a la red por cada operación, en gwei "
+        f"(milmillonésimas de ETH). {gwei(g.base)} se queman sí o sí; el resto es "
+        "propina para que te cuelen antes. Lo de Uniswap cambia según la ruta. "
+        "Con las propinas de los últimos 20 bloques.</i>",
+    ]
+    return "\n".join(texto)
 
 
 def formatear_aviso_comisionred(

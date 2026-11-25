@@ -242,6 +242,7 @@ from .mensajes.mercado import (
     formatear_comisionred,
     formatear_comparar,
     formatear_dificultad,
+    formatear_gwei,
     formatear_hashribbons,
     formatear_lightning,
     formatear_mapa,

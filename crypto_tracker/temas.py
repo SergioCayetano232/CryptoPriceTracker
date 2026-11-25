@@ -116,6 +116,7 @@ TEMAS = [
             "comisionred",
             "dificultad",
             "hashribbons",
+            "gwei",
             "lightning",
             "ruido",
             "voto",
