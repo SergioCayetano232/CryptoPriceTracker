@@ -18,10 +18,13 @@ dev = [
     "ruff==0.16.5",
 ]
 
-# Sin esto setuptools ve data/ y windows/ como paquetes y no instala nada.
 [tool.setuptools]
-packages = ["crypto_tracker", "crypto_tracker.mensajes"]
 py-modules = ["main"]
+
+# Sin esto setuptools ve data/ y windows/ como paquetes y no instala nada. Con
+# el * entran solas las carpetas nuevas: a mano se me quedó fuera respuestas/.
+[tool.setuptools.packages.find]
+include = ["crypto_tracker*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
