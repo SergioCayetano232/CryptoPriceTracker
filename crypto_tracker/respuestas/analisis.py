@@ -46,6 +46,7 @@ from .. import (
     simbolos,
     soporte,
     sube,
+    suelo,
     telegram,
     verdes,
     volatilidad,
@@ -894,6 +895,19 @@ def _arcoiris(config: Config, argumento: str) -> str | comandos.Foto:
         logger.warning("Mando /arcoiris sin imagen: %s", e)
         return texto
     return comandos.Foto(png, texto, texto)
+
+
+def _suelo(config: Config, argumento: str) -> str:
+    if argumento and simbolos.a_id(argumento) != "bitcoin":
+        return "La media de 200 semanas va con los ciclos de bitcoin: /suelo"
+    try:
+        velas = mayer.pedir("BTCUSDT")
+    except mayer.MayerError as e:
+        return f"No he podido mirarlo ahora mismo: {telegram.escape(str(e))}"
+    resultado = suelo.calcular(velas)
+    if resultado is None:
+        return "Binance no me ha dado 200 semanas de bitcoin. Prueba en un rato."
+    return alerts.formatear_suelo(resultado)
 
 
 def _comparar(config: Config, argumento: str) -> str | comandos.Foto:

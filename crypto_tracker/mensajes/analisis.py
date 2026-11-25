@@ -59,6 +59,7 @@ from ..semaforo import AMBAR, VERDE, Voto
 from ..sharpe import Sharpe
 from ..soporte import Nivel, Soportes
 from ..sube import Subida
+from ..suelo import Suelo
 from ..tarjeta import Tarjeta
 from ..telegram import escape
 from ..verdes import Verdes
@@ -1567,6 +1568,60 @@ def formatear_mayer(m: Mayer, coin_id: str) -> str:
         "<i>El precio entre su media de 200 días, en dólares. Por debajo de 1 "
         "está más barato que de media en los últimos siete meses; por encima de "
         "2,4 solía ser burbuja. Se pensó para bitcoin: en otras dice menos.</i>",
+    ]
+    return "\n".join(lineas)
+
+
+def formatear_suelo(s: Suelo) -> str:
+    """Respuesta de /suelo."""
+
+    def dolares(valor: float) -> str:
+        return f"${valor:,.0f}".replace(",", ".")
+
+    def mes(semana) -> str:
+        return f"{NOMBRES_MESES[semana.cuando.month - 1][:3]} {semana.cuando.year}"
+
+    hoy = s.hoy
+    emoji, zona = s.zona
+    lineas = [
+        f"🪨 <b>Bitcoin frente a su media de 200 semanas: {_signo(hoy.distancia)}</b>",
+        f"Precio: {dolares(hoy.precio)} · media: {dolares(hoy.media)}",
+    ]
+    ultimo_año = [x.distancia for x in s.semanas[-52:]]
+    if len(ultimo_año) >= MINIMO_BARRAS:
+        lineas.append(f"<code>{sparkline(muestrear(ultimo_año, BARRAS_MOVIL))}</code>")
+    lineas += ["", f"{emoji} <b>{zona}</b>"]
+    cambio = _signo((hoy.media / hoy.precio - 1) * 100)
+    if hoy.distancia >= 0:
+        lineas.append(
+            f"Para tocarla tendría que bajar a {dolares(hoy.media)} ({cambio})."
+        )
+    else:
+        lineas.append(
+            f"Para volver a ella tendría que subir a {dolares(hoy.media)} ({cambio})."
+        )
+    if s.por_debajo:
+        lineas.append(
+            f"Desde {s.semanas[0].cuando.year} ha cerrado por debajo "
+            f"{s.por_debajo} de {len(s.semanas) - 1} semanas."
+        )
+    else:
+        lineas.append(
+            f"Desde {s.semanas[0].cuando.year} no ha cerrado nunca por debajo."
+        )
+    lineas.append(
+        f"Lo más lejos: {_signo(s.mas_lejos.distancia)} en {mes(s.mas_lejos)} · "
+        f"lo más abajo: {_signo(s.mas_abajo.distancia)} en {mes(s.mas_abajo)}"
+    )
+    if s.sube_al_año is not None:
+        verbo = "subido" if s.sube_al_año >= 0 else "bajado"
+        cuanto = f"{abs(s.sube_al_año):.0f}%"
+        lineas.append(f"La media ha {verbo} un {cuanto} en un año.")
+    lineas += [
+        "",
+        "<i>La media de los cierres de las últimas 200 semanas, unos cuatro años: "
+        "un ciclo entero. Bitcoin ha ido a tocarla en el fondo de cada ciclo. "
+        "Con las velas de Binance, en dólares.</i>",
     ]
     return "\n".join(lineas)
 

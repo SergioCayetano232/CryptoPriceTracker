@@ -60,6 +60,7 @@ from .mensajes.analisis import (
     formatear_sharpe,
     formatear_soporte,
     formatear_sube,
+    formatear_suelo,
     formatear_tarjeta,
     formatear_verdes,
     formatear_vuelta,
