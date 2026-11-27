@@ -34,6 +34,24 @@ def test_sale_el_total_y_lo_ganado():
     assert "Actualizado hace 2 min" in html
 
 
+def test_el_total_sale_en_la_pestana():
+    html = pagina(_panel(total_antes=5000.0), AHORA, parado=False)
+
+    assert "<title>€6.000,00 · +20,00 %</title>" in html
+
+
+def test_la_pestana_sin_24h_lleva_solo_el_total():
+    html = pagina(_panel(), AHORA, parado=False)
+
+    assert "<title>€6.000,00</title>" in html
+
+
+def test_la_pestana_sin_cartera():
+    html = pagina(_panel(filas=[]), AHORA, parado=False)
+
+    assert "<title>Tu cartera · CryptoPriceTracker</title>" in html
+
+
 def test_sin_cartera_explica_como_ponerla():
     html = pagina(_panel(filas=[]), AHORA, parado=False)
 

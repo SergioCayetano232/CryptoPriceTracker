@@ -246,6 +246,15 @@ def _alertas(p: Panel) -> str:
     return _tarjeta("Alertas pendientes", cuerpo, 4)
 
 
+def _titulo(p: Panel) -> str:
+    if p.total is None:
+        return "Tu cartera · CryptoPriceTracker"
+    titulo = _dinero(p.total, p.moneda)
+    if p.cambio_24h is not None:
+        titulo += f" · {_pct(p.cambio_24h)}"
+    return escape(titulo)
+
+
 def _tarjeta(titulo: str, cuerpo: str, orden: int, clase: str = "") -> str:
     extra = f" tarjeta--{clase}" if clase else ""
     return f"""
@@ -271,7 +280,7 @@ def pagina(p: Panel, ahora: datetime, parado: bool) -> str:
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>Tu cartera · CryptoPriceTracker</title>
+<title>{_titulo(p)}</title>
 <style>{CSS}</style>
 </head>
 <body>
@@ -676,6 +685,7 @@ JS = f"""
         var antes = cifras(document);
         document.documentElement.classList.add('recargado');
         document.querySelector('main').replaceWith(nuevo.querySelector('main'));
+        document.title = nuevo.title;
         document.querySelectorAll('[data-k]').forEach(function (el) {{
           var k = el.dataset.k;
           if (k in antes && antes[k] !== el.textContent.trim()) {{
