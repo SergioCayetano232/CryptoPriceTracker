@@ -77,6 +77,16 @@ def test_sin_dato_de_24h_el_icono_es_neutro():
     assert "%236d4aff" in pagina(_panel(), AHORA, parado=False)
 
 
+def test_la_barra_del_movil_toma_el_fondo_de_cada_modo():
+    html = pagina(_panel(), AHORA, parado=False)
+
+    # Tienen que ser los --fondo del CSS, si no la barra no casa con la página.
+    assert 'content="#f4f1fb" media="(prefers-color-scheme: light)"' in html
+    assert 'content="#0d0b16" media="(prefers-color-scheme: dark)"' in html
+    assert "--fondo: #f4f1fb;" in html
+    assert "--fondo: #0d0b16;" in html
+
+
 def test_sin_cartera_explica_como_ponerla():
     html = pagina(_panel(filas=[]), AHORA, parado=False)
 

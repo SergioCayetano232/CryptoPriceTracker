@@ -315,6 +315,8 @@ def pagina(p: Panel, ahora: datetime, parado: bool) -> str:
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f4f1fb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0d0b16" media="(prefers-color-scheme: dark)">
 <title>{_titulo(p)}</title>
 <link rel="icon" href="{_icono(p)}">
 <script>{ANTES}</script>
