@@ -18,12 +18,20 @@ def _nombre(coin_id: str) -> str:
     return escape(coin_id.replace("-", " ").title())
 
 
-def _dinero(valor: float | None, moneda: str) -> str:
+def _importe(valor: float | None, moneda: str) -> str:
     if valor is None:
         return "—"
     simbolo = SIMBOLOS.get(moneda, moneda.upper() + " ")
     signo = "-" if valor < 0 else ""
     return f"{signo}{simbolo}{_num(abs(valor))}"
+
+
+def _dinero(valor: float | None, moneda: str) -> str:
+    # El span es para el botón de ocultar cifras. Los precios de mercado van con
+    # _importe: no dicen nada de lo que tienes.
+    if valor is None:
+        return "—"
+    return f'<span class="dinero">{_importe(valor, moneda)}</span>'
 
 
 def _pct(valor: float | None, signo: bool = True) -> str:
@@ -94,8 +102,12 @@ def _cabecera(p: Panel, ahora: datetime, parado: bool) -> str:
 <header class="cabecera seccion" style="--i:0">
   <div class="cabecera__fila">
     <span class="marca">CryptoPriceTracker</span>
-    <span class="estado estado--{estado}">
-      <span class="estado__punto"></span>{aviso}
+    <span class="cabecera__lado">
+      <span class="estado estado--{estado}">
+        <span class="estado__punto"></span>{aviso}
+      </span>
+      <button class="ojo" type="button" aria-pressed="false"
+              title="Ocultar cifras">👁</button>
     </span>
   </div>
   <p class="etiqueta">Tu cartera</p>
@@ -157,7 +169,8 @@ def _fila(f: Fila, moneda: str) -> str:
 <li class="fila">
   <div class="fila__nombre">
     <strong>{_nombre(f.coin_id)}</strong>
-    <small>{_cantidad(f.cantidad)} · {_dinero(f.precio, moneda)}</small>
+    <small><span class="dinero">{_cantidad(f.cantidad)}</span> ·
+      {_importe(f.precio, moneda)}</small>
   </div>
   {_mini(f.linea, _tono(f.cambio_24h))}
   <span class="num" data-k="v-{escape(f.coin_id)}">{_dinero(f.valor, moneda)}
@@ -191,7 +204,7 @@ def _vigilada(v: Vigilada, moneda: str) -> str:
     <small>{escape(describir(v.watch, moneda))}</small>
   </div>
   {_mini(v.linea, tono)}
-  <span class="num" data-k="p-{escape(v.coin_id)}">{_dinero(v.precio, moneda)}
+  <span class="num" data-k="p-{escape(v.coin_id)}">{_importe(v.precio, moneda)}
     <small class="num--{tono}">{_pct(v.cambio_24h)}</small></span>
 </li>"""
 
@@ -227,8 +240,8 @@ def _alerta(a: Alerta, moneda: str) -> str:
 <li class="fila fila--alerta">
   <div class="fila__nombre">
     <strong>{nombre} <span class="flecha">{flecha}</span>
-      {_dinero(a.objetivo, moneda)}</strong>
-    <small>#{a.id} · ahora {_dinero(a.precio, moneda)}</small>{nota}
+      {_importe(a.objetivo, moneda)}</strong>
+    <small>#{a.id} · ahora {_importe(a.precio, moneda)}</small>{nota}
   </div>
   {falta}
 </li>"""
@@ -249,7 +262,7 @@ def _alertas(p: Panel) -> str:
 def _titulo(p: Panel) -> str:
     if p.total is None:
         return "Tu cartera · CryptoPriceTracker"
-    titulo = _dinero(p.total, p.moneda)
+    titulo = _importe(p.total, p.moneda)
     if p.cambio_24h is not None:
         titulo += f" · {_pct(p.cambio_24h)}"
     return escape(titulo)
@@ -281,6 +294,7 @@ def pagina(p: Panel, ahora: datetime, parado: bool) -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>{_titulo(p)}</title>
+<script>{ANTES}</script>
 <style>{CSS}</style>
 </head>
 <body>
@@ -442,6 +456,25 @@ h2 {
   flex-wrap: wrap;
 }
 
+.cabecera__lado { display: inline-flex; align-items: center; gap: 10px; }
+.ojo {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-chico);
+  background: var(--cristal);
+  color: var(--texto);
+  font-size: 16px;
+  cursor: pointer;
+  transition: transform var(--rapido) var(--muelle);
+}
+.ojo:hover { transform: scale(1.08); }
+.ojo:active { transform: scale(0.94); }
+.ojo:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
+/* Hasta que el JS pone los puntos, que no se vea la cifra ni un instante. */
+.oculto .dinero:not([data-v]) { visibility: hidden; }
 .marca { font-weight: 700; letter-spacing: -0.01em; }
 
 .estado {
@@ -537,7 +570,7 @@ h2 {
   pointer-events: none;
 }
 
-.grafica__ejes span {
+.grafica__ejes > span {
   padding: 2px 8px;
   border-radius: 8px;
   background: var(--cristal);
@@ -667,9 +700,40 @@ code {
 
 CSS = CSS.replace("__GRANO__", GRANO)
 
+CLAVE = "panel-oculto"
+
+# Va en el <head> para que al recargar no asomen las cifras antes de taparlas.
+ANTES = (
+    f"if (localStorage.getItem('{CLAVE}') === '1') "
+    "document.documentElement.classList.add('oculto');"
+)
+
 JS = f"""
 (function () {{
   var cada = {REFRESCO} * 1000;
+  var titulo = document.title;
+  function oculto() {{ return localStorage.getItem('{CLAVE}') === '1'; }}
+  function tapar() {{
+    var si = oculto();
+    document.documentElement.classList.toggle('oculto', si);
+    document.querySelectorAll('.dinero').forEach(function (el) {{
+      if (!('v' in el.dataset)) el.dataset.v = el.textContent;
+      el.textContent = si ? '•••' : el.dataset.v;
+    }});
+    document.title = si ? '••• · CryptoPriceTracker' : titulo;
+    var ojo = document.querySelector('.ojo');
+    if (ojo) {{
+      ojo.setAttribute('aria-pressed', si);
+      ojo.title = si ? 'Enseñar cifras' : 'Ocultar cifras';
+      ojo.textContent = si ? '🙈' : '👁';
+    }}
+  }}
+  document.addEventListener('click', function (e) {{
+    if (!e.target.closest('.ojo')) return;
+    localStorage.setItem('{CLAVE}', oculto() ? '0' : '1');
+    tapar();
+  }});
+  tapar();
   function cifras(raiz) {{
     var mapa = {{}};
     raiz.querySelectorAll('[data-k]').forEach(function (el) {{
@@ -685,7 +749,8 @@ JS = f"""
         var antes = cifras(document);
         document.documentElement.classList.add('recargado');
         document.querySelector('main').replaceWith(nuevo.querySelector('main'));
-        document.title = nuevo.title;
+        titulo = nuevo.title;
+        tapar();
         document.querySelectorAll('[data-k]').forEach(function (el) {{
           var k = el.dataset.k;
           if (k in antes && antes[k] !== el.textContent.trim()) {{

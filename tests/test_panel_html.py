@@ -30,7 +30,7 @@ def test_sale_el_total_y_lo_ganado():
     html = pagina(_panel(), AHORA, parado=False)
 
     assert "€6.000,00" in html
-    assert "€1.000,00 · +20,00 %" in html
+    assert "€1.000,00</span> · +20,00 %" in html
     assert "Actualizado hace 2 min" in html
 
 
@@ -50,6 +50,16 @@ def test_la_pestana_sin_cartera():
     html = pagina(_panel(filas=[]), AHORA, parado=False)
 
     assert "<title>Tu cartera · CryptoPriceTracker</title>" in html
+
+
+def test_las_cifras_van_marcadas_para_poder_ocultarlas():
+    html = pagina(_panel(), AHORA, parado=False)
+
+    assert '<p class="total" data-k="total"><span class="dinero">€6.000,00' in html
+    assert '<span class="dinero">0,1</span>' in html
+    assert 'class="ojo"' in html
+    # Los porcentajes no dicen cuánto tienes: se quedan a la vista.
+    assert '<span class="dinero">+20' not in html
 
 
 def test_sin_cartera_explica_como_ponerla():
@@ -136,6 +146,6 @@ def test_en_el_movil_la_ganancia_va_a_la_derecha_aunque_no_haya_mini():
     html = pagina(_panel(), AHORA, parado=False)
 
     assert "sin histórico" in html
-    assert 'class="num num--sube ganancia">€1.000,00' in html
+    assert 'class="num num--sube ganancia"><span class="dinero">€1.000,00' in html
     assert ".lista--cartera .fila > .ganancia { grid-column: 2; }" in html
     assert "nth-of-type" not in html
