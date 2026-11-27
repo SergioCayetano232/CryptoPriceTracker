@@ -28,6 +28,15 @@ def _importe(valor: float | None, moneda: str) -> str:
     return f"{signo}{simbolo}{_num(abs(valor))}"
 
 
+def _enlace(coin_id: str) -> str:
+    # Los ids son los de CoinGecko, así que la página de cada una sale directa.
+    url = f"https://www.coingecko.com/es/monedas/{quote(coin_id)}"
+    return (
+        f'<a class="moneda" href="{url}" target="_blank" rel="noopener">'
+        f"{_nombre(coin_id)}</a>"
+    )
+
+
 def _dinero(valor: float | None, moneda: str) -> str:
     # El span es para el botón de ocultar cifras. Los precios de mercado van con
     # _importe: no dicen nada de lo que tienes.
@@ -203,7 +212,7 @@ def _fila(f: Fila, moneda: str) -> str:
     return f"""
 <li class="fila">
   <div class="fila__nombre">
-    <strong>{_nombre(f.coin_id)}</strong>
+    <strong>{_enlace(f.coin_id)}</strong>
     <small><span class="dinero">{_cantidad(f.cantidad)}</span> ·
       {_importe(f.precio, moneda)}</small>
   </div>
@@ -261,7 +270,7 @@ def _vigilada(v: Vigilada, moneda: str) -> str:
     return f"""
 <li class="fila fila--corta">
   <div class="fila__nombre">
-    <strong>{_nombre(v.coin_id)}</strong>
+    <strong>{_enlace(v.coin_id)}</strong>
     <small>{escape(describir(v.watch, moneda))}</small>
   </div>
   {_mini(v.linea, tono)}
@@ -727,6 +736,9 @@ h2 {
 }
 
 .fila__nombre { display: flex; flex-direction: column; min-width: 0; }
+.moneda { color: inherit; text-decoration: none; }
+.moneda:hover { color: var(--acento); text-decoration: underline; }
+.moneda:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
 .fila__nombre strong { font-weight: 650; }
 .fila__nombre small, .num small {
   display: block;

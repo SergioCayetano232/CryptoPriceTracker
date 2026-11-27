@@ -136,6 +136,15 @@ def test_el_estado_es_un_boton_para_actualizar():
     assert 'title="Actualizar ahora"' in html
 
 
+def test_cada_cripto_enlaza_a_su_pagina_de_coingecko():
+    html = pagina(_panel(), AHORA, parado=False)
+
+    assert (
+        '<a class="moneda" href="https://www.coingecko.com/es/monedas/bitcoin" '
+        'target="_blank" rel="noopener">Bitcoin</a>'
+    ) in html
+
+
 def test_sin_cartera_explica_como_ponerla():
     html = pagina(_panel(filas=[]), AHORA, parado=False)
 
