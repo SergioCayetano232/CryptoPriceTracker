@@ -153,6 +153,17 @@ def test_sin_historico_sale_una_raya_y_no_el_texto():
     assert ">sin histórico</span>" not in html
 
 
+def test_el_titulo_de_la_grafica_lleva_lo_que_ha_cambiado():
+    serie = [(AHORA - timedelta(hours=h), 6000.0 - h * 10) for h in range(10, 0, -1)]
+
+    html = pagina(_panel(serie=serie), AHORA, parado=False)
+
+    # De 5.900 a 5.990: un 1,53 % arriba.
+    assert (
+        'Los últimos 7 días · <span class="h2__cambio num--sube">+1,53 %</span>'
+    ) in html
+
+
 def test_sin_cartera_explica_como_ponerla():
     html = pagina(_panel(filas=[]), AHORA, parado=False)
 

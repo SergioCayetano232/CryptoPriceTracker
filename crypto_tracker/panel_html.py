@@ -6,7 +6,17 @@ from urllib.parse import quote
 
 from . import version
 from .mensajes.base import SIMBOLOS, _num, describir
-from .panel import PUNTOS_GRAFICA, Alerta, Fila, Panel, Vigilada, hace, muestrear, trazo
+from .panel import (
+    PUNTOS_GRAFICA,
+    Alerta,
+    Fila,
+    Panel,
+    Vigilada,
+    cambio,
+    hace,
+    muestrear,
+    trazo,
+)
 from .recordar import DIAS
 
 # Cada cuánto se refresca sola, en segundos. Los precios no cambian más rápido.
@@ -204,7 +214,13 @@ def _grafica(p: Panel) -> str:
     <span>{desde:%d/%m %H:%M}</span><span>{hasta:%d/%m %H:%M}</span>
   </div>
 </div>"""
-    return _tarjeta("Los últimos 7 días", cuerpo, 1, "grafica")
+    semana = cambio(p.serie[-1][1], p.serie[0][1])
+    titulo = "Los últimos 7 días"
+    if semana is not None:
+        titulo += (
+            f' · <span class="h2__cambio num--{_tono(semana)}">{_pct(semana)}</span>'
+        )
+    return _tarjeta(titulo, cuerpo, 1, "grafica")
 
 
 def _fila(f: Fila, moneda: str) -> str:
@@ -547,6 +563,7 @@ h2 {
   text-transform: uppercase;
   color: var(--suave);
 }
+.h2__cambio { font-weight: 700; }
 
 .cabecera__fila {
   display: flex;
