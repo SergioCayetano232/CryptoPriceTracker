@@ -517,6 +517,31 @@ def get_series(
     ]
 
 
+def cierres_diarios(
+    db_path: str, coin_ids: list[str], dias: int, currency: str
+) -> list[tuple[date, str, float]]:
+    """(día, cripto, último precio de ese día), en la hora de aquí.
+
+    Lo hace SQLite: para un año de precios cada cinco minutos, traerlos todos a
+    Python en cada refresco del panel sería mucho para quedarse con uno al día."""
+    if not coin_ids:
+        return []
+    desde = (datetime.now(timezone.utc) - timedelta(days=dias)).isoformat(
+        timespec="seconds"
+    )
+    huecos = ", ".join("?" * len(coin_ids))
+    with _connect(db_path) as conn:
+        # Con MAX() en un GROUP BY, SQLite da el precio de esa misma fila.
+        filas = conn.execute(
+            f"SELECT date(created_at, 'localtime') AS dia, coin_id, price, "
+            f"MAX(created_at) FROM prices "
+            f"WHERE coin_id IN ({huecos}) AND currency = ? AND created_at >= ? "
+            "GROUP BY coin_id, dia ORDER BY dia",
+            (*coin_ids, currency, desde),
+        ).fetchall()
+    return [(date.fromisoformat(f["dia"]), f["coin_id"], f["price"]) for f in filas]
+
+
 def get_prices_desde(
     db_path: str, coin_id: str, desde: datetime, currency: str
 ) -> list[float]:

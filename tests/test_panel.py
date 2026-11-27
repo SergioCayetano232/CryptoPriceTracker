@@ -202,3 +202,38 @@ def test_en_bitcoin_sin_precio_al_principio_no_dibuja_nada():
     serie = [(t0, 1000.0), (t0 + timedelta(hours=1), 1100.0)]
 
     assert panel.en_bitcoin(serie, [(t0 + timedelta(minutes=30), 50000.0)]) == []
+
+
+def test_dias_cartera_semanas_enteras_con_lo_que_tienes_hoy():
+    from datetime import date
+
+    hoy = date(2026, 11, 26)  # miércoles
+    cierres = [
+        (date(2026, 11, 23), "bitcoin", 100.0),
+        (date(2026, 11, 23), "ethereum", 10.0),
+        (date(2026, 11, 24), "bitcoin", 110.0),
+        (date(2026, 11, 24), "ethereum", 10.0),
+        # El 25 falta ethereum: ese día no cuenta, saldría hundido.
+        (date(2026, 11, 25), "bitcoin", 120.0),
+    ]
+    posiciones = [Posicion("bitcoin", 1.0), Posicion("ethereum", 2.0)]
+
+    dias = panel.dias_cartera(posiciones, cierres, hoy)
+
+    assert [d.dia for d in dias][0] == date(2026, 11, 23)  # el lunes
+    assert len(dias) == 7  # hasta el domingo
+    assert dias[0].valor == 120.0 and dias[0].cambio is None
+    assert dias[1].valor == 130.0
+    assert round(dias[1].cambio, 2) == 8.33
+    assert dias[2].valor is None
+
+
+def test_dias_cartera_como_mucho_un_año():
+    from datetime import date
+
+    hoy = date(2026, 11, 26)
+    cierres = [(hoy - timedelta(days=d), "bitcoin", 100.0) for d in range(800)]
+
+    dias = panel.dias_cartera([Posicion("bitcoin", 1.0)], cierres, hoy)
+
+    assert len(dias) == 53 * 7

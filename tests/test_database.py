@@ -1216,3 +1216,33 @@ def test_tesis_rota_no_tumba_las_demas(db):
         conn.execute("INSERT INTO ajustes VALUES ('tesis:2', 'basura')")
 
     assert [t.texto for t in database.get_tesis(db)] == ["bien"]
+
+
+def test_cierres_diarios_se_queda_con_el_ultimo_de_cada_dia(db):
+    import sqlite3
+
+    ahora = datetime.now(timezone.utc).replace(microsecond=0)
+    # Dos el mismo día a mediodía (hora de aquí) y uno el anterior.
+    mediodia = ahora.astimezone().replace(hour=12, minute=0, second=0)
+    filas = [
+        (mediodia - timedelta(days=1), 90.0),
+        (mediodia - timedelta(hours=2), 100.0),
+        (mediodia, 105.0),
+    ]
+    conn = sqlite3.connect(db)
+    for cuando, precio in filas:
+        conn.execute(
+            "INSERT INTO prices (coin_id, price, currency, created_at) "
+            "VALUES ('bitcoin', ?, 'eur', ?)",
+            (precio, cuando.astimezone(timezone.utc).isoformat(timespec="seconds")),
+        )
+    conn.commit()
+    conn.close()
+
+    cierres = database.cierres_diarios(db, ["bitcoin"], 5, "eur")
+
+    hoy = mediodia.date()
+    assert cierres == [
+        (hoy - timedelta(days=1), "bitcoin", 90.0),
+        (hoy, "bitcoin", 105.0),
+    ]

@@ -2251,6 +2251,16 @@ def datos_panel(config: Config) -> panel.Panel:
                 config.database_path, ["bitcoin"], 24 * 7, config.vs_currency
             )
         ],
+        panel.dias_cartera(
+            posiciones,
+            database.cierres_diarios(
+                config.database_path,
+                [p.coin_id for p in posiciones],
+                371,
+                config.vs_currency,
+            ),
+            date.today(),
+        ),
     )
 
 

@@ -1,15 +1,17 @@
 """La página del panel. Los datos vienen hechos de panel.py."""
 
 import json
-from datetime import datetime
+from datetime import date, datetime
 from html import escape
 from urllib.parse import quote
 
 from . import impuestos, version
 from .mensajes.base import SIMBOLOS, _num, describir
+from .mes import MESES
 from .panel import (
     PUNTOS_GRAFICA,
     Alerta,
+    Dia,
     Fila,
     Panel,
     Vigilada,
@@ -541,6 +543,87 @@ def _tarjeta(titulo: str, cuerpo: str, orden: int, clase: str = "") -> str:
 </section>"""
 
 
+# Por debajo de esto el día cuenta como plano: un 0,01 % en verde parece un fallo.
+IGUAL = 0.05
+# Hasta dónde llega cada intensidad de color, en % de lo que se movió el día.
+NIVELES = (1, 3, 6)
+
+
+def nivel(cambio: float | None) -> str:
+    """La clase de la casilla: sube-1 a sube-4, baja-1 a baja-4, igual o vacía."""
+    if cambio is None:
+        return "vacia"
+    if abs(cambio) < IGUAL:
+        return "igual"
+    fuerza = 1 + sum(abs(cambio) >= n for n in NIVELES)
+    return f"{'sube' if cambio > 0 else 'baja'}-{fuerza}"
+
+
+def _casilla(d: Dia, hoy: date) -> str:
+    if d.dia > hoy:
+        return '<span class="cal__dia cal__dia--futuro"></span>'
+    # Sin la cifra en euros: el 👁 no llega a los title y esto se ve con el ratón.
+    cuando = f"{DIAS[d.dia.weekday()]} {d.dia:%d/%m}"
+    texto = f"{cuando}: {_pct(d.cambio)}" if d.cambio is not None else cuando
+    if d.cambio is None:
+        texto += ": sin dato" if d.valor is None else ": primer día"
+    clase = f"cal__dia cal__dia--{nivel(d.cambio)}"
+    if d.dia == hoy:
+        clase += " cal__dia--hoy"
+    return f'<span class="{clase}" title="{texto}"></span>'
+
+
+def _calendario(p: Panel, hoy: date) -> str:
+    if not p.calendario:
+        return ""
+    semanas = len(p.calendario) // 7
+    meses = "".join(
+        f'<span style="grid-column:{i // 7 + 1}">{MESES[d.dia.month - 1][:3]}</span>'
+        for i, d in enumerate(p.calendario)
+        if d.dia.day == 1 or i == 0
+    )
+    casillas = "".join(_casilla(d, hoy) for d in p.calendario)
+    con_dato = [d for d in p.calendario if d.cambio is not None]
+    resumen = (
+        '<p class="cal__resumen">Aún no hay dos días seguidos con el precio de '
+        "todas tus criptos: en cuanto los haya, se irán coloreando.</p>"
+    )
+    if con_dato:
+        verdes = sum(d.cambio >= IGUAL for d in con_dato)
+        rojos = sum(d.cambio <= -IGUAL for d in con_dato)
+        mejor = max(con_dato, key=lambda d: d.cambio)
+        peor = min(con_dato, key=lambda d: d.cambio)
+        resumen = (
+            f'<p class="cal__resumen"><span class="num--sube">{verdes} en verde</span>'
+            f' · <span class="num--baja">{rojos} en rojo</span>'
+            f" · mejor el {mejor.dia:%d/%m}, {_pct(mejor.cambio)}"
+            f" · peor el {peor.dia:%d/%m}, {_pct(peor.cambio)}</p>"
+        )
+    primero = next(d.dia for d in p.calendario if d.valor is not None)
+    titulo = "Tu año, día a día" if (hoy - primero).days > 300 else "Día a día"
+    cuerpo = f"""
+<p class="nota cal__intro">Lo que hace cada día tu cartera de hoy, desde el
+  {primero:%d/%m/%Y}. Cuanto más intenso, más se movió.</p>
+<div class="cal__scroll">
+  <div class="cal" style="--semanas:{semanas}">
+    <div class="cal__meses">{meses}</div>
+    <div class="cal__semana"><span>L</span><span></span><span>X</span><span></span>
+      <span>V</span><span></span><span></span></div>
+    <div class="cal__rejilla">{casillas}</div>
+  </div>
+</div>
+<div class="cal__pie">
+  {resumen}
+  <p class="cal__escala"><span>baja</span>
+    <span class="cal__dia cal__dia--baja-4"></span>
+    <span class="cal__dia cal__dia--baja-2"></span>
+    <span class="cal__dia cal__dia--igual"></span>
+    <span class="cal__dia cal__dia--sube-2"></span>
+    <span class="cal__dia cal__dia--sube-4"></span><span>sube</span></p>
+</div>"""
+    return _tarjeta(titulo, cuerpo, 2, "ancha")
+
+
 # El deslizador va de ×0,2 a ×5: con una escala lineal, de -80 % a +400 %, casi
 # todo el recorrido sería para subidas y las bajadas quedarían en un rincón.
 SIM_TOPE = 5
@@ -630,6 +713,7 @@ def pagina(p: Panel, ahora: datetime, parado: bool) -> str:
             _cabecera(p, ahora, parado),
             _grafica(p),
             _cartera(p),
+            _calendario(p, ahora.astimezone().date()),
             _vigiladas(p),
             _alertas(p),
             _simulador(p),
@@ -1155,6 +1239,77 @@ code {
 .pie a { color: inherit; text-underline-offset: 3px; }
 .pie a:hover { color: var(--acento); }
 
+.cal__intro { margin: -6px 0 14px; }
+.cal__scroll { overflow-x: auto; padding-bottom: 4px; }
+.cal__scroll, .cal__pie { --casilla: 13px; }
+.cal {
+  display: grid;
+  grid-template-columns: auto max-content;
+  grid-template-rows: auto auto;
+  gap: 4px 6px;
+  width: max-content;
+}
+.cal__meses {
+  grid-column: 2;
+  display: grid;
+  grid-template-columns: repeat(var(--semanas), var(--casilla));
+  column-gap: 3px;
+  font-size: 11px;
+  color: var(--suave);
+}
+.cal__meses span { white-space: nowrap; }
+.cal__semana {
+  grid-row: 2;
+  display: grid;
+  grid-template-rows: repeat(7, var(--casilla));
+  row-gap: 3px;
+  font-size: 10px;
+  line-height: var(--casilla);
+  color: var(--suave);
+}
+.cal__rejilla {
+  grid-row: 2;
+  grid-column: 2;
+  display: grid;
+  grid-template-rows: repeat(7, var(--casilla));
+  grid-auto-flow: column;
+  grid-auto-columns: var(--casilla);
+  gap: 3px;
+}
+.cal__dia {
+  display: inline-block;
+  width: var(--casilla);
+  height: var(--casilla);
+  border-radius: 3px;
+  background: var(--neutro-fondo);
+}
+.cal__dia--futuro { background: none; }
+.cal__dia--vacia { background: var(--linea-fila); }
+.cal__dia--igual { background: color-mix(in srgb, var(--suave) 35%, transparent); }
+.cal__dia--sube-1 { background: color-mix(in srgb, var(--sube) 25%, transparent); }
+.cal__dia--sube-2 { background: color-mix(in srgb, var(--sube) 50%, transparent); }
+.cal__dia--sube-3 { background: color-mix(in srgb, var(--sube) 75%, transparent); }
+.cal__dia--sube-4 { background: var(--sube); }
+.cal__dia--baja-1 { background: color-mix(in srgb, var(--baja) 25%, transparent); }
+.cal__dia--baja-2 { background: color-mix(in srgb, var(--baja) 50%, transparent); }
+.cal__dia--baja-3 { background: color-mix(in srgb, var(--baja) 75%, transparent); }
+.cal__dia--baja-4 { background: var(--baja); }
+.cal__dia--hoy { outline: 2px solid var(--texto); outline-offset: 1px; }
+.cal__pie {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px 18px;
+  margin-top: 12px;
+  font-size: 12.5px;
+  color: var(--suave);
+}
+.cal__pie p { margin: 0; }
+.cal__escala { --casilla: 11px; display: inline-flex; align-items: center; gap: 3px; }
+.cal__escala span:first-child { margin-right: 4px; }
+.cal__escala span:last-child { margin-left: 4px; }
+
 .sim__intro { margin: -6px 0 14px; }
 .sim__fila {
   display: grid;
@@ -1512,6 +1667,13 @@ JS = f"""
     }});
   }}
   enganchar();
+  // El calendario puede no caber en el móvil: que se vea lo último, no enero.
+  function alFinal() {{
+    document.querySelectorAll('.cal__scroll').forEach(function (el) {{
+      el.scrollLeft = el.scrollWidth;
+    }});
+  }}
+  alFinal();
   // Solo al abrir: en cada refresco contaría desde cero y marearía.
   function contar() {{
     var el = document.querySelector('.total .dinero');
@@ -1564,6 +1726,7 @@ JS = f"""
         document.querySelector('main').replaceWith(nuevo.querySelector('main'));
         titulo = nuevo.title;
         enganchar();
+        alFinal();
         simular();
         pintarCampana();
         avisarNuevos();

@@ -1,7 +1,7 @@
 """El panel web: lo que tienes, lo que vigilas y tus alertas, en una página."""
 
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from .avisados import Aviso
 from .config import Posicion, Watch
@@ -75,6 +75,15 @@ class Alerta:
 
 
 @dataclass(frozen=True)
+class Dia:
+    """Una casilla del calendario."""
+
+    dia: date
+    valor: float | None  # lo que valía tu cartera al cerrar el día
+    cambio: float | None  # en % sobre el día anterior
+
+
+@dataclass(frozen=True)
 class Panel:
     moneda: str
     filas: list[Fila]
@@ -88,6 +97,7 @@ class Panel:
     avisos: dict[str, Aviso] = field(default_factory=dict)
     # El precio de bitcoin en esos 7 días, para la línea de "todo en bitcoin".
     serie_btc: list[tuple[datetime, float]] = field(default_factory=list)
+    calendario: list[Dia] = field(default_factory=list)
 
     @property
     def total(self) -> float | None:
@@ -220,6 +230,46 @@ def en_bitcoin(
             return []
         valores.append(ultimo)
     return [serie[0][1] * v / valores[0] for v in valores]
+
+
+def dias_cartera(
+    posiciones: list[Posicion],
+    cierres: list[tuple[date, str, float]],
+    hoy: date,
+    semanas: int = 53,
+) -> list[Dia]:
+    """Semanas enteras, de lunes a domingo, desde el primer día con precio (y
+    como mucho un año) hasta la de hoy. Con lo que tienes ahora, no con lo que
+    tenías entonces: es cómo le ha ido a tu reparto de hoy."""
+    cantidades = {p.coin_id: p.cantidad for p in posiciones}
+    precios: dict[date, dict[str, float]] = {}
+    for dia, coin_id, precio in cierres:
+        if coin_id in cantidades:
+            precios.setdefault(dia, {})[coin_id] = precio
+
+    valores = {
+        dia: sum(cantidades[c] * p[c] for c in cantidades)
+        for dia, p in precios.items()
+        # Sin el de una, el total saldría hundido ese día.
+        if all(c in p for c in cantidades)
+    }
+    if not valores:
+        return []
+
+    lunes_hoy = hoy - timedelta(days=hoy.weekday())
+    primero = min(valores)
+    inicio = max(
+        primero - timedelta(days=primero.weekday()),
+        lunes_hoy - timedelta(weeks=semanas - 1),
+    )
+    dias = []
+    dia = inicio
+    while dia <= lunes_hoy + timedelta(days=6):
+        valor = valores.get(dia)
+        ayer = valores.get(dia - timedelta(days=1))
+        dias.append(Dia(dia, valor, cambio(valor, ayer)))
+        dia += timedelta(days=1)
+    return dias
 
 
 def trazo(

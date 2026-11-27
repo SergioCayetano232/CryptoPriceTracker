@@ -339,6 +339,50 @@ def test_si_solo_tienes_bitcoin_no_hay_segunda_linea():
     assert 'class="grafica__btc"' not in html
 
 
+def test_nivel_de_cada_casilla():
+    from crypto_tracker.panel_html import nivel
+
+    assert nivel(None) == "vacia"
+    assert nivel(0.01) == "igual"
+    assert nivel(0.5) == "sube-1"
+    assert nivel(-2.0) == "baja-2"
+    assert nivel(4.0) == "sube-3"
+    assert nivel(-9.0) == "baja-4"
+
+
+def test_el_calendario_en_la_pagina():
+    hoy = AHORA.astimezone().date()
+    lunes = hoy - timedelta(days=hoy.weekday())
+    dias = [
+        panel.Dia(lunes + timedelta(days=i), 100.0 + i, None if i == 0 else 1.0)
+        for i in range(7)
+        if lunes + timedelta(days=i) <= hoy
+    ]
+    dias += [
+        panel.Dia(lunes + timedelta(days=i), None, None) for i in range(len(dias), 7)
+    ]
+
+    html = pagina(_panel(calendario=dias), AHORA, parado=False)
+
+    assert "cal__dia--hoy" in html
+    assert f"desde el\n  {lunes:%d/%m/%Y}" in html
+
+
+def test_calendario_sin_dos_dias_seguidos_lo_explica():
+    hoy = AHORA.astimezone().date()
+    lunes = hoy - timedelta(days=hoy.weekday())
+    dias = [panel.Dia(lunes + timedelta(days=i), None, None) for i in range(7)]
+    dias[0] = panel.Dia(lunes, 100.0, None)
+
+    html = pagina(_panel(calendario=dias), AHORA, parado=False)
+
+    assert "Aún no hay dos días seguidos" in html
+
+
+def test_sin_dias_no_hay_calendario():
+    assert 'class="cal"' not in pagina(_panel(), AHORA, parado=False)
+
+
 def test_sin_cartera_explica_como_ponerla():
     html = pagina(_panel(filas=[]), AHORA, parado=False)
 
