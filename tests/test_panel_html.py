@@ -103,6 +103,25 @@ def test_sin_precios_no_hay_hora_que_enseñar():
     assert "<time" not in html
 
 
+def test_con_varias_criptos_hay_fila_de_total():
+    filas, _ = panel.filas_cartera(
+        [Posicion("bitcoin", 0.1, 5000.0), Posicion("ethereum", 1.0, 1500.0)],
+        {"bitcoin": 60000.0, "ethereum": 2000.0},
+        {},
+        {},
+    )
+
+    html = pagina(_panel(filas=filas), AHORA, parado=False)
+
+    assert 'class="fila fila--total"' in html
+    assert '<small>invertido <span class="dinero">€6.500,00</span></small>' in html
+    assert 'ganancia"><span class="dinero">€1.500,00</span><small>+23,08 %' in html
+
+
+def test_con_una_sola_cripto_no_hay_total():
+    assert 'class="fila fila--total"' not in pagina(_panel(), AHORA, parado=False)
+
+
 def test_sin_cartera_explica_como_ponerla():
     html = pagina(_panel(filas=[]), AHORA, parado=False)
 

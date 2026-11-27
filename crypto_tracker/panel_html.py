@@ -217,10 +217,36 @@ def _fila(f: Fila, moneda: str) -> str:
 </li>"""
 
 
+def _fila_total(p: Panel) -> str:
+    invertido = (
+        f"<small>invertido {_dinero(p.invertido, p.moneda)}</small>"
+        if p.invertido is not None
+        else ""
+    )
+    tono = _tono(p.porcentaje)
+    ganancia = (
+        f'<span class="num num--{tono} ganancia">{_dinero(p.ganancia, p.moneda)}'
+        f"<small>{_pct(p.porcentaje)}</small></span>"
+        if p.ganancia is not None
+        else '<span class="num num--neutro ganancia">—</span>'
+    )
+    return f"""
+<li class="fila fila--total">
+  <div class="fila__nombre"><strong>Total</strong>{invertido}</div>
+  <span class="mini"></span>
+  <span class="num">{_dinero(p.total, p.moneda)}
+    <small class="num--{_tono(p.cambio_24h)}">{_pct(p.cambio_24h)} 24 h</small></span>
+  {ganancia}
+</li>"""
+
+
 def _cartera(p: Panel) -> str:
     if not p.filas:
         return ""
     filas = "".join(_fila(f, p.moneda) for f in p.filas)
+    # Con una sola cripto el total sería la misma fila repetida.
+    if len(p.filas) > 1:
+        filas += _fila_total(p)
     faltan = ""
     if p.faltan:
         nombres = ", ".join(_nombre(c) for c in p.faltan)
@@ -677,6 +703,8 @@ h2 {
 
 .fila:first-child { border-top: 0; }
 
+.fila--total { border-top: 2px solid var(--linea-fila); }
+.fila--total strong { font-weight: 750; }
 .fila--corta { grid-template-columns: minmax(0, 1fr) 80px auto; }
 .fila--alerta { grid-template-columns: minmax(0, 1fr) auto; }
 
