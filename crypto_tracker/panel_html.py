@@ -310,7 +310,7 @@ def _vigiladas(p: Panel) -> str:
     return _tarjeta(f"Lo que vigilo{_cuenta(len(p.vigiladas))}", cuerpo, 3)
 
 
-def _alerta(a: Alerta, moneda: str) -> str:
+def _alerta(a: Alerta, moneda: str, cerca: bool = False) -> str:
     flecha = "↑" if a.sube else "↓"
     nombre = "Tu cartera" if a.coin_id == "cartera" else _nombre(a.coin_id)
     # Sin rojo ni verde: que falte un 5 % no es ni bueno ni malo.
@@ -328,12 +328,14 @@ def _alerta(a: Alerta, moneda: str) -> str:
         falta = '<span class="num num--neutro">—<small>sin precio</small></span>'
 
     nota = f"<small>📝 {escape(a.nota)}</small>" if a.nota else ""
+    clase = "fila fila--alerta fila--cerca" if cerca else "fila fila--alerta"
+    aviso = ' · <span class="cerca">la más cerca</span>' if cerca else ""
     return f"""
-<li class="fila fila--alerta">
+<li class="{clase}">
   <div class="fila__nombre">
     <strong>{nombre} <span class="flecha">{flecha}</span>
       {_importe(a.objetivo, moneda)}</strong>
-    <small>#{a.id} · ahora {_importe(a.precio, moneda)}</small>{nota}
+    <small>#{a.id} · ahora {_importe(a.precio, moneda)}{aviso}</small>{nota}
   </div>
   {falta}
 </li>"""
@@ -346,7 +348,11 @@ def _alertas(p: Panel) -> str:
             "Con /alerta btc 70000 te aviso una vez al llegar.</p>"
         )
     else:
-        filas = "".join(_alerta(a, p.moneda) for a in p.alertas)
+        # Ya vienen ordenadas por lo que les falta. Las que ya han llegado tienen
+        # su propio "Ya está", y con una sola no hay nada que comparar.
+        pendientes = [a for a in p.alertas if a.falta is not None and not a.alcanzada]
+        cerca = pendientes[0] if len(p.alertas) > 1 and pendientes else None
+        filas = "".join(_alerta(a, p.moneda, a is cerca) for a in p.alertas)
         cuerpo = f'<ul class="lista">{filas}</ul>'
     return _tarjeta(f"Alertas pendientes{_cuenta(len(p.alertas))}", cuerpo, 4)
 
@@ -778,6 +784,16 @@ h2 {
 .fila--total strong { font-weight: 750; }
 /* Ancho fijo para el precio: con auto cada fila medía distinto y las rayas no
    quedaban en línea. 8.5em da para $1.000.000,00. */
+.fila--cerca {
+  margin: 0 -12px;
+  padding-left: 12px;
+  padding-right: 12px;
+  border-radius: 14px;
+  background: var(--neutro-fondo);
+  box-shadow: inset 3px 0 var(--acento);
+}
+.fila--cerca + .fila { border-top-color: transparent; }
+.cerca { color: var(--acento); font-weight: 600; white-space: nowrap; }
 .fila--corta { grid-template-columns: minmax(0, 1fr) 80px 8.5em; }
 .fila--alerta { grid-template-columns: minmax(0, 1fr) auto; }
 

@@ -181,6 +181,35 @@ def test_los_titulos_llevan_cuantas_hay():
     assert "<h2>Alertas pendientes</h2>" in html
 
 
+def test_resalta_la_alerta_mas_cercana():
+    lista = panel.alertas(
+        [
+            Puntual(1, "bitcoin", 70000.0, True),
+            Puntual(2, "bitcoin", 50000.0, True),
+            Puntual(3, "bitcoin", 63000.0, True),
+        ],
+        {"bitcoin": 60000.0},
+        None,
+    )
+
+    html = pagina(_panel(alertas=lista), AHORA, parado=False)
+
+    # La 2 ya ha llegado y tiene su "Ya está": la que más cerca está es la 3.
+    assert html.count('class="fila fila--alerta fila--cerca"') == 1
+    cerca = html.index("fila--alerta fila--cerca")
+    assert html.index("#3 ·", cerca) < html.index("la más cerca", cerca)
+
+
+def test_con_una_sola_alerta_no_resalta_nada():
+    lista = panel.alertas(
+        [Puntual(1, "bitcoin", 70000.0, True)], {"bitcoin": 1.0}, None
+    )
+
+    html = pagina(_panel(alertas=lista), AHORA, parado=False)
+
+    assert 'class="fila fila--alerta fila--cerca"' not in html
+
+
 def test_sin_cartera_explica_como_ponerla():
     html = pagina(_panel(filas=[]), AHORA, parado=False)
 
