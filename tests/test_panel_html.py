@@ -238,6 +238,27 @@ def test_sin_cartera_no_hay_boton_de_copiar():
     assert 'class="copiar"' not in pagina(_panel(filas=[]), AHORA, parado=False)
 
 
+def test_los_puntos_para_el_cursor_de_la_grafica():
+    from crypto_tracker.panel_html import puntos_cursor
+
+    puntos = [(AHORA, 100.0), (AHORA + timedelta(hours=1), 200.0)]
+
+    datos = puntos_cursor(puntos, "eur")
+
+    local = AHORA.astimezone()
+    # El más alto arriba del todo (0 %) y el más bajo abajo (100 %).
+    assert datos[0] == [f"{local:%d/%m %H:%M}", "€100,00", 100.0]
+    assert datos[1][1:] == ["€200,00", 0.0]
+
+
+def test_grafica_plana_deja_el_cursor_a_media_altura():
+    from crypto_tracker.panel_html import puntos_cursor
+
+    datos = puntos_cursor([(AHORA, 5.0), (AHORA, 5.0)], "eur")
+
+    assert [d[2] for d in datos] == [50, 50]
+
+
 def test_sin_cartera_explica_como_ponerla():
     html = pagina(_panel(filas=[]), AHORA, parado=False)
 

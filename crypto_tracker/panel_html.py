@@ -1,5 +1,6 @@
 """La página del panel. Los datos vienen hechos de panel.py."""
 
+import json
 from datetime import datetime
 from html import escape
 from urllib.parse import quote
@@ -205,15 +206,39 @@ def _pico(valores: list[float], i: int, arriba: bool, moneda: str) -> str:
     )
 
 
+CURSOR = (
+    '<span class="cursor"></span><span class="cursor__punto"></span>'
+    '<span class="cursor__texto"></span>'
+)
+
+
 def _picos(valores: list[float], moneda: str) -> str:
     alto, bajo = max(valores), min(valores)
     if alto == bajo:
         punto = _pico(valores, 0, True, moneda)
-        return f'<div class="grafica__picos grafica__picos--plana">{punto}</div>'
+        return (
+            f'<div class="grafica__picos grafica__picos--plana">{punto}{CURSOR}</div>'
+        )
     puntos = _pico(valores, valores.index(alto), True, moneda) + _pico(
         valores, valores.index(bajo), False, moneda
     )
-    return f'<div class="grafica__picos">{puntos}</div>'
+    return f'<div class="grafica__picos">{puntos}{CURSOR}</div>'
+
+
+def puntos_cursor(puntos: list[tuple[datetime, float]], moneda: str) -> list:
+    """Para el JS de la gráfica: [hora, cifra, altura en %] de cada punto."""
+    valores = [v for _, v in puntos]
+    suelo, techo = min(valores), max(valores)
+    # La misma cuenta que trazo(): si no, el punto no caería encima de la línea.
+    rango = techo - suelo
+    return [
+        [
+            f"{t.astimezone():%d/%m %H:%M}",
+            _importe(v, moneda),
+            round(100 - (v - suelo) / rango * 100, 1) if rango else 50,
+        ]
+        for t, v in puntos
+    ]
 
 
 def _grafica(p: Panel) -> str:
@@ -230,10 +255,11 @@ def _grafica(p: Panel) -> str:
     area = f"{linea} L{ANCHO},{ALTO} L0,{ALTO} Z"
     tono = _tono(valores[-1] - valores[0])
     desde, hasta = puntos[0][0].astimezone(), puntos[-1][0].astimezone()
+    datos = escape(json.dumps(puntos_cursor(puntos, p.moneda), ensure_ascii=False))
 
     cuerpo = f"""
 <div class="grafica grafica--{tono}">
-  <div class="grafica__zona">
+  <div class="grafica__zona" data-puntos="{datos}">
   {_picos(valores, p.moneda)}
   <svg viewBox="0 0 {ANCHO} {ALTO}" preserveAspectRatio="none" role="img"
        aria-label="Lo que ha valido tu cartera en los últimos días">
@@ -787,6 +813,37 @@ h2 {
 .pico--abajo { top: 100%; }
 .grafica__picos--plana .pico { top: 50%; }
 
+.grafica__zona { touch-action: pan-y; }
+.cursor, .cursor__punto, .cursor__texto {
+  position: absolute;
+  opacity: 0;
+  transition: opacity var(--rapido) var(--suave-curva);
+}
+.cursor { top: -14px; bottom: 0; border-left: 1px dashed var(--suave); }
+.cursor__punto {
+  width: 9px;
+  height: 9px;
+  margin: -4.5px 0 0 -4.5px;
+  border-radius: 50%;
+  background: var(--acento);
+  box-shadow: 0 0 0 3px var(--cristal);
+}
+.cursor__texto {
+  top: -26px;
+  transform: translateX(calc(var(--x) * -1));
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: var(--cristal);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.viendo .cursor, .viendo .cursor__punto, .viendo .cursor__texto { opacity: 1; }
+/* Mientras miras un punto, las cifras del máximo y el mínimo estorban. */
+.viendo .pico { opacity: 0.25; }
+.viendo .pico__cifra { opacity: 0; }
+
 .pico__cifra {
   position: absolute;
   left: 50%;
@@ -1039,6 +1096,33 @@ JS = f"""
     else if (tecla === 'o') alternar();
   }});
   tapar();
+  // La gráfica se cambia entera en cada refresco: hay que volver a engancharla.
+  function enganchar() {{
+    var zona = document.querySelector('.grafica__zona[data-puntos]');
+    if (!zona) return;
+    var puntos = JSON.parse(zona.dataset.puntos);
+    var linea = zona.querySelector('.cursor');
+    var punto = zona.querySelector('.cursor__punto');
+    var texto = zona.querySelector('.cursor__texto');
+    function mirar(e) {{
+      var caja = zona.getBoundingClientRect();
+      var f = Math.min(1, Math.max(0, (e.clientX - caja.left) / caja.width));
+      var i = Math.round(f * (puntos.length - 1));
+      var p = puntos[i];
+      var x = (i / (puntos.length - 1) * 100) + '%';
+      linea.style.left = punto.style.left = texto.style.left = x;
+      texto.style.setProperty('--x', x);
+      punto.style.top = p[2] + '%';
+      texto.textContent = (oculto() ? '•••' : p[1]) + ' · ' + p[0];
+      zona.classList.add('viendo');
+    }}
+    zona.addEventListener('pointermove', mirar);
+    zona.addEventListener('pointerdown', mirar);
+    zona.addEventListener('pointerleave', function () {{
+      zona.classList.remove('viendo');
+    }});
+  }}
+  enganchar();
   // Solo al abrir: en cada refresco contaría desde cero y marearía.
   function contar() {{
     var el = document.querySelector('.total .dinero');
@@ -1090,6 +1174,7 @@ JS = f"""
         document.documentElement.classList.add('recargado');
         document.querySelector('main').replaceWith(nuevo.querySelector('main'));
         titulo = nuevo.title;
+        enganchar();
         document.querySelector('link[rel=icon]').href =
           nuevo.querySelector('link[rel=icon]').href;
         tapar();
