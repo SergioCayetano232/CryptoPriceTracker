@@ -2244,6 +2244,7 @@ def datos_panel(config: Config) -> panel.Panel:
         database.ultimo_guardado(config.database_path),
         faltan,
         panel.total_antes(posiciones, antes),
+        database.ultimos_avisos(config.database_path),
     )
 
 

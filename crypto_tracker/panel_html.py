@@ -130,6 +130,23 @@ def resumen(p: Panel, ahora: datetime, oculto: bool) -> str:
     return "\n".join(lineas)
 
 
+def avisos_navegador(p: Panel) -> list[dict]:
+    """Los avisos que ha mandado el bot, para que el JS saque los nuevos."""
+    lista = []
+    for coin_id, a in sorted(p.avisos.items(), key=lambda par: par[1].cuando):
+        hora = a.cuando.astimezone()
+        verbo = "Ha subido" if a.sube else "Ha bajado"
+        flecha = "🔺" if a.sube else "🔻"
+        lista.append(
+            {
+                "id": f"{coin_id}@{a.cuando.isoformat()}",
+                "titulo": f"{flecha} {coin_id.replace('-', ' ').title()}",
+                "texto": f"{verbo} a {_importe(a.precio, p.moneda)} ({hora:%H:%M})",
+            }
+        )
+    return lista
+
+
 def _copiar(p: Panel, ahora: datetime) -> str:
     if p.total is None:
         return ""
@@ -144,6 +161,7 @@ def _copiar(p: Panel, ahora: datetime) -> str:
 def _cabecera(p: Panel, ahora: datetime, parado: bool) -> str:
     estado = "parado" if parado else "vivo"
     cuando = _cuando(p, ahora)
+    avisos = escape(json.dumps(avisos_navegador(p), ensure_ascii=False))
     aviso = (
         '<span class="estado__texto">El bot no guarda precios desde '
         f"{cuando}. ¿Está encendido?</span>"
@@ -176,7 +194,7 @@ def _cabecera(p: Panel, ahora: datetime, parado: bool) -> str:
         detalle = f'<p class="detalle">{"".join(partes)}</p>' if partes else ""
 
     return f"""
-<header class="cabecera seccion" style="--i:0">
+<header class="cabecera seccion" style="--i:0" data-avisos="{avisos}">
   <div class="cabecera__fila">
     <span class="marca">CryptoPriceTracker</span>
     <span class="cabecera__lado">
@@ -184,9 +202,12 @@ def _cabecera(p: Panel, ahora: datetime, parado: bool) -> str:
               title="Actualizar ahora (R)">
         <span class="estado__punto"></span>{aviso}
       </button>
-      {_copiar(p, ahora)}
-      <button class="ojo" type="button" aria-pressed="false"
-              title="Ocultar cifras (O)">👁</button>
+      <span class="botones">
+        <button class="campana" type="button" aria-pressed="false" hidden>🔕</button>
+        {_copiar(p, ahora)}
+        <button class="ojo" type="button" aria-pressed="false"
+                title="Ocultar cifras (O)">👁</button>
+      </span>
     </span>
   </div>
   <p class="etiqueta">Tu cartera</p>
@@ -667,8 +688,8 @@ h2 {
   flex-wrap: wrap;
 }
 
-.cabecera__lado { display: inline-flex; align-items: center; gap: 10px; }
-.ojo, .copiar {
+.cabecera__lado, .botones { display: inline-flex; align-items: center; gap: 10px; }
+.ojo, .copiar, .campana {
   display: inline-grid;
   place-items: center;
   width: 34px;
@@ -681,14 +702,15 @@ h2 {
   cursor: pointer;
   transition: transform var(--rapido) var(--muelle);
 }
-.ojo:hover, .copiar:hover { transform: scale(1.08); }
-.ojo:active, .copiar:active { transform: scale(0.94); }
-.copiar.temblor { animation: temblor 400ms var(--suave-curva); }
+.campana[hidden] { display: none; }
+.ojo:hover, .copiar:hover, .campana:hover { transform: scale(1.08); }
+.ojo:active, .copiar:active, .campana:active { transform: scale(0.94); }
+.temblor { animation: temblor 400ms var(--suave-curva); }
 @keyframes temblor {
   20%, 60% { transform: translateX(-3px); }
   40%, 80% { transform: translateX(3px); }
 }
-.ojo:focus-visible, .copiar:focus-visible {
+.ojo:focus-visible, .copiar:focus-visible, .campana:focus-visible {
   outline: 2px solid var(--acento);
   outline-offset: 2px;
 }
@@ -978,6 +1000,10 @@ code {
 .pie a:hover { color: var(--acento); }
 
 @media screen and (max-width: 760px) {
+  /* Con tres botones al lado el estado se quedaba en tres líneas: los botones
+     suben a la fila del nombre y el estado baja a todo lo ancho. */
+  .cabecera__lado { display: contents; }
+  .estado { order: 1; flex-basis: 100%; }
   .panel { grid-template-columns: minmax(0, 1fr); gap: 14px; padding-top: 18px; }
   .tarjeta, .cabecera { padding: 18px; }
   .fila { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; }
@@ -1012,7 +1038,9 @@ code {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-  body::after, .tarjeta::before, .cabecera::before, .ojo, .copiar { display: none; }
+  body::after, .tarjeta::before, .cabecera::before, .ojo, .copiar, .campana {
+    display: none;
+  }
   .tarjeta, .cabecera {
     box-shadow: none;
     -webkit-backdrop-filter: none;
@@ -1072,19 +1100,72 @@ JS = f"""
         boton.textContent = '📋';
         boton.title = 'Copiar resumen';
       }}, 1500);
-    }}, function () {{
-      boton.classList.remove('temblor');
-      void boton.offsetWidth;
-      boton.classList.add('temblor');
+    }}, function () {{ temblar(boton); }});
+  }}
+  function temblar(boton) {{
+    boton.classList.remove('temblor');
+    void boton.offsetWidth;
+    boton.classList.add('temblor');
+  }}
+  var hayAvisos = 'Notification' in window;
+  function avisando() {{
+    return hayAvisos && Notification.permission === 'granted' &&
+      localStorage.getItem('panel-avisos') === '1';
+  }}
+  function pintarCampana() {{
+    var c = document.querySelector('.campana');
+    if (!c || !hayAvisos) return;
+    var si = avisando();
+    c.hidden = false;
+    c.textContent = si ? '🔔' : '🔕';
+    c.setAttribute('aria-pressed', si);
+    c.title = si ? 'Te aviso también aquí (pulsa para dejarlo)'
+      : 'Avisarme también en este navegador';
+  }}
+  function campana(boton) {{
+    if (avisando()) {{
+      localStorage.setItem('panel-avisos', '0');
+      pintarCampana();
+      return;
+    }}
+    Notification.requestPermission().then(function (permiso) {{
+      if (permiso === 'granted') {{
+        localStorage.setItem('panel-avisos', '1');
+        new Notification('CryptoPriceTracker', {{
+          body: 'Listo: cuando salte un aviso, te llega también aquí.',
+        }});
+      }} else {{
+        // Bloqueado en el navegador: desde aquí ya no se puede volver a pedir.
+        boton.title = 'El navegador tiene bloqueados los avisos de esta página';
+        temblar(boton);
+      }}
+      pintarCampana();
     }});
   }}
+  function avisosDe(raiz) {{
+    var el = raiz.querySelector('[data-avisos]');
+    return el ? JSON.parse(el.dataset.avisos) : [];
+  }}
+  // Los que ya estaban al abrir no se avisan: solo los que llegan con él abierto.
+  var vistos = {{}};
+  avisosDe(document).forEach(function (a) {{ vistos[a.id] = true; }});
+  function avisarNuevos() {{
+    avisosDe(document).forEach(function (a) {{
+      if (vistos[a.id]) return;
+      vistos[a.id] = true;
+      if (avisando()) new Notification(a.titulo, {{ body: a.texto, tag: a.id }});
+    }});
+  }}
+  pintarCampana();
   function alternar() {{
     localStorage.setItem('{CLAVE}', oculto() ? '0' : '1');
     tapar();
   }}
   document.addEventListener('click', function (e) {{
     var copiar = e.target.closest('.copiar');
-    if (copiar) copiarResumen(copiar);
+    var boton = e.target.closest('.campana');
+    if (boton) campana(boton);
+    else if (copiar) copiarResumen(copiar);
     else if (e.target.closest('.ojo')) alternar();
     else if (e.target.closest('.estado')) refrescar();
   }});
@@ -1175,6 +1256,8 @@ JS = f"""
         document.querySelector('main').replaceWith(nuevo.querySelector('main'));
         titulo = nuevo.title;
         enganchar();
+        pintarCampana();
+        avisarNuevos();
         document.querySelector('link[rel=icon]').href =
           nuevo.querySelector('link[rel=icon]').href;
         tapar();
@@ -1190,8 +1273,12 @@ JS = f"""
         if (estado) estado.classList.remove('estado--cargando');
       }});
   }}
-  // Con la pestaña de fondo no pido nada; al volver, si toca, refresco al momento.
-  setInterval(function () {{ if (!document.hidden) refrescar(); }}, cada);
+  // Con la pestaña de fondo no pido nada (salvo con los avisos puestos); al volver,
+  // si toca, refresco al momento.
+  // Con los avisos puestos sí, aunque esté de fondo: es justo cuando sirven.
+  setInterval(function () {{
+    if (!document.hidden || avisando()) refrescar();
+  }}, cada);
   document.addEventListener('visibilitychange', function () {{
     if (!document.hidden && Date.now() - ultimo >= cada) refrescar();
   }});

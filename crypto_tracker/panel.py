@@ -3,6 +3,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
+from .avisados import Aviso
 from .config import Posicion, Watch
 from .puntuales import CARTERA, Puntual
 
@@ -83,6 +84,8 @@ class Panel:
     actualizado: datetime | None
     faltan: list[str] = field(default_factory=list)
     total_antes: float | None = None
+    # El último aviso mandado de cada cripto, para los avisos del navegador.
+    avisos: dict[str, Aviso] = field(default_factory=dict)
 
     @property
     def total(self) -> float | None:

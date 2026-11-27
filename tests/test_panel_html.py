@@ -126,7 +126,7 @@ def test_al_imprimir_quita_los_botones():
     html = pagina(_panel(), AHORA, parado=False)
 
     imprimir = html[html.index("@media print") :]
-    assert ".ojo, .copiar { display: none; }" in imprimir
+    assert ".ojo, .copiar, .campana {\n    display: none;" in imprimir
 
 
 def test_el_estado_es_un_boton_para_actualizar():
@@ -257,6 +257,32 @@ def test_grafica_plana_deja_el_cursor_a_media_altura():
     datos = puntos_cursor([(AHORA, 5.0), (AHORA, 5.0)], "eur")
 
     assert [d[2] for d in datos] == [50, 50]
+
+
+def test_los_avisos_del_bot_van_en_la_pagina_para_el_navegador():
+    from crypto_tracker.avisados import Aviso
+    from crypto_tracker.panel_html import avisos_navegador
+
+    cuando = AHORA - timedelta(minutes=5)
+    p = _panel(avisos={"bitcoin": Aviso(cuando, 63000.0, True)})
+
+    avisos = avisos_navegador(p)
+
+    hora = cuando.astimezone()
+    assert avisos == [
+        {
+            "id": f"bitcoin@{cuando.isoformat()}",
+            "titulo": "🔺 Bitcoin",
+            "texto": f"Ha subido a €63.000,00 ({hora:%H:%M})",
+        }
+    ]
+    assert "data-avisos=" in pagina(p, AHORA, parado=False)
+
+
+def test_la_campana_sale_oculta_hasta_que_el_js_ve_que_hay_avisos():
+    html = pagina(_panel(), AHORA, parado=False)
+
+    assert '<button class="campana" type="button" aria-pressed="false" hidden>' in html
 
 
 def test_sin_cartera_explica_como_ponerla():
