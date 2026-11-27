@@ -759,7 +759,9 @@ h2 {
 
 .fila--total { border-top: 2px solid var(--linea-fila); }
 .fila--total strong { font-weight: 750; }
-.fila--corta { grid-template-columns: minmax(0, 1fr) 80px auto; }
+/* Ancho fijo para el precio: con auto cada fila medía distinto y las rayas no
+   quedaban en línea. 8.5em da para $1.000.000,00. */
+.fila--corta { grid-template-columns: minmax(0, 1fr) 80px 8.5em; }
 .fila--alerta { grid-template-columns: minmax(0, 1fr) auto; }
 
 @keyframes aparece {
