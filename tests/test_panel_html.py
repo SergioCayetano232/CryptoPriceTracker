@@ -122,6 +122,13 @@ def test_con_una_sola_cripto_no_hay_total():
     assert 'class="fila fila--total"' not in pagina(_panel(), AHORA, parado=False)
 
 
+def test_al_imprimir_quita_el_boton_de_ocultar():
+    html = pagina(_panel(), AHORA, parado=False)
+
+    imprimir = html[html.index("@media print") :]
+    assert ".ojo { display: none; }" in imprimir
+
+
 def test_sin_cartera_explica_como_ponerla():
     html = pagina(_panel(filas=[]), AHORA, parado=False)
 

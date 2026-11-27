@@ -783,7 +783,7 @@ code {
 .pie a { color: inherit; text-underline-offset: 3px; }
 .pie a:hover { color: var(--acento); }
 
-@media (max-width: 760px) {
+@media screen and (max-width: 760px) {
   .panel { grid-template-columns: minmax(0, 1fr); gap: 14px; padding-top: 18px; }
   .tarjeta, .cabecera { padding: 18px; }
   .fila { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; }
@@ -793,6 +793,42 @@ code {
   /* Por clase: contando spans fallaba cuando la mini es el "sin histórico". */
   .lista--cartera .fila > .ganancia { grid-column: 2; }
   .grafica svg { height: 150px; }
+}
+
+/* Al imprimir, papel blanco aunque tengas el modo oscuro: sin manchas ni cristal. */
+@media print {
+  :root {
+    --fondo: #fff;
+    --texto: #16131f;
+    --suave: #5d5873;
+    --cristal: #fff;
+    --borde: #dcd8e6;
+    --linea-fila: #e8e5ef;
+    --acento: #5536d6;
+    --sube: #0a7d55;
+    --sube-fondo: rgba(10, 125, 85, 0.1);
+    --baja: #c0303f;
+    --baja-fondo: rgba(192, 48, 63, 0.1);
+    --neutro-fondo: rgba(93, 88, 115, 0.1);
+    --aviso: #a36800;
+  }
+  @page { margin: 14mm; }
+  body {
+    background: none;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  body::after, .tarjeta::before, .cabecera::before, .ojo { display: none; }
+  .tarjeta, .cabecera {
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    break-inside: avoid;
+  }
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
