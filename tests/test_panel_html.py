@@ -122,11 +122,11 @@ def test_con_una_sola_cripto_no_hay_total():
     assert 'class="fila fila--total"' not in pagina(_panel(), AHORA, parado=False)
 
 
-def test_al_imprimir_quita_el_boton_de_ocultar():
+def test_al_imprimir_quita_los_botones():
     html = pagina(_panel(), AHORA, parado=False)
 
     imprimir = html[html.index("@media print") :]
-    assert ".ojo { display: none; }" in imprimir
+    assert ".ojo, .copiar { display: none; }" in imprimir
 
 
 def test_el_estado_es_un_boton_para_actualizar():
@@ -208,6 +208,34 @@ def test_con_una_sola_alerta_no_resalta_nada():
     html = pagina(_panel(alertas=lista), AHORA, parado=False)
 
     assert 'class="fila fila--alerta fila--cerca"' not in html
+
+
+def test_el_resumen_para_copiar():
+    from crypto_tracker.panel_html import resumen
+
+    texto = resumen(_panel(total_antes=5000.0), AHORA, oculto=False)
+
+    assert texto.splitlines() == [
+        f"*Mi cartera* · {AHORA.astimezone():%d/%m}",
+        "€6.000,00 · €1.000,00 (+20,00 % desde que compré)",
+        "En 24 h: +20,00 %",
+        "",
+        "Bitcoin: €6.000,00 (100,0 %)",
+    ]
+
+
+def test_el_resumen_con_las_cifras_tapadas_no_lleva_dinero():
+    from crypto_tracker.panel_html import resumen
+
+    texto = resumen(_panel(total_antes=5000.0), AHORA, oculto=True)
+
+    assert "€" not in texto
+    assert "+20,00 % desde que compré" in texto
+    assert "Bitcoin: 100,0 % del total" in texto
+
+
+def test_sin_cartera_no_hay_boton_de_copiar():
+    assert 'class="copiar"' not in pagina(_panel(filas=[]), AHORA, parado=False)
 
 
 def test_sin_cartera_explica_como_ponerla():

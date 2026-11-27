@@ -104,6 +104,42 @@ def _cuando(p: Panel, ahora: datetime) -> str:
     )
 
 
+def resumen(p: Panel, ahora: datetime, oculto: bool) -> str:
+    """El texto para pegar en WhatsApp. Oculto: solo porcentajes, sin cifras."""
+    lineas = [f"*Mi cartera* · {ahora.astimezone():%d/%m}"]
+    if p.ganancia is not None:
+        desde = f"{_pct(p.porcentaje)} desde que compré"
+        if oculto:
+            lineas.append(desde)
+        else:
+            total = _importe(p.total, p.moneda)
+            lineas.append(f"{total} · {_importe(p.ganancia, p.moneda)} ({desde})")
+    elif not oculto:
+        lineas.append(_importe(p.total, p.moneda))
+    if p.cambio_24h is not None:
+        lineas.append(f"En 24 h: {_pct(p.cambio_24h)}")
+    lineas.append("")
+    for f in p.filas:
+        nombre = f.coin_id.replace("-", " ").title()
+        peso = _pct(f.peso, signo=False)
+        if oculto:
+            lineas.append(f"{nombre}: {peso} del total")
+        else:
+            lineas.append(f"{nombre}: {_importe(f.valor, p.moneda)} ({peso})")
+    return "\n".join(lineas)
+
+
+def _copiar(p: Panel, ahora: datetime) -> str:
+    if p.total is None:
+        return ""
+    # Los dos textos van ya hechos: el JS solo elige según tengas las cifras tapadas.
+    return (
+        '<button class="copiar" type="button" title="Copiar resumen"'
+        f' data-texto="{escape(resumen(p, ahora, False))}"'
+        f' data-oculto="{escape(resumen(p, ahora, True))}">📋</button>'
+    )
+
+
 def _cabecera(p: Panel, ahora: datetime, parado: bool) -> str:
     estado = "parado" if parado else "vivo"
     cuando = _cuando(p, ahora)
@@ -147,6 +183,7 @@ def _cabecera(p: Panel, ahora: datetime, parado: bool) -> str:
               title="Actualizar ahora (R)">
         <span class="estado__punto"></span>{aviso}
       </button>
+      {_copiar(p, ahora)}
       <button class="ojo" type="button" aria-pressed="false"
               title="Ocultar cifras (O)">👁</button>
     </span>
@@ -605,7 +642,7 @@ h2 {
 }
 
 .cabecera__lado { display: inline-flex; align-items: center; gap: 10px; }
-.ojo {
+.ojo, .copiar {
   display: inline-grid;
   place-items: center;
   width: 34px;
@@ -618,9 +655,17 @@ h2 {
   cursor: pointer;
   transition: transform var(--rapido) var(--muelle);
 }
-.ojo:hover { transform: scale(1.08); }
-.ojo:active { transform: scale(0.94); }
-.ojo:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
+.ojo:hover, .copiar:hover { transform: scale(1.08); }
+.ojo:active, .copiar:active { transform: scale(0.94); }
+.copiar.temblor { animation: temblor 400ms var(--suave-curva); }
+@keyframes temblor {
+  20%, 60% { transform: translateX(-3px); }
+  40%, 80% { transform: translateX(3px); }
+}
+.ojo:focus-visible, .copiar:focus-visible {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
 /* Hasta que el JS pone los puntos, que no se vea la cifra ni un instante. */
 .oculto .dinero:not([data-v]) { visibility: hidden; }
 .marca { font-weight: 700; letter-spacing: -0.01em; }
@@ -910,7 +955,7 @@ code {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-  body::after, .tarjeta::before, .cabecera::before, .ojo { display: none; }
+  body::after, .tarjeta::before, .cabecera::before, .ojo, .copiar { display: none; }
   .tarjeta, .cabecera {
     box-shadow: none;
     -webkit-backdrop-filter: none;
@@ -961,12 +1006,29 @@ JS = f"""
       ojo.textContent = si ? '🙈' : '👁';
     }}
   }}
+  function copiarResumen(boton) {{
+    var texto = oculto() ? boton.dataset.oculto : boton.dataset.texto;
+    navigator.clipboard.writeText(texto).then(function () {{
+      boton.textContent = '✓';
+      boton.title = 'Copiado';
+      setTimeout(function () {{
+        boton.textContent = '📋';
+        boton.title = 'Copiar resumen';
+      }}, 1500);
+    }}, function () {{
+      boton.classList.remove('temblor');
+      void boton.offsetWidth;
+      boton.classList.add('temblor');
+    }});
+  }}
   function alternar() {{
     localStorage.setItem('{CLAVE}', oculto() ? '0' : '1');
     tapar();
   }}
   document.addEventListener('click', function (e) {{
-    if (e.target.closest('.ojo')) alternar();
+    var copiar = e.target.closest('.copiar');
+    if (copiar) copiarResumen(copiar);
+    else if (e.target.closest('.ojo')) alternar();
     else if (e.target.closest('.estado')) refrescar();
   }});
   document.addEventListener('keydown', function (e) {{
@@ -988,22 +1050,22 @@ JS = f"""
     var fin = parseFloat(m[0].replace(/\\./g, '').replace(',', '.'));
     var antes = texto.slice(0, m.index);
     var despues = texto.slice(m.index + m[0].length);
-    var inicio = performance.now();
+    var inicio = Date.now();
     function cifra(v) {{
       var p = v.toFixed(2).split('.');
       return p[0].replace(/\\B(?=(\\d{{3}})+(?!\\d))/g, '.') + ',' + p[1];
     }}
-    function paso(ahora) {{
+    // Con setTimeout y no requestAnimationFrame: sin fotogramas (pestaña de fondo,
+    // Chrome sin ventana) este se quedaba a medias y la página no terminaba de entrar.
+    function paso() {{
       // Si lo tapas a mitad, que no siga escribiendo la cifra encima.
       if (oculto()) return;
-      var x = Math.min(1, (ahora - inicio) / 700);
+      var x = Math.min(1, (Date.now() - inicio) / 700);
       var suave = 1 - Math.pow(1 - x, 3);
       el.textContent = x < 1 ? antes + cifra(fin * suave) + despues : texto;
-      if (x < 1) requestAnimationFrame(paso);
+      if (x < 1) setTimeout(paso, 16);
     }}
-    paso(inicio);
-    // Con la pestaña de fondo no hay fotogramas: que acabe en la cifra buena igual.
-    setTimeout(function () {{ if (!oculto()) el.textContent = texto; }}, 800);
+    paso();
   }}
   contar();
   function cifras(raiz) {{
