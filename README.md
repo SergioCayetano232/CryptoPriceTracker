@@ -808,6 +808,11 @@ días, lo que vigilas y las alertas que tienes puestas, ordenadas por lo poco qu
 les falta. Se actualiza sola cada minuto. Para usar otro puerto:
 `--panel 9000`.
 
+![El panel con una cartera de ejemplo](docs/panel.jpg)
+
+*Las cifras son inventadas. Con 👁 o la tecla `O` se tapan las cantidades, y con
+📋 copias un resumen para mandarlo por WhatsApp.*
+
 Solo lee lo que el bot ya ha guardado, así que no gasta consultas a CoinGecko y
 puede estar abierto a la vez que `--loop`. Si el bot lleva un rato sin guardar
 precios, el panel te lo dice arriba. Solo se abre desde el mismo ordenador:
