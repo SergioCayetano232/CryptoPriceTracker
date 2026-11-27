@@ -67,7 +67,13 @@ def _cantidad(valor: float) -> str:
 def _mini(linea: list[float], tono: str) -> str:
     d = trazo(linea, MINI_ANCHO, MINI_ALTO)
     if not d:
-        return '<span class="mini mini--vacia">sin histórico</span>'
+        # Una raya punteada en vez del texto: repetido en cada fila ensuciaba.
+        return (
+            f'<svg class="mini mini--vacia" viewBox="0 0 {MINI_ANCHO} {MINI_ALTO}" '
+            'preserveAspectRatio="none" role="img" aria-label="sin histórico">'
+            f'<title>sin histórico</title><path d="M0,{MINI_ALTO / 2} '
+            f'H{MINI_ANCHO}" vector-effect="non-scaling-stroke"/></svg>'
+        )
     return (
         f'<svg class="mini mini--{tono}" viewBox="0 0 {MINI_ANCHO} {MINI_ALTO}" '
         f'preserveAspectRatio="none" aria-hidden="true">'
@@ -761,7 +767,7 @@ h2 {
 .mini--sube path { stroke: var(--sube); }
 .mini--baja path { stroke: var(--baja); }
 .mini--neutro path { stroke: var(--acento); }
-.mini--vacia { font-size: 12px; color: var(--suave); text-align: center; }
+.mini--vacia path { stroke: var(--suave); stroke-dasharray: 3 4; opacity: 0.5; }
 
 .peso { display: flex; flex-direction: column; gap: 4px; }
 .peso small { color: var(--suave); font-size: 12px; text-align: right; }

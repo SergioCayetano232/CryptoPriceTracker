@@ -145,6 +145,14 @@ def test_cada_cripto_enlaza_a_su_pagina_de_coingecko():
     ) in html
 
 
+def test_sin_historico_sale_una_raya_y_no_el_texto():
+    html = pagina(_panel(), AHORA, parado=False)
+
+    assert '<svg class="mini mini--vacia"' in html
+    assert "<title>sin histórico</title>" in html
+    assert ">sin histórico</span>" not in html
+
+
 def test_sin_cartera_explica_como_ponerla():
     html = pagina(_panel(filas=[]), AHORA, parado=False)
 
