@@ -11397,12 +11397,20 @@ def test_ruido_tramo_corto(config, enviados):
 
 
 def test_el_aviso_cuenta_que_paso_las_otras_veces(config, enviados, monkeypatch):
+    from datetime import timedelta
+
     # Tres veces subió un 10% en un día y a la semana estaba un 5% más arriba.
+    # A mediodía: restando días de 24 h, pasada la medianoche y con el cambio de
+    # hora de octubre por medio, dos precios caían en el mismo día.
+    ahora = datetime.now().astimezone()
+    mediodia = ahora.replace(hour=12, minute=0, second=0, microsecond=0)
     for vez in range(3):
         empieza = 60 - vez * 10
         bloque = [100.0, 110.0, *[110.0] * 6, 115.5]
         for i, precio in enumerate(bloque):
-            _precio_de(config, "bitcoin", precio, (empieza - i) * 24 * 60)
+            cuando = mediodia - timedelta(days=empieza - i)
+            minutos = (ahora - cuando).total_seconds() / 60
+            _precio_de(config, "bitcoin", precio, minutos)
     _con_fecha(config, 60000.0, 24)
     _precio(monkeypatch, {"bitcoin": 66000.0})
 
