@@ -140,6 +140,18 @@ def test_grafica_con_datos():
 
     assert 'class="grafica__linea"' in html
     assert "€6.010,00" in html  # el máximo
+    # El máximo es el primero de la serie y el mínimo el último.
+    assert 'class="pico" style="left:0.0%' in html
+    assert 'class="pico pico--abajo" style="left:100.0%' in html
+
+
+def test_grafica_plana_marca_un_solo_punto():
+    serie = [(AHORA - timedelta(hours=h), 6000.0) for h in range(5, 0, -1)]
+
+    html = pagina(_panel(serie=serie), AHORA, parado=False)
+
+    assert "grafica__picos--plana" in html
+    assert html.count('class="pico__cifra"') == 1
 
 
 def test_vigiladas_con_su_regla():

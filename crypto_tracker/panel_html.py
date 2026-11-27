@@ -117,6 +117,28 @@ def _cabecera(p: Panel, ahora: datetime, parado: bool) -> str:
 </header>"""
 
 
+def _pico(valores: list[float], i: int, arriba: bool, moneda: str) -> str:
+    x = i / (len(valores) - 1) * 100
+    clase = "pico" if arriba else "pico pico--abajo"
+    # El desplazamiento va con x: en el borde izquierdo la cifra queda a la
+    # derecha del punto y en el derecho a la izquierda, sin salirse nunca.
+    return (
+        f'<span class="{clase}" style="left:{x:.1f}%;--x:{x:.1f}%">'
+        f'<span class="pico__cifra">{_dinero(valores[i], moneda)}</span></span>'
+    )
+
+
+def _picos(valores: list[float], moneda: str) -> str:
+    alto, bajo = max(valores), min(valores)
+    if alto == bajo:
+        punto = _pico(valores, 0, True, moneda)
+        return f'<div class="grafica__picos grafica__picos--plana">{punto}</div>'
+    puntos = _pico(valores, valores.index(alto), True, moneda) + _pico(
+        valores, valores.index(bajo), False, moneda
+    )
+    return f'<div class="grafica__picos">{puntos}</div>'
+
+
 def _grafica(p: Panel) -> str:
     if len(p.serie) < 2:
         cuerpo = (
@@ -135,10 +157,7 @@ def _grafica(p: Panel) -> str:
     cuerpo = f"""
 <div class="grafica grafica--{tono}">
   <div class="grafica__zona">
-  <div class="grafica__ejes">
-    <span>{_dinero(max(valores), p.moneda)}</span>
-    <span>{_dinero(min(valores), p.moneda)}</span>
-  </div>
+  {_picos(valores, p.moneda)}
   <svg viewBox="0 0 {ANCHO} {ALTO}" preserveAspectRatio="none" role="img"
        aria-label="Lo que ha valido tu cartera en los últimos días">
     <defs>
@@ -559,7 +578,7 @@ h2 {
 .pastilla--baja { color: var(--baja); background: var(--baja-fondo); }
 .pastilla--neutro { color: var(--suave); background: var(--neutro-fondo); }
 
-.total, .num, .pastilla, .grafica__ejes, .grafica__fechas, .fila small {
+.total, .num, .pastilla, .pico__cifra, .grafica__fechas, .fila small {
   font-variant-numeric: tabular-nums;
 }
 
@@ -581,25 +600,39 @@ h2 {
 .grafica--neutro .grafica__luz { stop-color: var(--acento); stop-opacity: 0.28; }
 .grafica__sombra { stop-color: var(--fondo); stop-opacity: 0; }
 
-.grafica__ejes {
+.grafica__picos {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: space-between;
-  font-size: 12px;
-  color: var(--suave);
+  inset: 26px 0;
   pointer-events: none;
 }
 
-.grafica__ejes > span {
+.pico {
+  position: absolute;
+  top: 0;
+  width: 9px;
+  height: 9px;
+  margin: -4.5px 0 0 -4.5px;
+  border-radius: 50%;
+  background: var(--texto);
+  box-shadow: 0 0 0 3px var(--cristal);
+  animation: aparece 500ms var(--muelle) both 400ms;
+}
+.pico--abajo { top: 100%; }
+.grafica__picos--plana .pico { top: 50%; }
+
+.pico__cifra {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(calc(var(--x) * -1));
   padding: 2px 8px;
   border-radius: 8px;
   background: var(--cristal);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
 }
+.pico--abajo .pico__cifra { bottom: auto; top: 14px; }
 
 .grafica__fechas {
   display: flex;
