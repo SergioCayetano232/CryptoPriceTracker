@@ -126,7 +126,10 @@ def test_al_imprimir_quita_los_botones():
     html = pagina(_panel(), AHORA, parado=False)
 
     imprimir = html[html.index("@media print") :]
-    assert ".ojo, .copiar, .campana, .simulador {\n    display: none;" in imprimir
+    assert (
+        ".ojo, .copiar, .campana, .simulador, .repetir {\n    display: none;"
+        in imprimir
+    )
 
 
 def test_el_estado_es_un_boton_para_actualizar():
@@ -440,6 +443,16 @@ def test_grafica_con_datos():
     # El máximo es el primero de la serie y el mínimo el último.
     assert 'class="pico" style="left:0.0%' in html
     assert 'class="pico pico--abajo" style="left:100.0%' in html
+
+
+def test_la_grafica_se_puede_repetir():
+    serie = [(AHORA - timedelta(hours=h), 6000.0 + h) for h in range(10, 0, -1)]
+
+    html = pagina(_panel(serie=serie), AHORA, parado=False)
+
+    assert '<button class="repetir" type="button">▶ Ver cómo fue</button>' in html
+    # Las líneas van dentro del recorte que el JS va abriendo al repetir.
+    assert '<g clip-path="url(#corte)">' in html
 
 
 def test_grafica_plana_marca_un_solo_punto():

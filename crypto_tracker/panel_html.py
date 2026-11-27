@@ -337,14 +337,20 @@ def _grafica(p: Panel) -> str:
         <stop offset="0" class="grafica__luz"/>
         <stop offset="1" class="grafica__sombra"/>
       </linearGradient>
+      <clipPath id="corte"><rect class="grafica__corte" width="{ANCHO}"
+        height="{ALTO + 20}" y="-10"/></clipPath>
     </defs>
-    <path class="grafica__area" d="{area}"/>
-    {linea_btc}
-    <path class="grafica__linea" d="{linea}" vector-effect="non-scaling-stroke"/>
+    <g clip-path="url(#corte)">
+      <path class="grafica__area" d="{area}"/>
+      {linea_btc}
+      <path class="grafica__linea" d="{linea}" vector-effect="non-scaling-stroke"/>
+    </g>
   </svg>
   </div>
   <div class="grafica__fechas">
-    <span>{desde:%d/%m %H:%M}</span><span>{hasta:%d/%m %H:%M}</span>
+    <span>{desde:%d/%m %H:%M}</span>
+    <button class="repetir" type="button">▶ Ver cómo fue</button>
+    <span>{hasta:%d/%m %H:%M}</span>
   </div>
   {leyenda}
 </div>"""
@@ -1048,6 +1054,21 @@ h2 {
   box-shadow: 0 0 0 3px var(--cristal);
   animation: aparece 500ms var(--muelle) both 400ms;
 }
+.repetir {
+  padding: 4px 12px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-chico);
+  background: var(--cristal);
+  color: var(--texto);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform var(--rapido) var(--muelle);
+}
+.repetir:hover { color: var(--acento); transform: scale(1.04); }
+.repetir:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
+
 .grafica__btc {
   fill: none;
   stroke: var(--aviso);
@@ -1105,6 +1126,8 @@ h2 {
 /* Mientras miras un punto, las cifras del máximo y el mínimo estorban. */
 .viendo .pico { opacity: 0.25; }
 .viendo .pico__cifra { opacity: 0; }
+/* Repitiendo, el máximo y el mínimo destriparían cómo acaba. */
+.repitiendo .pico { opacity: 0; }
 
 .pico__cifra {
   position: absolute;
@@ -1123,6 +1146,7 @@ h2 {
 .grafica__fechas {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   margin-top: 8px;
   font-size: 12px;
   color: var(--suave);
@@ -1403,7 +1427,7 @@ code {
     print-color-adjust: exact;
   }
   body::after, .tarjeta::before, .cabecera::before,
-  .ojo, .copiar, .campana, .simulador {
+  .ojo, .copiar, .campana, .simulador, .repetir {
     display: none;
   }
   .tarjeta, .cabecera {
@@ -1647,10 +1671,10 @@ JS = f"""
     var linea = zona.querySelector('.cursor');
     var punto = zona.querySelector('.cursor__punto');
     var texto = zona.querySelector('.cursor__texto');
-    function mirar(e) {{
-      var caja = zona.getBoundingClientRect();
-      var f = Math.min(1, Math.max(0, (e.clientX - caja.left) / caja.width));
-      var i = Math.round(f * (puntos.length - 1));
+    var corte = zona.querySelector('.grafica__corte');
+    var boton = zona.parentNode.querySelector('.repetir');
+    var paso = null;
+    function ponerEn(i) {{
       var p = puntos[i];
       var x = (i / (puntos.length - 1) * 100) + '%';
       linea.style.left = punto.style.left = texto.style.left = x;
@@ -1660,10 +1684,48 @@ JS = f"""
       texto.textContent = (oculto() ? '•••' : p[1]) + btc + ' · ' + p[0];
       zona.classList.add('viendo');
     }}
+    function parar() {{
+      clearTimeout(paso);
+      paso = null;
+      zona.classList.remove('repitiendo');
+      corte.setAttribute('width', {ANCHO});
+      boton.textContent = '▶ Ver cómo fue';
+    }}
+    // La semana en unos seis segundos, dibujándose de izquierda a derecha.
+    function repetir() {{
+      if (paso !== null) {{
+        parar();
+        zona.classList.remove('viendo');
+        return;
+      }}
+      var i = 0;
+      boton.textContent = '■ Parar';
+      zona.classList.add('repitiendo');
+      (function siguiente() {{
+        // Si el refresco del minuto ha cambiado la gráfica, esta ya no está.
+        if (!zona.isConnected) return;
+        corte.setAttribute('width', i / (puntos.length - 1) * {ANCHO});
+        ponerEn(i);
+        if (i++ < puntos.length - 1) {{
+          paso = setTimeout(siguiente, 6000 / puntos.length);
+        }} else {{
+          paso = null;
+          zona.classList.remove('repitiendo');
+          boton.textContent = '↻ Otra vez';
+        }}
+      }})();
+    }}
+    function mirar(e) {{
+      if (paso !== null) parar();
+      var caja = zona.getBoundingClientRect();
+      var f = Math.min(1, Math.max(0, (e.clientX - caja.left) / caja.width));
+      ponerEn(Math.round(f * (puntos.length - 1)));
+    }}
+    boton.addEventListener('click', repetir);
     zona.addEventListener('pointermove', mirar);
     zona.addEventListener('pointerdown', mirar);
     zona.addEventListener('pointerleave', function () {{
-      zona.classList.remove('viendo');
+      if (paso === null) zona.classList.remove('viendo');
     }});
   }}
   enganchar();
