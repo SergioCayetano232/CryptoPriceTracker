@@ -766,7 +766,9 @@ JS = f"""
     }});
     return mapa;
   }}
+  var ultimo = Date.now();
   function refrescar() {{
+    ultimo = Date.now();
     fetch(location.href, {{ cache: 'no-store' }})
       .then(function (r) {{ return r.ok ? r.text() : Promise.reject(r.status); }})
       .then(function (html) {{
@@ -788,6 +790,10 @@ JS = f"""
       // Si el panel se ha caído, se queda lo último que había.
       .catch(function () {{}});
   }}
-  setInterval(refrescar, cada);
+  // Con la pestaña de fondo no pido nada; al volver, si toca, refresco al momento.
+  setInterval(function () {{ if (!document.hidden) refrescar(); }}, cada);
+  document.addEventListener('visibilitychange', function () {{
+    if (!document.hidden && Date.now() - ultimo >= cada) refrescar();
+  }});
 }})();
 """
