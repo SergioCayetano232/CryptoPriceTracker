@@ -164,6 +164,13 @@ def test_el_titulo_de_la_grafica_lleva_lo_que_ha_cambiado():
     ) in html
 
 
+def test_con_el_bot_parado_el_icono_va_en_ambar():
+    html = pagina(_panel(total_antes=5000.0), AHORA, parado=True)
+
+    assert "%23d48a00" in html
+    assert "%230f9f6e" not in html
+
+
 def test_sin_cartera_explica_como_ponerla():
     html = pagina(_panel(filas=[]), AHORA, parado=False)
 

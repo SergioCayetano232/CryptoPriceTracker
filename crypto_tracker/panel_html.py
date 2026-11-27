@@ -360,18 +360,26 @@ def _titulo(p: Panel) -> str:
     return escape(titulo)
 
 
-# Los mismos que --sube, --baja y --acento del modo claro. Aquí no llegan las
+# Los mismos que --sube, --baja, --acento y --aviso del modo claro. No llegan las
 # variables CSS: el icono es una imagen aparte.
-ICONO_COLOR = {"sube": "#0f9f6e", "baja": "#e0445a", "neutro": "#6d4aff"}
+ICONO_COLOR = {
+    "sube": "#0f9f6e",
+    "baja": "#e0445a",
+    "neutro": "#6d4aff",
+    "parado": "#d48a00",
+}
 ICONO_TRAZO = {
     "sube": "M7 22 L13 15 L18 19 L25 10",
     "baja": "M7 10 L13 17 L18 13 L25 22",
     "neutro": "M7 16 H25",
+    # Una exclamación: el punto es una raya de nada con la punta redonda.
+    "parado": "M16 8 V18 M16 24 V24.01",
 }
 
 
-def _icono(p: Panel) -> str:
-    tono = _tono(p.cambio_24h)
+def _icono(p: Panel, parado: bool) -> str:
+    # Parado manda: un verde de hace cinco días engaña más que no saber nada.
+    tono = "parado" if parado else _tono(p.cambio_24h)
     svg = (
         "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'>"
         f"<rect width='32' height='32' rx='8' fill='{ICONO_COLOR[tono]}'/>"
@@ -409,7 +417,7 @@ def pagina(p: Panel, ahora: datetime, parado: bool) -> str:
 <meta name="theme-color" content="#f4f1fb" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0d0b16" media="(prefers-color-scheme: dark)">
 <title>{_titulo(p)}</title>
-<link rel="icon" href="{_icono(p)}">
+<link rel="icon" href="{_icono(p, parado)}">
 <script>{ANTES}</script>
 <style>{CSS}</style>
 </head>
