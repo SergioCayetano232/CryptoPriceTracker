@@ -5236,10 +5236,17 @@ def test_bollinger_pocos_dias(config, enviados):
 
 
 def test_soporte(config, enviados):
+    from datetime import timedelta
+
     precios = [100, 95, 90, 95, 100, 105, 110, 105, 100, 95, 91, 95, 100, 105, 109, 104]
+    # Cada día a mediodía y el de ahora en este mismo instante: con "hace una hora",
+    # pasada la medianoche caía en el día de ayer y pisaba su cierre.
+    ahora = datetime.now().astimezone()
+    mediodia = ahora.replace(hour=12, minute=0, second=0, microsecond=0)
     for i, precio in enumerate(precios):
-        _precio_de(config, "bitcoin", precio, (len(precios) - i) * 24 * 60)
-    _precio_de(config, "bitcoin", 100, 60)
+        cuando = mediodia - timedelta(days=len(precios) - i)
+        _precio_de(config, "bitcoin", precio, (ahora - cuando).total_seconds() / 60)
+    _precio_de(config, "bitcoin", 100, 0)
 
     main.atender(config, _mensaje("/soporte"))
 
