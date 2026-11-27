@@ -118,9 +118,10 @@ def _cabecera(p: Panel, ahora: datetime, parado: bool) -> str:
   <div class="cabecera__fila">
     <span class="marca">CryptoPriceTracker</span>
     <span class="cabecera__lado">
-      <span class="estado estado--{estado}">
+      <button class="estado estado--{estado}" type="button"
+              title="Actualizar ahora">
         <span class="estado__punto"></span>{aviso}
-      </span>
+      </button>
       <button class="ojo" type="button" aria-pressed="false"
               title="Ocultar cifras">👁</button>
     </span>
@@ -565,9 +566,22 @@ h2 {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  padding: 4px 8px;
+  margin: -4px 0 -4px -8px;
+  border: 0;
+  border-radius: var(--radio-chico);
+  background: none;
+  font: inherit;
   font-size: 13px;
+  text-align: left;
   color: var(--suave);
+  cursor: pointer;
+  transition: background var(--rapido) var(--suave-curva);
 }
+.estado:hover { background: var(--neutro-fondo); }
+.estado:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
+.estado.estado--cargando { opacity: 0.6; cursor: progress; }
+.estado.estado--cargando .estado__punto { animation: pulso 0.6s ease-out infinite; }
 
 .estado__punto {
   width: 8px;
@@ -870,9 +884,12 @@ JS = f"""
     }}
   }}
   document.addEventListener('click', function (e) {{
-    if (!e.target.closest('.ojo')) return;
-    localStorage.setItem('{CLAVE}', oculto() ? '0' : '1');
-    tapar();
+    if (e.target.closest('.ojo')) {{
+      localStorage.setItem('{CLAVE}', oculto() ? '0' : '1');
+      tapar();
+    }} else if (e.target.closest('.estado')) {{
+      refrescar();
+    }}
   }});
   tapar();
   function cifras(raiz) {{
@@ -884,6 +901,10 @@ JS = f"""
   }}
   var ultimo = Date.now();
   function refrescar() {{
+    var estado = document.querySelector('.estado');
+    // Un segundo toque mientras carga no lanza otra petición.
+    if (estado && estado.classList.contains('estado--cargando')) return;
+    if (estado) estado.classList.add('estado--cargando');
     ultimo = Date.now();
     fetch(location.href, {{ cache: 'no-store' }})
       .then(function (r) {{ return r.ok ? r.text() : Promise.reject(r.status); }})
@@ -904,7 +925,9 @@ JS = f"""
         }});
       }})
       // Si el panel se ha caído, se queda lo último que había.
-      .catch(function () {{}});
+      .catch(function () {{
+        if (estado) estado.classList.remove('estado--cargando');
+      }});
   }}
   // Con la pestaña de fondo no pido nada; al volver, si toca, refresco al momento.
   setInterval(function () {{ if (!document.hidden) refrescar(); }}, cada);

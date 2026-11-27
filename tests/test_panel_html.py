@@ -129,6 +129,13 @@ def test_al_imprimir_quita_el_boton_de_ocultar():
     assert ".ojo { display: none; }" in imprimir
 
 
+def test_el_estado_es_un_boton_para_actualizar():
+    html = pagina(_panel(), AHORA, parado=False)
+
+    assert '<button class="estado estado--vivo" type="button"' in html
+    assert 'title="Actualizar ahora"' in html
+
+
 def test_sin_cartera_explica_como_ponerla():
     html = pagina(_panel(filas=[]), AHORA, parado=False)
 
