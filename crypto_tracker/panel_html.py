@@ -977,6 +977,35 @@ JS = f"""
     else if (tecla === 'o') alternar();
   }});
   tapar();
+  // Solo al abrir: en cada refresco contaría desde cero y marearía.
+  function contar() {{
+    var el = document.querySelector('.total .dinero');
+    var quieto = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!el || oculto() || quieto) return;
+    var texto = el.dataset.v;
+    var m = texto.match(/\\d[\\d.]*,\\d{{2}}/);
+    if (!m) return;
+    var fin = parseFloat(m[0].replace(/\\./g, '').replace(',', '.'));
+    var antes = texto.slice(0, m.index);
+    var despues = texto.slice(m.index + m[0].length);
+    var inicio = performance.now();
+    function cifra(v) {{
+      var p = v.toFixed(2).split('.');
+      return p[0].replace(/\\B(?=(\\d{{3}})+(?!\\d))/g, '.') + ',' + p[1];
+    }}
+    function paso(ahora) {{
+      // Si lo tapas a mitad, que no siga escribiendo la cifra encima.
+      if (oculto()) return;
+      var x = Math.min(1, (ahora - inicio) / 700);
+      var suave = 1 - Math.pow(1 - x, 3);
+      el.textContent = x < 1 ? antes + cifra(fin * suave) + despues : texto;
+      if (x < 1) requestAnimationFrame(paso);
+    }}
+    paso(inicio);
+    // Con la pestaña de fondo no hay fotogramas: que acabe en la cifra buena igual.
+    setTimeout(function () {{ if (!oculto()) el.textContent = texto; }}, 800);
+  }}
+  contar();
   function cifras(raiz) {{
     var mapa = {{}};
     raiz.querySelectorAll('[data-k]').forEach(function (el) {{
