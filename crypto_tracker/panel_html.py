@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from html import escape
+from urllib.parse import quote
 
 from . import version
 from .mensajes.base import SIMBOLOS, _num, describir
@@ -268,6 +269,27 @@ def _titulo(p: Panel) -> str:
     return escape(titulo)
 
 
+# Los mismos que --sube, --baja y --acento del modo claro. Aquí no llegan las
+# variables CSS: el icono es una imagen aparte.
+ICONO_COLOR = {"sube": "#0f9f6e", "baja": "#e0445a", "neutro": "#6d4aff"}
+ICONO_TRAZO = {
+    "sube": "M7 22 L13 15 L18 19 L25 10",
+    "baja": "M7 10 L13 17 L18 13 L25 22",
+    "neutro": "M7 16 H25",
+}
+
+
+def _icono(p: Panel) -> str:
+    tono = _tono(p.cambio_24h)
+    svg = (
+        "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'>"
+        f"<rect width='32' height='32' rx='8' fill='{ICONO_COLOR[tono]}'/>"
+        f"<path d='{ICONO_TRAZO[tono]}' fill='none' stroke='white' "
+        "stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/></svg>"
+    )
+    return "data:image/svg+xml," + quote(svg)
+
+
 def _tarjeta(titulo: str, cuerpo: str, orden: int, clase: str = "") -> str:
     extra = f" tarjeta--{clase}" if clase else ""
     return f"""
@@ -294,6 +316,7 @@ def pagina(p: Panel, ahora: datetime, parado: bool) -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>{_titulo(p)}</title>
+<link rel="icon" href="{_icono(p)}">
 <script>{ANTES}</script>
 <style>{CSS}</style>
 </head>
@@ -750,6 +773,8 @@ JS = f"""
         document.documentElement.classList.add('recargado');
         document.querySelector('main').replaceWith(nuevo.querySelector('main'));
         titulo = nuevo.title;
+        document.querySelector('link[rel=icon]').href =
+          nuevo.querySelector('link[rel=icon]').href;
         tapar();
         document.querySelectorAll('[data-k]').forEach(function (el) {{
           var k = el.dataset.k;

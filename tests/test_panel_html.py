@@ -62,6 +62,21 @@ def test_las_cifras_van_marcadas_para_poder_ocultarlas():
     assert '<span class="dinero">+20' not in html
 
 
+def test_el_icono_va_en_verde_si_sube_en_el_dia():
+    html = pagina(_panel(total_antes=5000.0), AHORA, parado=False)
+
+    assert '<link rel="icon" href="data:image/svg+xml,' in html
+    assert "%230f9f6e" in html
+
+
+def test_el_icono_va_en_rojo_si_baja_en_el_dia():
+    assert "%23e0445a" in pagina(_panel(total_antes=7000.0), AHORA, parado=False)
+
+
+def test_sin_dato_de_24h_el_icono_es_neutro():
+    assert "%236d4aff" in pagina(_panel(), AHORA, parado=False)
+
+
 def test_sin_cartera_explica_como_ponerla():
     html = pagina(_panel(filas=[]), AHORA, parado=False)
 
