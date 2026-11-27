@@ -172,6 +172,15 @@ def test_con_el_bot_parado_el_icono_va_en_ambar():
     assert "%230f9f6e" not in html
 
 
+def test_los_titulos_llevan_cuantas_hay():
+    html = pagina(_panel(), AHORA, parado=False)
+
+    assert '<h2>Lo que tienes <span class="h2__cuenta">1</span></h2>' in html
+    # Sin ninguna, el título va solo: ya lo dice el texto de vacío.
+    assert "<h2>Lo que vigilo</h2>" in html
+    assert "<h2>Alertas pendientes</h2>" in html
+
+
 def test_sin_cartera_explica_como_ponerla():
     html = pagina(_panel(filas=[]), AHORA, parado=False)
 

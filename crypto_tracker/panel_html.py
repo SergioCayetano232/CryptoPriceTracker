@@ -284,7 +284,7 @@ def _cartera(p: Panel) -> str:
         nombres = ", ".join(_nombre(c) for c in p.faltan)
         faltan = f'<p class="nota">Sin precio guardado todavía: {nombres}.</p>'
     cuerpo = f'<ul class="lista lista--cartera">{filas}</ul>{faltan}'
-    return _tarjeta("Lo que tienes", cuerpo, 2, "ancha")
+    return _tarjeta(f"Lo que tienes{_cuenta(len(p.filas))}", cuerpo, 2, "ancha")
 
 
 def _vigilada(v: Vigilada, moneda: str) -> str:
@@ -307,7 +307,7 @@ def _vigiladas(p: Panel) -> str:
     else:
         filas = "".join(_vigilada(v, p.moneda) for v in p.vigiladas)
         cuerpo = f'<ul class="lista">{filas}</ul>'
-    return _tarjeta("Lo que vigilo", cuerpo, 3)
+    return _tarjeta(f"Lo que vigilo{_cuenta(len(p.vigiladas))}", cuerpo, 3)
 
 
 def _alerta(a: Alerta, moneda: str) -> str:
@@ -348,7 +348,7 @@ def _alertas(p: Panel) -> str:
     else:
         filas = "".join(_alerta(a, p.moneda) for a in p.alertas)
         cuerpo = f'<ul class="lista">{filas}</ul>'
-    return _tarjeta("Alertas pendientes", cuerpo, 4)
+    return _tarjeta(f"Alertas pendientes{_cuenta(len(p.alertas))}", cuerpo, 4)
 
 
 def _titulo(p: Panel) -> str:
@@ -387,6 +387,11 @@ def _icono(p: Panel, parado: bool) -> str:
         "stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/></svg>"
     )
     return "data:image/svg+xml," + quote(svg)
+
+
+def _cuenta(n: int) -> str:
+    # Con cero no: la tarjeta ya lo dice con su texto de vacío.
+    return f' <span class="h2__cuenta">{n}</span>' if n else ""
 
 
 def _tarjeta(titulo: str, cuerpo: str, orden: int, clase: str = "") -> str:
@@ -572,6 +577,18 @@ h2 {
   color: var(--suave);
 }
 .h2__cambio { font-weight: 700; }
+.h2__cuenta {
+  display: inline-block;
+  min-width: 1.6em;
+  margin-left: 4px;
+  padding: 1px 6px;
+  border-radius: var(--radio-chico);
+  background: var(--neutro-fondo);
+  font-size: 11px;
+  letter-spacing: 0;
+  text-align: center;
+  vertical-align: 1px;
+}
 
 .cabecera__fila {
   display: flex;
