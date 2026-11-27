@@ -5,7 +5,7 @@ from datetime import datetime
 from html import escape
 from urllib.parse import quote
 
-from . import version
+from . import impuestos, version
 from .mensajes.base import SIMBOLOS, _num, describir
 from .panel import (
     PUNTOS_GRAFICA,
@@ -493,6 +493,89 @@ def _tarjeta(titulo: str, cuerpo: str, orden: int, clase: str = "") -> str:
 </section>"""
 
 
+# El deslizador va de ×0,2 a ×5: con una escala lineal, de -80 % a +400 %, casi
+# todo el recorrido sería para subidas y las bajadas quedarían en un rincón.
+SIM_TOPE = 5
+
+
+def datos_simulador(p: Panel) -> dict:
+    """Lo que necesita el JS del simulador, ya calculado aquí."""
+    datos = {
+        "simbolo": SIMBOLOS.get(p.moneda, p.moneda.upper() + " "),
+        "tope": SIM_TOPE,
+        "monedas": [
+            {"id": f.coin_id, "cantidad": f.cantidad, "precio": f.precio}
+            for f in p.filas
+        ],
+        "invertido": p.invertido,
+        # Hacienda va en euros: en otra moneda la cuenta no valdría.
+        "tramos": None,
+    }
+    if p.moneda == "eur":
+        # El último tramo no tiene techo, y infinito no cabe en JSON.
+        datos["tramos"] = [
+            [None if hasta == float("inf") else hasta, tipo]
+            for hasta, tipo in impuestos.TRAMOS
+        ]
+    return datos
+
+
+def _simulador(p: Panel) -> str:
+    if not p.filas:
+        return ""
+
+    def fila(id_: str, nombre: str, detalle: str) -> str:
+        return f"""
+<div class="sim__fila">
+  <label for="sim-{escape(id_)}">
+    <strong>{nombre}</strong><small>{detalle}</small>
+  </label>
+  <input type="range" id="sim-{escape(id_)}" data-id="{escape(id_)}"
+         min="-1" max="1" step="0.01" value="0">
+  <span class="sim__pct num">0 %</span>
+  <span class="sim__precio num" data-precio="{escape(id_)}"></span>
+</div>"""
+
+    filas = fila("*", "Todas a la vez", "mueve todos los precios igual")
+    filas += "".join(
+        fila(f.coin_id, _nombre(f.coin_id), f"hoy {_importe(f.precio, p.moneda)}")
+        for f in p.filas
+    )
+    datos = escape(json.dumps(datos_simulador(p)))
+    hacienda = (
+        """
+  <div><small>Si lo vendieras todo, a Hacienda</small>
+    <strong class="sim__hacienda num">—</strong>
+    <small class="sim__tipo"></small></div>"""
+        if p.moneda == "eur" and p.invertido is not None
+        else ""
+    )
+    ganancia = (
+        """
+  <div><small>Ganancia desde que compraste</small>
+    <strong class="sim__ganancia num">—</strong>
+    <small class="sim__gpct"></small></div>"""
+        if p.invertido is not None
+        else ""
+    )
+    cuerpo = f"""
+<p class="nota sim__intro">Mueve los precios y mira qué sería de tu cartera.
+  Es solo una cuenta: no cambia nada.</p>
+<div class="sim__filas">{filas}</div>
+<div class="sim__resultado">
+  <div><small>Tu cartera valdría</small>
+    <strong class="sim__total num">—</strong><small class="sim__dif"></small></div>
+  {ganancia}{hacienda}
+</div>
+<button class="sim__volver" type="button" hidden>Volver a los precios de hoy</button>"""
+    return f"""
+<section class="tarjeta seccion tarjeta--ancha simulador" style="--i:5"
+         data-sim="{datos}">
+  <h2>¿Y si…?</h2>
+  {cuerpo}
+</section>"""
+
+
 def pagina(p: Panel, ahora: datetime, parado: bool) -> str:
     contenido = "".join(
         [
@@ -501,6 +584,7 @@ def pagina(p: Panel, ahora: datetime, parado: bool) -> str:
             _cartera(p),
             _vigiladas(p),
             _alertas(p),
+            _simulador(p),
         ]
     )
     return f"""<!doctype html>
@@ -999,11 +1083,64 @@ code {
 .pie a { color: inherit; text-underline-offset: 3px; }
 .pie a:hover { color: var(--acento); }
 
+.sim__intro { margin: -6px 0 14px; }
+.sim__fila {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) 70px 9em;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0;
+}
+.sim__fila:first-child {
+  padding-bottom: 14px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--linea-fila);
+}
+.sim__fila label { display: flex; flex-direction: column; min-width: 0; }
+.sim__fila small { color: var(--suave); font-size: 12.5px; }
+.sim__fila input { width: 100%; accent-color: var(--acento); cursor: pointer; }
+.sim__pct.num--sube, .sim__precio.num--sube { color: var(--sube); }
+.sim__pct.num--baja, .sim__precio.num--baja { color: var(--baja); }
+.sim__resultado {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+.sim__resultado > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--neutro-fondo);
+}
+.sim__resultado small { color: var(--suave); font-size: 12.5px; }
+.sim__resultado strong { font-size: 22px; text-align: left; }
+.sim__resultado .num--sube { color: var(--sube); }
+.sim__resultado .num--baja { color: var(--baja); }
+.sim__volver {
+  margin-top: 14px;
+  padding: 8px 14px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-chico);
+  background: var(--cristal);
+  color: var(--texto);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.sim__volver:hover { color: var(--acento); }
+.sim__volver:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
+
 @media screen and (max-width: 760px) {
   /* Con tres botones al lado el estado se quedaba en tres líneas: los botones
      suben a la fila del nombre y el estado baja a todo lo ancho. */
   .cabecera__lado { display: contents; }
   .estado { order: 1; flex-basis: 100%; }
+  .sim__fila { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; }
+  .sim__fila input { grid-column: 1 / -1; grid-row: 2; }
+  .sim__precio { display: none; }
   .panel { grid-template-columns: minmax(0, 1fr); gap: 14px; padding-top: 18px; }
   .tarjeta, .cabecera { padding: 18px; }
   .fila { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; }
@@ -1038,7 +1175,8 @@ code {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-  body::after, .tarjeta::before, .cabecera::before, .ojo, .copiar, .campana {
+  body::after, .tarjeta::before, .cabecera::before,
+  .ojo, .copiar, .campana, .simulador {
     display: none;
   }
   .tarjeta, .cabecera {
@@ -1076,6 +1214,97 @@ JS = f"""
   var cada = {REFRESCO} * 1000;
   var titulo = document.title;
   function oculto() {{ return localStorage.getItem('{CLAVE}') === '1'; }}
+  // Dónde está cada deslizador (-1 a 1). Fuera de <main> a propósito: el refresco
+  // de cada minuto cambia la página entera y no quiero que te los devuelva a cero.
+  var sim = {{}};
+  function simular() {{
+    var sec = document.querySelector('[data-sim]');
+    if (!sec) return;
+    var d = JSON.parse(sec.dataset.sim);
+    var tapado = oculto();
+    function dinero(v) {{
+      if (tapado) return '•••';
+      var p = Math.abs(v).toFixed(2).split('.');
+      var entero = p[0].replace(/\\B(?=(\\d{{3}})+(?!\\d))/g, '.');
+      return (v < 0 ? '-' : '') + d.simbolo + entero + ',' + p[1];
+    }}
+    function pct(x) {{
+      var t = Math.abs(x) < 0.5 ? '0' : (x > 0 ? '+' : '') + x.toFixed(0);
+      return t.replace('.', ',') + ' %';
+    }}
+    function tono(el, x) {{
+      el.classList.toggle('num--sube', x >= 0.5);
+      el.classList.toggle('num--baja', x <= -0.5);
+    }}
+    function poner(id, pos) {{
+      var input = sec.querySelector('input[data-id="' + id + '"]');
+      if (!input) return;
+      input.value = pos;
+      var cambio = (Math.pow(d.tope, pos) - 1) * 100;
+      var etiqueta = input.parentNode.querySelector('.sim__pct');
+      etiqueta.textContent = pct(cambio);
+      tono(etiqueta, cambio);
+    }}
+    var hoy = 0, total = 0, movido = false;
+    d.monedas.forEach(function (m) {{
+      var pos = sim[m.id] || 0;
+      if (pos) movido = true;
+      var precio = m.precio * Math.pow(d.tope, pos);
+      hoy += m.cantidad * m.precio;
+      total += m.cantidad * precio;
+      poner(m.id, pos);
+      var el = sec.querySelector('[data-precio="' + m.id + '"]');
+      el.textContent = dinero(precio);
+      tono(el, (precio / m.precio - 1) * 100);
+    }});
+    poner('*', sim['*'] || 0);
+    var dif = (total / hoy - 1) * 100;
+    sec.querySelector('.sim__total').textContent = dinero(total);
+    var difEl = sec.querySelector('.sim__dif');
+    difEl.textContent = movido
+      ? (tapado ? '' : dinero(total - hoy) + ' · ') + pct(dif) + ' sobre hoy'
+      : 'lo mismo que hoy';
+    tono(difEl, dif);
+    var ganancia = sec.querySelector('.sim__ganancia');
+    if (ganancia) {{
+      var g = total - d.invertido;
+      ganancia.textContent = dinero(g);
+      tono(ganancia, g);
+      sec.querySelector('.sim__gpct').textContent = pct(g / d.invertido * 100);
+    }}
+    var hacienda = sec.querySelector('.sim__hacienda');
+    if (hacienda) {{
+      // Lo mismo que impuestos.por_tramos(). Vendiéndolo todo, lo que costó es
+      // justo lo invertido: no hace falta el FIFO.
+      var base = Math.max(0, total - d.invertido), cuota = 0, desde = 0;
+      d.tramos.forEach(function (t) {{
+        var hasta = t[0] === null ? Infinity : t[0];
+        if (base <= desde) return;
+        cuota += (Math.min(base, hasta) - desde) * t[1] / 100;
+        desde = hasta;
+      }});
+      hacienda.textContent = dinero(cuota);
+      sec.querySelector('.sim__tipo').textContent = base > 0
+        ? 'un ' + (cuota / base * 100).toFixed(1).replace('.', ',') +
+          ' % de lo ganado'
+        : 'sin ganancia, nada';
+    }}
+    sec.querySelector('.sim__volver').hidden = !movido;
+  }}
+  document.addEventListener('input', function (e) {{
+    var id = e.target.dataset && e.target.dataset.id;
+    if (!id || !e.target.closest('[data-sim]')) return;
+    var pos = parseFloat(e.target.value);
+    if (id === '*') {{
+      // Mover "todas" las pone todas ahí; mover una suelta deja "todas" donde estaba.
+      sim = {{ '*': pos }};
+      JSON.parse(e.target.closest('[data-sim]').dataset.sim).monedas
+        .forEach(function (m) {{ sim[m.id] = pos; }});
+    }} else {{
+      sim[id] = pos;
+    }}
+    simular();
+  }});
   function tapar() {{
     var si = oculto();
     document.documentElement.classList.toggle('oculto', si);
@@ -1090,6 +1319,7 @@ JS = f"""
       ojo.title = (si ? 'Enseñar' : 'Ocultar') + ' cifras (O)';
       ojo.textContent = si ? '🙈' : '👁';
     }}
+    simular();
   }}
   function copiarResumen(boton) {{
     var texto = oculto() ? boton.dataset.oculto : boton.dataset.texto;
@@ -1162,6 +1392,11 @@ JS = f"""
     tapar();
   }}
   document.addEventListener('click', function (e) {{
+    if (e.target.closest('.sim__volver')) {{
+      sim = {{}};
+      simular();
+      return;
+    }}
     var copiar = e.target.closest('.copiar');
     var boton = e.target.closest('.campana');
     if (boton) campana(boton);
@@ -1256,6 +1491,7 @@ JS = f"""
         document.querySelector('main').replaceWith(nuevo.querySelector('main'));
         titulo = nuevo.title;
         enganchar();
+        simular();
         pintarCampana();
         avisarNuevos();
         document.querySelector('link[rel=icon]').href =

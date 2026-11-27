@@ -126,7 +126,7 @@ def test_al_imprimir_quita_los_botones():
     html = pagina(_panel(), AHORA, parado=False)
 
     imprimir = html[html.index("@media print") :]
-    assert ".ojo, .copiar, .campana {\n    display: none;" in imprimir
+    assert ".ojo, .copiar, .campana, .simulador {\n    display: none;" in imprimir
 
 
 def test_el_estado_es_un_boton_para_actualizar():
@@ -283,6 +283,34 @@ def test_la_campana_sale_oculta_hasta_que_el_js_ve_que_hay_avisos():
     html = pagina(_panel(), AHORA, parado=False)
 
     assert '<button class="campana" type="button" aria-pressed="false" hidden>' in html
+
+
+def test_el_simulador_lleva_lo_que_necesita_el_js():
+    from crypto_tracker.panel_html import datos_simulador
+
+    datos = datos_simulador(_panel())
+
+    assert datos["simbolo"] == "€"
+    assert datos["monedas"] == [{"id": "bitcoin", "cantidad": 0.1, "precio": 60000.0}]
+    assert datos["invertido"] == 5000.0
+    # Los de impuestos.py, con el último tramo sin techo.
+    assert datos["tramos"][0] == [6000, 19]
+    assert datos["tramos"][-1] == [None, 30]
+
+
+def test_el_simulador_no_cuenta_hacienda_en_otra_moneda():
+    from crypto_tracker.panel_html import datos_simulador
+
+    html = pagina(_panel(moneda="usd"), AHORA, parado=False)
+
+    assert datos_simulador(_panel(moneda="usd"))["tramos"] is None
+    assert 'class="sim__hacienda' not in html
+
+
+def test_sin_cartera_no_hay_simulador():
+    html = pagina(_panel(filas=[]), AHORA, parado=False)
+
+    assert "data-sim=" not in html
 
 
 def test_sin_cartera_explica_como_ponerla():
