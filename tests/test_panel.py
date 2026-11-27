@@ -181,3 +181,24 @@ def test_parado_tras_tres_ciclos():
     assert not panel.parado(AHORA - timedelta(minutes=14), AHORA, 300)
     assert panel.parado(AHORA - timedelta(minutes=16), AHORA, 300)
     assert panel.parado(None, AHORA, 300)
+
+
+def test_en_bitcoin_sigue_al_precio_de_bitcoin_desde_el_principio():
+    t0 = datetime(2026, 11, 20, 12, tzinfo=timezone.utc)
+    serie = [
+        (t0, 1000.0),
+        (t0 + timedelta(hours=1), 1100.0),
+        (t0 + timedelta(hours=2), 900.0),
+    ]
+    # Bitcoin guardado a otras horas: vale el último de antes de cada punto, así
+    # que a las 13:00 aún cuenta el de 50.000 y el de 60.000 entra a las 14:00.
+    btc = [(t0 - timedelta(minutes=5), 50000.0), (t0 + timedelta(minutes=70), 60000.0)]
+
+    assert panel.en_bitcoin(serie, btc) == [1000.0, 1000.0, 1200.0]
+
+
+def test_en_bitcoin_sin_precio_al_principio_no_dibuja_nada():
+    t0 = datetime(2026, 11, 20, 12, tzinfo=timezone.utc)
+    serie = [(t0, 1000.0), (t0 + timedelta(hours=1), 1100.0)]
+
+    assert panel.en_bitcoin(serie, [(t0 + timedelta(minutes=30), 50000.0)]) == []

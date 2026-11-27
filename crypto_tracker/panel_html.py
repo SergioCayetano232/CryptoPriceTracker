@@ -14,6 +14,7 @@ from .panel import (
     Panel,
     Vigilada,
     cambio,
+    en_bitcoin,
     hace,
     muestrear,
     trazo,
@@ -216,13 +217,22 @@ def _cabecera(p: Panel, ahora: datetime, parado: bool) -> str:
 </header>"""
 
 
-def _pico(valores: list[float], i: int, arriba: bool, moneda: str) -> str:
+def _altura(v: float, escala: tuple[float, float]) -> float:
+    """En % desde arriba, con la misma cuenta que trazo()."""
+    suelo, techo = escala
+    return round(100 - (v - suelo) / (techo - suelo) * 100, 1) if techo > suelo else 50
+
+
+def _pico(
+    valores: list[float], i: int, arriba: bool, moneda: str, escala: tuple
+) -> str:
     x = i / (len(valores) - 1) * 100
     clase = "pico" if arriba else "pico pico--abajo"
     # El desplazamiento va con x: en el borde izquierdo la cifra queda a la
     # derecha del punto y en el derecho a la izquierda, sin salirse nunca.
     return (
-        f'<span class="{clase}" style="left:{x:.1f}%;--x:{x:.1f}%">'
+        f'<span class="{clase}" style="left:{x:.1f}%;--x:{x:.1f}%;'
+        f'top:{_altura(valores[i], escala)}%">'
         f'<span class="pico__cifra">{_dinero(valores[i], moneda)}</span></span>'
     )
 
@@ -233,33 +243,55 @@ CURSOR = (
 )
 
 
-def _picos(valores: list[float], moneda: str) -> str:
+def _picos(valores: list[float], moneda: str, escala: tuple | None = None) -> str:
     alto, bajo = max(valores), min(valores)
+    escala = escala or (bajo, alto)
     if alto == bajo:
-        punto = _pico(valores, 0, True, moneda)
+        punto = _pico(valores, 0, True, moneda, escala)
         return (
             f'<div class="grafica__picos grafica__picos--plana">{punto}{CURSOR}</div>'
         )
-    puntos = _pico(valores, valores.index(alto), True, moneda) + _pico(
-        valores, valores.index(bajo), False, moneda
+    puntos = _pico(valores, valores.index(alto), True, moneda, escala) + _pico(
+        valores, valores.index(bajo), False, moneda, escala
     )
     return f'<div class="grafica__picos">{puntos}{CURSOR}</div>'
 
 
-def puntos_cursor(puntos: list[tuple[datetime, float]], moneda: str) -> list:
-    """Para el JS de la gráfica: [hora, cifra, altura en %] de cada punto."""
+def puntos_cursor(
+    puntos: list[tuple[datetime, float]],
+    moneda: str,
+    escala: tuple[float, float] | None = None,
+    btc: list[float] | None = None,
+) -> list:
+    """Para el JS de la gráfica: [hora, cifra, altura en %, en bitcoin] de cada
+    punto. Lo de bitcoin va a None si no hay esa línea."""
     valores = [v for _, v in puntos]
-    suelo, techo = min(valores), max(valores)
-    # La misma cuenta que trazo(): si no, el punto no caería encima de la línea.
-    rango = techo - suelo
+    escala = escala or (min(valores), max(valores))
     return [
         [
             f"{t.astimezone():%d/%m %H:%M}",
             _importe(v, moneda),
-            round(100 - (v - suelo) / rango * 100, 1) if rango else 50,
+            _altura(v, escala),
+            _importe(btc[i], moneda) if btc else None,
         ]
-        for t, v in puntos
+        for i, (t, v) in enumerate(puntos)
     ]
+
+
+def _leyenda(valores: list[float], btc: list[float], desde, moneda: str) -> str:
+    diferencia = btc[-1] - valores[-1]
+    if abs(diferencia) < 0.005:
+        cuanto = "lo mismo que tienes"
+    else:
+        lado = "más" if diferencia > 0 else "menos"
+        cuanto = f"{_dinero(abs(diferencia), moneda)} {lado} de lo que tienes"
+    return (
+        '<p class="grafica__leyenda">'
+        '<span class="leyenda leyenda--tuya">Tu cartera</span>'
+        '<span class="leyenda leyenda--btc">'
+        f"Todo en bitcoin desde el {desde:%d/%m}: {_dinero(btc[-1], moneda)}, "
+        f"{cuanto}</span></p>"
+    )
 
 
 def _grafica(p: Panel) -> str:
@@ -272,16 +304,30 @@ def _grafica(p: Panel) -> str:
 
     puntos = muestrear(p.serie, PUNTOS_GRAFICA)
     valores = [v for _, v in puntos]
-    linea = trazo(valores, ANCHO, ALTO)
+    # Si solo tienes bitcoin, las dos líneas serían la misma.
+    solo_btc = all(f.coin_id == "bitcoin" for f in p.filas)
+    btc = [] if solo_btc else en_bitcoin(puntos, p.serie_btc)
+    # Una sola escala para las dos, o no se podrían comparar a ojo.
+    escala = (min(valores + btc), max(valores + btc))
+    linea = trazo(valores, ANCHO, ALTO, escala)
     area = f"{linea} L{ANCHO},{ALTO} L0,{ALTO} Z"
+    linea_btc = (
+        f'<path class="grafica__btc" d="{trazo(btc, ANCHO, ALTO, escala)}" '
+        'vector-effect="non-scaling-stroke"/>'
+        if btc
+        else ""
+    )
     tono = _tono(valores[-1] - valores[0])
     desde, hasta = puntos[0][0].astimezone(), puntos[-1][0].astimezone()
-    datos = escape(json.dumps(puntos_cursor(puntos, p.moneda), ensure_ascii=False))
+    datos = escape(
+        json.dumps(puntos_cursor(puntos, p.moneda, escala, btc), ensure_ascii=False)
+    )
+    leyenda = _leyenda(valores, btc, desde, p.moneda) if btc else ""
 
     cuerpo = f"""
 <div class="grafica grafica--{tono}">
   <div class="grafica__zona" data-puntos="{datos}">
-  {_picos(valores, p.moneda)}
+  {_picos(valores, p.moneda, escala)}
   <svg viewBox="0 0 {ANCHO} {ALTO}" preserveAspectRatio="none" role="img"
        aria-label="Lo que ha valido tu cartera en los últimos días">
     <defs>
@@ -291,12 +337,14 @@ def _grafica(p: Panel) -> str:
       </linearGradient>
     </defs>
     <path class="grafica__area" d="{area}"/>
+    {linea_btc}
     <path class="grafica__linea" d="{linea}" vector-effect="non-scaling-stroke"/>
   </svg>
   </div>
   <div class="grafica__fechas">
     <span>{desde:%d/%m %H:%M}</span><span>{hasta:%d/%m %H:%M}</span>
   </div>
+  {leyenda}
 </div>"""
     semana = cambio(p.serie[-1][1], p.serie[0][1])
     titulo = "Los últimos 7 días"
@@ -916,8 +964,32 @@ h2 {
   box-shadow: 0 0 0 3px var(--cristal);
   animation: aparece 500ms var(--muelle) both 400ms;
 }
-.pico--abajo { top: 100%; }
-.grafica__picos--plana .pico { top: 50%; }
+.grafica__btc {
+  fill: none;
+  stroke: var(--aviso);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 5;
+  opacity: 0.75;
+}
+.grafica__leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  color: var(--suave);
+}
+.leyenda::before {
+  content: "";
+  display: inline-block;
+  width: 16px;
+  margin-right: 6px;
+  vertical-align: middle;
+  border-top: 2px solid var(--acento);
+}
+.grafica--sube .leyenda--tuya::before { border-top-color: var(--sube); }
+.grafica--baja .leyenda--tuya::before { border-top-color: var(--baja); }
+.leyenda--btc::before { border-top: 2px dashed var(--aviso); }
 
 .grafica__zona { touch-action: pan-y; }
 .cursor, .cursor__punto, .cursor__texto {
@@ -1429,7 +1501,8 @@ JS = f"""
       linea.style.left = punto.style.left = texto.style.left = x;
       texto.style.setProperty('--x', x);
       punto.style.top = p[2] + '%';
-      texto.textContent = (oculto() ? '•••' : p[1]) + ' · ' + p[0];
+      var btc = p[3] ? ' · en bitcoin ' + (oculto() ? '•••' : p[3]) : '';
+      texto.textContent = (oculto() ? '•••' : p[1]) + btc + ' · ' + p[0];
       zona.classList.add('viendo');
     }}
     zona.addEventListener('pointermove', mirar);

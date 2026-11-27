@@ -2245,6 +2245,12 @@ def datos_panel(config: Config) -> panel.Panel:
         faltan,
         panel.total_antes(posiciones, antes),
         database.ultimos_avisos(config.database_path),
+        [
+            (cuando, precio)
+            for cuando, _, precio in database.get_series(
+                config.database_path, ["bitcoin"], 24 * 7, config.vs_currency
+            )
+        ],
     )
 
 

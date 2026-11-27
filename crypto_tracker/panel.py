@@ -86,6 +86,8 @@ class Panel:
     total_antes: float | None = None
     # El último aviso mandado de cada cripto, para los avisos del navegador.
     avisos: dict[str, Aviso] = field(default_factory=dict)
+    # El precio de bitcoin en esos 7 días, para la línea de "todo en bitcoin".
+    serie_btc: list[tuple[datetime, float]] = field(default_factory=list)
 
     @property
     def total(self) -> float | None:
@@ -202,11 +204,36 @@ def hace(actualizado: datetime | None, ahora: datetime) -> str:
     return f"hace {horas // 24} días"
 
 
-def trazo(valores: list[float], ancho: float, alto: float) -> str:
-    """La línea en un path de SVG. Vacío si no hay al menos dos puntos."""
+def en_bitcoin(
+    serie: list[tuple[datetime, float]], btc: list[tuple[datetime, float]]
+) -> list[float]:
+    """Lo que valdría la cartera si al principio de la serie lo hubieras pasado
+    todo a bitcoin. Vacío si no hay precio de bitcoin para ese principio."""
+    btc = sorted(btc)
+    valores, i, ultimo = [], 0, None
+    for cuando, _ in serie:
+        # El último precio guardado hasta ese momento: no van a la misma hora.
+        while i < len(btc) and btc[i][0] <= cuando:
+            ultimo = btc[i][1]
+            i += 1
+        if ultimo is None:
+            return []
+        valores.append(ultimo)
+    return [serie[0][1] * v / valores[0] for v in valores]
+
+
+def trazo(
+    valores: list[float],
+    ancho: float,
+    alto: float,
+    escala: tuple[float, float] | None = None,
+) -> str:
+    """La línea en un path de SVG. Vacío si no hay al menos dos puntos.
+
+    escala es (suelo, techo), para que dos líneas compartan alturas."""
     if len(valores) < 2:
         return ""
-    suelo, techo = min(valores), max(valores)
+    suelo, techo = escala or (min(valores), max(valores))
     # Plano: a media altura, que dividir por cero no dibuja nada.
     rango = techo - suelo or 1
     medio = 0.5 if techo == suelo else None

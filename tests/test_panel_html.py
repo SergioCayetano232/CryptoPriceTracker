@@ -247,8 +247,8 @@ def test_los_puntos_para_el_cursor_de_la_grafica():
 
     local = AHORA.astimezone()
     # El más alto arriba del todo (0 %) y el más bajo abajo (100 %).
-    assert datos[0] == [f"{local:%d/%m %H:%M}", "€100,00", 100.0]
-    assert datos[1][1:] == ["€200,00", 0.0]
+    assert datos[0] == [f"{local:%d/%m %H:%M}", "€100,00", 100.0, None]
+    assert datos[1][1:] == ["€200,00", 0.0, None]
 
 
 def test_grafica_plana_deja_el_cursor_a_media_altura():
@@ -311,6 +311,32 @@ def test_sin_cartera_no_hay_simulador():
     html = pagina(_panel(filas=[]), AHORA, parado=False)
 
     assert "data-sim=" not in html
+
+
+def test_la_grafica_dibuja_lo_mismo_en_bitcoin():
+    filas, _ = panel.filas_cartera(
+        [Posicion("ethereum", 1.0, 1500.0)], {"ethereum": 2000.0}, {}, {}
+    )
+    serie = [(AHORA - timedelta(hours=h), 2000.0) for h in range(10, 0, -1)]
+    # Bitcoin sube un 9 % en esas horas (de 50.000 a 54.500) y la cartera no se mueve.
+    btc = [
+        (AHORA - timedelta(hours=h), 50000.0 + (10 - h) * 500) for h in range(11, 0, -1)
+    ]
+
+    html = pagina(_panel(filas=filas, serie=serie, serie_btc=btc), AHORA, parado=False)
+
+    assert 'class="grafica__btc"' in html
+    assert "€2.180,00</span>, <span" in html
+    assert "€180,00</span> más de lo que tienes" in html
+
+
+def test_si_solo_tienes_bitcoin_no_hay_segunda_linea():
+    serie = [(AHORA - timedelta(hours=h), 6000.0 + h) for h in range(10, 0, -1)]
+    btc = [(AHORA - timedelta(hours=h), 60000.0) for h in range(11, 0, -1)]
+
+    html = pagina(_panel(serie=serie, serie_btc=btc), AHORA, parado=False)
+
+    assert 'class="grafica__btc"' not in html
 
 
 def test_sin_cartera_explica_como_ponerla():
