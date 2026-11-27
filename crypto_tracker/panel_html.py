@@ -144,11 +144,11 @@ def _cabecera(p: Panel, ahora: datetime, parado: bool) -> str:
     <span class="marca">CryptoPriceTracker</span>
     <span class="cabecera__lado">
       <button class="estado estado--{estado}" type="button"
-              title="Actualizar ahora">
+              title="Actualizar ahora (R)">
         <span class="estado__punto"></span>{aviso}
       </button>
       <button class="ojo" type="button" aria-pressed="false"
-              title="Ocultar cifras">👁</button>
+              title="Ocultar cifras (O)">👁</button>
     </span>
   </div>
   <p class="etiqueta">Tu cartera</p>
@@ -922,17 +922,24 @@ JS = f"""
     var ojo = document.querySelector('.ojo');
     if (ojo) {{
       ojo.setAttribute('aria-pressed', si);
-      ojo.title = si ? 'Enseñar cifras' : 'Ocultar cifras';
+      ojo.title = (si ? 'Enseñar' : 'Ocultar') + ' cifras (O)';
       ojo.textContent = si ? '🙈' : '👁';
     }}
   }}
+  function alternar() {{
+    localStorage.setItem('{CLAVE}', oculto() ? '0' : '1');
+    tapar();
+  }}
   document.addEventListener('click', function (e) {{
-    if (e.target.closest('.ojo')) {{
-      localStorage.setItem('{CLAVE}', oculto() ? '0' : '1');
-      tapar();
-    }} else if (e.target.closest('.estado')) {{
-      refrescar();
-    }}
+    if (e.target.closest('.ojo')) alternar();
+    else if (e.target.closest('.estado')) refrescar();
+  }});
+  document.addEventListener('keydown', function (e) {{
+    // Con Cmd o Ctrl es del navegador: Cmd+R tiene que seguir recargando.
+    if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
+    var tecla = e.key.toLowerCase();
+    if (tecla === 'r') refrescar();
+    else if (tecla === 'o') alternar();
   }});
   tapar();
   function cifras(raiz) {{

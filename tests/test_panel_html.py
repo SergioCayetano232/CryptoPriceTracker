@@ -133,7 +133,8 @@ def test_el_estado_es_un_boton_para_actualizar():
     html = pagina(_panel(), AHORA, parado=False)
 
     assert '<button class="estado estado--vivo" type="button"' in html
-    assert 'title="Actualizar ahora"' in html
+    assert 'title="Actualizar ahora (R)"' in html
+    assert 'title="Ocultar cifras (O)"' in html
 
 
 def test_cada_cripto_enlaza_a_su_pagina_de_coingecko():
