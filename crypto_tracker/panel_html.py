@@ -7,6 +7,7 @@ from urllib.parse import quote
 from . import version
 from .mensajes.base import SIMBOLOS, _num, describir
 from .panel import PUNTOS_GRAFICA, Alerta, Fila, Panel, Vigilada, hace, muestrear, trazo
+from .recordar import DIAS
 
 # Cada cuánto se refresca sola, en segundos. Los precios no cambian más rápido.
 REFRESCO = 60
@@ -65,14 +66,27 @@ def _mini(linea: list[float], tono: str) -> str:
     )
 
 
+def _cuando(p: Panel, ahora: datetime) -> str:
+    texto = hace(p.actualizado, ahora)
+    if p.actualizado is None:
+        return texto
+    local = p.actualizado.astimezone()
+    exacta = f"{DIAS[local.weekday()]} {local:%d/%m} a las {local:%H:%M:%S}"
+    # En el móvil no hay ratón que enseñe el title: allí va la hora a la vista.
+    return (
+        f'<time datetime="{local.isoformat()}" title="{exacta}">{texto}</time>'
+        f'<span class="estado__hora"> · {local:%d/%m %H:%M}</span>'
+    )
+
+
 def _cabecera(p: Panel, ahora: datetime, parado: bool) -> str:
     estado = "parado" if parado else "vivo"
+    cuando = _cuando(p, ahora)
     aviso = (
         '<span class="estado__texto">El bot no guarda precios desde '
-        f"{hace(p.actualizado, ahora)}. ¿Está encendido?</span>"
+        f"{cuando}. ¿Está encendido?</span>"
         if parado
-        else f'<span class="estado__texto">Actualizado {hace(p.actualizado, ahora)}'
-        "</span>"
+        else f'<span class="estado__texto">Actualizado {cuando}</span>'
     )
     if p.total is None:
         grande = '<p class="total total--vacio">Sin cartera</p>'
@@ -539,6 +553,11 @@ h2 {
 }
 
 .estado--parado .estado__punto { background: var(--aviso); animation: none; }
+.estado__texto time { cursor: help; }
+.estado__hora { display: none; }
+@media (hover: none) {
+  .estado__hora { display: inline; }
+}
 .estado--parado .estado__texto { color: var(--aviso); font-weight: 600; }
 
 @keyframes pulso {

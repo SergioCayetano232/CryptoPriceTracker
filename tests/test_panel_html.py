@@ -31,7 +31,8 @@ def test_sale_el_total_y_lo_ganado():
 
     assert "€6.000,00" in html
     assert "€1.000,00</span> · +20,00 %" in html
-    assert "Actualizado hace 2 min" in html
+    assert "Actualizado <time" in html
+    assert ">hace 2 min</time>" in html
 
 
 def test_el_total_sale_en_la_pestana():
@@ -87,6 +88,21 @@ def test_la_barra_del_movil_toma_el_fondo_de_cada_modo():
     assert "--fondo: #0d0b16;" in html
 
 
+def test_al_pasar_el_raton_sale_la_hora_exacta():
+    html = pagina(_panel(), AHORA, parado=False)
+
+    local = (AHORA - timedelta(minutes=2)).astimezone()
+    assert f'title="viernes {local:%d/%m} a las {local:%H:%M:%S}"' in html
+    assert f'<span class="estado__hora"> · {local:%d/%m %H:%M}</span>' in html
+
+
+def test_sin_precios_no_hay_hora_que_enseñar():
+    html = pagina(_panel(actualizado=None), AHORA, parado=False)
+
+    assert "todavía sin precios" in html
+    assert "<time" not in html
+
+
 def test_sin_cartera_explica_como_ponerla():
     html = pagina(_panel(filas=[]), AHORA, parado=False)
 
@@ -99,7 +115,8 @@ def test_avisa_si_el_bot_esta_parado():
     html = pagina(_panel(actualizado=AHORA - timedelta(hours=3)), AHORA, parado=True)
 
     assert "estado--parado" in html
-    assert "no guarda precios desde hace 3 h" in html
+    assert "no guarda precios desde <time" in html
+    assert ">hace 3 h</time>" in html
 
 
 def test_la_nota_de_una_alerta_no_se_cuela_como_html():
