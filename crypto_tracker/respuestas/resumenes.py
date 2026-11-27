@@ -26,6 +26,7 @@ from .. import (
     periodo,
     proximo,
     puntuales,
+    resumenia,
     semanal,
     tarjeta_anual,
     telegram,
@@ -583,6 +584,27 @@ def _semana(config: Config) -> str | comandos.Foto:
     if semana is None:
         return "Aún no tengo precios de esta semana. Vuelve a preguntar en un rato."
     return _foto_semana(config, semana)
+
+
+def _resumenia(config: Config) -> Respuesta:
+    config = _con_cambios(config)
+    if not config.cartera:
+        return SIN_CARTERA
+    semana = _leer_semana(config)
+    if semana is None:
+        return "Aún no tengo precios de esta semana. Vuelve a preguntar en un rato."
+    valores = {}
+    for p in config.cartera:
+        precio = database.get_last_price(config.database_path, p.coin_id)
+        if precio is not None:
+            valores[p.coin_id] = p.cantidad * precio
+    total = sum(valores.values())
+    pesos = {c: v / total * 100 for c, v in valores.items()} if total else {}
+    try:
+        frases = resumenia.escribir(resumenia.datos(semana, config.vs_currency, pesos))
+    except resumenia.ResumenIAError as e:
+        return telegram.escape(str(e))
+    return alerts.formatear_resumenia(frases)
 
 
 def _mes(config: Config) -> str | comandos.Foto:

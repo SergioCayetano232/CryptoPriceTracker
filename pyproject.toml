@@ -7,6 +7,8 @@ license = { file = "LICENSE" }
 requires-python = ">=3.10"
 dependencies = [
     "requests==2.32.3",
+    # Solo para /resumenia; sin clave, el resto del bot va igual.
+    "anthropic==2.14.0",
     "python-dotenv==1.0.1",
     # Rango y no version fija: las nuevas ya no van con Python 3.10
     "matplotlib>=3.8,<4",

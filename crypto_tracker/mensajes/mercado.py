@@ -1037,6 +1037,13 @@ def formatear_ruido(
     return "\n".join(texto)
 
 
+def formatear_resumenia(frases: str) -> str:
+    return (
+        f"🧠 <b>Tu semana, contada</b>\n\n{escape(frases)}\n\n"
+        "<i>Lo ha escrito Claude con los cambios de tu semana.</i>"
+    )
+
+
 def formatear_no_encuentro(coin_ids: list[str]) -> str:
     nombres = ", ".join(f"<b>{escape(c)}</b>" for c in coin_ids)
     return (

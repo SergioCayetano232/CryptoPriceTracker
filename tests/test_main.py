@@ -6303,6 +6303,41 @@ def test_semana_a_mano_no_quita_la_del_domingo(con_semana, sin_fotos_de_verdad):
     assert len(sin_fotos_de_verdad) == 2
 
 
+def test_resumenia_manda_lo_que_escribe_claude(con_semana, enviados, monkeypatch):
+    from crypto_tracker import resumenia
+
+    _semana_guardada(con_semana)
+    pedidos = []
+
+    def escribir(texto):
+        pedidos.append(texto)
+        return "Tu cartera ha subido <un poco>."
+
+    monkeypatch.setattr(resumenia, "escribir", escribir)
+
+    main.atender(con_semana, _mensaje("/resumenia"))
+
+    assert "🧠 <b>Tu semana, contada</b>" in enviados[0]
+    # Lo de Claude va escapado: Telegram no puede leerlo como HTML.
+    assert "Tu cartera ha subido &lt;un poco&gt;." in enviados[0]
+    assert "% de la cartera" in pedidos[0]
+
+
+def test_resumenia_sin_clave_lo_explica(con_semana, enviados, monkeypatch):
+    from crypto_tracker import resumenia
+
+    _semana_guardada(con_semana)
+
+    def sin_clave(texto):
+        raise resumenia.ResumenIAError("Para esto necesito una clave de Claude")
+
+    monkeypatch.setattr(resumenia, "escribir", sin_clave)
+
+    main.atender(con_semana, _mensaje("/resumenia"))
+
+    assert "necesito una clave de Claude" in enviados[0]
+
+
 def test_semana_sin_cartera(config, enviados):
     main.atender(config, _mensaje("/semana"))
 

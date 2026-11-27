@@ -256,6 +256,7 @@ from .mensajes.mercado import (
     formatear_precio,
     formatear_precios,
     formatear_quieta,
+    formatear_resumenia,
     formatear_ruido,
     formatear_sectores,
     formatear_semana,

@@ -45,6 +45,7 @@ TEMAS = [
             "rebalanceo",
             "ideal",
             "semana",
+            "resumenia",
             "mes",
             "anual",
             "record",
