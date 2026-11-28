@@ -5,7 +5,7 @@ from datetime import date, datetime
 from html import escape
 from urllib.parse import parse_qs, quote, urlencode, urlsplit
 
-from . import impuestos, version
+from . import impuestos, miedo, version
 from .mensajes.base import SIMBOLOS, _num, describir
 from .mes import MESES
 from .panel import (
@@ -216,7 +216,31 @@ def _cabecera(p: Panel, ahora: datetime, parado: bool) -> str:
   <p class="etiqueta">Tu cartera</p>
   {grande}
   {detalle}
+  {_animo(p)}
 </header>"""
+
+
+def matiz(valor: int) -> int:
+    """El tono del fondo: de rojo con miedo extremo (0) a verde con codicia
+    extrema (100), pasando por el ámbar."""
+    return round(valor * 1.4)
+
+
+def _animo(p: Panel) -> str:
+    if p.miedo is None:
+        return ""
+    emoji, nombre = miedo.nombre(p.miedo)
+    return (
+        '<p class="animo" title="Índice de miedo y codicia de alternative.me">'
+        f'<span class="animo__punto"></span>Mercado: {emoji} {escape(nombre)} · '
+        f"{p.miedo.valor}/100</p>"
+    )
+
+
+def _fondo(p: Panel) -> str:
+    if p.miedo is None:
+        return ""
+    return f' class="con-animo" style="--animo:{matiz(p.miedo.valor)}"'
 
 
 def _altura(v: float, escala: tuple[float, float]) -> float:
@@ -743,7 +767,7 @@ def pagina(p: Panel, ahora: datetime, parado: bool) -> str:
 <script>{ANTES}</script>
 <style>{CSS}</style>
 </head>
-<body>
+<body{_fondo(p)}>
 <main class="panel">{contenido}</main>
 <footer class="pie">
   CryptoPriceTracker {escape(version.numero() or "")} · se actualiza sola cada minuto ·
@@ -828,6 +852,27 @@ body {
     radial-gradient(35vw 35vw at 100% 30%, var(--mancha-2), transparent 70%),
     radial-gradient(45vw 45vw at 30% 110%, var(--mancha-3), transparent 70%);
   background-attachment: fixed;
+}
+
+/* Con el índice de miedo, la mancha de arriba toma su color. */
+body.con-animo { --mancha-1: hsl(var(--animo) 85% 80%); }
+@media (prefers-color-scheme: dark) {
+  body.con-animo { --mancha-1: hsl(var(--animo) 55% 25%); }
+}
+
+.animo {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 14px 0 0;
+  color: var(--suave);
+  font-size: 13px;
+}
+.animo__punto {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: hsl(var(--animo) 75% 48%);
 }
 
 /* El grano: sin él, el degradado parece de plantilla. */
@@ -1794,6 +1839,9 @@ JS = f"""
         var antes = cifras(document);
         document.documentElement.classList.add('recargado');
         document.querySelector('main').replaceWith(nuevo.querySelector('main'));
+        // El fondo va en body, que no se cambia: el tono del día, a mano.
+        document.body.className = nuevo.body.className;
+        document.body.style.cssText = nuevo.body.style.cssText;
         titulo = nuevo.title;
         enganchar();
         alFinal();

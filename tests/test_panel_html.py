@@ -91,6 +91,26 @@ def test_la_app_instalada_abre_con_la_clave():
     assert "'manifest.webmanifest' + location.search" in ANTES
 
 
+def test_el_fondo_se_tine_con_el_miedo_del_mercado():
+    from datetime import date
+
+    from crypto_tracker.miedo import Indice
+    from crypto_tracker.panel_html import matiz
+
+    html = pagina(_panel(miedo=Indice(20, "Fear", date(2026, 11, 28))), AHORA, False)
+
+    assert '<body class="con-animo" style="--animo:28">' in html
+    assert "Mercado: 😟 Miedo · 20/100" in html
+    assert (matiz(0), matiz(50), matiz(100)) == (0, 70, 140)
+
+
+def test_sin_miedo_el_fondo_de_siempre():
+    html = pagina(_panel(), AHORA, parado=False)
+
+    assert "<body>" in html
+    assert 'class="animo"' not in html
+
+
 def test_el_icono_va_en_rojo_si_baja_en_el_dia():
     assert "%23e0445a" in pagina(_panel(total_antes=7000.0), AHORA, parado=False)
 

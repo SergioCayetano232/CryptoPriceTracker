@@ -10,6 +10,7 @@ from urllib.parse import parse_qs, parse_qsl, urlsplit
 
 from .avisados import Aviso
 from .config import Posicion, Watch
+from .miedo import Indice
 from .puntuales import CARTERA, Puntual
 
 # Más puntos que esto no se ven en pantalla y solo engordan la página.
@@ -110,6 +111,8 @@ class Panel:
     # El precio de bitcoin en esos 7 días, para la línea de "todo en bitcoin".
     serie_btc: list[tuple[datetime, float]] = field(default_factory=list)
     calendario: list[Dia] = field(default_factory=list)
+    # El índice de miedo y codicia de hoy, para teñir el fondo.
+    miedo: Indice | None = None
 
     @property
     def total(self) -> float | None:

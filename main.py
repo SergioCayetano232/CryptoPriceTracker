@@ -64,6 +64,7 @@ from crypto_tracker import (
     latido,
     maximo,
     merge,
+    miedo,
     movimientos,
     panel,
     panel_html,
@@ -2270,7 +2271,28 @@ def datos_panel(config: Config) -> panel.Panel:
             ),
             date.today(),
         ),
+        miedo_panel(time.time()),
     )
+
+
+# El índice cambia una vez al día: con preguntar cada hora sobra.
+CADA_MIEDO = 3600
+_miedo_panel: dict = {"cuando": None, "indice": None}
+
+
+def miedo_panel(ahora: float) -> miedo.Indice | None:
+    """El de hoy, guardado una hora. Si alternative.me falla, el de antes."""
+    cuando = _miedo_panel["cuando"]
+    if cuando is None or ahora - cuando >= CADA_MIEDO:
+        _miedo_panel["cuando"] = ahora
+        try:
+            lista = miedo.historico(1)
+        except miedo.MiedoError as e:
+            logger.debug("Sin índice de miedo para el panel: %s", e)
+            lista = []
+        if lista:
+            _miedo_panel["indice"] = lista[0]
+    return _miedo_panel["indice"]
 
 
 def pagina_panel(config: Config) -> str:

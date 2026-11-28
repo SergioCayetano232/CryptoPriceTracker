@@ -90,6 +90,7 @@ def sin_miedo_de_verdad(monkeypatch):
     """El resumen diario lo pide; sin esto los tests irian a alternative.me."""
     monkeypatch.setattr(miedo, "pedir", lambda: [])
     monkeypatch.setattr(miedo, "historico", lambda dias: [])
+    monkeypatch.setattr(main, "_miedo_panel", {"cuando": None, "indice": None})
 
 
 @pytest.fixture(autouse=True)
@@ -12871,6 +12872,28 @@ def test_panel_con_url_manda_el_boton(config, con_teclado, monkeypatch):
     assert con_teclado[0][1]["botones"] == [
         [("Abrir el panel", "https://mi-panel.example/app")]
     ]
+
+
+def test_el_panel_pide_el_miedo_como_mucho_cada_hora(monkeypatch):
+    from datetime import date
+
+    hoy = miedo.Indice(20, "Extreme Fear", date(2026, 11, 28))
+    pedidos = []
+
+    def historico(dias):
+        pedidos.append(dias)
+        if len(pedidos) > 1:
+            raise miedo.MiedoError("caído")
+        return [hoy]
+
+    monkeypatch.setattr(miedo, "historico", historico)
+
+    assert main.miedo_panel(1000) == hoy
+    assert main.miedo_panel(1000 + 60) == hoy
+    assert pedidos == [1]
+    # Pasada la hora vuelve a preguntar; si falla, se queda con el de antes.
+    assert main.miedo_panel(1000 + main.CADA_MIEDO) == hoy
+    assert pedidos == [1, 1]
 
 
 # --- /impuestos csv ---
