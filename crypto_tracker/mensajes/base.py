@@ -85,7 +85,9 @@ def _quien_condicion(c: Condicion) -> str:
 
 
 def _signo(porcentaje: float) -> str:
-    return f"{porcentaje:+.1f}%".replace(".", ",")
+    # Un -0,00001 de sumar decimales saldría "-0,0%": el + 0.0 lo deja en +0,0.
+    valor = round(porcentaje, 1) + 0.0
+    return f"{valor:+.1f}%".replace(".", ",")
 
 
 def describir(watch: Watch, currency: str) -> str:
