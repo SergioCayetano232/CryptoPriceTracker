@@ -1,7 +1,10 @@
 """El panel web: lo que tienes, lo que vigilas y tus alertas, en una página."""
 
+import hmac
+import os
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
+from urllib.parse import parse_qs, urlsplit
 
 from .avisados import Aviso
 from .config import Posicion, Watch
@@ -10,6 +13,9 @@ from .puntuales import CARTERA, Puntual
 # Más puntos que esto no se ven en pantalla y solo engordan la página.
 PUNTOS_GRAFICA = 160
 PUNTOS_MINI = 40
+
+# Para abrir el panel a la red de casa: más corta se adivina probando.
+MIN_CLAVE = 16
 
 # Si en tres consultas seguidas no ha guardado nada, algo le pasa al bot.
 CICLOS_PARADO = 3
@@ -191,6 +197,43 @@ def alertas(
     ]
     # Las que no tienen precio, al final: no se sabe lo que les falta.
     return sorted(lista, key=lambda a: (a.falta is None, abs(a.falta or 0)))
+
+
+def clave_panel() -> str:
+    """La de PANEL_CLAVE en el .env. Nunca se enseña ni se loguea."""
+    return os.getenv("PANEL_CLAVE", "").strip()
+
+
+def acceso(ruta: str, clave: str) -> bool:
+    """Si la petición trae la clave. Sin clave puesta, el panel es solo local y
+    no hace falta."""
+    if not clave:
+        return True
+    dada = parse_qs(urlsplit(ruta).query).get("clave", [""])[0]
+    # compare_digest tarda lo mismo acierte o no: no da pistas de por dónde va.
+    return hmac.compare_digest(dada.encode(), clave.encode())
+
+
+def a_json(p: "Panel", parado_: bool) -> dict:
+    """Lo justo para un widget: el total, cómo va y cada cripto."""
+    return {
+        "moneda": p.moneda,
+        "total": p.total,
+        "cambio_24h": p.cambio_24h,
+        "ganancia": p.ganancia,
+        "porcentaje": p.porcentaje,
+        "actualizado": p.actualizado.isoformat() if p.actualizado else None,
+        "parado": parado_,
+        "criptos": [
+            {
+                "id": f.coin_id,
+                "valor": f.valor,
+                "cambio_24h": f.cambio_24h,
+                "peso": f.peso,
+            }
+            for f in p.filas
+        ],
+    }
 
 
 def parado(actualizado: datetime | None, ahora: datetime, intervalo: int) -> bool:

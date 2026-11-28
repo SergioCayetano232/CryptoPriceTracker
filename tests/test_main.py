@@ -12735,6 +12735,75 @@ def test_panel_se_sirve_por_http(config, monkeypatch):
         hilo.join()
 
 
+def _panel_en_marcha(monkeypatch, config, red):
+    import threading
+    from http.server import HTTPServer
+
+    hecho = threading.Event()
+    servidor = {}
+
+    class EnPuertoLibre(HTTPServer):
+        def __init__(self, direccion, atender):
+            servidor["host"] = direccion[0]
+            super().__init__(("127.0.0.1", 0), atender)
+            servidor["este"] = self
+            hecho.set()
+
+    monkeypatch.setattr(main, "HTTPServer", EnPuertoLibre)
+    hilo = threading.Thread(target=main.servir_panel, args=(config, 0, red))
+    hilo.start()
+    hecho.wait(5)
+    return servidor, hilo
+
+
+def test_panel_en_la_red_pide_la_clave(config, monkeypatch):
+    import json
+    import urllib.error
+    import urllib.request
+
+    clave = "una-clave-larga-de-verdad"
+    monkeypatch.setenv("PANEL_CLAVE", clave)
+    servidor, hilo = _panel_en_marcha(monkeypatch, config, True)
+    base = f"http://127.0.0.1:{servidor['este'].server_address[1]}"
+    try:
+        # Con --red escucha en todas las tarjetas, no solo en este ordenador.
+        assert servidor["host"] == "0.0.0.0"
+        for ruta in ("/", "/api.json", "/api.json?clave=otra"):
+            with pytest.raises(urllib.error.HTTPError) as e:
+                urllib.request.urlopen(base + ruta)
+            assert e.value.code == 403
+        with urllib.request.urlopen(f"{base}/api.json?clave={clave}") as r:
+            assert r.headers["Content-Type"].startswith("application/json")
+            assert "criptos" in json.loads(r.read())
+        with urllib.request.urlopen(f"{base}/?clave={clave}") as r:
+            assert "CryptoPriceTracker" in r.read().decode()
+    finally:
+        servidor["este"].shutdown()
+        hilo.join()
+
+
+def test_panel_en_la_red_sin_clave_no_arranca(config, monkeypatch):
+    monkeypatch.setenv("PANEL_CLAVE", "corta")
+
+    assert main.servir_panel(config, 0, red=True) == 1
+
+
+def test_panel_local_da_el_json_sin_clave(config, monkeypatch):
+    import json
+    import urllib.request
+
+    monkeypatch.setenv("PANEL_CLAVE", "una-clave-larga-de-verdad")
+    servidor, hilo = _panel_en_marcha(monkeypatch, config, False)
+    base = f"http://127.0.0.1:{servidor['este'].server_address[1]}"
+    try:
+        assert servidor["host"] == "127.0.0.1"
+        with urllib.request.urlopen(base + "/api.json") as r:
+            assert json.loads(r.read())["criptos"] == []
+    finally:
+        servidor["este"].shutdown()
+        hilo.join()
+
+
 # --- /impuestos csv ---
 
 

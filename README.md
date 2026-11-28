@@ -819,6 +819,17 @@ puede estar abierto a la vez que `--loop`. Si el bot lleva un rato sin guardar
 precios, el panel te lo dice arriba. Solo se abre desde el mismo ordenador:
 enseña tu cartera y no pide contraseña.
 
+**En el móvil, con un widget:** pon en el `.env` una `PANEL_CLAVE` de al menos
+16 caracteres y arranca el panel abierto a tu red de casa:
+```
+python main.py --panel --red
+```
+Te dice la dirección (algo como `http://192.168.1.20:8000`). Sin `?clave=` y tu
+clave al final, contesta que no. En `/api.json?clave=...` están los datos en
+JSON. Para el widget del iPhone, instala [Scriptable](https://scriptable.app),
+pega `widgets/scriptable.js`, cambia la `URL` del principio y añade un widget
+de Scriptable a la pantalla de inicio. Solo llega con el móvil en la misma wifi.
+
 ---
 
 ## Dejarlo funcionando con Docker

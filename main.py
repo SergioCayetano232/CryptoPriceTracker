@@ -9,10 +9,14 @@ Uso:
     python main.py --unmute           vuelve a avisar
     python main.py --history bitcoin  muestra el historico guardado
     python main.py --panel            abre el panel web en el navegador
+    python main.py --panel --red      lo abre a tu red de casa, con PANEL_CLAVE
 """
 
 import argparse
+import json
 import logging
+import secrets
+import socket
 import sys
 import time
 from collections.abc import Callable
@@ -2274,22 +2278,60 @@ def pagina_panel(config: Config) -> str:
     )
 
 
-def servir_panel(config: Config, puerto: int) -> int:
-    """El panel en http://127.0.0.1:puerto hasta que lo pares con Ctrl+C."""
+def json_panel(config: Config) -> str:
+    datos = datos_panel(config)
+    ahora = datetime.now(timezone.utc)
+    parado = panel.parado(datos.actualizado, ahora, config.check_interval)
+    return json.dumps(panel.a_json(datos, parado), ensure_ascii=False)
+
+
+def ip_local() -> str:
+    """La de este ordenador en la red de casa, para decirte a dónde apuntar."""
+    # Conectar un socket UDP no manda nada: solo elige por qué tarjeta saldría.
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+        try:
+            s.connect(("10.255.255.255", 1))
+            return s.getsockname()[0]
+        except OSError:
+            return "IP-DE-ESTE-ORDENADOR"
+
+
+def servir_panel(config: Config, puerto: int, red: bool = False) -> int:
+    """El panel en http://127.0.0.1:puerto hasta que lo pares con Ctrl+C.
+
+    Con red, en toda la red de casa, y solo con la clave de PANEL_CLAVE."""
+    clave = panel.clave_panel() if red else ""
+    if red and len(clave) < panel.MIN_CLAVE:
+        logger.error(
+            "Para abrir el panel a tu red pon en el .env PANEL_CLAVE con al menos "
+            "%d caracteres. Por ejemplo: PANEL_CLAVE=%s",
+            panel.MIN_CLAVE,
+            secrets.token_urlsafe(18),
+        )
+        return 1
 
     class Atender(BaseHTTPRequestHandler):
         def do_GET(self) -> None:
-            if self.path.split("?")[0] != "/":
+            ruta = self.path.split("?")[0]
+            if ruta not in ("/", "/api.json"):
                 self.send_error(404)
                 return
+            if not panel.acceso(self.path, clave):
+                self.send_error(403, "Falta la clave del panel")
+                return
             try:
-                cuerpo = pagina_panel(config).encode()
+                if ruta == "/api.json":
+                    cuerpo = json_panel(config).encode()
+                    tipo = "application/json; charset=utf-8"
+                else:
+                    cuerpo = pagina_panel(config).encode()
+                    tipo = "text/html; charset=utf-8"
             except database.DatabaseError as e:
                 logger.error("No se pudo montar el panel: %s", e)
                 self.send_error(500, "No se pudo leer la base de datos")
                 return
             self.send_response(200)
-            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Type", tipo)
             self.send_header("Cache-Control", "no-store")
             self.end_headers()
             self.wfile.write(cuerpo)
@@ -2297,13 +2339,22 @@ def servir_panel(config: Config, puerto: int) -> int:
         def log_message(self, formato: str, *args) -> None:
             logger.debug("Panel: " + formato, *args)
 
-    # Solo en este ordenador: el panel enseña tu cartera y no pide contraseña.
+    # Sin --red, solo en este ordenador: así no hace falta clave.
+    host = "0.0.0.0" if red else "127.0.0.1"
     try:
-        servidor = HTTPServer(("127.0.0.1", puerto), Atender)
+        servidor = HTTPServer((host, puerto), Atender)
     except OSError as e:
         logger.error("No se pudo abrir el panel en el puerto %d: %s", puerto, e)
         return 1
-    logger.info("Panel en http://127.0.0.1:%d (Ctrl+C para pararlo)", puerto)
+    if red:
+        logger.info(
+            "Panel en tu red: http://%s:%d/?clave=(la de PANEL_CLAVE). "
+            "Para el widget: /api.json?clave=... (Ctrl+C para pararlo)",
+            ip_local(),
+            servidor.server_address[1],
+        )
+    else:
+        logger.info("Panel en http://127.0.0.1:%d (Ctrl+C para pararlo)", puerto)
     try:
         servidor.serve_forever()
     finally:
@@ -2372,6 +2423,11 @@ def main() -> int:
         metavar="PUERTO",
         help="abre el panel web en http://127.0.0.1:8000 (u otro puerto)",
     )
+    parser.add_argument(
+        "--red",
+        action="store_true",
+        help="con --panel, ábrelo a tu red de casa (pide PANEL_CLAVE en el .env)",
+    )
     parser.add_argument("-v", "--verbose", action="store_true", help="logs detallados")
     args = parser.parse_args()
 
@@ -2400,7 +2456,7 @@ def main() -> int:
         return mostrar_historico(config, args.history)
 
     if args.panel:
-        return servir_panel(config, args.panel)
+        return servir_panel(config, args.panel, args.red)
 
     if args.mute:
         return silenciar(config, args.mute)

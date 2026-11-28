@@ -237,3 +237,34 @@ def test_dias_cartera_como_mucho_un_año():
     dias = panel.dias_cartera([Posicion("bitcoin", 1.0)], cierres, hoy)
 
     assert len(dias) == 53 * 7
+
+
+def test_sin_clave_puesta_el_panel_local_no_la_pide():
+    assert panel.acceso("/", "")
+
+
+def test_con_clave_hay_que_traerla_bien():
+    clave = "una-clave-larga-de-verdad"
+
+    assert panel.acceso(f"/?clave={clave}", clave)
+    assert panel.acceso(f"/api.json?clave={clave}", clave)
+    assert not panel.acceso("/", clave)
+    assert not panel.acceso("/?clave=otra", clave)
+
+
+def test_a_json_lleva_lo_del_widget():
+    filas, _ = panel.filas_cartera(
+        [Posicion("bitcoin", 0.1, 5000.0)], {"bitcoin": 60000.0}, {}, {}
+    )
+    ahora = datetime(2026, 11, 20, 12, tzinfo=timezone.utc)
+    p = panel.Panel("eur", filas, [], [], [], ahora, total_antes=5000.0)
+
+    datos = panel.a_json(p, False)
+
+    assert datos["total"] == 6000.0
+    assert round(datos["cambio_24h"], 6) == 20.0
+    assert datos["ganancia"] == 1000.0
+    assert datos["actualizado"] == "2026-11-20T12:00:00+00:00"
+    assert datos["parado"] is False
+    assert datos["criptos"][0]["id"] == "bitcoin"
+    assert datos["criptos"][0]["peso"] == 100.0
