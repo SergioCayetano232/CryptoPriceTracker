@@ -6,7 +6,7 @@ import pytest
 
 from crypto_tracker.avisos.alerts import formatear_aniversarios
 from crypto_tracker.informes.aniversario import Aniversario, calcular, de_hoy
-from crypto_tracker.movimientos import Movimiento
+from crypto_tracker.inversion.movimientos import Movimiento
 
 
 def _mov(id, dia, tipo="compra", coin_id="bitcoin", cantidad=0.01, coste=600.0):

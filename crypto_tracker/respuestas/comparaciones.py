@@ -16,7 +16,6 @@ from .. import (
     cafe,
     cana,
     carnet,
-    cartera,
     churros,
     cine,
     coche,
@@ -65,6 +64,7 @@ from .. import (
     zapatillas,
 )
 from ..avisos import alerts
+from ..inversion import cartera
 from ..nucleo import botones, comandos, simbolos, telegram
 from ..nucleo.config import Config
 from .base import (

@@ -23,19 +23,19 @@ from ..avisos.recordar import Recordatorio, a_texto, de_texto
 from ..avisos.rezagada import Rezagada
 from ..avisos.voto import Voto
 from ..dominancia import Foto
-from ..fantasma import Fantasma
-from ..fantasma import a_texto as texto_fantasma
-from ..fantasma import de_texto as leer_fantasma
 from ..funding import Vigilado
+from ..inversion.fantasma import Fantasma
+from ..inversion.fantasma import a_texto as texto_fantasma
+from ..inversion.fantasma import de_texto as leer_fantasma
+from ..inversion.movimientos import Movimiento
+from ..inversion.pienso import Pienso
+from ..inversion.pienso import a_texto as texto_pienso
+from ..inversion.pienso import de_texto as leer_pienso
+from ..inversion.tesis import Tesis
+from ..inversion.tesis import a_texto as texto_tesis
+from ..inversion.tesis import de_texto as leer_tesis
 from ..longshort import Vigilado as VigiladoLongShort
-from ..movimientos import Movimiento
-from ..pienso import Pienso
-from ..pienso import a_texto as texto_pienso
-from ..pienso import de_texto as leer_pienso
 from ..prediccion import Prediccion
-from ..tesis import Tesis
-from ..tesis import a_texto as texto_tesis
-from ..tesis import de_texto as leer_tesis
 from .config import Posicion
 from .usuarios import Invitado
 

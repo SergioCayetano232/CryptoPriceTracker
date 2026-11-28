@@ -1,7 +1,7 @@
 """La moneda que pides al final de /precio, si no quieres la del .env."""
 
 from ..avisos.alerts import SIMBOLOS
-from ..convertir import NOMBRES
+from ..inversion.convertir import NOMBRES
 
 # usd, $, dólares... todos a su código.
 _MONEDAS = {codigo: codigo for codigo in SIMBOLOS}

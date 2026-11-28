@@ -17,26 +17,26 @@ from ..avisos.recordar import Recordatorio
 from ..avisos.rezagada import EJEMPLO as EJEMPLO_REZAGADA
 from ..avisos.rezagada import Rezagada
 from ..avisos.stop import Stop
-from ..emocion import EMOCIONES, Emociones, en_frase
-from ..emocion import Grupo as GrupoEmocion
 from ..encuesta import BANDA as BANDA_ENCUESTA
 from ..encuesta import Encuesta, limites, se_cierra
-from ..fantasma import BITCOIN as BITCOIN_FANTASMA
-from ..fantasma import EMPATE as EMPATE_FANTASMA
-from ..fantasma import Fantasma
-from ..herencia import Linea
+from ..inversion.emocion import EMOCIONES, Emociones, en_frase
+from ..inversion.emocion import Grupo as GrupoEmocion
+from ..inversion.fantasma import BITCOIN as BITCOIN_FANTASMA
+from ..inversion.fantasma import EMPATE as EMPATE_FANTASMA
+from ..inversion.fantasma import Fantasma
+from ..inversion.herencia import Linea
+from ..inversion.movimientos import texto_cantidad
+from ..inversion.pienso import IGUAL as IGUAL_PIENSO
+from ..inversion.pienso import SUBIDON, Pienso
+from ..inversion.tesis import EJEMPLO as EJEMPLO_TESIS
+from ..inversion.tesis import Tesis, marcador, pendientes
 from ..liga import Puesto, posiciones
 from ..maximo import hace
 from ..miedo import Indice
 from ..miedo import nombre as nombre_miedo
-from ..movimientos import texto_cantidad
 from ..nucleo.config import Watch
 from ..nucleo.telegram import escape
-from ..pienso import IGUAL as IGUAL_PIENSO
-from ..pienso import SUBIDON, Pienso
 from ..prediccion import Marcador, Prediccion
-from ..tesis import EJEMPLO as EJEMPLO_TESIS
-from ..tesis import Tesis, marcador, pendientes
 from .base import (
     SIMBOLOS,
     _barra_progreso,

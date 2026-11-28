@@ -4,8 +4,8 @@ import csv
 from datetime import date, datetime
 from io import StringIO
 
-from ..ganancias import de_venta
-from ..movimientos import Movimiento
+from ..inversion.ganancias import de_venta
+from ..inversion.movimientos import Movimiento
 from ..nucleo.periodo import PeriodoError, leer
 from ..nucleo.simbolos import a_id
 

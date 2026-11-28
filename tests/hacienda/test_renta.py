@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 import pytest
 
 from crypto_tracker.hacienda import renta
-from crypto_tracker.movimientos import Movimiento
+from crypto_tracker.inversion.movimientos import Movimiento
 from crypto_tracker.nucleo.config import Posicion
 
 

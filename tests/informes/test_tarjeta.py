@@ -4,8 +4,8 @@ from datetime import date, datetime, timedelta, timezone
 
 import pytest
 
-from crypto_tracker.cartera import Valor
 from crypto_tracker.informes.tarjeta import calcular, interpretar, reducir
+from crypto_tracker.inversion.cartera import Valor
 from crypto_tracker.nucleo.periodo import PeriodoError
 
 HOY = date(2026, 11, 16)

@@ -6,7 +6,7 @@ from datetime import datetime
 from io import StringIO
 
 from ..informes.exportar import _numero
-from ..movimientos import Movimiento
+from ..inversion.movimientos import Movimiento
 from . import fifo
 
 

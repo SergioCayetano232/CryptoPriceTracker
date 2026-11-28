@@ -7,10 +7,10 @@ from ..arcoiris import FRANJAS, Arcoiris
 from ..avisos.alerts import SIMBOLOS, _num
 from ..calendario import Mes, semanas
 from ..correlacion import Matriz
+from ..inversion.reparto import OTRAS, Trozo
 from ..mapa import Mapa, repartir
 from ..nucleo.periodo import nombre as nombre_periodo
 from ..nucleo.simbolos import de_id
-from ..reparto import OTRAS, Trozo
 from ..velas import Vela
 from .mes import MESES
 from .tarjeta import Tarjeta

@@ -4,8 +4,21 @@ import logging
 from dataclasses import replace
 from datetime import date, datetime, timezone
 
-from .. import (
-    apodo,
+from .. import apodo, miedo, volatilidad
+from ..avisos import alerts
+from ..hacienda import (
+    compensar,
+    fifo,
+    impuestos,
+    informe,
+    informe_pdf,
+    modelo721,
+    permuta,
+    renta,
+    sivendo,
+)
+from ..informes import grafica, tarjeta
+from ..inversion import (
     apy,
     arrepentido,
     cartera,
@@ -26,7 +39,6 @@ from .. import (
     inflacion,
     limite,
     meta,
-    miedo,
     mitad,
     movimientos,
     nota,
@@ -43,23 +55,9 @@ from .. import (
     riesgo,
     sesgo,
     timing,
-    volatilidad,
     vsbolsa,
     vsbtc,
 )
-from ..avisos import alerts
-from ..hacienda import (
-    compensar,
-    fifo,
-    impuestos,
-    informe,
-    informe_pdf,
-    modelo721,
-    permuta,
-    renta,
-    sivendo,
-)
-from ..informes import grafica, tarjeta
 from ..nucleo import (
     botones,
     coingecko,

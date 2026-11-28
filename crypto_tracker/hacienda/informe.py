@@ -6,9 +6,9 @@ dibujo va en informe_pdf.py.
 
 from dataclasses import dataclass
 
-from .. import comisiones
-from ..comisiones import Comisiones
-from ..movimientos import Movimiento
+from ..inversion import comisiones
+from ..inversion.comisiones import Comisiones
+from ..inversion.movimientos import Movimiento
 from . import impuestos, renta
 from .impuestos import Impuestos
 from .renta import Venta

@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 
-from ..movimientos import Movimiento
+from ..inversion.movimientos import Movimiento
 from ..nucleo.config import Posicion
 
 LIMITE = 50_000

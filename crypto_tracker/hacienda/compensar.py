@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, time
 
 from ..avisos.diario import toca_resumen
-from ..movimientos import RESTO
+from ..inversion.movimientos import RESTO
 from .fifo import Lote
 from .impuestos import Impuestos, cuota
 

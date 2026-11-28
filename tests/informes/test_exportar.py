@@ -12,7 +12,7 @@ from crypto_tracker.informes.exportar import (
     nombre_movimientos,
     pide_movimientos,
 )
-from crypto_tracker.movimientos import Movimiento
+from crypto_tracker.inversion.movimientos import Movimiento
 from crypto_tracker.nucleo.config import Posicion
 from crypto_tracker.nucleo.periodo import PeriodoError
 

@@ -12,7 +12,7 @@ from crypto_tracker.hacienda.modelo721 import (
     horas_desde,
     toca_avisar,
 )
-from crypto_tracker.movimientos import Movimiento
+from crypto_tracker.inversion.movimientos import Movimiento
 from crypto_tracker.nucleo.config import Posicion
 
 FIN = cierre(2025)

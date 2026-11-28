@@ -3,7 +3,6 @@
 import logging
 from datetime import date, datetime, timezone
 
-from .. import cartera, movimientos
 from ..avisos import (
     alertaratio,
     alerts,
@@ -15,6 +14,7 @@ from ..avisos import (
     stop,
 )
 from ..hacienda import impuestos
+from ..inversion import cartera, movimientos
 from ..nucleo import (
     botones,
     coingecko,

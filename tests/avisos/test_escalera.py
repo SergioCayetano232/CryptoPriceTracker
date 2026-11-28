@@ -14,7 +14,7 @@ from crypto_tracker.avisos.escalera import (
     nota,
     nota_compra,
 )
-from crypto_tracker.movimientos import Movimiento
+from crypto_tracker.inversion.movimientos import Movimiento
 from crypto_tracker.nucleo.config import Posicion
 
 CUANDO = datetime(2026, 6, 1, tzinfo=timezone.utc)

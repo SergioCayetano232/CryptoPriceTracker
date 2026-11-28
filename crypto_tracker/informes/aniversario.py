@@ -4,7 +4,7 @@ import calendar
 from dataclasses import dataclass
 from datetime import date
 
-from ..movimientos import Movimiento
+from ..inversion.movimientos import Movimiento
 
 # Si un día cumplen muchas, el resumen no puede llenarse solo de esto.
 MAX = 3

@@ -10,13 +10,11 @@ from .. import (
     bollinger,
     caida,
     calendario,
-    cartera,
     ciclo,
     cme,
     comparar,
     correlacion,
     cuando,
-    dca,
     diames,
     diasemana,
     dvol,
@@ -24,10 +22,8 @@ from .. import (
     estocastico,
     fibonacci,
     funding,
-    futuro,
     hashribbons,
     horas,
-    hubiera,
     macd,
     maxpain,
     mayer,
@@ -43,7 +39,6 @@ from .. import (
     ratio,
     rsi,
     semaforo,
-    sharpe,
     soporte,
     sube,
     suelo,
@@ -52,6 +47,7 @@ from .. import (
 )
 from ..avisos import alerts, puntuales, ruido, voto
 from ..informes import grafica
+from ..inversion import cartera, dca, futuro, hubiera, sharpe
 from ..nucleo import botones, comandos, database, periodo, simbolos, telegram
 from ..nucleo.config import Config
 from .base import (

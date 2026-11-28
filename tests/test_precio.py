@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 import pytest
 
 from crypto_tracker.avisos.alerts import formatear_precio
-from crypto_tracker.cartera import Valor
+from crypto_tracker.inversion.cartera import Valor
 from crypto_tracker.maximo import Maximo
 from crypto_tracker.precio import Precio, en_sats, leer
 

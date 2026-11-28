@@ -3,7 +3,7 @@
 import pytest
 
 from crypto_tracker.avisos.concentracion import Concentracion, mayor, sigue, toca
-from crypto_tracker.cartera import Valor
+from crypto_tracker.inversion.cartera import Valor
 
 LIMITE = 70
 

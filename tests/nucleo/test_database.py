@@ -1189,7 +1189,7 @@ def test_invitados(db):
 
 
 def test_tesis_guardar_leer_y_quitar(db):
-    from crypto_tracker.tesis import Tesis
+    from crypto_tracker.inversion.tesis import Tesis
 
     cuando = datetime(2026, 11, 1, tzinfo=timezone.utc)
     for n in (2, 10, 1):
@@ -1208,7 +1208,7 @@ def test_tesis_guardar_leer_y_quitar(db):
 
 
 def test_tesis_rota_no_tumba_las_demas(db):
-    from crypto_tracker.tesis import Tesis
+    from crypto_tracker.inversion.tesis import Tesis
 
     cuando = datetime(2026, 11, 1, tzinfo=timezone.utc)
     database.guardar_tesis(db, Tesis(1, "bitcoin", "bien", 60000.0, cuando))

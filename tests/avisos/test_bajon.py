@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 from crypto_tracker.avisos.alerts import formatear_bajon
 from crypto_tracker.avisos.bajon import escalon, toca
-from crypto_tracker.record import Record
+from crypto_tracker.inversion.record import Record
 
 RECORD = datetime(2026, 10, 1, 12, tzinfo=timezone.utc)
 DESDE = datetime(2026, 8, 1, tzinfo=timezone.utc)

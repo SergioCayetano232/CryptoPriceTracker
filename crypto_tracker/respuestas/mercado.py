@@ -5,9 +5,7 @@ from datetime import date, datetime, timezone
 
 from .. import (
     aleatoria,
-    cartera,
     comisionred,
-    convertir,
     dia,
     dificultad,
     dominancia,
@@ -29,6 +27,7 @@ from .. import (
 )
 from ..avisos import alerts, avisados, aviso_tendencias, direccion
 from ..informes import grafica
+from ..inversion import cartera, convertir
 from ..mercado import Mercado
 from ..nucleo import (
     binance,

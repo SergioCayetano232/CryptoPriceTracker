@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from ..cartera import Valor
+from ..inversion.cartera import Valor
 from ..nucleo.config import Posicion
 from ..nucleo.simbolos import a_id
 from .puntuales import CARTERA, numero

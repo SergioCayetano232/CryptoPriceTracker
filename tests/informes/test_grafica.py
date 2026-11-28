@@ -108,7 +108,7 @@ def _tarjeta(total=66.7, tramo=12.5, linea=(0, 6, 12.5)):
     from datetime import date
 
     from crypto_tracker.informes.tarjeta import Tarjeta
-    from crypto_tracker.reparto import Trozo
+    from crypto_tracker.inversion.reparto import Trozo
 
     reparto = [Trozo("bitcoin", 0, 75, 0), Trozo("otras", 0, 25, None)]
     return Tarjeta(total, tramo, 720, list(linea), reparto, date(2026, 11, 16))

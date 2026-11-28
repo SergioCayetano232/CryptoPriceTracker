@@ -3,19 +3,11 @@
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from ..arrepentido import Arrepentido
 from ..avisos.concentracion import Concentracion
 from ..avisos.cruce import ARRIBA, CORTA, LARGA, Cruce
 from ..avisos.estables import Desvio
 from ..avisos.volumen import Volumen
 from ..calendario import Mes
-from ..cartera import Valor, mejor_y_peor, peso
-from ..comisiones import Comisiones
-from ..compras import Compra, Resumen
-from ..corregir import CANTIDAD, Correccion
-from ..cuenta_binance import Comparacion
-from ..deposito import Contra as ContraDeposito
-from ..ganancias import Ganancias
 from ..hacienda.compensar import Compensacion
 from ..hacienda.impuestos import Impuestos
 from ..hacienda.modelo721 import LIMITE as LIMITE_721
@@ -23,19 +15,26 @@ from ..hacienda.modelo721 import SUBIDA as SUBIDA_721
 from ..hacienda.modelo721 import Modelo721
 from ..hacienda.permuta import Permuta
 from ..hacienda.sivendo import Simulacion
-from ..hodl import Hodl
 from ..hoy import Hoy
 from ..hoy import mejor_y_peor as extremos_hoy
-from ..ideal import Ideal, Parte, fuera
-from ..ideal import comando as comando_ideal
-from ..importar import Operacion
-from ..inflacion import Inflacion
 from ..informes.aniversario import MAX as MAX_ANIVERSARIOS
 from ..informes.aniversario import Aniversario
 from ..informes.anual import Año
 from ..informes.mes import MESES
-from ..mercado import grande
-from ..movimientos import (
+from ..inversion.arrepentido import Arrepentido
+from ..inversion.cartera import Valor, mejor_y_peor, peso
+from ..inversion.comisiones import Comisiones
+from ..inversion.compras import Compra, Resumen
+from ..inversion.corregir import CANTIDAD, Correccion
+from ..inversion.cuenta_binance import Comparacion
+from ..inversion.deposito import Contra as ContraDeposito
+from ..inversion.ganancias import Ganancias
+from ..inversion.hodl import Hodl
+from ..inversion.ideal import Ideal, Parte, fuera
+from ..inversion.ideal import comando as comando_ideal
+from ..inversion.importar import Operacion
+from ..inversion.inflacion import Inflacion
+from ..inversion.movimientos import (
     Movimiento,
     descuadre,
     precio_medio,
@@ -43,20 +42,21 @@ from ..movimientos import (
     texto_cantidad,
     totales,
 )
+from ..inversion.pelotazo import Jugada, Pelotazo
+from ..inversion.primera import Primera
+from ..inversion.record import Record
+from ..inversion.rentabilidad import MIN_DIAS as MIN_DIAS_RENTABILIDAD
+from ..inversion.rentabilidad import Rentabilidad
+from ..inversion.riesgo import CAIDA as CAIDA_RIESGO
+from ..inversion.riesgo import Riesgo
+from ..inversion.vsbolsa import Contra as ContraBolsa
+from ..inversion.vsbtc import Contra
+from ..mercado import grande
 from ..nucleo.config import Posicion
 from ..nucleo.periodo import nombre as nombre_periodo
 from ..nucleo.rellenar import Relleno
 from ..nucleo.telegram import escape
-from ..pelotazo import Jugada, Pelotazo
-from ..primera import Primera
-from ..record import Record
-from ..rentabilidad import MIN_DIAS as MIN_DIAS_RENTABILIDAD
-from ..rentabilidad import Rentabilidad
-from ..riesgo import CAIDA as CAIDA_RIESGO
-from ..riesgo import Riesgo
 from ..rsi import PERIODO, SOBRECOMPRA, Rsi
-from ..vsbolsa import Contra as ContraBolsa
-from ..vsbtc import Contra
 from .base import (
     BARRAS_MOVIL,
     SIMBOLOS,
@@ -77,8 +77,8 @@ from .base import (
 
 # Solo para el tipo: esos módulos importan de alerts y se haría un círculo.
 if TYPE_CHECKING:
-    from ..timing import Compra as CompraTiming
-    from ..timing import Timing
+    from ..inversion.timing import Compra as CompraTiming
+    from ..inversion.timing import Timing
 
 
 def formatear_resumen(

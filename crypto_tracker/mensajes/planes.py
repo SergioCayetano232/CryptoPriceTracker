@@ -2,19 +2,19 @@
 
 from datetime import date, datetime
 
-from ..apy import Tramo
 from ..informes.mes import MESES
-from ..limite import Limite
-from ..meta import Meta
-from ..movimientos import texto_cantidad
+from ..inversion.apy import Tramo
+from ..inversion.limite import Limite
+from ..inversion.meta import Meta
+from ..inversion.movimientos import texto_cantidad
+from ..inversion.objetivo import Escenario
+from ..inversion.plan import MAX_AÑOS as MAX_AÑOS_PLAN
+from ..inversion.plan import TEXTO as TEXTO_PLAN
+from ..inversion.plan import Camino
+from ..inversion.plan import cuanto as cuanto_plan
+from ..inversion.posicion import Entrada
+from ..inversion.promediar import Promedio
 from ..nucleo.telegram import escape
-from ..objetivo import Escenario
-from ..plan import MAX_AÑOS as MAX_AÑOS_PLAN
-from ..plan import TEXTO as TEXTO_PLAN
-from ..plan import Camino
-from ..plan import cuanto as cuanto_plan
-from ..posicion import Entrada
-from ..promediar import Promedio
 from ..rango import barra
 from .base import SIMBOLOS, _barra_progreso, _es, _flecha, _ganancia, _hace, _num
 

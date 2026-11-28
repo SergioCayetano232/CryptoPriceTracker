@@ -3,7 +3,7 @@
 import math
 from datetime import datetime
 
-from ..record import Record
+from ..inversion.record import Record
 
 
 def escalon(r: Record, porcentaje: float) -> int:

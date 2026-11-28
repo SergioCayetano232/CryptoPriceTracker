@@ -7,7 +7,6 @@ from ..altseason import ALTCOINS, BITCOIN, CUANTAS, DIAS, Moneda, Temporada
 from ..avisos.avisados import Ultimo
 from ..avisos.aviso_tendencias import Nueva
 from ..avisos.recordar import DIAS as NOMBRES_DIAS
-from ..cartera import Valor
 from ..comisionred import TAMAÑO as TAMAÑO_ENVIO
 from ..comisionred import ComisionRed, en_dinero, media_hora
 from ..comparar import Resultado
@@ -17,6 +16,10 @@ from ..gwei import OPERACIONES, Gas
 from ..hashribbons import Ribbons
 from ..informes.mes import MESES as NOMBRES_MESES
 from ..informes.semanal import Semana
+from ..inversion.cartera import Valor
+from ..inversion.movimientos import texto_cantidad
+from ..inversion.sesgo import MINIMO as MINIMO_SESGO
+from ..inversion.sesgo import Lado, Sesgo
 from ..lightning import Lightning
 from ..mapa import Mapa
 from ..maximo import Maximo, hace
@@ -25,15 +28,12 @@ from ..miedo import NOMBRES as NOMBRES_MIEDO
 from ..miedo import Indice
 from ..miedo import hace as dia_miedo
 from ..miedo import nombre as nombre_miedo
-from ..movimientos import texto_cantidad
 from ..mvrv import Mvrv
 from ..nucleo.copia import numero as numero_env
 from ..nucleo.periodo import nombre as nombre_periodo
 from ..nucleo.telegram import escape
 from ..quieta import Quieta
 from ..sectores import Sector
-from ..sesgo import MINIMO as MINIMO_SESGO
-from ..sesgo import Lado, Sesgo
 from ..tendencias import Tendencia
 from ..top import ENTRE, Movida
 from .base import (

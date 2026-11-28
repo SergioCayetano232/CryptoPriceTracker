@@ -10,7 +10,7 @@ from crypto_tracker.hacienda import fifo
 from crypto_tracker.hacienda.compensar import Compensacion, Venta, calcular, toca_aviso
 from crypto_tracker.hacienda.fifo import Lote
 from crypto_tracker.hacienda.impuestos import Impuestos, por_tramos
-from crypto_tracker.movimientos import Movimiento
+from crypto_tracker.inversion.movimientos import Movimiento
 from crypto_tracker.nucleo import coingecko, database, telegram
 from crypto_tracker.nucleo.config import Config, Posicion, Watch
 

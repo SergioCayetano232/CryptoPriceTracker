@@ -17,14 +17,13 @@ from crypto_tracker import (
     excusa,
     frase,
     funding,
-    inflacion,
     miedo,
     refran,
     tarot,
-    vsbolsa,
 )
 from crypto_tracker.avisos import condicion, direccion
 from crypto_tracker.informes import grafica
+from crypto_tracker.inversion import inflacion, vsbolsa
 from crypto_tracker.nucleo import binance, coingecko, comandos, database, telegram
 from crypto_tracker.nucleo.config import Config, Posicion, Watch
 from crypto_tracker.precio import Precio
@@ -11802,7 +11801,7 @@ def test_tesis_callado_espera(config, con_botones, monkeypatch):
 
 
 def test_tesis_lista_y_marcador(config, enviados, monkeypatch):
-    from crypto_tracker.tesis import Tesis
+    from crypto_tracker.inversion.tesis import Tesis
 
     hace = datetime.now(timezone.utc) - timedelta(days=40)
     for t in [
@@ -11858,7 +11857,7 @@ def test_tesis_vacia_y_quitar(config, enviados, monkeypatch):
 
 
 def test_tesis_tope(config, enviados, monkeypatch):
-    from crypto_tracker.tesis import MAXIMO
+    from crypto_tracker.inversion.tesis import MAXIMO
 
     _precio(monkeypatch, {"bitcoin": 60000.0})
     for _ in range(MAXIMO):

@@ -2,8 +2,8 @@
 
 from dataclasses import dataclass
 
-from .. import comision
-from ..movimientos import Movimiento, MovimientoError, interpretar_venta
+from ..inversion import comision
+from ..inversion.movimientos import Movimiento, MovimientoError, interpretar_venta
 from ..nucleo.config import Posicion
 from ..nucleo.simbolos import a_id
 from . import sivendo

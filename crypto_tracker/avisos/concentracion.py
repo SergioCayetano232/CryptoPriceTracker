@@ -2,8 +2,8 @@
 
 from dataclasses import dataclass
 
-from ..cartera import Valor
-from ..riesgo import CAIDA
+from ..inversion.cartera import Valor
+from ..inversion.riesgo import CAIDA
 
 # Para volver a avisar tiene que bajar esto por debajo del límite. Si no, una
 # cripto rondando el 70% daría un aviso cada vez que lo cruza.

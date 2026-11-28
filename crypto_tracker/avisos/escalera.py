@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from ..hacienda import fifo
 from ..hacienda.impuestos import cuota
-from ..movimientos import Movimiento
+from ..inversion.movimientos import Movimiento
 from ..nucleo.config import Posicion
 from ..nucleo.simbolos import a_id
 from .puntuales import numero

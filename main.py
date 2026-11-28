@@ -27,7 +27,6 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from crypto_tracker import (
     adios,
     caraocruz,
-    cartera,
     chiste,
     consejo,
     cumple,
@@ -38,11 +37,9 @@ from crypto_tracker import (
     frase,
     galleta,
     halving,
-    importar,
     maximo,
     merge,
     miedo,
-    movimientos,
     refran,
     tarot,
     velas,
@@ -67,6 +64,7 @@ from crypto_tracker.avisos import (
     stop,
 )
 from crypto_tracker.informes import grafica, icono_app, panel, panel_html
+from crypto_tracker.inversion import cartera, importar, movimientos
 from crypto_tracker.nucleo import (
     ajustes,
     binance,

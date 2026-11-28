@@ -22,10 +22,8 @@ from ..cuando import Cuando
 from ..diames import POCOS_MESES as POCOS_MESES_DIAMES
 from ..diames import DiasMes
 from ..diasemana import DiasSemana
-from ..doble import Cartera as CarteraDoble
 from ..dominancia import Dominancia
 from ..dvol import Dvol
-from ..equilibrio import Cartera, Equilibrio
 from ..estacional import MESES as MESES_ESTACIONAL
 from ..estacional import POCOS_AÑOS, Estacional
 from ..estocastico import ALTO as ALTO_ESTOCASTICO
@@ -34,10 +32,18 @@ from ..estocastico import PERIODO as PERIODO_ESTOCASTICO
 from ..estocastico import Estocastico
 from ..fibonacci import Fibonacci
 from ..funding import Funding
-from ..futuro import Futuro
 from ..horas import Horas
 from ..informes.mes import MESES as NOMBRES_MESES
 from ..informes.tarjeta import Tarjeta
+from ..inversion.doble import Cartera as CarteraDoble
+from ..inversion.equilibrio import Cartera, Equilibrio
+from ..inversion.futuro import Futuro
+from ..inversion.mitad import Cartera as CarteraMitad
+from ..inversion.movimientos import texto_cantidad
+from ..inversion.rebalanceo import EJEMPLO as EJEMPLO_REBALANCEO
+from ..inversion.rebalanceo import Paso
+from ..inversion.reparto import OTRAS, Trozo, demasiado
+from ..inversion.sharpe import Sharpe
 from ..kimchi import Kimchi
 from ..longshort import LongShort
 from ..longshort import lectura as lectura_longshort
@@ -49,8 +55,6 @@ from ..mayer import BURBUJA, Mayer
 from ..media import lado_de_todas
 from ..mejor import Extremo
 from ..mercado import grande
-from ..mitad import Cartera as CarteraMitad
-from ..movimientos import texto_cantidad
 from ..nucleo.periodo import nombre as nombre_periodo
 from ..nucleo.telegram import escape
 from ..oi import Interes, lectura
@@ -61,12 +65,8 @@ from ..profundidad import Profundidad
 from ..racha import Racha
 from ..rango import Rango, barra
 from ..ratio import Ratio
-from ..rebalanceo import EJEMPLO as EJEMPLO_REBALANCEO
-from ..rebalanceo import Paso
-from ..reparto import OTRAS, Trozo, demasiado
 from ..rsi import PERIODO, SOBRECOMPRA, SOBREVENTA, Rsi, hasta_zona
 from ..semaforo import AMBAR, VERDE, Voto
-from ..sharpe import Sharpe
 from ..soporte import Nivel, Soportes
 from ..sube import Subida
 from ..suelo import Suelo

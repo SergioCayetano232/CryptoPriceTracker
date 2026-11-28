@@ -12,7 +12,7 @@ from crypto_tracker.informes.anual import (
     toca,
     tramo,
 )
-from crypto_tracker.movimientos import Movimiento
+from crypto_tracker.inversion.movimientos import Movimiento
 from crypto_tracker.nucleo.config import Posicion
 
 POSICIONES = [Posicion("bitcoin", 0.1, 5000), Posicion("solana", 10, 1000)]

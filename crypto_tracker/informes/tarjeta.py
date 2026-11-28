@@ -3,9 +3,9 @@
 from dataclasses import dataclass
 from datetime import date, datetime
 
-from ..cartera import Valor, total
+from ..inversion.cartera import Valor, total
+from ..inversion.reparto import Trozo, trozos
 from ..nucleo.periodo import PeriodoError, es_tramo, leer
-from ..reparto import Trozo, trozos
 
 EJEMPLO = "/tarjeta o /tarjeta 90d"
 HORAS = 30 * 24

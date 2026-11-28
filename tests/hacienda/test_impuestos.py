@@ -12,7 +12,7 @@ from crypto_tracker.hacienda.impuestos import (
     interpretar,
     por_tramos,
 )
-from crypto_tracker.movimientos import Movimiento
+from crypto_tracker.inversion.movimientos import Movimiento
 from crypto_tracker.nucleo.config import Posicion
 
 

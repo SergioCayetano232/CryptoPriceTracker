@@ -15,7 +15,7 @@ from crypto_tracker.avisos.stop import (
     separar_movil,
     subir,
 )
-from crypto_tracker.cartera import Valor
+from crypto_tracker.inversion.cartera import Valor
 from crypto_tracker.nucleo.config import Posicion
 
 

@@ -4,10 +4,10 @@ from dataclasses import dataclass
 from datetime import date, datetime, time
 
 from ..avisos.diario import toca_resumen
-from ..compras import Resumen
-from ..compras import calcular as calcular_compras
-from ..ganancias import calcular as calcular_ganancias
-from ..movimientos import Movimiento
+from ..inversion.compras import Resumen
+from ..inversion.compras import calcular as calcular_compras
+from ..inversion.ganancias import calcular as calcular_ganancias
+from ..inversion.movimientos import Movimiento
 from ..nucleo.config import Posicion
 from .semanal import Semana, semana
 

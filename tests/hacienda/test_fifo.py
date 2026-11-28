@@ -6,7 +6,7 @@ import pytest
 
 import main
 from crypto_tracker.hacienda import fifo, impuestos, sivendo
-from crypto_tracker.movimientos import Movimiento
+from crypto_tracker.inversion.movimientos import Movimiento
 from crypto_tracker.nucleo import coingecko, database
 from crypto_tracker.nucleo.config import Config, Posicion, Watch
 

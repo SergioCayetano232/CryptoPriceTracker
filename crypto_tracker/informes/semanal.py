@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, time
 
 from ..avisos.diario import toca_resumen
-from ..cartera import serie_valor
+from ..inversion.cartera import serie_valor
 from ..nucleo.config import Posicion
 
 DOMINGO = 6

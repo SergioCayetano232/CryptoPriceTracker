@@ -4,7 +4,7 @@ import math
 from collections import deque
 from dataclasses import dataclass
 
-from ..movimientos import RESTO, Movimiento
+from ..inversion.movimientos import RESTO, Movimiento
 from ..nucleo.config import Posicion
 
 

@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from ..movimientos import Movimiento, recibido
+from ..inversion.movimientos import Movimiento, recibido
 from . import fifo
 
 # Base del ahorro del IRPF desde 2025: hasta dónde llega cada tramo y su tipo.
