@@ -1,10 +1,12 @@
 """El panel web: lo que tienes, lo que vigilas y tus alertas, en una página."""
 
+import hashlib
 import hmac
+import json
 import os
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
-from urllib.parse import parse_qs, urlsplit
+from urllib.parse import parse_qs, parse_qsl, urlsplit
 
 from .avisados import Aviso
 from .config import Posicion, Watch
@@ -16,6 +18,10 @@ PUNTOS_MINI = 40
 
 # Para abrir el panel a la red de casa: más corta se adivina probando.
 MIN_CLAVE = 16
+
+# Desde Telegram: lo que vale su firma y lo que dura la sesión que da.
+VIDA_FIRMA = 24 * 3600
+VIDA_SESION = 12 * 3600
 
 # Si en tres consultas seguidas no ha guardado nada, algo le pasa al bot.
 CICLOS_PARADO = 3
@@ -234,6 +240,46 @@ def a_json(p: "Panel", parado_: bool) -> dict:
             for f in p.filas
         ],
     }
+
+
+def url_app() -> str:
+    """La dirección pública (https) del panel, para abrirlo desde Telegram."""
+    return os.getenv("PANEL_URL", "").strip().rstrip("/")
+
+
+def _firma(clave: bytes, texto: str) -> str:
+    return hmac.new(clave, texto.encode(), hashlib.sha256).hexdigest()
+
+
+def usuario_telegram(init_data: str, token: str, ahora: float) -> int | None:
+    """El id de quien abre el panel desde Telegram, si la firma es buena y de
+    hace menos de un día. Así lo explica Telegram para las Mini Apps."""
+    campos = dict(parse_qsl(init_data, keep_blank_values=True))
+    dada = campos.pop("hash", "")
+    texto = "\n".join(f"{k}={v}" for k, v in sorted(campos.items()))
+    clave = hmac.new(b"WebAppData", token.encode(), hashlib.sha256).digest()
+    if not hmac.compare_digest(dada.encode(), _firma(clave, texto).encode()):
+        return None
+    try:
+        if ahora - int(campos["auth_date"]) > VIDA_FIRMA:
+            return None
+        return int(json.loads(campos["user"])["id"])
+    except (KeyError, ValueError, TypeError):
+        return None
+
+
+def sesion(secreto: bytes, ahora: float) -> str:
+    """Un pase para no tener que firmar cada vez que se refresca: caduca solo."""
+    caduca = str(int(ahora) + VIDA_SESION)
+    return f"{caduca}.{_firma(secreto, caduca)}"
+
+
+def sesion_valida(ruta: str, secreto: bytes, ahora: float) -> bool:
+    dada = parse_qs(urlsplit(ruta).query).get("sesion", [""])[0]
+    caduca, _, firma = dada.partition(".")
+    if not hmac.compare_digest(firma.encode(), _firma(secreto, caduca).encode()):
+        return False
+    return caduca.isdigit() and int(caduca) > ahora
 
 
 def parado(actualizado: datetime | None, ahora: datetime, intervalo: int) -> bool:

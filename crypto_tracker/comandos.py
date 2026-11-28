@@ -26,6 +26,7 @@ COMANDOS = {
     "ideal": "Tu reparto ideal, y aviso si te alejas (ej: /ideal btc 60 eth 40)",
     "semana": "Cómo le ha ido a tu cartera esta semana, o a una (ej: /semana btc)",
     "resumenia": "Tu semana contada en cuatro frases por Claude (IA)",
+    "panel": "El panel web con tu cartera, sin salir de Telegram",
     "mes": "Cómo va tu cartera desde el día 1 del mes",
     "anual": "Cómo va tu cartera este año, o tu resumen de uno (ej: /anual 2025)",
     "compra": "Apuntar una compra en la cartera (ej: /compra bitcoin 0.01 600)",

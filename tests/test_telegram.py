@@ -385,6 +385,22 @@ def test_mensaje_con_botones(monkeypatch):
     }
 
 
+def test_boton_con_https_abre_la_web_en_telegram(monkeypatch):
+    enviado = {}
+
+    def capturar(url, json=None, timeout=None):
+        enviado.update(json)
+        return RespuestaFalsa()
+
+    monkeypatch.setattr(requests, "post", capturar)
+    botones = [[("Abrir el panel", "https://mi-panel.example/app")]]
+    telegram.send_message("token", "123", "hola", botones=botones)
+
+    assert enviado["reply_markup"]["inline_keyboard"] == [
+        [{"text": "Abrir el panel", "web_app": {"url": "https://mi-panel.example/app"}}]
+    ]
+
+
 def test_mensaje_sin_botones_como_antes(monkeypatch):
     enviado = {}
 

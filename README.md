@@ -201,6 +201,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/futuro 30d` | Entre qué cifras puede estar tu cartera dentro de esos días: dónde cae 2 de cada 3 veces y dónde 9 de cada 10, según cuánto se ha movido en los últimos 90 días con lo que tienes hoy. No es una predicción: no dice si sube o baja, solo cuánto suele moverse. Sin tramo, 30 días; hasta 365. Necesita 15 días seguidos guardados. También `/proyeccion` |
 | `/semana` | El resumen de tu semana sin esperar al domingo. No gasta consultas |
 | `/semana bitcoin` | La semana de una sola: lo mismo que `/historico bitcoin 7d` |
+| `/panel` | Un botón que abre el panel web dentro de Telegram, solo para ti. Necesita `PANEL_URL` en el `.env` (ver «Dentro de Telegram», más abajo) |
 | `/resumenia` | Tu semana contada en cuatro frases por Claude: cuánto ha cambiado, qué cripto la ha movido más y algo que llame la atención del reparto. Necesita `ANTHROPIC_API_KEY` en el `.env` (cada resumen cuesta céntimos). Solo le manda a Claude el valor de tu cartera, los cambios de la semana y el peso de cada cripto |
 | `/mes` | Cómo va tu cartera desde el día 1 del mes, con gráfica, no en los últimos 30 días como `/cartera 30d`. No gasta consultas. También `/mensual` |
 | `/anual` | Lo mismo desde el 1 de enero, para compararlo con la bolsa. Con `HISTORY_DAYS=90`, que es lo que viene, a partir de abril no tiene el año entero y te lo dice: pon `366`. También `/año` y `/ytd` |
@@ -829,6 +830,18 @@ clave al final, contesta que no. En `/api.json?clave=...` están los datos en
 JSON. Para el widget del iPhone, instala [Scriptable](https://scriptable.app),
 pega `widgets/scriptable.js`, cambia la `URL` del principio y añade un widget
 de Scriptable a la pantalla de inicio. Solo llega con el móvil en la misma wifi.
+
+**Dentro de Telegram:** `/panel` manda un botón que abre el panel sin salir del
+chat. Telegram solo abre direcciones `https` públicas, así que hay que sacar el
+panel a internet, por ejemplo con un túnel de Cloudflare:
+```
+python main.py --panel
+cloudflared tunnel --url http://127.0.0.1:8000
+```
+Pon la dirección que te dé en el `.env` como `PANEL_URL` y reinicia el bot y el
+panel. Telegram firma quién abre el botón con el token del bot: si no es la
+cuenta de `TELEGRAM_CHAT_ID`, no entra. Con `PANEL_URL` puesta, `/` y
+`/api.json` piden `?clave=` aunque lleguen por el túnel.
 
 ---
 

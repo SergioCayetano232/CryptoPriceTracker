@@ -272,6 +272,7 @@ from crypto_tracker.respuestas.resumenes import (
     _comando_status,
     _envivo,
     _mes,
+    _panel,
     _resumenia,
     _semana,
     aviso_compensar,
@@ -1660,6 +1661,7 @@ COMANDOS: dict[str, Callable[[Config, str], Respuesta]] = {
     "envivo": lambda c, a: _envivo(c, a),
     "semana": _comando_semana,
     "resumenia": lambda c, a: _resumenia(c),
+    "panel": lambda c, a: _panel(c),
     "cartera": _con_cartera(lambda c, a: _cartera(c, a)),
     "tarjeta": lambda c, a: _tarjeta(c, a),
     "reparto": _con_cartera(lambda c, a: _reparto(c)),
@@ -2299,8 +2301,10 @@ def ip_local() -> str:
 def servir_panel(config: Config, puerto: int, red: bool = False) -> int:
     """El panel en http://127.0.0.1:puerto hasta que lo pares con Ctrl+C.
 
-    Con red, en toda la red de casa, y solo con la clave de PANEL_CLAVE."""
-    clave = panel.clave_panel() if red else ""
+    Con red, en toda la red de casa, y solo con la clave de PANEL_CLAVE. Con
+    PANEL_URL, también se abre desde Telegram con el botón de /panel."""
+    app = panel.url_app()
+    clave = panel.clave_panel() if red or app else ""
     if red and len(clave) < panel.MIN_CLAVE:
         logger.error(
             "Para abrir el panel a tu red pon en el .env PANEL_CLAVE con al menos "
@@ -2309,16 +2313,54 @@ def servir_panel(config: Config, puerto: int, red: bool = False) -> int:
             secrets.token_urlsafe(18),
         )
         return 1
+    if len(clave) < panel.MIN_CLAVE:
+        clave = ""
+    # Con un túnel a internet todo llega como local: sin clave, solo vía Telegram.
+    cerrado = red or bool(app)
+    # Nuevo en cada arranque: reiniciar el panel cierra las sesiones abiertas.
+    secreto = secrets.token_bytes(32)
 
     class Atender(BaseHTTPRequestHandler):
         def do_GET(self) -> None:
             ruta = self.path.split("?")[0]
+            if app and ruta == "/app":
+                self._mandar(panel_html.APP.encode(), "text/html; charset=utf-8")
+                return
+            if app and ruta == "/app/panel":
+                if not panel.sesion_valida(self.path, secreto, time.time()):
+                    self.send_error(403, "La sesión ha caducado: vuelve a /panel")
+                    return
+                self._pagina("/")
+                return
             if ruta not in ("/", "/api.json"):
                 self.send_error(404)
                 return
-            if not panel.acceso(self.path, clave):
+            if cerrado and not (clave and panel.acceso(self.path, clave)):
                 self.send_error(403, "Falta la clave del panel")
                 return
+            self._pagina(ruta)
+
+        def do_POST(self) -> None:
+            if not app or self.path != "/app/entrar":
+                self.send_error(404)
+                return
+            try:
+                largo = int(self.headers.get("Content-Length") or 0)
+            except ValueError:
+                largo = 0
+            # La firma de Telegram ocupa poco: más que esto no es suya.
+            if not 0 < largo <= 8192:
+                self.send_error(400)
+                return
+            datos = self.rfile.read(largo).decode(errors="replace")
+            quien = panel.usuario_telegram(datos, config.telegram_token, time.time())
+            if quien is None or str(quien) != config.telegram_chat_id:
+                self.send_error(403, "Este panel no es tuyo")
+                return
+            pase = json.dumps({"sesion": panel.sesion(secreto, time.time())})
+            self._mandar(pase.encode(), "application/json")
+
+        def _pagina(self, ruta: str) -> None:
             try:
                 if ruta == "/api.json":
                     cuerpo = json_panel(config).encode()
@@ -2330,6 +2372,9 @@ def servir_panel(config: Config, puerto: int, red: bool = False) -> int:
                 logger.error("No se pudo montar el panel: %s", e)
                 self.send_error(500, "No se pudo leer la base de datos")
                 return
+            self._mandar(cuerpo, tipo)
+
+        def _mandar(self, cuerpo: bytes, tipo: str) -> None:
             self.send_response(200)
             self.send_header("Content-Type", tipo)
             self.send_header("Cache-Control", "no-store")
@@ -2355,6 +2400,8 @@ def servir_panel(config: Config, puerto: int, red: bool = False) -> int:
         )
     else:
         logger.info("Panel en http://127.0.0.1:%d (Ctrl+C para pararlo)", puerto)
+    if app:
+        logger.info("Desde Telegram: /panel abre %s/app", app)
     try:
         servidor.serve_forever()
     finally:

@@ -268,3 +268,61 @@ def test_a_json_lleva_lo_del_widget():
     assert datos["parado"] is False
     assert datos["criptos"][0]["id"] == "bitcoin"
     assert datos["criptos"][0]["peso"] == 100.0
+
+
+def firmado(token, auth_date, usuario=123, **extra):
+    """Un initData como el que manda Telegram, firmado con ese token."""
+    import hashlib
+    import hmac
+    import json
+    from urllib.parse import urlencode
+
+    campos = {"auth_date": str(auth_date), "user": json.dumps({"id": usuario})}
+    campos.update(extra)
+    texto = "\n".join(f"{k}={v}" for k, v in sorted(campos.items()))
+    clave = hmac.new(b"WebAppData", token.encode(), hashlib.sha256).digest()
+    campos["hash"] = hmac.new(clave, texto.encode(), hashlib.sha256).hexdigest()
+    return urlencode(campos)
+
+
+def test_usuario_telegram_con_la_firma_buena():
+    datos = firmado("token", 1000, usuario=42, query_id="AAH")
+
+    assert panel.usuario_telegram(datos, "token", 1000 + 60) == 42
+
+
+def test_usuario_telegram_con_otro_token_o_tocado():
+    datos = firmado("otro", 1000)
+    tocado = firmado("token", 1000, usuario=42).replace("42", "43")
+
+    assert panel.usuario_telegram(datos, "token", 1000) is None
+    assert panel.usuario_telegram(tocado, "token", 1000) is None
+    assert panel.usuario_telegram("", "token", 1000) is None
+    assert panel.usuario_telegram("hash=%C3%B1", "token", 1000) is None
+
+
+def test_usuario_telegram_caducado():
+    datos = firmado("token", 1000)
+
+    assert panel.usuario_telegram(datos, "token", 1000 + panel.VIDA_FIRMA + 1) is None
+
+
+def test_sesion_vale_hasta_que_caduca():
+    secreto = b"s" * 32
+    pase = panel.sesion(secreto, 1000)
+    ruta = f"/app/panel?sesion={pase}"
+
+    assert panel.sesion_valida(ruta, secreto, 1000 + 60)
+    assert not panel.sesion_valida(ruta, secreto, 1000 + panel.VIDA_SESION)
+    assert not panel.sesion_valida(ruta, b"o" * 32, 1000)
+    assert not panel.sesion_valida("/app/panel", secreto, 1000)
+    # Alargar la caducidad a mano rompe la firma.
+    caduca, _, firma = pase.partition(".")
+    otra = f"/app/panel?sesion={int(caduca) + 9999}.{firma}"
+    assert not panel.sesion_valida(otra, secreto, 1000)
+
+
+def test_url_app_sin_barra_final(monkeypatch):
+    monkeypatch.setenv("PANEL_URL", " https://mi-panel.example/ ")
+
+    assert panel.url_app() == "https://mi-panel.example"

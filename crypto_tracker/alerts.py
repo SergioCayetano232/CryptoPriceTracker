@@ -234,6 +234,8 @@ from .mensajes.comparaciones import (
 from .mensajes.mercado import (
     HUMOR_COMPRAS,
     HUMOR_VENTAS,
+    PANEL_ABRIR,
+    PANEL_SIN_URL,
     _lado_sesgo,
     formatear_aleatoria,
     formatear_altseason,

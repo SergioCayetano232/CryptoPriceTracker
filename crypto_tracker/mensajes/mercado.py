@@ -1044,6 +1044,18 @@ def formatear_resumenia(frases: str) -> str:
     )
 
 
+PANEL_ABRIR = "📊 <b>Tu panel</b>, dentro de Telegram. Solo se abre para ti."
+
+PANEL_SIN_URL = (
+    "📊 Para abrir el panel aquí, Telegram pide una dirección <b>https</b> "
+    "pública.\n\n"
+    "1. Arranca el panel: <code>python main.py --panel</code>\n"
+    "2. Sácalo a internet con un túnel (Cloudflare Tunnel, por ejemplo).\n"
+    "3. Pon esa dirección en el .env: <code>PANEL_URL=https://…</code>\n"
+    "4. Reinicia el bot y el panel, y vuelve a escribir /panel."
+)
+
+
 def formatear_no_encuentro(coin_ids: list[str]) -> str:
     nombres = ", ".join(f"<b>{escape(c)}</b>" for c in coin_ids)
     return (

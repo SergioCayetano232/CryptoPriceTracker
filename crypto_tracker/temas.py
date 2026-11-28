@@ -46,6 +46,7 @@ TEMAS = [
             "ideal",
             "semana",
             "resumenia",
+            "panel",
             "mes",
             "anual",
             "record",

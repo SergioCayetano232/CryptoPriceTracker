@@ -1818,3 +1818,50 @@ JS = f"""
   }});
 }})();
 """
+
+# Lo que abre el botón de /panel: Telegram firma quién eres y con eso entra.
+APP = """<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Tu cartera</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+body {
+  margin: 0; min-height: 100vh; display: grid; place-items: center;
+  font: 16px system-ui, sans-serif; background: #f4f1fb; color: #1c1830;
+}
+@media (prefers-color-scheme: dark) {
+  body { background: #0d0b16; color: #ece9f6; }
+}
+</style>
+</head>
+<body>
+<p id="aviso">Abriendo tu panel…</p>
+<script>
+(function () {
+  function decir(texto) { document.getElementById('aviso').textContent = texto; }
+  var tg = window.Telegram && Telegram.WebApp;
+  if (!tg || !tg.initData) {
+    decir('Ábrelo con el botón de /panel en Telegram.');
+    return;
+  }
+  tg.ready();
+  tg.expand();
+  // Rutas relativas: así vale aunque el panel cuelgue de una subcarpeta.
+  fetch('app/entrar', { method: 'POST', body: tg.initData })
+    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+    .then(function (d) {
+      location.replace('app/panel?sesion=' + encodeURIComponent(d.sesion));
+    })
+    .catch(function (e) {
+      decir(e === 403 ? 'Este panel no es tuyo.'
+                      : 'No llego al panel. ¿Está en marcha?');
+    });
+})();
+</script>
+</body>
+</html>
+"""

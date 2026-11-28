@@ -12763,6 +12763,7 @@ def test_panel_en_la_red_pide_la_clave(config, monkeypatch):
 
     clave = "una-clave-larga-de-verdad"
     monkeypatch.setenv("PANEL_CLAVE", clave)
+    monkeypatch.delenv("PANEL_URL", raising=False)
     servidor, hilo = _panel_en_marcha(monkeypatch, config, True)
     base = f"http://127.0.0.1:{servidor['este'].server_address[1]}"
     try:
@@ -12793,6 +12794,7 @@ def test_panel_local_da_el_json_sin_clave(config, monkeypatch):
     import urllib.request
 
     monkeypatch.setenv("PANEL_CLAVE", "una-clave-larga-de-verdad")
+    monkeypatch.delenv("PANEL_URL", raising=False)
     servidor, hilo = _panel_en_marcha(monkeypatch, config, False)
     base = f"http://127.0.0.1:{servidor['este'].server_address[1]}"
     try:
@@ -12802,6 +12804,64 @@ def test_panel_local_da_el_json_sin_clave(config, monkeypatch):
     finally:
         servidor["este"].shutdown()
         hilo.join()
+
+
+def test_panel_desde_telegram_solo_para_ti(config, monkeypatch):
+    import json
+    import time
+    import urllib.error
+    import urllib.request
+
+    from test_panel import firmado
+
+    monkeypatch.setenv("PANEL_URL", "https://mi-panel.example")
+    monkeypatch.delenv("PANEL_CLAVE", raising=False)
+    servidor, hilo = _panel_en_marcha(monkeypatch, config, False)
+    base = f"http://127.0.0.1:{servidor['este'].server_address[1]}"
+
+    def entrar(datos):
+        return urllib.request.urlopen(base + "/app/entrar", data=datos.encode())
+
+    try:
+        with urllib.request.urlopen(base + "/app") as r:
+            assert "telegram-web-app.js" in r.read().decode()
+        # Por un túnel todo llega como local: sin clave, lo de siempre se cierra.
+        for ruta in ("/", "/api.json", "/app/panel", "/app/panel?sesion=1.mal"):
+            with pytest.raises(urllib.error.HTTPError) as e:
+                urllib.request.urlopen(base + ruta)
+            assert e.value.code == 403
+        ahora = int(time.time())
+        for datos in (firmado("token", ahora, usuario=999), firmado("otro", ahora)):
+            with pytest.raises(urllib.error.HTTPError) as e:
+                entrar(datos)
+            assert e.value.code == 403
+        with entrar(firmado("token", ahora, usuario=123)) as r:
+            pase = json.loads(r.read())["sesion"]
+        with urllib.request.urlopen(f"{base}/app/panel?sesion={pase}") as r:
+            assert "CryptoPriceTracker" in r.read().decode()
+    finally:
+        servidor["este"].shutdown()
+        hilo.join()
+
+
+def test_panel_sin_url_explica_como(config, con_teclado, monkeypatch):
+    monkeypatch.delenv("PANEL_URL", raising=False)
+
+    main.atender(config, _mensaje("/panel"))
+
+    texto, kw = con_teclado[0]
+    assert "PANEL_URL=https://" in texto
+    assert not kw.get("botones")
+
+
+def test_panel_con_url_manda_el_boton(config, con_teclado, monkeypatch):
+    monkeypatch.setenv("PANEL_URL", "https://mi-panel.example/")
+
+    main.atender(config, _mensaje("/panel"))
+
+    assert con_teclado[0][1]["botones"] == [
+        [("Abrir el panel", "https://mi-panel.example/app")]
+    ]
 
 
 # --- /impuestos csv ---

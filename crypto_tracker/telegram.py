@@ -140,12 +140,14 @@ def _enviar(token: str, payload: dict) -> tuple[bool, bool, int]:
 
 
 def _teclado(botones: list[list[tuple[str, str]]]) -> dict:
-    return {
-        "inline_keyboard": [
-            [{"text": texto, "callback_data": datos} for texto, datos in fila]
-            for fila in botones
-        ]
-    }
+    return {"inline_keyboard": [[_boton(*b) for b in fila] for fila in botones]}
+
+
+def _boton(texto: str, datos: str) -> dict:
+    # Una dirección https se abre como web dentro de Telegram (una Mini App).
+    if datos.startswith("https://"):
+        return {"text": texto, "web_app": {"url": datos}}
+    return {"text": texto, "callback_data": datos}
 
 
 def _partir(text: str, limite: int, max_trozos: int) -> list[str]:

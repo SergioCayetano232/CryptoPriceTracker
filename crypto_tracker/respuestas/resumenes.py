@@ -23,6 +23,7 @@ from .. import (
     mes,
     miedo,
     movimientos,
+    panel,
     periodo,
     proximo,
     puntuales,
@@ -605,6 +606,13 @@ def _resumenia(config: Config) -> Respuesta:
     except resumenia.ResumenIAError as e:
         return telegram.escape(str(e))
     return alerts.formatear_resumenia(frases)
+
+
+def _panel(config: Config) -> Respuesta:
+    url = panel.url_app()
+    if not url.startswith("https://"):
+        return alerts.PANEL_SIN_URL
+    return comandos.ConBotones(alerts.PANEL_ABRIR, [[("Abrir el panel", url + "/app")]])
 
 
 def _mes(config: Config) -> str | comandos.Foto:
