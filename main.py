@@ -24,24 +24,7 @@ from dataclasses import dataclass, replace
 from datetime import date, datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-from crypto_tracker import (
-    adios,
-    caraocruz,
-    chiste,
-    consejo,
-    cumple,
-    dado,
-    dato,
-    ethereum,
-    excusa,
-    frase,
-    galleta,
-    merge,
-    refran,
-    tarot,
-    version,
-    whitepaper,
-)
+from crypto_tracker import version
 from crypto_tracker.avisos import (
     alertaratio,
     alerts,
@@ -58,6 +41,23 @@ from crypto_tracker.avisos import (
     puntuales,
     salvo,
     stop,
+)
+from crypto_tracker.curiosidades import (
+    adios,
+    caraocruz,
+    chiste,
+    consejo,
+    cumple,
+    dado,
+    dato,
+    ethereum,
+    excusa,
+    frase,
+    galleta,
+    merge,
+    refran,
+    tarot,
+    whitepaper,
 )
 from crypto_tracker.indicadores import halving, maximo, miedo, velas
 from crypto_tracker.informes import grafica, icono_app, panel, panel_html

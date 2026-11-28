@@ -17,8 +17,10 @@ from ..avisos.recordar import Recordatorio
 from ..avisos.rezagada import EJEMPLO as EJEMPLO_REZAGADA
 from ..avisos.rezagada import Rezagada
 from ..avisos.stop import Stop
-from ..encuesta import BANDA as BANDA_ENCUESTA
-from ..encuesta import Encuesta, limites, se_cierra
+from ..curiosidades.encuesta import BANDA as BANDA_ENCUESTA
+from ..curiosidades.encuesta import Encuesta, limites, se_cierra
+from ..curiosidades.liga import Puesto, posiciones
+from ..curiosidades.prediccion import Marcador, Prediccion
 from ..indicadores.maximo import hace
 from ..indicadores.miedo import Indice
 from ..indicadores.miedo import nombre as nombre_miedo
@@ -33,10 +35,8 @@ from ..inversion.pienso import IGUAL as IGUAL_PIENSO
 from ..inversion.pienso import SUBIDON, Pienso
 from ..inversion.tesis import EJEMPLO as EJEMPLO_TESIS
 from ..inversion.tesis import Tesis, marcador, pendientes
-from ..liga import Puesto, posiciones
 from ..nucleo.config import Watch
 from ..nucleo.telegram import escape
-from ..prediccion import Marcador, Prediccion
 from .base import (
     SIMBOLOS,
     _barra_progreso,

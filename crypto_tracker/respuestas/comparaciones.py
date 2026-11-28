@@ -4,8 +4,8 @@ import logging
 from collections.abc import Callable
 from datetime import date
 
-from .. import ballena, emoji
 from ..avisos import alerts
+from ..curiosidades import ballena, emoji
 from ..equivalencias import (
     aceite,
     airpods,

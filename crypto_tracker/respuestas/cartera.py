@@ -4,8 +4,8 @@ import logging
 from dataclasses import replace
 from datetime import date, datetime, timezone
 
-from .. import apodo
 from ..avisos import alerts
+from ..curiosidades import apodo
 from ..hacienda import (
     compensar,
     fifo,

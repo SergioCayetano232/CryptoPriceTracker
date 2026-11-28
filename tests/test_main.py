@@ -7,8 +7,17 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 import main
-from crypto_tracker import bola, caraocruz, consejo, dado, excusa, frase, refran, tarot
 from crypto_tracker.avisos import condicion, direccion
+from crypto_tracker.curiosidades import (
+    bola,
+    caraocruz,
+    consejo,
+    dado,
+    excusa,
+    frase,
+    refran,
+    tarot,
+)
 from crypto_tracker.indicadores import comisionred, estacional, funding, miedo
 from crypto_tracker.indicadores.precio import Precio
 from crypto_tracker.informes import grafica
@@ -8782,7 +8791,7 @@ def test_dato(config, enviados, monkeypatch):
 def test_quiz_pregunta_y_responde_con_botones(
     config, con_teclado, contestados, monkeypatch
 ):
-    from crypto_tracker import quiz
+    from crypto_tracker.curiosidades import quiz
 
     monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
     monkeypatch.setattr(quiz, "sacar", lambda: 1)
@@ -9138,7 +9147,7 @@ def test_hodl_sin_cartera(config, enviados):
 
 
 def test_ppt(config, enviados, monkeypatch):
-    from crypto_tracker import ppt
+    from crypto_tracker.curiosidades import ppt
 
     monkeypatch.setattr(ppt, "sacar", lambda: "piedra")
 
@@ -11990,7 +11999,8 @@ def test_prediccion_se_cambia_pero_no_a_ultima_hora(config, enviados, monkeypatc
 
     # A menos de un día del domingo, el cierre nuevo ya es el siguiente.
     monkeypatch.setattr(
-        "crypto_tracker.prediccion.cierre", lambda ahora: p.cierre + timedelta(days=7)
+        "crypto_tracker.curiosidades.prediccion.cierre",
+        lambda ahora: p.cierre + timedelta(days=7),
     )
     main.atender(config, _mensaje("/prediccion btc 66000"))
 
@@ -14144,7 +14154,7 @@ def test_comisionred_a_secas_recuerda_el_aviso(config, monkeypatch):
 
 def _cerrada(ruta, predicho, real, hace_dias=0):
     """Una predicción ya cerrada, con bitcoin a 100 cuando se hizo."""
-    from crypto_tracker.prediccion import Prediccion
+    from crypto_tracker.curiosidades.prediccion import Prediccion
 
     cierre = datetime(2026, 11, 22, 19, 0, tzinfo=timezone.utc) - timedelta(
         days=hace_dias
@@ -14533,7 +14543,7 @@ def _voto(poll_id, opciones, usuario=123):
 
 
 def _guardada(config):
-    from crypto_tracker import encuesta
+    from crypto_tracker.curiosidades import encuesta
 
     return encuesta.de_texto(database.encuesta(config.database_path))
 

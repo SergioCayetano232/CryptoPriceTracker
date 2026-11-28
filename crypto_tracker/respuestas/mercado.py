@@ -3,8 +3,8 @@
 import logging
 from datetime import date, datetime, timezone
 
-from .. import aleatoria
 from ..avisos import alerts, avisados, aviso_tendencias, direccion
+from ..curiosidades import aleatoria
 from ..indicadores import (
     comisionred,
     dia,

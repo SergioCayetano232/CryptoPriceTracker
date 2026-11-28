@@ -2,8 +2,8 @@
 
 from datetime import date
 
-from .. import adivina, bola, horoscopo, ppt, quiz
 from ..avisos import alerts
+from ..curiosidades import adivina, bola, horoscopo, ppt, quiz
 from ..nucleo import comandos, telegram
 from ..nucleo.config import Config
 from .base import (

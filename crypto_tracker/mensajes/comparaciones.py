@@ -1,6 +1,7 @@
 """Cuánto de cada cosa te compras con lo que tienes."""
 
-from ..emoji import cara as cara_emoji
+from ..curiosidades.emoji import cara as cara_emoji
+from ..curiosidades.tiempo import parte as parte_tiempo
 from ..equivalencias.aceite import PRECIO as PRECIO_ACEITE
 from ..equivalencias.aceite import Aceite
 from ..equivalencias.airpods import PRECIO as PRECIO_AIRPODS
@@ -103,7 +104,6 @@ from ..equivalencias.vuelo import Vuelo
 from ..equivalencias.zapatillas import PRECIO as PRECIO_ZAPATILLAS
 from ..equivalencias.zapatillas import Zapatillas
 from ..nucleo.telegram import escape
-from ..tiempo import parte as parte_tiempo
 from .base import SIMBOLOS, _es, _num
 
 

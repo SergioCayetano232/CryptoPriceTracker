@@ -1063,7 +1063,7 @@ def test_alerta_con_condicion(db):
 def test_predicciones(db):
     from dataclasses import replace
 
-    from crypto_tracker.prediccion import Prediccion
+    from crypto_tracker.curiosidades.prediccion import Prediccion
 
     ahora = datetime(2026, 11, 17, 10, 0, tzinfo=timezone.utc)
     domingo = datetime(2026, 11, 22, 19, 0, tzinfo=timezone.utc)

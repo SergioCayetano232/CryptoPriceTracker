@@ -2,21 +2,27 @@
 
 from datetime import date
 
-from ..adios import Adios
-from ..adivina import Intento
-from ..ballena import Ballena
-from ..caraocruz import QUE_HACER
-from ..cumple import Cumple
-from ..dado import CARAS
-from ..dado import QUE_HACER as QUE_HACER_DADO
+from ..curiosidades.adios import Adios
+from ..curiosidades.adivina import Intento
+from ..curiosidades.ballena import Ballena
+from ..curiosidades.caraocruz import QUE_HACER
+from ..curiosidades.cumple import Cumple
+from ..curiosidades.dado import CARAS
+from ..curiosidades.dado import QUE_HACER as QUE_HACER_DADO
+from ..curiosidades.ethereum import Ethereum
+from ..curiosidades.frase import Frase
+from ..curiosidades.galleta import Galleta
+from ..curiosidades.glosario import TERMINOS, buscar, parecido
+from ..curiosidades.horoscopo import Horoscopo
+from ..curiosidades.merge import Merge
+from ..curiosidades.ppt import EMOJIS as EMOJIS_PPT
+from ..curiosidades.ppt import QUE_HACER as QUE_HACER_PPT
+from ..curiosidades.quiz import PREGUNTAS as PREGUNTAS_QUIZ
+from ..curiosidades.tarot import Carta
+from ..curiosidades.whitepaper import Whitepaper
 from ..equivalencias.enletras import dinero as dinero_en_letras
 from ..equivalencias.mundo import PERSONAS, Mundo
 from ..equivalencias.pizza import BTC, Pizza
-from ..ethereum import Ethereum
-from ..frase import Frase
-from ..galleta import Galleta
-from ..glosario import TERMINOS, buscar, parecido
-from ..horoscopo import Horoscopo
 from ..indicadores.dia import Dia
 from ..indicadores.diasemana import NOMBRES
 from ..indicadores.halving import Halving
@@ -26,14 +32,8 @@ from ..indicadores.rango import barra
 from ..indicadores.redondo import Redondo
 from ..indicadores.sat import CANTIDADES as CANTIDADES_SAT
 from ..indicadores.sat import SATS_POR_BTC, Sat
-from ..merge import Merge
 from ..nucleo.telegram import escape
-from ..ppt import EMOJIS as EMOJIS_PPT
-from ..ppt import QUE_HACER as QUE_HACER_PPT
-from ..quiz import PREGUNTAS as PREGUNTAS_QUIZ
-from ..tarot import Carta
 from ..version import Version
-from ..whitepaper import Whitepaper
 from .base import SIMBOLOS, _es, _flecha, _num
 
 
