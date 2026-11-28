@@ -6,10 +6,11 @@ dibujo va en informe_pdf.py.
 
 from dataclasses import dataclass
 
-from . import comisiones, impuestos, renta
-from .comisiones import Comisiones
+from .. import comisiones
+from ..comisiones import Comisiones
+from ..movimientos import Movimiento
+from . import impuestos, renta
 from .impuestos import Impuestos
-from .movimientos import Movimiento
 from .renta import Venta
 
 EJEMPLO = "/informe 2025"

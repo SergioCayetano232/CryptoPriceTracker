@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta, timezone
 import pytest
 
 from crypto_tracker.config import Posicion
-from crypto_tracker.modelo721 import (
+from crypto_tracker.hacienda.modelo721 import (
     calcular,
     cartera_en,
     cierre,

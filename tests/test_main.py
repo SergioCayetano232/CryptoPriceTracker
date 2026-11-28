@@ -10701,7 +10701,7 @@ def _hoy_es(monkeypatch, dia):
 def _precio_el_31(config, coin_id, precio, año=2025):
     import sqlite3
 
-    from crypto_tracker.modelo721 import cierre
+    from crypto_tracker.hacienda.modelo721 import cierre
 
     conn = sqlite3.connect(config.database_path)
     conn.execute(
@@ -14018,7 +14018,7 @@ def test_informe_año_que_no_vale(config, enviados, archivos):
 
 
 def test_informe_sin_matplotlib_lo_dice(config, enviados, archivos, monkeypatch):
-    from crypto_tracker import informe_pdf
+    from crypto_tracker.hacienda import informe_pdf
 
     def sin_matplotlib(*a):
         raise grafica.GraficaError("Falta matplotlib.")

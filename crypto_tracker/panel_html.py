@@ -5,7 +5,8 @@ from datetime import date, datetime
 from html import escape
 from urllib.parse import parse_qs, quote, urlencode, urlsplit
 
-from . import impuestos, miedo, version
+from . import miedo, version
+from .hacienda import impuestos
 from .mensajes.base import SIMBOLOS, _num, describir
 from .mes import MESES
 from .panel import (

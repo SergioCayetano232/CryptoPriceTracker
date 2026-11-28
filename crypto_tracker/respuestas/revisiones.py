@@ -31,7 +31,6 @@ from .. import (
     ideal,
     juntas,
     longshort,
-    modelo721,
     puntuales,
     record,
     rezagada,
@@ -42,6 +41,7 @@ from .. import (
     volumen,
 )
 from ..config import Config
+from ..hacienda import modelo721
 from .base import (
     _alertas_ratio,
     _direcciones_guardadas,

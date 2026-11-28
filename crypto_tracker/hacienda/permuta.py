@@ -2,11 +2,12 @@
 
 from dataclasses import dataclass
 
-from . import comision, sivendo
-from .config import Posicion
+from .. import comision
+from ..config import Posicion
+from ..movimientos import Movimiento, MovimientoError, interpretar_venta
+from ..simbolos import a_id
+from . import sivendo
 from .impuestos import Impuestos
-from .movimientos import Movimiento, MovimientoError, interpretar_venta
-from .simbolos import a_id
 from .sivendo import Simulacion
 
 EJEMPLO = (

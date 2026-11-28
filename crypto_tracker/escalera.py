@@ -2,9 +2,9 @@
 
 from dataclasses import dataclass
 
-from . import fifo
 from .config import Posicion
-from .impuestos import cuota
+from .hacienda import fifo
+from .hacienda.impuestos import cuota
 from .movimientos import Movimiento
 from .puntuales import numero
 from .simbolos import a_id

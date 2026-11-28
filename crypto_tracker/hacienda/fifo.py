@@ -4,8 +4,8 @@ import math
 from collections import deque
 from dataclasses import dataclass
 
-from .config import Posicion
-from .movimientos import RESTO, Movimiento
+from ..config import Posicion
+from ..movimientos import RESTO, Movimiento
 
 
 @dataclass(frozen=True)

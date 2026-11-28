@@ -9,17 +9,14 @@ from .. import (
     alerts,
     aniversario,
     anual,
-    aviso_renta,
     backup,
     botones,
     cartera,
     comandos,
-    compensar,
     database,
     diario,
     envivo,
     grafica,
-    impuestos,
     mensual,
     mes,
     miedo,
@@ -34,6 +31,7 @@ from .. import (
     telegram,
 )
 from ..config import Config
+from ..hacienda import aviso_renta, compensar, impuestos
 from .base import (
     SIN_CARTERA,
     Respuesta,

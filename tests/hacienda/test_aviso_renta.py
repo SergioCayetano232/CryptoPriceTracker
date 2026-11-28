@@ -4,8 +4,8 @@ from datetime import date, datetime, time
 
 import pytest
 
-from crypto_tracker.aviso_renta import hay_que_declarar, toca_aviso
-from crypto_tracker.impuestos import Impuestos
+from crypto_tracker.hacienda.aviso_renta import hay_que_declarar, toca_aviso
+from crypto_tracker.hacienda.impuestos import Impuestos
 
 NUEVE = time(9, 0)
 

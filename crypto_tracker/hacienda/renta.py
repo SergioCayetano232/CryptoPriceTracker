@@ -5,9 +5,9 @@ from dataclasses import dataclass
 from datetime import datetime
 from io import StringIO
 
+from ..exportar import _numero
+from ..movimientos import Movimiento
 from . import fifo
-from .exportar import _numero
-from .movimientos import Movimiento
 
 
 @dataclass(frozen=True)

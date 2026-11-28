@@ -2,7 +2,7 @@
 
 from datetime import date, datetime, time
 
-from .diario import toca_resumen
+from ..diario import toca_resumen
 from .impuestos import Impuestos
 
 # La campaña suele abrir a primeros de abril. Hasta el 15, por si ese día el bot

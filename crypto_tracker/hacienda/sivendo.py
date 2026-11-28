@@ -2,10 +2,10 @@
 
 from dataclasses import dataclass
 
+from ..config import Posicion
+from ..movimientos import Movimiento, MovimientoError, cobrado, interpretar_venta
 from . import fifo
-from .config import Posicion
 from .impuestos import Impuestos, cuota
-from .movimientos import Movimiento, MovimientoError, cobrado, interpretar_venta
 
 EJEMPLO = (
     "/sivendo bitcoin 0.005, /sivendo bitcoin todo o /sivendo bitcoin 0.005 @80000"

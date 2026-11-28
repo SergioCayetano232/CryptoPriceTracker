@@ -3,10 +3,10 @@
 from dataclasses import dataclass
 from datetime import date, datetime, time
 
-from .diario import toca_resumen
+from ..diario import toca_resumen
+from ..movimientos import RESTO
 from .fifo import Lote
 from .impuestos import Impuestos, cuota
-from .movimientos import RESTO
 
 # Por debajo de un céntimo no merece una línea ni una venta.
 CENTIMO = 0.01

@@ -13,7 +13,6 @@ from .. import (
     condicion,
     database,
     escalera,
-    impuestos,
     juntas,
     movimientos,
     puntuales,
@@ -24,6 +23,7 @@ from .. import (
     vigiladas,
 )
 from ..config import Config
+from ..hacienda import impuestos
 from .base import (
     Respuesta,
     _alertas_ratio,
