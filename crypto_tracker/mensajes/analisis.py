@@ -3,36 +3,61 @@
 import math
 from datetime import date, datetime
 
-from ..ahr999 import COMPRAR, ESPERAR, Ahr999
-from ..arcoiris import FRANJAS, Arcoiris
 from ..avisos.direccion import EJEMPLO as EJEMPLO_DIRECCION
 from ..avisos.direccion import Saldo, Vigilada, a_moneda, coin_id, es_eth, ver
 from ..avisos.perdido import Perdido
 from ..avisos.puntuales import CARTERA
 from ..avisos.recordar import DIAS as DIAS_SEMANA
-from ..backtest import INICIAL as INICIAL_BACKTEST
-from ..backtest import Backtest
-from ..bollinger import PERIODO as PERIODO_BOLLINGER
-from ..bollinger import Bandas
-from ..caida import Caida
-from ..ciclo import FONDO, TECHO
-from ..cme import Cme
-from ..correlacion import Correlacion, Matriz
-from ..cuando import Cuando
-from ..diames import POCOS_MESES as POCOS_MESES_DIAMES
-from ..diames import DiasMes
-from ..diasemana import DiasSemana
-from ..dominancia import Dominancia
-from ..dvol import Dvol
-from ..estacional import MESES as MESES_ESTACIONAL
-from ..estacional import POCOS_AÑOS, Estacional
-from ..estocastico import ALTO as ALTO_ESTOCASTICO
-from ..estocastico import BAJO as BAJO_ESTOCASTICO
-from ..estocastico import PERIODO as PERIODO_ESTOCASTICO
-from ..estocastico import Estocastico
-from ..fibonacci import Fibonacci
-from ..funding import Funding
-from ..horas import Horas
+from ..indicadores.ahr999 import COMPRAR, ESPERAR, Ahr999
+from ..indicadores.arcoiris import FRANJAS, Arcoiris
+from ..indicadores.backtest import INICIAL as INICIAL_BACKTEST
+from ..indicadores.backtest import Backtest
+from ..indicadores.bollinger import PERIODO as PERIODO_BOLLINGER
+from ..indicadores.bollinger import Bandas
+from ..indicadores.caida import Caida
+from ..indicadores.ciclo import FONDO, TECHO
+from ..indicadores.cme import Cme
+from ..indicadores.correlacion import Correlacion, Matriz
+from ..indicadores.cuando import Cuando
+from ..indicadores.diames import POCOS_MESES as POCOS_MESES_DIAMES
+from ..indicadores.diames import DiasMes
+from ..indicadores.diasemana import DiasSemana
+from ..indicadores.dominancia import Dominancia
+from ..indicadores.dvol import Dvol
+from ..indicadores.estacional import MESES as MESES_ESTACIONAL
+from ..indicadores.estacional import POCOS_AÑOS, Estacional
+from ..indicadores.estocastico import ALTO as ALTO_ESTOCASTICO
+from ..indicadores.estocastico import BAJO as BAJO_ESTOCASTICO
+from ..indicadores.estocastico import PERIODO as PERIODO_ESTOCASTICO
+from ..indicadores.estocastico import Estocastico
+from ..indicadores.fibonacci import Fibonacci
+from ..indicadores.funding import Funding
+from ..indicadores.horas import Horas
+from ..indicadores.kimchi import Kimchi
+from ..indicadores.longshort import LongShort
+from ..indicadores.longshort import lectura as lectura_longshort
+from ..indicadores.macd import LENTA, RAPIDA, Macd
+from ..indicadores.macd import SEÑAL as SEÑAL_MACD
+from ..indicadores.maximo import hace
+from ..indicadores.maxpain import MaxPain, Vencimiento
+from ..indicadores.mayer import BURBUJA, Mayer
+from ..indicadores.media import lado_de_todas
+from ..indicadores.mejor import Extremo
+from ..indicadores.mercado import grande
+from ..indicadores.oi import Interes, lectura
+from ..indicadores.paciencia import Paciencia
+from ..indicadores.picycle import PiCycle
+from ..indicadores.premium import Premium
+from ..indicadores.profundidad import Profundidad
+from ..indicadores.racha import Racha
+from ..indicadores.rango import Rango, barra
+from ..indicadores.ratio import Ratio
+from ..indicadores.rsi import PERIODO, SOBRECOMPRA, SOBREVENTA, Rsi, hasta_zona
+from ..indicadores.semaforo import AMBAR, VERDE, Voto
+from ..indicadores.soporte import Nivel, Soportes
+from ..indicadores.sube import Subida
+from ..indicadores.suelo import Suelo
+from ..indicadores.verdes import Verdes
 from ..informes.mes import MESES as NOMBRES_MESES
 from ..informes.tarjeta import Tarjeta
 from ..inversion.doble import Cartera as CarteraDoble
@@ -44,33 +69,8 @@ from ..inversion.rebalanceo import EJEMPLO as EJEMPLO_REBALANCEO
 from ..inversion.rebalanceo import Paso
 from ..inversion.reparto import OTRAS, Trozo, demasiado
 from ..inversion.sharpe import Sharpe
-from ..kimchi import Kimchi
-from ..longshort import LongShort
-from ..longshort import lectura as lectura_longshort
-from ..macd import LENTA, RAPIDA, Macd
-from ..macd import SEÑAL as SEÑAL_MACD
-from ..maximo import hace
-from ..maxpain import MaxPain, Vencimiento
-from ..mayer import BURBUJA, Mayer
-from ..media import lado_de_todas
-from ..mejor import Extremo
-from ..mercado import grande
 from ..nucleo.periodo import nombre as nombre_periodo
 from ..nucleo.telegram import escape
-from ..oi import Interes, lectura
-from ..paciencia import Paciencia
-from ..picycle import PiCycle
-from ..premium import Premium
-from ..profundidad import Profundidad
-from ..racha import Racha
-from ..rango import Rango, barra
-from ..ratio import Ratio
-from ..rsi import PERIODO, SOBRECOMPRA, SOBREVENTA, Rsi, hasta_zona
-from ..semaforo import AMBAR, VERDE, Voto
-from ..soporte import Nivel, Soportes
-from ..sube import Subida
-from ..suelo import Suelo
-from ..verdes import Verdes
 from .base import (
     BARRAS_MOVIL,
     MINIMO_BARRAS,

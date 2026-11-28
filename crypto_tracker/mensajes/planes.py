@@ -2,6 +2,7 @@
 
 from datetime import date, datetime
 
+from ..indicadores.rango import barra
 from ..informes.mes import MESES
 from ..inversion.apy import Tramo
 from ..inversion.limite import Limite
@@ -15,7 +16,6 @@ from ..inversion.plan import cuanto as cuanto_plan
 from ..inversion.posicion import Entrada
 from ..inversion.promediar import Promedio
 from ..nucleo.telegram import escape
-from ..rango import barra
 from .base import SIMBOLOS, _barra_progreso, _es, _flecha, _ganancia, _hace, _num
 
 

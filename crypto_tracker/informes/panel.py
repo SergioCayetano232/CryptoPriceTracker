@@ -10,7 +10,7 @@ from urllib.parse import parse_qs, parse_qsl, urlsplit
 
 from ..avisos.avisados import Aviso
 from ..avisos.puntuales import CARTERA, Puntual
-from ..miedo import Indice
+from ..indicadores.miedo import Indice
 from ..nucleo.config import Posicion, Watch
 
 # Más puntos que esto no se ven en pantalla y solo engordan la página.

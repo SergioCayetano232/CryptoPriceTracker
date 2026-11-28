@@ -15,7 +15,7 @@ from crypto_tracker.avisos.aviso_tendencias import (
     nuevas,
     toca_mirar,
 )
-from crypto_tracker.tendencias import Tendencia
+from crypto_tracker.indicadores.tendencias import Tendencia
 
 AHORA = datetime(2026, 11, 23, 12, tzinfo=timezone.utc)
 SOL = Tendencia("solana", "Solana", "SOL", 5, 12.3)

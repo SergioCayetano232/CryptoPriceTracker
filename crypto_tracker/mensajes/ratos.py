@@ -9,28 +9,28 @@ from ..caraocruz import QUE_HACER
 from ..cumple import Cumple
 from ..dado import CARAS
 from ..dado import QUE_HACER as QUE_HACER_DADO
-from ..dia import Dia
-from ..diasemana import NOMBRES
 from ..enletras import dinero as dinero_en_letras
 from ..ethereum import Ethereum
 from ..frase import Frase
 from ..galleta import Galleta
 from ..glosario import TERMINOS, buscar, parecido
-from ..halving import Halving
 from ..horoscopo import Horoscopo
-from ..mercado import grande
+from ..indicadores.dia import Dia
+from ..indicadores.diasemana import NOMBRES
+from ..indicadores.halving import Halving
+from ..indicadores.mercado import grande
+from ..indicadores.millonario import Millonario, cantidad
+from ..indicadores.rango import barra
+from ..indicadores.redondo import Redondo
+from ..indicadores.sat import CANTIDADES as CANTIDADES_SAT
+from ..indicadores.sat import SATS_POR_BTC, Sat
 from ..merge import Merge
-from ..millonario import Millonario, cantidad
 from ..mundo import PERSONAS, Mundo
 from ..nucleo.telegram import escape
 from ..pizza import BTC, Pizza
 from ..ppt import EMOJIS as EMOJIS_PPT
 from ..ppt import QUE_HACER as QUE_HACER_PPT
 from ..quiz import PREGUNTAS as PREGUNTAS_QUIZ
-from ..rango import barra
-from ..redondo import Redondo
-from ..sat import CANTIDADES as CANTIDADES_SAT
-from ..sat import SATS_POR_BTC, Sat
 from ..tarot import Carta
 from ..version import Version
 from ..whitepaper import Whitepaper

@@ -19,6 +19,9 @@ from ..avisos.rezagada import Rezagada
 from ..avisos.stop import Stop
 from ..encuesta import BANDA as BANDA_ENCUESTA
 from ..encuesta import Encuesta, limites, se_cierra
+from ..indicadores.maximo import hace
+from ..indicadores.miedo import Indice
+from ..indicadores.miedo import nombre as nombre_miedo
 from ..inversion.emocion import EMOCIONES, Emociones, en_frase
 from ..inversion.emocion import Grupo as GrupoEmocion
 from ..inversion.fantasma import BITCOIN as BITCOIN_FANTASMA
@@ -31,9 +34,6 @@ from ..inversion.pienso import SUBIDON, Pienso
 from ..inversion.tesis import EJEMPLO as EJEMPLO_TESIS
 from ..inversion.tesis import Tesis, marcador, pendientes
 from ..liga import Puesto, posiciones
-from ..maximo import hace
-from ..miedo import Indice
-from ..miedo import nombre as nombre_miedo
 from ..nucleo.config import Watch
 from ..nucleo.telegram import escape
 from ..prediccion import Marcador, Prediccion

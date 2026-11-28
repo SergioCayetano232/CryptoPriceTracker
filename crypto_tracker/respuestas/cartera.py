@@ -4,7 +4,7 @@ import logging
 from dataclasses import replace
 from datetime import date, datetime, timezone
 
-from .. import apodo, miedo, volatilidad
+from .. import apodo
 from ..avisos import alerts
 from ..hacienda import (
     compensar,
@@ -17,6 +17,7 @@ from ..hacienda import (
     renta,
     sivendo,
 )
+from ..indicadores import miedo, volatilidad
 from ..informes import grafica, tarjeta
 from ..inversion import (
     apy,

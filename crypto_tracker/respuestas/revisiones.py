@@ -10,7 +10,6 @@ from dataclasses import replace
 from datetime import date, datetime, timezone
 from functools import partial
 
-from .. import comisionred, funding, longshort, rsi, volatilidad
 from ..avisos import (
     alertaratio,
     alerts,
@@ -30,6 +29,7 @@ from ..avisos import (
     volumen,
 )
 from ..hacienda import modelo721
+from ..indicadores import comisionred, funding, longshort, rsi, volatilidad
 from ..inversion import cartera, equilibrio, ideal, record
 from ..nucleo import coingecko, database, telegram
 from ..nucleo.config import Config

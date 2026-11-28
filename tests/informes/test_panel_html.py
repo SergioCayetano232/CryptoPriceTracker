@@ -94,8 +94,8 @@ def test_la_app_instalada_abre_con_la_clave():
 def test_el_fondo_se_tine_con_el_miedo_del_mercado():
     from datetime import date
 
+    from crypto_tracker.indicadores.miedo import Indice
     from crypto_tracker.informes.panel_html import matiz
-    from crypto_tracker.miedo import Indice
 
     html = pagina(_panel(miedo=Indice(20, "Fear", date(2026, 11, 28))), AHORA, False)
 

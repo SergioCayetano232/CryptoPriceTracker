@@ -4,7 +4,7 @@ import json
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta
 
-from ..tendencias import Tendencia
+from ..indicadores.tendencias import Tendencia
 
 # Cada ciclo serían ~8.600 consultas al mes; así son unas 120.
 CADA = timedelta(hours=6)

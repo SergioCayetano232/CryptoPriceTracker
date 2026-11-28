@@ -208,8 +208,8 @@ def test_las_etiquetas_de_los_bordes_van_hacia_dentro(monkeypatch):
 
 
 def test_mapa_sale_un_png_con_una_o_con_treinta():
+    from crypto_tracker.indicadores.mapa import Casilla, Mapa
     from crypto_tracker.informes.grafica import dibujar_mapa
-    from crypto_tracker.mapa import Casilla, Mapa
 
     una = Mapa([Casilla("bitcoin", "BTC", 1.0, 0.0)])
     treinta = Mapa(

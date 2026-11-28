@@ -41,7 +41,7 @@ def calcular(
 ) -> Cruce | None:
     """None si no hay días bastantes para la de 200."""
     # Aquí y no arriba: config usa LARGA, y media acaba importando config.
-    from .. import media
+    from ..indicadores import media
 
     corta = media.calcular(dias, CORTA)
     larga = media.calcular(dias, LARGA)

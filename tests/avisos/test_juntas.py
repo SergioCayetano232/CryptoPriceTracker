@@ -7,7 +7,7 @@ import pytest
 from crypto_tracker.avisos import juntas
 from crypto_tracker.avisos.alerts import formatear_aviso_juntas, formatear_juntas
 from crypto_tracker.avisos.juntas import JuntasError, Medida, Pareja
-from crypto_tracker.correlacion import Correlacion
+from crypto_tracker.indicadores.correlacion import Correlacion
 
 HOY = date(2026, 11, 22)
 

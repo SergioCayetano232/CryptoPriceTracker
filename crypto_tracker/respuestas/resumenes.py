@@ -5,9 +5,9 @@ import math
 import time
 from datetime import date, datetime, timedelta, timezone
 
-from .. import miedo
 from ..avisos import alerts, diario, envivo, proximo, puntuales
 from ..hacienda import aviso_renta, compensar, impuestos
+from ..indicadores import miedo
 from ..informes import (
     aniversario,
     anual,

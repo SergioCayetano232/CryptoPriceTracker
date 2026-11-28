@@ -9,7 +9,7 @@ from .cartera import Valor
 
 # Solo el tipo: volatilidad importa alerts, y alerts importa este.
 if TYPE_CHECKING:
-    from ..volatilidad import Volatilidad
+    from ..indicadores.volatilidad import Volatilidad
 
 HORAS = 30 * 24
 

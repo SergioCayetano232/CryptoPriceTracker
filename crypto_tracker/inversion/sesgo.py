@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import date
 
-from ..miedo import Indice
+from ..indicadores.miedo import Indice
 from .movimientos import Movimiento
 
 # Las cinco de alternative.me, de pánico a euforia.

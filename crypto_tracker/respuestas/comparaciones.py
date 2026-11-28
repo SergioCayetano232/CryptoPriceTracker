@@ -37,7 +37,6 @@ from .. import (
     macbook,
     menu,
     metro,
-    millonario,
     mundo,
     navidad,
     netflix,
@@ -50,7 +49,6 @@ from .. import (
     pizza,
     ps5,
     rolex,
-    sat,
     sofa,
     spotify,
     sueldo,
@@ -64,6 +62,7 @@ from .. import (
     zapatillas,
 )
 from ..avisos import alerts
+from ..indicadores import millonario, sat
 from ..inversion import cartera
 from ..nucleo import botones, comandos, simbolos, telegram
 from ..nucleo.config import Config

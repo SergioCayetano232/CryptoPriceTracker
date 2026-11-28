@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 from ..avisos.calma import MIN_SEMANAS, VENTANA
 from ..avisos.cruce import LARGA
 from ..avisos.volumen import MIN_DIAS as MIN_DIAS_VOLUMEN
-from ..rsi import PERIODO
+from ..indicadores.rsi import PERIODO
 
 MIN_DIAS_CALMA = MIN_SEMANAS + VENTANA + 1
 

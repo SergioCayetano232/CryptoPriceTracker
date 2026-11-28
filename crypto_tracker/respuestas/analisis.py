@@ -3,7 +3,8 @@
 import logging
 from datetime import date, datetime, timedelta, timezone
 
-from .. import (
+from ..avisos import alerts, puntuales, ruido, voto
+from ..indicadores import (
     ahr999,
     arcoiris,
     backtest,
@@ -45,7 +46,6 @@ from .. import (
     verdes,
     volatilidad,
 )
-from ..avisos import alerts, puntuales, ruido, voto
 from ..informes import grafica
 from ..inversion import cartera, dca, futuro, hubiera, sharpe
 from ..nucleo import botones, comandos, database, periodo, simbolos, telegram

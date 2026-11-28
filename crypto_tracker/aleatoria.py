@@ -2,7 +2,7 @@
 
 import random
 
-from .top import Movida
+from .indicadores.top import Movida
 
 # Las estables valen siempre 1 y no hay nada que descubrir. Casi todas llevan
 # USD en el símbolo (USDT, USDC, FDUSD...); estas son las que no.

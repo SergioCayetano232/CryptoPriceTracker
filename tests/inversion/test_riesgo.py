@@ -5,9 +5,9 @@ from datetime import date
 import pytest
 
 from crypto_tracker.avisos.alerts import formatear_riesgo
+from crypto_tracker.indicadores.volatilidad import Volatilidad
 from crypto_tracker.inversion.cartera import Valor
 from crypto_tracker.inversion.riesgo import Riesgo, calcular
-from crypto_tracker.volatilidad import Volatilidad
 
 PEOR = date(2026, 10, 12)
 

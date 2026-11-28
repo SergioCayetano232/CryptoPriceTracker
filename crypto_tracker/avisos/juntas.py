@@ -7,8 +7,8 @@ hackeo, alguien grande vendiendo.
 from dataclasses import dataclass
 from datetime import date, timedelta
 
-from .. import correlacion
-from ..correlacion import Correlacion
+from ..indicadores import correlacion
+from ..indicadores.correlacion import Correlacion
 from ..nucleo.simbolos import a_id
 
 EJEMPLO = "/juntas btc eth"

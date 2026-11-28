@@ -36,13 +36,9 @@ from crypto_tracker import (
     excusa,
     frase,
     galleta,
-    halving,
-    maximo,
     merge,
-    miedo,
     refran,
     tarot,
-    velas,
     version,
     whitepaper,
 )
@@ -63,6 +59,7 @@ from crypto_tracker.avisos import (
     salvo,
     stop,
 )
+from crypto_tracker.indicadores import halving, maximo, miedo, velas
 from crypto_tracker.informes import grafica, icono_app, panel, panel_html
 from crypto_tracker.inversion import cartera, importar, movimientos
 from crypto_tracker.nucleo import (

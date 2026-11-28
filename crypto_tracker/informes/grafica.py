@@ -3,15 +3,15 @@
 import io
 from datetime import datetime
 
-from ..arcoiris import FRANJAS, Arcoiris
 from ..avisos.alerts import SIMBOLOS, _num
-from ..calendario import Mes, semanas
-from ..correlacion import Matriz
+from ..indicadores.arcoiris import FRANJAS, Arcoiris
+from ..indicadores.calendario import Mes, semanas
+from ..indicadores.correlacion import Matriz
+from ..indicadores.mapa import Mapa, repartir
+from ..indicadores.velas import Vela
 from ..inversion.reparto import OTRAS, Trozo
-from ..mapa import Mapa, repartir
 from ..nucleo.periodo import nombre as nombre_periodo
 from ..nucleo.simbolos import de_id
-from ..velas import Vela
 from .mes import MESES
 from .tarjeta import Tarjeta
 from .tarjeta_anual import TarjetaAnual

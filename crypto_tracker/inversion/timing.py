@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import date, datetime
 
-from ..volatilidad import por_dias
+from ..indicadores.volatilidad import por_dias
 from .movimientos import Movimiento
 
 # Los días de antes y de después con los que comparo cada compra.

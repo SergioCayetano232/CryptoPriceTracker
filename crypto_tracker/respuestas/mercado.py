@@ -3,8 +3,9 @@
 import logging
 from datetime import date, datetime, timezone
 
-from .. import (
-    aleatoria,
+from .. import aleatoria
+from ..avisos import alerts, avisados, aviso_tendencias, direccion
+from ..indicadores import (
     comisionred,
     dia,
     dificultad,
@@ -25,10 +26,10 @@ from .. import (
     spread,
     top,
 )
-from ..avisos import alerts, avisados, aviso_tendencias, direccion
+from ..indicadores.mercado import Mercado
+from ..indicadores.precio import en_sats
 from ..informes import grafica
 from ..inversion import cartera, convertir
-from ..mercado import Mercado
 from ..nucleo import (
     binance,
     botones,
@@ -40,7 +41,6 @@ from ..nucleo import (
     telegram,
 )
 from ..nucleo.config import Config
-from ..precio import en_sats
 from .base import (
     _con_cambios,
     _consultar,

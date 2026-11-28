@@ -21,7 +21,7 @@ from crypto_tracker.avisos.alerts import (
     revisar,
 )
 from crypto_tracker.avisos.puntuales import Puntual
-from crypto_tracker.maximo import Maximo
+from crypto_tracker.indicadores.maximo import Maximo
 from crypto_tracker.nucleo.config import Watch
 
 # --- clasificar ---

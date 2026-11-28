@@ -4,9 +4,9 @@ from datetime import date, datetime, timezone
 
 import pytest
 
+from crypto_tracker.indicadores.miedo import Indice
 from crypto_tracker.inversion.movimientos import Movimiento
 from crypto_tracker.inversion.sesgo import Grupo, Lado, calcular, dias_hacia_atras
-from crypto_tracker.miedo import Indice
 
 
 def _mov(dia, tipo="compra", cantidad=1.0, coste=100.0, coin_id="bitcoin"):

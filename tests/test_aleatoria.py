@@ -4,7 +4,7 @@ import random
 
 from crypto_tracker.aleatoria import elegir, es_estable
 from crypto_tracker.avisos.alerts import formatear_aleatoria
-from crypto_tracker.top import Movida
+from crypto_tracker.indicadores.top import Movida
 
 
 def _m(coin_id, simbolo, precio=1.0, variacion=0.0):

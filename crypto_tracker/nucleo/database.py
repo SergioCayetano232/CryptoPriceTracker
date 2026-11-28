@@ -22,8 +22,9 @@ from ..avisos.puntuales import Puntual
 from ..avisos.recordar import Recordatorio, a_texto, de_texto
 from ..avisos.rezagada import Rezagada
 from ..avisos.voto import Voto
-from ..dominancia import Foto
-from ..funding import Vigilado
+from ..indicadores.dominancia import Foto
+from ..indicadores.funding import Vigilado
+from ..indicadores.longshort import Vigilado as VigiladoLongShort
 from ..inversion.fantasma import Fantasma
 from ..inversion.fantasma import a_texto as texto_fantasma
 from ..inversion.fantasma import de_texto as leer_fantasma
@@ -34,7 +35,6 @@ from ..inversion.pienso import de_texto as leer_pienso
 from ..inversion.tesis import Tesis
 from ..inversion.tesis import a_texto as texto_tesis
 from ..inversion.tesis import de_texto as leer_tesis
-from ..longshort import Vigilado as VigiladoLongShort
 from ..prediccion import Prediccion
 from .config import Posicion
 from .usuarios import Invitado

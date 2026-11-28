@@ -2,6 +2,7 @@
 
 from crypto_tracker.avisos import puntuales
 from crypto_tracker.avisos.alerts import ALTO, BAJO, Alert
+from crypto_tracker.indicadores.tendencias import Tendencia
 from crypto_tracker.nucleo import comandos
 from crypto_tracker.nucleo.botones import (
     CALLAR,
@@ -14,7 +15,6 @@ from crypto_tracker.nucleo.botones import (
     para_tendencias,
     para_vigilar,
 )
-from crypto_tracker.tendencias import Tendencia
 
 
 def test_un_aviso():

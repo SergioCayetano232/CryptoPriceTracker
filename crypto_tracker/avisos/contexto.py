@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-from ..volatilidad import por_dias
+from ..indicadores.volatilidad import por_dias
 
 # Todo lo guardado; ya lo recorta HISTORY_DAYS.
 HORAS = 366 * 24

@@ -651,7 +651,7 @@ def test_volumenes(db):
 
 
 def test_dominancia(db):
-    from crypto_tracker.dominancia import Foto
+    from crypto_tracker.indicadores.dominancia import Foto
 
     assert database.ultima_dominancia(db) is None
     ahora = datetime.now(timezone.utc).replace(microsecond=0)
@@ -990,7 +990,7 @@ def test_parejas_de_juntas(db):
 
 
 def test_avisos_de_funding(db):
-    from crypto_tracker.funding import Vigilado
+    from crypto_tracker.indicadores.funding import Vigilado
 
     mirado = datetime(2026, 11, 22, 12, 0, tzinfo=timezone.utc)
     database.guardar_funding(db, Vigilado("BTCUSDT", "bitcoin"))
@@ -1006,13 +1006,13 @@ def test_avisos_de_funding(db):
 
 
 def test_avisos_de_longshort(db):
-    from crypto_tracker.longshort import Vigilado
+    from crypto_tracker.indicadores.longshort import Vigilado
 
     mirado = datetime(2026, 11, 22, 12, 0, tzinfo=timezone.utc)
     database.guardar_longshort(db, Vigilado("BTCUSDT", "bitcoin"))
     database.guardar_longshort(db, Vigilado("ETHUSDT", "ethereum", "alcista", mirado))
     # Que no se mezclen con los de /funding, que van en la misma tabla.
-    from crypto_tracker.funding import Vigilado as DeFunding
+    from crypto_tracker.indicadores.funding import Vigilado as DeFunding
 
     database.guardar_funding(db, DeFunding("SOLUSDT", "solana"))
 

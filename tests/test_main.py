@@ -7,26 +7,14 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 import main
-from crypto_tracker import (
-    bola,
-    caraocruz,
-    comisionred,
-    consejo,
-    dado,
-    estacional,
-    excusa,
-    frase,
-    funding,
-    miedo,
-    refran,
-    tarot,
-)
+from crypto_tracker import bola, caraocruz, consejo, dado, excusa, frase, refran, tarot
 from crypto_tracker.avisos import condicion, direccion
+from crypto_tracker.indicadores import comisionred, estacional, funding, miedo
+from crypto_tracker.indicadores.precio import Precio
 from crypto_tracker.informes import grafica
 from crypto_tracker.inversion import inflacion, vsbolsa
 from crypto_tracker.nucleo import binance, coingecko, comandos, database, telegram
 from crypto_tracker.nucleo.config import Config, Posicion, Watch
-from crypto_tracker.precio import Precio
 from crypto_tracker.respuestas import cartera as respuestas_cartera
 from crypto_tracker.respuestas import resumenes, revisiones
 
@@ -579,7 +567,7 @@ def test_resumen_diario_a_su_hora(con_resumen, enviados):
 def test_resumen_diario_lleva_el_miedo(con_resumen, enviados, monkeypatch):
     from datetime import date
 
-    from crypto_tracker.miedo import Indice
+    from crypto_tracker.indicadores.miedo import Indice
 
     monkeypatch.setattr(
         miedo,
@@ -677,7 +665,7 @@ def test_status_no_lleva_aniversario(con_resumen, enviados):
 def test_resumen_cuando_lo_pides(con_resumen, enviados, monkeypatch):
     from datetime import date
 
-    from crypto_tracker.miedo import Indice
+    from crypto_tracker.indicadores.miedo import Indice
 
     monkeypatch.setattr(
         miedo, "pedir", lambda: [Indice(20, "Extreme Fear", date(2026, 9, 29))]
@@ -3618,7 +3606,7 @@ def test_precio_con_lo_emitido(config, enviados, monkeypatch):
 
 
 def test_precio_con_el_maximo_historico(config, enviados, monkeypatch):
-    from crypto_tracker.maximo import Maximo
+    from crypto_tracker.indicadores.maximo import Maximo
 
     m = Maximo("bitcoin", 63000.0, 98000.0, datetime(2024, 12, 17, tzinfo=timezone.utc))
     btc = Precio("bitcoin", 63000.0, 2.5, -4.25, maximo=m)
@@ -4210,7 +4198,7 @@ def test_exportar_movimientos_de_mas(config, enviados, archivos):
 
 
 def _maximos(monkeypatch, maximos):
-    from crypto_tracker.maximo import Maximo
+    from crypto_tracker.indicadores.maximo import Maximo
 
     pedidas = []
 
@@ -4239,7 +4227,7 @@ def test_ath(config, enviados, monkeypatch):
 
 
 def test_ath_con_el_minimo(config, enviados, monkeypatch):
-    from crypto_tracker.maximo import Maximo
+    from crypto_tracker.indicadores.maximo import Maximo
 
     m = Maximo(
         "bitcoin",
@@ -4309,7 +4297,7 @@ def test_ath_sin_conexion(config, enviados, monkeypatch):
 
 
 def test_tendencias(config, monkeypatch):
-    from crypto_tracker.tendencias import Tendencia
+    from crypto_tracker.indicadores.tendencias import Tendencia
 
     mandados = []
     monkeypatch.setattr(
@@ -4360,7 +4348,7 @@ def test_tendencias_sin_conexion(config, enviados, monkeypatch):
 
 
 def _altseason(monkeypatch, bitcoin=-10.0):
-    from crypto_tracker.altseason import Moneda, Temporada
+    from crypto_tracker.indicadores.altseason import Moneda, Temporada
 
     monedas = [Moneda("solana", "SOL", 20.0), Moneda("ethereum", "ETH", -30.0)]
     monedas += [Moneda(f"a{i}", f"A{i}", -20.0) for i in range(48)]
@@ -4415,7 +4403,7 @@ def test_altseason_sin_conexion(config, enviados, monkeypatch):
 
 
 def _mapa(monkeypatch):
-    from crypto_tracker.mapa import Casilla, Mapa
+    from crypto_tracker.indicadores.mapa import Casilla, Mapa
 
     m = Mapa(
         [
@@ -4490,7 +4478,7 @@ def test_mapa_sin_conexion(config, enviados, monkeypatch):
 
 
 def _sectores(monkeypatch, cambios):
-    from crypto_tracker.sectores import Sector
+    from crypto_tracker.indicadores.sectores import Sector
 
     lista = [Sector(n, "A, B", c, 1e9) for n, c in cambios]
     monkeypatch.setattr(coingecko, "sectores_hoy", lambda: lista)
@@ -4551,7 +4539,7 @@ def test_sectores_sin_conexion(config, enviados, monkeypatch):
 
 
 def _dificultad(monkeypatch, cambio=9.0, potencia=None):
-    from crypto_tracker import dificultad
+    from crypto_tracker.indicadores import dificultad
 
     ajuste = {
         "progressPercent": 81.99,
@@ -4609,7 +4597,7 @@ def test_dificultad_capitulacion(config, monkeypatch):
 
 
 def test_dificultad_sin_datos(config, enviados, monkeypatch):
-    from crypto_tracker import dificultad
+    from crypto_tracker.indicadores import dificultad
 
     monkeypatch.setattr(dificultad, "pedir", lambda: ({}, {}))
 
@@ -4619,7 +4607,7 @@ def test_dificultad_sin_datos(config, enviados, monkeypatch):
 
 
 def test_dificultad_sin_conexion(config, enviados, monkeypatch):
-    from crypto_tracker import dificultad
+    from crypto_tracker.indicadores import dificultad
 
     def falla():
         raise dificultad.DificultadError("mempool.space no contesta")
@@ -4635,7 +4623,7 @@ def test_dificultad_sin_conexion(config, enviados, monkeypatch):
 
 
 def test_top(config, monkeypatch):
-    from crypto_tracker.top import Movida
+    from crypto_tracker.indicadores.top import Movida
 
     mandados = _con_botones(monkeypatch)
     monkeypatch.setattr(
@@ -4659,7 +4647,7 @@ def test_top(config, monkeypatch):
 
 
 def test_top_todo_en_verde(config, enviados, monkeypatch):
-    from crypto_tracker.top import Movida
+    from crypto_tracker.indicadores.top import Movida
 
     monkeypatch.setattr(
         coingecko,
@@ -4924,7 +4912,7 @@ def test_comisionred_sin_conexion(config, enviados, monkeypatch):
 def test_miedo(config, monkeypatch):
     from datetime import date
 
-    from crypto_tracker.miedo import Indice
+    from crypto_tracker.indicadores.miedo import Indice
 
     mandados = _con_botones(monkeypatch)
     monkeypatch.setattr(
@@ -4951,7 +4939,7 @@ def test_miedo(config, monkeypatch):
 def test_miedo_sin_ayer(config, enviados, monkeypatch):
     from datetime import date
 
-    from crypto_tracker.miedo import Indice
+    from crypto_tracker.indicadores.miedo import Indice
 
     monkeypatch.setattr(
         miedo, "pedir", lambda: [Indice(8, "Extreme Fear", date(2026, 10, 10))]
@@ -4978,7 +4966,7 @@ def test_miedo_sin_conexion(config, enviados, monkeypatch):
 
 
 def test_mercado(config, monkeypatch):
-    from crypto_tracker.mercado import Mercado
+    from crypto_tracker.indicadores.mercado import Mercado
 
     mandados = []
     monkeypatch.setattr(
@@ -5005,7 +4993,7 @@ def test_mercado(config, monkeypatch):
 
 
 def test_mercado_a_medias(config, enviados, monkeypatch):
-    from crypto_tracker.mercado import Mercado
+    from crypto_tracker.indicadores.mercado import Mercado
 
     monkeypatch.setattr(
         coingecko,
@@ -5023,7 +5011,7 @@ def test_mercado_a_medias(config, enviados, monkeypatch):
 
 
 def test_mercado_sin_datos(config, enviados, monkeypatch):
-    from crypto_tracker.mercado import Mercado
+    from crypto_tracker.indicadores.mercado import Mercado
 
     monkeypatch.setattr(
         coingecko,
@@ -5065,7 +5053,7 @@ def _precio_de(config, coin_id, precio, minutos):
 
 
 def _mercado_global(monkeypatch, bitcoin):
-    from crypto_tracker.mercado import Mercado
+    from crypto_tracker.indicadores.mercado import Mercado
 
     llamadas = []
 
@@ -5078,7 +5066,7 @@ def _mercado_global(monkeypatch, bitcoin):
 
 
 def test_dominancia(config, enviados, monkeypatch):
-    from crypto_tracker.dominancia import Foto
+    from crypto_tracker.indicadores.dominancia import Foto
 
     hace_semana = datetime.now(timezone.utc) - timedelta(days=7)
     database.guardar_dominancia(config.database_path, Foto(hace_semana, 56.0, 13, 6))
@@ -7531,7 +7519,7 @@ def test_pizza_sin_red(config, enviados, monkeypatch):
 
 
 def test_aleatoria(config, monkeypatch):
-    from crypto_tracker.top import Movida
+    from crypto_tracker.indicadores.top import Movida
 
     mandados = _con_botones(monkeypatch)
     # bitcoin la vigilas y tether es estable: solo puede salir solana.
@@ -11473,7 +11461,7 @@ def test_sin_casos_parecidos_el_aviso_va_sin_contexto(config, enviados, monkeypa
 
 
 def test_sesgo(config, enviados, monkeypatch):
-    from crypto_tracker.miedo import Indice
+    from crypto_tracker.indicadores.miedo import Indice
 
     hoy = datetime.now(timezone.utc).date()
     for horas in (0, 24, 48):
@@ -11521,7 +11509,7 @@ def test_sesgo_sin_indice(config, enviados, monkeypatch):
 
 
 def _miedo_de(monkeypatch, valor):
-    from crypto_tracker.miedo import Indice
+    from crypto_tracker.indicadores.miedo import Indice
 
     hoy = datetime.now(timezone.utc).date()
     monkeypatch.setattr(miedo, "pedir", lambda: [Indice(valor, "Fear", hoy)])
@@ -11633,7 +11621,7 @@ def test_frase_con_condicion(config, enviados, monkeypatch):
 
 
 def test_pienso(config, enviados, monkeypatch):
-    from crypto_tracker.miedo import Indice
+    from crypto_tracker.indicadores.miedo import Indice
 
     _precio(monkeypatch, {"bitcoin": 64000.0})
     monkeypatch.setattr(coingecko, "_cambios", {"bitcoin": 11.2})
@@ -13509,7 +13497,7 @@ def test_la_ayuda_del_invitado_sin_lo_tuyo(config, a_quien):
 
 
 def test_dominancia_del_invitado_con_tu_historico(config, a_quien, monkeypatch):
-    from crypto_tracker.dominancia import Foto
+    from crypto_tracker.indicadores.dominancia import Foto
     from crypto_tracker.nucleo import usuarios
 
     _con_invitado(config, a_quien)
@@ -13775,7 +13763,7 @@ def _sin_funding(monkeypatch):
 
 
 def test_semaforo_subiendo_sin_parar_queda_en_ambar(config, enviados, monkeypatch):
-    from crypto_tracker.miedo import Indice
+    from crypto_tracker.indicadores.miedo import Indice
 
     monkeypatch.setattr(coingecko, "get_prices", lambda *a, **k: pytest.fail())
     monkeypatch.setattr(
@@ -13797,7 +13785,7 @@ def test_semaforo_subiendo_sin_parar_queda_en_ambar(config, enviados, monkeypatc
 
 
 def test_semaforo_rojo_cayendo_con_euforia(config, enviados, monkeypatch):
-    from crypto_tracker.miedo import Indice
+    from crypto_tracker.indicadores.miedo import Indice
 
     monkeypatch.setattr(
         miedo, "pedir", lambda: [Indice(80, "Extreme Greed", datetime.now().date())]

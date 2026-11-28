@@ -1,6 +1,6 @@
 """Aviso de cuando una cripto que vigilas entra en sobrecompra o sobreventa."""
 
-from ..rsi import SOBRECOMPRA, SOBREVENTA
+from ..indicadores.rsi import SOBRECOMPRA, SOBREVENTA
 
 ALTA = "alta"
 BAJA = "baja"

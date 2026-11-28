@@ -5,8 +5,9 @@ import math
 from dataclasses import replace
 from datetime import datetime, timezone
 
-from .. import encuesta, liga, miedo, prediccion
+from .. import encuesta, liga, prediccion
 from ..avisos import alerts, recordar
+from ..indicadores import miedo
 from ..inversion import pienso, tesis
 from ..nucleo import botones, coingecko, database, telegram, usuarios
 from ..nucleo.config import Config

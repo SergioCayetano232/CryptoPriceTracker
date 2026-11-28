@@ -8,9 +8,9 @@ from urllib.parse import quote
 
 import requests
 
-from .. import altseason, mapa, mercado, precio, sectores, tendencias, top
 from ..avisos import estables
-from ..maximo import Maximo, leer
+from ..indicadores import altseason, mapa, mercado, precio, sectores, tendencias, top
+from ..indicadores.maximo import Maximo, leer
 from . import rellenar
 
 logger = logging.getLogger(__name__)
