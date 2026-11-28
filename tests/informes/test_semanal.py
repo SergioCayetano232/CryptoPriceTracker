@@ -4,7 +4,7 @@ from datetime import date, datetime, time, timedelta, timezone
 
 import pytest
 
-from crypto_tracker.alerts import formatear_semana
+from crypto_tracker.avisos.alerts import formatear_semana
 from crypto_tracker.informes.semanal import Semana, semana, toca
 from crypto_tracker.nucleo.config import Posicion
 

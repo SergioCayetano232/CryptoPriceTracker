@@ -2,7 +2,7 @@
 
 import pytest
 
-from crypto_tracker.alerts import formatear_objetivo
+from crypto_tracker.avisos.alerts import formatear_objetivo
 from crypto_tracker.cartera import valorar
 from crypto_tracker.nucleo.config import parse_cartera
 from crypto_tracker.objetivo import Escenario, ObjetivoError, calcular, interpretar

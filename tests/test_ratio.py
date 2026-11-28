@@ -4,7 +4,7 @@ from datetime import date, timedelta
 
 import pytest
 
-from crypto_tracker.alerts import formatear_ratio
+from crypto_tracker.avisos.alerts import formatear_ratio
 from crypto_tracker.nucleo.periodo import PeriodoError
 from crypto_tracker.ratio import Ratio, calcular, interpretar
 

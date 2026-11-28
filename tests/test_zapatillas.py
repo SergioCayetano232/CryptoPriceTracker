@@ -1,6 +1,6 @@
 """Tests de /zapatillas."""
 
-from crypto_tracker.alerts import formatear_zapatillas
+from crypto_tracker.avisos.alerts import formatear_zapatillas
 from crypto_tracker.zapatillas import Zapatillas
 
 

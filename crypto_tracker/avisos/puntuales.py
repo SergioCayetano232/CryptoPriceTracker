@@ -1,0 +1,270 @@
+"""Alertas de una sola vez: avisan al llegar a un precio y se borran."""
+
+import math
+import re
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+
+from ..nucleo.periodo import PeriodoError, es_tramo, leer
+from ..nucleo.simbolos import a_id
+from .condicion import Condicion
+
+# 70.000 es setenta mil, que es como lo escribe uno aqui. 0.5 sigue siendo medio.
+_MILES = re.compile(r"[1-9]\d{0,2}(\.\d{3})+")
+
+EJEMPLO = "/alerta bitcoin 70000"
+EJEMPLO_RELATIVA = "/alerta bitcoin +10%"
+EJEMPLO_PAREJA = "/alerta bitcoin 60000 o 80000"
+
+# Es para acordarte de por que la pusiste, no para escribir un diario.
+MAX_NOTA = 100
+
+# En el resumen del dia, las que estan a menos de esto de saltar.
+CERCA = 3.0
+
+# Con este nombre la alerta es del valor de toda la cartera, no de una cripto.
+# Va en la misma tabla, asi no hace falta otra.
+CARTERA = "cartera"
+
+
+class PuntualError(Exception):
+    """Lo que escribiste en /alerta no se entiende."""
+
+
+@dataclass(frozen=True)
+class Puntual:
+    id: int
+    coin_id: str
+    objetivo: float
+    sube: bool  # True si espera a que suba hasta el objetivo
+    caduca: datetime | None = None  # None, las de antes y las que no lo pidieron
+    nota: str | None = None
+    creada: datetime | None = None
+    condicion: Condicion | None = None  # lo del miedo o el RSI; las de antes, sin
+
+
+def separar_nota(argumento: str) -> tuple[str, str | None]:
+    """'bitcoin 70000 7d vender la mitad' -> ('bitcoin 70000 7d', 'vender la mitad')."""
+    partes = argumento.split()
+    if len(partes) <= 2:
+        return argumento, None
+    corte = 3 if es_tramo(partes[2]) else 2
+    if len(partes) <= corte:
+        return argumento, None
+
+    nota = " ".join(partes[corte:])
+    if len(nota) > MAX_NOTA:
+        raise PuntualError(f"La nota es muy larga, como mucho {MAX_NOTA} letras.")
+    return " ".join(partes[:corte]), nota
+
+
+def separar_pareja(argumento: str) -> tuple[str, str | None]:
+    """'bitcoin 60000 o 80000 7d' -> ('bitcoin 60000 7d', '80000'). Sin 'o', None."""
+    partes = argumento.split()
+    # Solo justo detrás del precio: una "o" en la nota es parte de la nota.
+    if len(partes) < 4 or partes[2].lower() != "o":
+        return argumento, None
+    return " ".join(partes[:2] + partes[4:]), partes[3]
+
+
+def otro_de_pareja(texto: str, objetivo: float, precio: float) -> float:
+    """El segundo precio de la pareja. Uno tiene que quedar por cada lado."""
+    otro = numero(texto)
+    if otro is None or otro <= 0:
+        raise PuntualError(f"'{texto}' no es un precio. Por ejemplo: {EJEMPLO_PAREJA}")
+    if sube(otro, precio) == sube(objetivo, precio):
+        # Las dos hacia arriba siempre salta antes la más cercana: la otra sobra.
+        raise PuntualError(
+            "Pon uno por encima y otro por debajo de lo que vale ahora. "
+            "Para dos hacia el mismo lado, pon dos /alerta."
+        )
+    return otro
+
+
+def otras_de_pareja(saltan: list[int], parejas: dict[int, int]) -> list[int]:
+    """Las que hay que quitar porque ha saltado su pareja."""
+    otras = [parejas[i] for i in saltan if i in parejas]
+    return [i for i in dict.fromkeys(otras) if i not in saltan]
+
+
+def separar_caducidad(argumento: str) -> tuple[str, float | None]:
+    """'bitcoin 70000 7d' -> ('bitcoin 70000', 168). Sin caducidad, None."""
+    partes = argumento.split()
+    # Con dos partes no: "bitcoin 70000" tambien pareceria un tramo.
+    if len(partes) != 3 or not es_tramo(partes[2]):
+        return argumento, None
+    try:
+        horas = leer(partes[2])
+    except PeriodoError as e:
+        raise PuntualError(str(e)) from None
+    return " ".join(partes[:2]), horas
+
+
+def caducidad(ahora: datetime, horas: float | None) -> datetime | None:
+    return ahora + timedelta(hours=horas) if horas else None
+
+
+def caducadas(alertas: list[Puntual], ahora: datetime) -> list[Puntual]:
+    return [a for a in alertas if a.caduca and a.caduca <= ahora]
+
+
+def interpretar(argumento: str) -> tuple[str, float]:
+    """'bitcoin 70000' -> ('bitcoin', 70000.0)."""
+    partes = argumento.split()
+    if len(partes) != 2:
+        raise PuntualError(f"Escríbelo así: {EJEMPLO}")
+
+    objetivo = numero(partes[1])
+    if objetivo is None or objetivo <= 0:
+        raise PuntualError(f"'{partes[1]}' no es un precio. Por ejemplo: {EJEMPLO}")
+
+    return a_id(partes[0]), objetivo
+
+
+def interpretar_relativa(argumento: str) -> tuple[str, float] | None:
+    """'bitcoin +10%' -> ('bitcoin', 10.0). None si no va en porcentaje."""
+    partes = argumento.split()
+    if len(partes) != 2 or not partes[1].endswith("%"):
+        return None
+
+    texto = partes[1][:-1]
+    # Sin signo no se sabe si esperar a que suba o a que baje.
+    if not texto.startswith(("+", "-")):
+        raise PuntualError(f"¿Sube o baja? Pon +{texto}% o -{texto}%")
+
+    porcentaje = numero(texto[1:])
+    if porcentaje is None or porcentaje <= 0:
+        raise PuntualError(f"'{partes[1]}' no es un porcentaje. Ej: {EJEMPLO_RELATIVA}")
+    if texto.startswith("-"):
+        porcentaje = -porcentaje
+    if porcentaje <= -100:
+        raise PuntualError("No puede bajar un 100 % o más, se quedaría en nada.")
+
+    return a_id(partes[0]), porcentaje
+
+
+def numeros(argumento: str) -> list[int]:
+    """'3', '#3' o '2 5, 7' -> los numeros de las alertas, sin repetir."""
+    partes = argumento.replace(",", " ").split()
+    try:
+        ids = [int(p.lstrip("#")) for p in partes]
+    except ValueError:
+        raise PuntualError("No son números de alerta") from None
+    if not ids:
+        raise PuntualError("Falta el número de la alerta")
+    return list(dict.fromkeys(ids))
+
+
+def de_cripto(alertas: list[Puntual], coin_id: str) -> list[int]:
+    """Los numeros de las alertas de esa cripto, para /quitar bitcoin."""
+    return [a.id for a in alertas if a.coin_id == coin_id]
+
+
+def objetivo_relativo(precio: float, porcentaje: float) -> float:
+    return precio * (1 + porcentaje / 100)
+
+
+def ejemplo(precio: float) -> str:
+    """Un precio redondo algo por encima del de ahora, para poner de ejemplo."""
+    # Dos cifras: con mas ya no parece un numero que escribirias tu.
+    paso = 10 ** (math.floor(math.log10(precio * 1.1)) - 1)
+    redondo = math.floor(precio * 1.1 / paso) * paso
+    decimales = max(0, -round(math.log10(paso)))
+    # Con coma decimal, como lo escribiria uno aqui.
+    return f"{redondo:.{decimales}f}".replace(".", ",")
+
+
+def numero(texto: str) -> float | None:
+    """Lee 70000, 70.000, 0,35, 70000€ o 70k. None si no es un numero."""
+    texto = texto.strip().strip("€$£")
+    por = 1
+    if texto[-1:] in ("k", "K"):
+        texto, por = texto[:-1], 1000
+    if "," in texto:
+        texto = texto.replace(".", "").replace(",", ".")
+    elif _MILES.fullmatch(texto):
+        texto = texto.replace(".", "")
+
+    try:
+        valor = float(texto) * por
+    except ValueError:
+        return None
+    # float() se traga "inf" y "nan", y con eso nunca saltaria
+    return valor if math.isfinite(valor) else None
+
+
+def sube(objetivo: float, precio: float) -> bool:
+    """True si hay que esperar a que suba, False si a que baje."""
+    if objetivo == precio:
+        raise PuntualError("Ya está justo a ese precio ahora mismo.")
+    return objetivo > precio
+
+
+def repetida(
+    alertas: list[Puntual], coin_id: str, objetivo: float, sube: bool
+) -> Puntual | None:
+    """La que ya tienes igual: misma cripto, mismo precio y hacia el mismo lado."""
+    # isclose: el 70000,0 del boton y el 70.000 escrito a mano son la misma.
+    return next(
+        (
+            a
+            for a in alertas
+            if a.coin_id == coin_id
+            and a.sube == sube
+            and math.isclose(a.objetivo, objetivo, rel_tol=1e-9)
+        ),
+        None,
+    )
+
+
+def progreso(alerta: Puntual, valor: float | None) -> float | None:
+    """Lo que lleva tu cartera hacia la meta, en %. Solo en las de que suba."""
+    # En una de bajar, "60% del camino" no se entiende: ¿60% de qué?
+    if alerta.coin_id != CARTERA or not alerta.sube or not valor or valor < 0:
+        return None
+    return min(100.0, valor / alerta.objetivo * 100)
+
+
+def cumplidas(alertas: list[Puntual], precios: dict[str, float]) -> list[Puntual]:
+    """Las que ya han llegado. Pasarse tambien cuenta: entre ciclo y ciclo salta."""
+    hechas = []
+    for a in alertas:
+        precio = precios.get(a.coin_id)
+        if precio is None:
+            continue
+        if (a.sube and precio >= a.objetivo) or (not a.sube and precio <= a.objetivo):
+            hechas.append(a)
+    return hechas
+
+
+def por_cercania(alertas: list[Puntual], precios: dict[str, float]) -> list[Puntual]:
+    """La que antes va a saltar primero. Las que ya llegaron, arriba del todo."""
+    hechas = cumplidas(alertas, precios)
+
+    def distancia(a: Puntual) -> float:
+        precio = precios.get(a.coin_id)
+        if a in hechas:
+            return -1
+        # Sin precio no se sabe, al final; sorted es estable y quedan como estaban.
+        if not precio:
+            return math.inf
+        return abs(a.objetivo - precio) / precio
+
+    return sorted(alertas, key=distancia)
+
+
+def cerca(
+    alertas: list[Puntual], precios: dict[str, float], margen: float = CERCA
+) -> list[tuple[Puntual, float]]:
+    """Las que estan a punto, con lo que les falta en %. La mas cercana primero."""
+    hechas = cumplidas(alertas, precios)
+    proximas = []
+    for a in alertas:
+        precio = precios.get(a.coin_id)
+        # Las que ya han llegado saltan solas en el siguiente ciclo.
+        if not precio or a in hechas:
+            continue
+        falta = (a.objetivo - precio) / precio * 100
+        if abs(falta) <= margen:
+            proximas.append((a, falta))
+    return sorted(proximas, key=lambda x: abs(x[1]))

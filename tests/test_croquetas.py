@@ -2,7 +2,7 @@
 
 import pytest
 
-from crypto_tracker.alerts import formatear_croquetas
+from crypto_tracker.avisos.alerts import formatear_croquetas
 from crypto_tracker.croquetas import Croquetas
 from crypto_tracker.nucleo.comandos import interpretar
 

@@ -4,7 +4,7 @@ from datetime import date, datetime, timezone
 
 import pytest
 
-from crypto_tracker.alerts import formatear_primera
+from crypto_tracker.avisos.alerts import formatear_primera
 from crypto_tracker.movimientos import Movimiento
 from crypto_tracker.primera import Primera, buscar
 

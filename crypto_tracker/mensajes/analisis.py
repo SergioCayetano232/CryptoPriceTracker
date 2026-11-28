@@ -5,6 +5,11 @@ from datetime import date, datetime
 
 from ..ahr999 import COMPRAR, ESPERAR, Ahr999
 from ..arcoiris import FRANJAS, Arcoiris
+from ..avisos.direccion import EJEMPLO as EJEMPLO_DIRECCION
+from ..avisos.direccion import Saldo, Vigilada, a_moneda, coin_id, es_eth, ver
+from ..avisos.perdido import Perdido
+from ..avisos.puntuales import CARTERA
+from ..avisos.recordar import DIAS as DIAS_SEMANA
 from ..backtest import INICIAL as INICIAL_BACKTEST
 from ..backtest import Backtest
 from ..bollinger import PERIODO as PERIODO_BOLLINGER
@@ -17,8 +22,6 @@ from ..cuando import Cuando
 from ..diames import POCOS_MESES as POCOS_MESES_DIAMES
 from ..diames import DiasMes
 from ..diasemana import DiasSemana
-from ..direccion import EJEMPLO as EJEMPLO_DIRECCION
-from ..direccion import Saldo, Vigilada, a_moneda, coin_id, es_eth, ver
 from ..doble import Cartera as CarteraDoble
 from ..dominancia import Dominancia
 from ..dvol import Dvol
@@ -52,17 +55,14 @@ from ..nucleo.periodo import nombre as nombre_periodo
 from ..nucleo.telegram import escape
 from ..oi import Interes, lectura
 from ..paciencia import Paciencia
-from ..perdido import Perdido
 from ..picycle import PiCycle
 from ..premium import Premium
 from ..profundidad import Profundidad
-from ..puntuales import CARTERA
 from ..racha import Racha
 from ..rango import Rango, barra
 from ..ratio import Ratio
 from ..rebalanceo import EJEMPLO as EJEMPLO_REBALANCEO
 from ..rebalanceo import Paso
-from ..recordar import DIAS as DIAS_SEMANA
 from ..reparto import OTRAS, Trozo, demasiado
 from ..rsi import PERIODO, SOBRECOMPRA, SOBREVENTA, Rsi, hasta_zona
 from ..semaforo import AMBAR, VERDE, Voto

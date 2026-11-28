@@ -2,7 +2,7 @@
 
 from datetime import date, timedelta
 
-from crypto_tracker.alerts import formatear_galleta
+from crypto_tracker.avisos.alerts import formatear_galleta
 from crypto_tracker.galleta import FRASES, Galleta, abrir
 from crypto_tracker.nucleo.comandos import interpretar
 

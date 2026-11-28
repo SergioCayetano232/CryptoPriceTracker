@@ -4,7 +4,7 @@ from datetime import date
 
 import pytest
 
-from crypto_tracker.alerts import formatear_calendario
+from crypto_tracker.avisos.alerts import formatear_calendario
 from crypto_tracker.calendario import CalendarioError, calcular, interpretar, semanas
 
 HOY = date(2026, 11, 6)

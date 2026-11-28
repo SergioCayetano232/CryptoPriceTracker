@@ -3,7 +3,7 @@
 import pytest
 
 from crypto_tracker.aceite import Aceite
-from crypto_tracker.alerts import formatear_aceite
+from crypto_tracker.avisos.alerts import formatear_aceite
 from crypto_tracker.nucleo.comandos import interpretar
 
 

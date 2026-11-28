@@ -7,7 +7,6 @@ from datetime import date
 from .. import (
     aceite,
     airpods,
-    alerts,
     alquiler,
     ave,
     ballena,
@@ -65,6 +64,7 @@ from .. import (
     vuelo,
     zapatillas,
 )
+from ..avisos import alerts
 from ..nucleo import botones, comandos, simbolos, telegram
 from ..nucleo.config import Config
 from .base import (

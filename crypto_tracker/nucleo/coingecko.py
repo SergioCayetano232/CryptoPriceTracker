@@ -8,7 +8,8 @@ from urllib.parse import quote
 
 import requests
 
-from .. import altseason, estables, mapa, mercado, precio, sectores, tendencias, top
+from .. import altseason, mapa, mercado, precio, sectores, tendencias, top
+from ..avisos import estables
 from ..maximo import Maximo, leer
 from . import rellenar
 

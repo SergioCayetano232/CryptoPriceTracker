@@ -2,7 +2,7 @@
 
 import random
 
-from crypto_tracker.alerts import formatear_chiste
+from crypto_tracker.avisos.alerts import formatear_chiste
 from crypto_tracker.chiste import CHISTES, elegir
 from crypto_tracker.nucleo.comandos import interpretar
 

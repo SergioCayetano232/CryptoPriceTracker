@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from crypto_tracker.alerts import formatear_loteria
+from crypto_tracker.avisos.alerts import formatear_loteria
 from crypto_tracker.loteria import Loteria, sorteo
 
 NOVIEMBRE = date(2026, 11, 1)

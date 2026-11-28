@@ -1,6 +1,6 @@
 """Tests de /taxi."""
 
-from crypto_tracker.alerts import formatear_taxi
+from crypto_tracker.avisos.alerts import formatear_taxi
 from crypto_tracker.taxi import Taxi
 
 

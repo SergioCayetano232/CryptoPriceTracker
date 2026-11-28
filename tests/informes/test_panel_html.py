@@ -2,10 +2,10 @@
 
 from datetime import datetime, timedelta, timezone
 
+from crypto_tracker.avisos.puntuales import Puntual
 from crypto_tracker.informes import panel
 from crypto_tracker.informes.panel_html import pagina
 from crypto_tracker.nucleo.config import Posicion, Watch
-from crypto_tracker.puntuales import Puntual
 
 AHORA = datetime(2026, 11, 20, 12, 0, tzinfo=timezone.utc)
 
@@ -324,7 +324,7 @@ def test_grafica_plana_deja_el_cursor_a_media_altura():
 
 
 def test_los_avisos_del_bot_van_en_la_pagina_para_el_navegador():
-    from crypto_tracker.avisados import Aviso
+    from crypto_tracker.avisos.avisados import Aviso
     from crypto_tracker.informes.panel_html import avisos_navegador
 
     cuando = AHORA - timedelta(minutes=5)

@@ -4,7 +4,7 @@ from datetime import date, timedelta
 
 import pytest
 
-from crypto_tracker.alerts import formatear_extremo
+from crypto_tracker.avisos.alerts import formatear_extremo
 from crypto_tracker.mejor import Dia, Extremo, calcular, interpretar
 from crypto_tracker.nucleo.periodo import PeriodoError
 

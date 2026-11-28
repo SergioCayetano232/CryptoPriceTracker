@@ -833,7 +833,7 @@ def test_deshacer_varias_seguidas_vuelve_al_principio(db):
 
 
 def test_recordatorios(tmp_path):
-    from crypto_tracker.recordar import Recordatorio
+    from crypto_tracker.avisos.recordar import Recordatorio
 
     ruta = str(tmp_path / "r.db")
     database.init_db(ruta)
@@ -959,7 +959,7 @@ def test_aviso_de_la_comision_de_red(db):
 
 
 def test_votos_uno_por_aviso(db):
-    from crypto_tracker.voto import Voto
+    from crypto_tracker.avisos.voto import Voto
 
     aviso = datetime(2026, 11, 22, 10, 30, tzinfo=timezone.utc)
     database.guardar_voto(db, Voto("bitcoin", aviso, True))
@@ -974,7 +974,7 @@ def test_votos_uno_por_aviso(db):
 
 
 def test_parejas_de_juntas(db):
-    from crypto_tracker.juntas import Pareja
+    from crypto_tracker.avisos.juntas import Pareja
 
     database.guardar_juntas(db, Pareja("bitcoin", "ethereum"))
     database.guardar_juntas(db, Pareja("bitcoin", "usd-coin"))
@@ -1047,7 +1047,7 @@ def test_mensaje_en_vivo(db):
 
 
 def test_alerta_con_condicion(db):
-    from crypto_tracker.condicion import Condicion
+    from crypto_tracker.avisos.condicion import Condicion
 
     database.crear_puntual(
         db, "bitcoin", 60000, False, "eur", condicion=Condicion("miedo", True, 20)

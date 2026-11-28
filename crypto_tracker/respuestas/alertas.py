@@ -3,14 +3,13 @@
 import logging
 from datetime import date, datetime, timezone
 
-from .. import (
+from .. import cartera, movimientos
+from ..avisos import (
     alertaratio,
     alerts,
-    cartera,
     condicion,
     escalera,
     juntas,
-    movimientos,
     puntuales,
     rezagada,
     stop,

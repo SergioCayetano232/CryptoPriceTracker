@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from crypto_tracker.alerts import formatear_merge
+from crypto_tracker.avisos.alerts import formatear_merge
 from crypto_tracker.merge import Merge
 
 

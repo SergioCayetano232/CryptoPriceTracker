@@ -4,8 +4,8 @@ from datetime import datetime, timezone
 
 import pytest
 
-from crypto_tracker.alerts import formatear_arrepentido
 from crypto_tracker.arrepentido import Arrepentido, Vendida, calcular
+from crypto_tracker.avisos.alerts import formatear_arrepentido
 from crypto_tracker.movimientos import Movimiento
 
 AHORA = datetime(2026, 10, 1, tzinfo=timezone.utc)

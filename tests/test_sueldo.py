@@ -2,7 +2,7 @@
 
 import pytest
 
-from crypto_tracker.alerts import formatear_sueldo
+from crypto_tracker.avisos.alerts import formatear_sueldo
 from crypto_tracker.sueldo import MENSUAL, Sueldo
 
 

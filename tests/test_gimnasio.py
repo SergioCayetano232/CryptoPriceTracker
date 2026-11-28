@@ -1,6 +1,6 @@
 """Tests de /gimnasio."""
 
-from crypto_tracker.alerts import formatear_gimnasio
+from crypto_tracker.avisos.alerts import formatear_gimnasio
 from crypto_tracker.gimnasio import Gimnasio
 
 

@@ -4,7 +4,7 @@ import pytest
 import requests
 
 from crypto_tracker import comisionred
-from crypto_tracker.alerts import formatear_comisionred
+from crypto_tracker.avisos.alerts import formatear_comisionred
 from crypto_tracker.comisionred import (
     TAMAÑO,
     ComisionRedError,
@@ -222,7 +222,7 @@ def test_pedir_ahora_no_pide_la_semana(monkeypatch):
 
 
 def test_formatear_el_aviso():
-    from crypto_tracker.alerts import formatear_aviso_comisionred
+    from crypto_tracker.avisos.alerts import formatear_aviso_comisionred
 
     texto = formatear_aviso_comisionred(leer(AHORA, []), 10, 80000.0, "eur")
 

@@ -4,7 +4,7 @@ from datetime import date, timedelta
 
 import pytest
 
-from crypto_tracker.alerts import formatear_media
+from crypto_tracker.avisos.alerts import formatear_media
 from crypto_tracker.media import calcular, interpretar, lado_de_todas
 from crypto_tracker.nucleo.periodo import PeriodoError
 

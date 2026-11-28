@@ -1,6 +1,6 @@
 """Tests de /hotel."""
 
-from crypto_tracker.alerts import formatear_hotel
+from crypto_tracker.avisos.alerts import formatear_hotel
 from crypto_tracker.hotel import Hotel
 
 

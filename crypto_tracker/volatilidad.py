@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import date, datetime
 
-from .alerts import _revisar_porcentaje
+from .avisos.alerts import _revisar_porcentaje
 from .nucleo.config import Watch
 from .nucleo.periodo import PeriodoError, es_tramo, leer
 from .nucleo.simbolos import a_id

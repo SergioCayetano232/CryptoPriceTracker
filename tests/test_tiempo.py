@@ -2,7 +2,7 @@
 
 import pytest
 
-from crypto_tracker.alerts import formatear_tiempo
+from crypto_tracker.avisos.alerts import formatear_tiempo
 from crypto_tracker.emoji import CARAS
 from crypto_tracker.nucleo.comandos import interpretar
 from crypto_tracker.tiempo import PARTE, parte

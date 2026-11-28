@@ -2,10 +2,10 @@
 
 from dataclasses import dataclass
 
-from .alerts import SIMBOLOS
+from .avisos.alerts import SIMBOLOS
+from .avisos.puntuales import numero
 from .nucleo.periodo import PeriodoError, leer
 from .nucleo.simbolos import a_id
-from .puntuales import numero
 
 POR_DEFECTO = 30 * 24
 

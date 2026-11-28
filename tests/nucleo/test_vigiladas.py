@@ -2,7 +2,7 @@
 
 import pytest
 
-from crypto_tracker.alerts import describir, formatear_vigiladas
+from crypto_tracker.avisos.alerts import describir, formatear_vigiladas
 from crypto_tracker.nucleo.config import Watch
 from crypto_tracker.nucleo.vigiladas import VigilarError, combinar, interpretar
 

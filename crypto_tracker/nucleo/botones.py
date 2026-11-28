@@ -2,10 +2,10 @@
 
 from datetime import datetime
 
-from .. import voto
-from ..alerts import ALTO, SIMBOLOS, Alert, _num
+from ..avisos import voto
+from ..avisos.alerts import ALTO, SIMBOLOS, Alert, _num
+from ..avisos.puntuales import CARTERA, Puntual
 from ..emocion import EMOCIONES
-from ..puntuales import CARTERA, Puntual
 from ..tendencias import Tendencia
 
 # Telegram no deja meter mas de 64 bytes en cada boton.

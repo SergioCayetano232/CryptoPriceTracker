@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from crypto_tracker.alerts import formatear_pizza
+from crypto_tracker.avisos.alerts import formatear_pizza
 from crypto_tracker.pizza import Pizza
 
 HOY = date(2026, 10, 25)

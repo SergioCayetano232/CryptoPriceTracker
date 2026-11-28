@@ -4,7 +4,7 @@ import pytest
 import requests
 
 from crypto_tracker import funding
-from crypto_tracker.alerts import formatear_funding
+from crypto_tracker.avisos.alerts import formatear_funding
 from crypto_tracker.funding import FundingError, como_esta, leer, par
 
 AHORA = {"symbol": "BTCUSDT", "lastFundingRate": "0.00010000"}
@@ -217,7 +217,7 @@ def test_se_mira_una_vez_por_hora():
 
 
 def test_mensaje_del_aviso():
-    from crypto_tracker.alerts import formatear_aviso_funding
+    from crypto_tracker.avisos.alerts import formatear_aviso_funding
 
     texto = formatear_aviso_funding(_f(0.0612))
 
@@ -228,7 +228,7 @@ def test_mensaje_del_aviso():
 
 
 def test_formatear_recuerda_que_tienes_el_aviso():
-    from crypto_tracker.alerts import formatear_funding
+    from crypto_tracker.avisos.alerts import formatear_funding
 
     assert "🔔 Te aviso" in formatear_funding(_f(0.01), True)
     assert "/funding btc no" in formatear_funding(_f(0.01), True)

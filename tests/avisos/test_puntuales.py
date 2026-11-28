@@ -1,0 +1,489 @@
+"""Tests de las alertas de una sola vez."""
+
+from datetime import datetime, timedelta, timezone
+
+import pytest
+
+from crypto_tracker.avisos.alerts import (
+    ALTO,
+    Alert,
+    formatear,
+    formatear_cerca,
+    formatear_lejos,
+    formatear_puntual,
+    formatear_puntuales,
+    formatear_quitadas,
+)
+from crypto_tracker.avisos.puntuales import (
+    Puntual,
+    PuntualError,
+    caducadas,
+    caducidad,
+    cerca,
+    cumplidas,
+    de_cripto,
+    interpretar,
+    interpretar_relativa,
+    numero,
+    numeros,
+    objetivo_relativo,
+    otras_de_pareja,
+    otro_de_pareja,
+    por_cercania,
+    progreso,
+    repetida,
+    separar_caducidad,
+    separar_nota,
+    separar_pareja,
+    sube,
+)
+
+# --- leer lo que escribes ---
+
+
+def test_interpretar():
+    assert interpretar("Bitcoin 70000") == ("bitcoin", 70000.0)
+
+
+@pytest.mark.parametrize(
+    "texto, esperado",
+    [
+        ("70000", 70000.0),
+        ("70.000", 70000.0),
+        ("1.250.000", 1250000.0),
+        ("0,35", 0.35),
+        ("70.000,50", 70000.5),
+        ("0.35", 0.35),
+        ("0.150", 0.15),  # empieza por 0: son decimales, no miles
+        ("70000€", 70000.0),
+        ("$2500", 2500.0),
+        ("70k", 70000.0),
+        ("1,5k", 1500.0),
+        ("2.5K€", 2500.0),
+    ],
+)
+def test_numero(texto, esperado):
+    assert numero(texto) == esperado
+
+
+@pytest.mark.parametrize("texto", ["setenta", "inf", "nan", "", "7o000", "k", "70kk"])
+def test_numero_que_no_lo_es(texto):
+    assert numero(texto) is None
+
+
+@pytest.mark.parametrize("argumento", ["", "bitcoin", "bitcoin 70000 ya"])
+def test_interpretar_formato_malo(argumento):
+    with pytest.raises(PuntualError, match="/alerta bitcoin 70000"):
+        interpretar(argumento)
+
+
+@pytest.mark.parametrize("precio", ["mucho", "0", "-5"])
+def test_interpretar_precio_malo(precio):
+    with pytest.raises(PuntualError, match="no es un precio"):
+        interpretar(f"bitcoin {precio}")
+
+
+# --- hacia donde espera ---
+
+
+def test_por_encima_espera_a_que_suba():
+    assert sube(70000, 63000) is True
+
+
+def test_por_debajo_espera_a_que_baje():
+    assert sube(55000, 63000) is False
+
+
+def test_justo_al_precio_de_ahora_no_vale():
+    with pytest.raises(PuntualError):
+        sube(63000, 63000)
+
+
+# --- cuando salta ---
+
+SUBE = Puntual(1, "bitcoin", 70000, sube=True)
+BAJA = Puntual(2, "bitcoin", 55000, sube=False)
+
+
+def test_no_salta_antes_de_llegar():
+    assert cumplidas([SUBE, BAJA], {"bitcoin": 63000}) == []
+
+
+def test_salta_al_llegar_justo():
+    assert cumplidas([SUBE], {"bitcoin": 70000}) == [SUBE]
+
+
+def test_salta_aunque_se_pase():
+    # entre ciclo y ciclo puede haber dado el salto de golpe
+    assert cumplidas([SUBE], {"bitcoin": 72000}) == [SUBE]
+    assert cumplidas([BAJA], {"bitcoin": 50000}) == [BAJA]
+
+
+def test_sin_precio_no_salta():
+    assert cumplidas([SUBE], {}) == []
+
+
+def test_cada_una_con_su_cripto():
+    eth = Puntual(3, "ethereum", 4000, sube=True)
+
+    assert cumplidas([SUBE, eth], {"bitcoin": 63000, "ethereum": 4100}) == [eth]
+
+
+# --- los mensajes ---
+
+
+def test_mensaje_al_crear():
+    texto = formatear_puntual(SUBE, 63000, "eur")
+
+    assert "suba a <b>€70.000,00</b>" in texto
+    assert "€63.000,00" in texto
+
+
+def test_mensaje_al_crear_bajando():
+    assert "baje a" in formatear_puntual(BAJA, 63000, "eur")
+
+
+def test_lista_de_alertas():
+    texto = formatear_puntuales([SUBE, BAJA], "eur")
+
+    assert "<code>1</code>  <b>Bitcoin</b> 🔺 €70.000,00" in texto
+    assert "<code>2</code>  <b>Bitcoin</b> 🔻 €55.000,00" in texto
+    assert "/quitar 1" in texto
+
+
+def test_lista_vacia():
+    assert "No tienes alertas" in formatear_puntuales([], "eur")
+
+
+def test_el_aviso_dice_que_era_tu_alerta():
+    aviso = Alert("bitcoin", 70100, 70000, ALTO, puntual=True)
+
+    texto = formatear(aviso, "eur")
+
+    assert "ha subido de €70.000,00" in texto
+    assert "Era tu /alerta" in texto
+
+
+def test_los_avisos_normales_no_cambian():
+    assert "/alerta" not in formatear(Alert("bitcoin", 70100, 70000, ALTO), "eur")
+
+
+# --- relativas: /alerta bitcoin +10% ---
+
+
+@pytest.mark.parametrize(
+    "texto, esperado",
+    [
+        ("Bitcoin +10%", ("bitcoin", 10.0)),
+        ("bitcoin -5%", ("bitcoin", -5.0)),
+        ("bitcoin +2,5%", ("bitcoin", 2.5)),
+        ("bitcoin -0.5%", ("bitcoin", -0.5)),
+    ],
+)
+def test_interpretar_relativa(texto, esperado):
+    assert interpretar_relativa(texto) == esperado
+
+
+def test_un_precio_no_es_relativa():
+    # asi sigue por el camino de siempre
+    assert interpretar_relativa("bitcoin 70000") is None
+    assert interpretar_relativa("bitcoin") is None
+
+
+def test_relativa_sin_signo_pregunta():
+    with pytest.raises(PuntualError, match=r"\+10% o -10%"):
+        interpretar_relativa("bitcoin 10%")
+
+
+@pytest.mark.parametrize("texto", ["bitcoin +0%", "bitcoin +%", "bitcoin +mucho%"])
+def test_relativa_mal_escrita(texto):
+    with pytest.raises(PuntualError):
+        interpretar_relativa(texto)
+
+
+def test_relativa_no_puede_bajar_del_todo():
+    with pytest.raises(PuntualError):
+        interpretar_relativa("bitcoin -100%")
+
+
+def test_objetivo_relativo():
+    assert objetivo_relativo(60000.0, 10) == pytest.approx(66000.0)
+    assert objetivo_relativo(60000.0, -5) == pytest.approx(57000.0)
+
+
+# --- /quitar ---
+
+
+@pytest.mark.parametrize(
+    "texto, esperado",
+    [
+        ("3", [3]),
+        ("#3", [3]),
+        ("2 5", [2, 5]),
+        ("2, 5,7", [2, 5, 7]),
+        ("5 5 2", [5, 2]),
+    ],
+)
+def test_numeros(texto, esperado):
+    assert numeros(texto) == esperado
+
+
+@pytest.mark.parametrize("texto", ["", "  ", "tres", "2 bitcoin", "2.5"])
+def test_numeros_malos(texto):
+    with pytest.raises(PuntualError):
+        numeros(texto)
+
+
+@pytest.mark.parametrize(
+    "quitadas, no_estaban, esperado",
+    [
+        ([3], [], "🗑 Alerta quitada."),
+        ([], [9], "No tengo ninguna alerta con el número 9. Mira /alertas"),
+        ([2, 5], [], "🗑 2 alertas quitadas."),
+        (
+            [],
+            [7, 8, 9],
+            "No tengo ninguna alerta con los números 7, 8 y 9. Mira /alertas",
+        ),
+    ],
+)
+def test_formatear_quitadas(quitadas, no_estaban, esperado):
+    assert formatear_quitadas(quitadas, no_estaban) == esperado
+
+
+@pytest.mark.parametrize(
+    "precio, esperado",
+    [
+        (150.0, "160"),
+        (1000.0, "1100"),
+        (85601.0, "94000"),
+        (0.35, "0,38"),
+        (0.00002, "0,000022"),
+    ],
+)
+def test_ejemplo_redondo_por_encima(precio, esperado):
+    from crypto_tracker.avisos.puntuales import ejemplo, numero
+
+    assert ejemplo(precio) == esperado
+    assert numero(ejemplo(precio)) > precio  # y /alerta lo entiende
+
+
+# --- caducidad ---
+
+
+@pytest.mark.parametrize(
+    "argumento,esperado",
+    [
+        ("bitcoin 70000 7d", ("bitcoin 70000", 168)),
+        ("bitcoin +10% 12h", ("bitcoin +10%", 12)),
+        ("bitcoin 70000 2sem", ("bitcoin 70000", 336)),
+        ("bitcoin 70000", ("bitcoin 70000", None)),
+        ("bitcoin 7d", ("bitcoin 7d", None)),  # sin precio, lo dira interpretar
+        ("bitcoin 70000 mucho", ("bitcoin 70000 mucho", None)),
+        ("bitcoin", ("bitcoin", None)),
+    ],
+)
+def test_separar_caducidad(argumento, esperado):
+    assert separar_caducidad(argumento) == esperado
+
+
+def test_separar_caducidad_demasiado_larga():
+    with pytest.raises(PuntualError, match="Como mucho un año"):
+        separar_caducidad("bitcoin 70000 500d")
+
+
+def test_caducidad():
+    ahora = datetime(2026, 10, 8, 12, 0, tzinfo=timezone.utc)
+
+    assert caducidad(ahora, 168) == datetime(2026, 10, 15, 12, 0, tzinfo=timezone.utc)
+    assert caducidad(ahora, None) is None
+
+
+def test_caducadas():
+    ahora = datetime(2026, 10, 8, 12, 0, tzinfo=timezone.utc)
+    vieja = Puntual(1, "bitcoin", 70000, True, ahora - timedelta(minutes=1))
+    justa = Puntual(2, "bitcoin", 70000, True, ahora)
+    viva = Puntual(3, "bitcoin", 70000, True, ahora + timedelta(minutes=1))
+    sin = Puntual(4, "bitcoin", 70000, True)
+
+    assert caducadas([vieja, justa, viva, sin], ahora) == [vieja, justa]
+
+
+# --- la nota ---
+
+
+@pytest.mark.parametrize(
+    "argumento, esperado",
+    [
+        ("bitcoin 70000", ("bitcoin 70000", None)),
+        ("bitcoin 70000 7d", ("bitcoin 70000 7d", None)),
+        ("bitcoin 70000 vender la mitad", ("bitcoin 70000", "vender la mitad")),
+        ("bitcoin +10% 7d vender la mitad", ("bitcoin +10% 7d", "vender la mitad")),
+        ("bitcoin", ("bitcoin", None)),
+    ],
+)
+def test_separar_nota(argumento, esperado):
+    assert separar_nota(argumento) == esperado
+
+
+def test_nota_demasiado_larga():
+    with pytest.raises(PuntualError, match="muy larga"):
+        separar_nota("bitcoin 70000 " + "a" * 101)
+
+
+# --- repetidas ---
+
+
+def test_de_cripto():
+    tienes = [
+        Puntual(1, "bitcoin", 70000.0, True),
+        Puntual(2, "solana", 100.0, False),
+        Puntual(4, "bitcoin", 60000.0, False),
+    ]
+
+    assert de_cripto(tienes, "bitcoin") == [1, 4]
+    assert de_cripto(tienes, "ethereum") == []
+
+
+def test_repetida():
+    tienes = [Puntual(1, "bitcoin", 70000.0, True), Puntual(2, "solana", 100.0, False)]
+
+    assert repetida(tienes, "bitcoin", 70000.0, True).id == 1
+    assert repetida(tienes, "solana", 100.0, False).id == 2
+
+
+def test_no_es_repetida_si_cambia_algo():
+    tienes = [Puntual(1, "bitcoin", 70000.0, True)]
+
+    assert repetida(tienes, "bitcoin", 70001.0, True) is None
+    assert repetida(tienes, "bitcoin", 70000.0, False) is None
+    assert repetida(tienes, "ethereum", 70000.0, True) is None
+    assert repetida([], "bitcoin", 70000.0, True) is None
+
+
+def test_cerca():
+    lejos = Puntual(1, "bitcoin", 80000, True)
+    justo = Puntual(2, "bitcoin", 71000, True)
+    bajando = Puntual(3, "solana", 147, False)
+    ya_llego = Puntual(4, "solana", 160, False)
+    sin_precio = Puntual(5, "dogecoin", 1, True)
+    precios = {"bitcoin": 70000.0, "solana": 150.0}
+
+    hay = cerca([lejos, justo, bajando, ya_llego, sin_precio], precios)
+
+    assert [(a.id, round(f, 2)) for a, f in hay] == [(2, 1.43), (3, -2.0)]
+
+
+def test_por_cercania():
+    lejos = Puntual(1, "bitcoin", 80000, True)
+    justo = Puntual(2, "bitcoin", 71000, True)
+    bajando = Puntual(3, "solana", 147, False)
+    ya_llego = Puntual(4, "solana", 160, False)
+    sin_precio = Puntual(5, "dogecoin", 1, True)
+    precios = {"bitcoin": 70000.0, "solana": 150.0}
+
+    ordenadas = por_cercania([sin_precio, lejos, justo, bajando, ya_llego], precios)
+
+    assert [a.id for a in ordenadas] == [4, 2, 3, 1, 5]
+
+
+def test_por_cercania_sin_precios_las_deja_como_estaban():
+    alertas = [Puntual(3, "solana", 100, False), Puntual(1, "bitcoin", 70000, True)]
+
+    assert por_cercania(alertas, {}) == alertas
+
+
+def test_cerca_con_otro_margen():
+    alerta = Puntual(1, "bitcoin", 75000, True)
+
+    assert cerca([alerta], {"bitcoin": 70000.0}) == []
+    assert len(cerca([alerta], {"bitcoin": 70000.0}, margen=10)) == 1
+
+
+def test_formatear_lejos():
+    bitcoin = Puntual(2, "bitcoin", 80000, True)
+
+    assert formatear_lejos(1, bitcoin, 14.29, "eur") == (
+        "🎯 Tienes 1 alerta: <b>Bitcoin</b> 🔺 €80.000,00  <i>(falta +14.29%)</i>"
+    )
+    assert formatear_lejos(3, Puntual(5, "cartera", 1500, False), -25.0, "eur") == (
+        "🎯 Tienes 3 alertas, la más cerca: <b>Tu cartera</b> 🔻 €1.500,00  "
+        "<i>(falta -25.00%)</i>"
+    )
+
+
+def test_formatear_cerca():
+    hay = [
+        (Puntual(2, "bitcoin", 71000, True, nota="vender la mitad"), 1.43),
+        (Puntual(3, "cartera", 2000, False), -2.5),
+    ]
+
+    texto = formatear_cerca(hay, "eur")
+
+    assert "A punto de saltar" in texto
+    assert "<b>Bitcoin</b> 🔺 €71.000,00  <i>(falta +1.43%)</i>" in texto
+    assert "📝 vender la mitad" in texto
+    assert "<b>Tu cartera</b> 🔻 €2.000,00  <i>(falta -2.50%)</i>" in texto
+
+
+def test_progreso_de_la_cartera():
+    meta = Puntual(1, "cartera", 5000, True)
+
+    assert progreso(meta, 3400.0) == pytest.approx(68)
+    assert progreso(meta, 5200.0) == 100  # ya llegó, salta en el siguiente ciclo
+
+
+@pytest.mark.parametrize(
+    "alerta, valor",
+    [
+        (Puntual(1, "cartera", 2000, False), 3000.0),  # esperando a que baje
+        (Puntual(1, "bitcoin", 80000, True), 70000.0),  # solo la cartera
+        (Puntual(1, "cartera", 5000, True), None),  # sin precio ahora
+    ],
+)
+def test_sin_progreso(alerta, valor):
+    assert progreso(alerta, valor) is None
+
+
+# --- la pareja: /alerta bitcoin 60000 o 80000 ---
+
+
+@pytest.mark.parametrize(
+    "argumento, queda, otro",
+    [
+        ("bitcoin 60000 o 80000", "bitcoin 60000", "80000"),
+        ("bitcoin 60000 O 80k 7d vender", "bitcoin 60000 7d vender", "80k"),
+        ("bitcoin 70000", "bitcoin 70000", None),
+        ("bitcoin 70000 vender o no", "bitcoin 70000 vender o no", None),
+        ("bitcoin 70000 o", "bitcoin 70000 o", None),
+    ],
+)
+def test_separar_pareja(argumento, queda, otro):
+    assert separar_pareja(argumento) == (queda, otro)
+
+
+def test_otro_de_pareja_uno_por_cada_lado():
+    assert otro_de_pareja("80.000", 60000, 70000) == 80000
+    assert otro_de_pareja("60k", 80000, 70000) == 60000
+
+
+@pytest.mark.parametrize("texto", ["75000", "90000"])
+def test_otro_de_pareja_los_dos_del_mismo_lado(texto):
+    with pytest.raises(PuntualError, match="uno por encima y otro por debajo"):
+        otro_de_pareja(texto, 80000, 70000)
+
+
+@pytest.mark.parametrize("texto", ["mucho", "0", "-5"])
+def test_otro_de_pareja_que_no_es_precio(texto):
+    with pytest.raises(PuntualError, match="no es un precio"):
+        otro_de_pareja(texto, 60000, 70000)
+
+
+def test_otras_de_pareja():
+    parejas = {1: 2, 2: 1, 5: 6, 6: 5}
+
+    assert otras_de_pareja([1], parejas) == [2]
+    assert otras_de_pareja([1, 5], parejas) == [2, 6]
+    assert otras_de_pareja([3], parejas) == []
+    # Si saltaran las dos a la vez, no hay ninguna más que quitar.
+    assert otras_de_pareja([1, 2], parejas) == []

@@ -4,7 +4,7 @@ from datetime import date
 
 import pytest
 
-from crypto_tracker.alerts import formatear_riesgo
+from crypto_tracker.avisos.alerts import formatear_riesgo
 from crypto_tracker.cartera import Valor
 from crypto_tracker.riesgo import Riesgo, calcular
 from crypto_tracker.volatilidad import Volatilidad

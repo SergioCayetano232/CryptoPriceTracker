@@ -4,7 +4,7 @@ from datetime import date
 
 import pytest
 
-from crypto_tracker.alerts import formatear_plan
+from crypto_tracker.avisos.alerts import formatear_plan
 from crypto_tracker.plan import Peticion, PlanError, calcular, cuanto, interpretar
 
 HOY = date(2026, 11, 11)

@@ -1,7 +1,7 @@
 """La comisión de /compra o /venta: 'com 1.5' en dinero o 'com 0.1%' de lo movido."""
 
+from .avisos.puntuales import numero
 from .movimientos import MovimientoError
-from .puntuales import numero
 
 PALABRAS = ("com", "comision", "comisión", "fee")
 

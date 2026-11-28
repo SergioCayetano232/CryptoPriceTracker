@@ -2,9 +2,9 @@
 
 from dataclasses import dataclass
 
+from .avisos.puntuales import numero
 from .cartera import Valor, total
 from .nucleo.simbolos import a_id
-from .puntuales import numero
 
 EJEMPLO = "/objetivo bitcoin 100000"
 

@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from . import estables
+from .avisos import estables
 from .mensajes.base import SIMBOLOS, _nombre, _num
 from .nucleo import binance
 from .nucleo.simbolos import MAX_VARIAS, varias

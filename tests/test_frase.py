@@ -2,7 +2,7 @@
 
 import random
 
-from crypto_tracker.alerts import formatear_frase
+from crypto_tracker.avisos.alerts import formatear_frase
 from crypto_tracker.frase import FRASES, Frase, elegir
 
 

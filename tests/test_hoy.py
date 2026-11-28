@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from crypto_tracker.alerts import formatear_hoy
+from crypto_tracker.avisos.alerts import formatear_hoy
 from crypto_tracker.hoy import Hoy, calcular, medianoche, mejor_y_peor
 
 CERO = datetime(2026, 10, 15).astimezone()  # las 00:00 de aquí

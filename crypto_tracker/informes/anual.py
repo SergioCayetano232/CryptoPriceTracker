@@ -3,9 +3,9 @@
 from dataclasses import dataclass
 from datetime import date, datetime, time
 
+from ..avisos.diario import toca_resumen
 from ..compras import Resumen
 from ..compras import calcular as calcular_compras
-from ..diario import toca_resumen
 from ..ganancias import calcular as calcular_ganancias
 from ..movimientos import Movimiento
 from ..nucleo.config import Posicion

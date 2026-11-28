@@ -5,7 +5,6 @@ from datetime import date, datetime, timedelta, timezone
 
 from .. import (
     ahr999,
-    alerts,
     arcoiris,
     backtest,
     bollinger,
@@ -38,13 +37,11 @@ from .. import (
     mvrv,
     paciencia,
     picycle,
-    puntuales,
     quieta,
     racha,
     rango,
     ratio,
     rsi,
-    ruido,
     semaforo,
     sharpe,
     soporte,
@@ -52,8 +49,8 @@ from .. import (
     suelo,
     verdes,
     volatilidad,
-    voto,
 )
+from ..avisos import alerts, puntuales, ruido, voto
 from ..informes import grafica
 from ..nucleo import botones, comandos, database, periodo, simbolos, telegram
 from ..nucleo.config import Config

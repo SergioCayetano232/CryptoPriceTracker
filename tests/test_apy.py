@@ -2,8 +2,8 @@
 
 import pytest
 
-from crypto_tracker.alerts import formatear_apy
 from crypto_tracker.apy import ApyError, Peticion, calcular, interpretar
+from crypto_tracker.avisos.alerts import formatear_apy
 
 
 def test_los_años_de_siempre():

@@ -2,7 +2,7 @@
 
 import pytest
 
-from crypto_tracker.alerts import formatear_equilibrio, formatear_vuelta
+from crypto_tracker.avisos.alerts import formatear_equilibrio, formatear_vuelta
 from crypto_tracker.cartera import Valor
 from crypto_tracker.equilibrio import Cartera, Equilibrio, calcular, vuelta
 

@@ -1,7 +1,7 @@
 """Tests de /ave."""
 
-from crypto_tracker.alerts import formatear_ave
 from crypto_tracker.ave import Ave
+from crypto_tracker.avisos.alerts import formatear_ave
 
 
 def test_cuantos():

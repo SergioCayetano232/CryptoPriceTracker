@@ -4,7 +4,7 @@ from datetime import date, timedelta
 
 import pytest
 
-from crypto_tracker.alerts import formatear_bollinger
+from crypto_tracker.avisos.alerts import formatear_bollinger
 from crypto_tracker.bollinger import PERIODO, Bandas, calcular
 
 INICIO = date(2026, 9, 1)

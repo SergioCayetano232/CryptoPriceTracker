@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from crypto_tracker.alerts import formatear_ganancias
+from crypto_tracker.avisos.alerts import formatear_ganancias
 from crypto_tracker.ganancias import calcular, de_venta
 from crypto_tracker.movimientos import Movimiento
 from crypto_tracker.nucleo.config import Posicion

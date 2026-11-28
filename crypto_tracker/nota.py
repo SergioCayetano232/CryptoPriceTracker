@@ -1,8 +1,8 @@
 """El porqué de una /compra o /venta: lo que va detrás de los números."""
 
+from .avisos.puntuales import MAX_NOTA, numero
 from .comision import PALABRAS
 from .movimientos import MovimientoError
-from .puntuales import MAX_NOTA, numero
 
 
 def separar(argumento: str) -> tuple[str, str | None]:

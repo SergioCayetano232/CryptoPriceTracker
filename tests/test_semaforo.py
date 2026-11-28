@@ -5,7 +5,7 @@ from datetime import date
 import pytest
 
 from crypto_tracker import semaforo
-from crypto_tracker.alerts import formatear_semaforo
+from crypto_tracker.avisos.alerts import formatear_semaforo
 from crypto_tracker.bollinger import Bandas
 from crypto_tracker.funding import Funding
 from crypto_tracker.macd import Macd

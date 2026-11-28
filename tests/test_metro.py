@@ -1,6 +1,6 @@
 """Tests de /metro."""
 
-from crypto_tracker.alerts import formatear_metro
+from crypto_tracker.avisos.alerts import formatear_metro
 from crypto_tracker.metro import Metro
 
 

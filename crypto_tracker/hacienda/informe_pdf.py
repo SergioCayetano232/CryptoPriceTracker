@@ -3,7 +3,7 @@
 import io
 from datetime import date
 
-from ..alerts import SIMBOLOS
+from ..avisos.alerts import SIMBOLOS
 from ..informes.grafica import (
     FONDO,
     REJILLA,

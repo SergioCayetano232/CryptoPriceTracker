@@ -5,7 +5,6 @@ from dataclasses import replace
 from datetime import date, datetime, timezone
 
 from .. import (
-    alerts,
     apodo,
     apy,
     arrepentido,
@@ -48,6 +47,7 @@ from .. import (
     vsbolsa,
     vsbtc,
 )
+from ..avisos import alerts
 from ..hacienda import (
     compensar,
     fifo,

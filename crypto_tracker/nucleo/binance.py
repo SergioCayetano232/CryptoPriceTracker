@@ -5,7 +5,7 @@ import math
 
 import requests
 
-from .. import estables
+from ..avisos import estables
 from . import simbolos
 
 logger = logging.getLogger(__name__)

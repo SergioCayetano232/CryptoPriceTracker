@@ -2,7 +2,7 @@
 
 import pytest
 
-from crypto_tracker.alerts import formatear_ps5
+from crypto_tracker.avisos.alerts import formatear_ps5
 from crypto_tracker.ps5 import Ps5
 
 

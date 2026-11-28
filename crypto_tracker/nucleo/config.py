@@ -8,10 +8,10 @@ from urllib.parse import urlsplit
 
 from dotenv import load_dotenv
 
-from ..calma import MIN_SEMANAS, VENTANA
-from ..cruce import LARGA
+from ..avisos.calma import MIN_SEMANAS, VENTANA
+from ..avisos.cruce import LARGA
+from ..avisos.volumen import MIN_DIAS as MIN_DIAS_VOLUMEN
 from ..rsi import PERIODO
-from ..volumen import MIN_DIAS as MIN_DIAS_VOLUMEN
 
 MIN_DIAS_CALMA = MIN_SEMANAS + VENTANA + 1
 

@@ -11,10 +11,8 @@ from crypto_tracker import (
     bola,
     caraocruz,
     comisionred,
-    condicion,
     consejo,
     dado,
-    direccion,
     estacional,
     excusa,
     frase,
@@ -25,6 +23,7 @@ from crypto_tracker import (
     tarot,
     vsbolsa,
 )
+from crypto_tracker.avisos import condicion, direccion
 from crypto_tracker.informes import grafica
 from crypto_tracker.nucleo import binance, coingecko, comandos, database, telegram
 from crypto_tracker.nucleo.config import Config, Posicion, Watch

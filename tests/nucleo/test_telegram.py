@@ -266,7 +266,7 @@ def _etiquetas_cerradas(texto):
 
 
 def test_lo_largo_llega_entero_en_varios(monkeypatch):
-    from crypto_tracker.alerts import Alert, con_fuente, formatear_varios
+    from crypto_tracker.avisos.alerts import Alert, con_fuente, formatear_varios
 
     enviados = []
 

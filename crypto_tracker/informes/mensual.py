@@ -2,7 +2,7 @@
 
 from datetime import date, datetime, time, timedelta
 
-from ..diario import toca_resumen
+from ..avisos.diario import toca_resumen
 from .mes import principio
 
 

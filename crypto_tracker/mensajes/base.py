@@ -2,10 +2,10 @@
 
 import math
 
-from ..condicion import Condicion
+from ..avisos.condicion import Condicion
+from ..avisos.puntuales import Puntual, cumplidas
 from ..nucleo.config import Watch
 from ..nucleo.telegram import escape
-from ..puntuales import Puntual, cumplidas
 
 # Estados en los que puede estar una cripto respecto a sus umbrales.
 BAJO = "bajo"  # por debajo del minimo

@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta
 
-from crypto_tracker.alerts import formatear_semana
+from crypto_tracker.avisos.alerts import formatear_semana
 from crypto_tracker.informes import mes
 from crypto_tracker.informes.semanal import semana
 from crypto_tracker.nucleo.config import parse_cartera

@@ -1,6 +1,6 @@
 """Tests de /netflix."""
 
-from crypto_tracker.alerts import formatear_netflix
+from crypto_tracker.avisos.alerts import formatear_netflix
 from crypto_tracker.netflix import Netflix
 
 

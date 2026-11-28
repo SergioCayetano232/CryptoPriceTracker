@@ -4,7 +4,7 @@ from datetime import date, datetime
 
 import pytest
 
-from crypto_tracker.alerts import formatear_limite, linea_limite
+from crypto_tracker.avisos.alerts import formatear_limite, linea_limite
 from crypto_tracker.limite import (
     PONER,
     QUITAR,

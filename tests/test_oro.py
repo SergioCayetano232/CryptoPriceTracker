@@ -2,7 +2,7 @@
 
 import pytest
 
-from crypto_tracker.alerts import formatear_oro
+from crypto_tracker.avisos.alerts import formatear_oro
 from crypto_tracker.oro import Oro
 
 

@@ -3,8 +3,8 @@
 from dataclasses import dataclass
 from datetime import datetime
 
+from .avisos.puntuales import numero
 from .movimientos import Movimiento
-from .puntuales import numero
 from .rentabilidad import calcular as rentabilidad
 from .rentabilidad import contables
 

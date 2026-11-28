@@ -5,7 +5,7 @@ from datetime import date, timedelta
 
 import pytest
 
-from crypto_tracker.alerts import formatear_futuro
+from crypto_tracker.avisos.alerts import formatear_futuro
 from crypto_tracker.futuro import (
     DIAS,
     MIN_CAMBIOS,

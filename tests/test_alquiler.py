@@ -1,7 +1,7 @@
 """Tests de /alquiler."""
 
-from crypto_tracker.alerts import formatear_alquiler
 from crypto_tracker.alquiler import Alquiler
+from crypto_tracker.avisos.alerts import formatear_alquiler
 
 
 def test_cuantos():

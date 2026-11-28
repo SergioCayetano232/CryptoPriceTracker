@@ -11,6 +11,17 @@ from datetime import date, datetime, timezone
 from functools import partial
 
 from .. import (
+    cartera,
+    comisionred,
+    equilibrio,
+    funding,
+    ideal,
+    longshort,
+    record,
+    rsi,
+    volatilidad,
+)
+from ..avisos import (
     alertaratio,
     alerts,
     aviso_tendencias,
@@ -18,23 +29,14 @@ from .. import (
     bajon,
     buzon,
     calma,
-    cartera,
-    comisionred,
     concentracion,
     cruce,
     direccion,
-    equilibrio,
     estables,
-    funding,
-    ideal,
     juntas,
-    longshort,
     puntuales,
-    record,
     rezagada,
-    rsi,
     salvo,
-    volatilidad,
     volumen,
 )
 from ..hacienda import modelo721

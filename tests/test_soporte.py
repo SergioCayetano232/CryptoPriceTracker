@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta, timezone
 
 import pytest
 
-from crypto_tracker.alerts import formatear_soporte
+from crypto_tracker.avisos.alerts import formatear_soporte
 from crypto_tracker.nucleo.periodo import PeriodoError
 from crypto_tracker.soporte import (
     POR_DEFECTO,

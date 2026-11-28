@@ -3,9 +3,9 @@
 import math
 from dataclasses import dataclass, replace
 
+from .avisos.puntuales import numero
 from .movimientos import Movimiento, MovimientoError, comprar, vender
 from .nucleo.config import Posicion
-from .puntuales import numero
 
 EJEMPLO = "/corregir 12 cantidad 0.02 o /corregir 12 importe 700"
 

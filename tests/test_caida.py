@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from crypto_tracker.alerts import formatear_caida
+from crypto_tracker.avisos.alerts import formatear_caida
 from crypto_tracker.caida import Caida, calcular, interpretar
 from crypto_tracker.nucleo.periodo import PeriodoError
 

@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from crypto_tracker import encuesta, prediccion
-from crypto_tracker.alerts import (
+from crypto_tracker.avisos.alerts import (
     formatear_voto_encuesta,
     opciones_encuesta,
     pregunta_encuesta,

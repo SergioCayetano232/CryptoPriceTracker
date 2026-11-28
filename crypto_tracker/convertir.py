@@ -2,9 +2,9 @@
 
 from dataclasses import dataclass
 
-from .alerts import POR_BTC, SIMBOLOS
+from .avisos.alerts import POR_BTC, SIMBOLOS
+from .avisos.puntuales import numero
 from .nucleo.simbolos import a_id
-from .puntuales import numero
 
 EJEMPLOS = "/convertir 0.05 bitcoin, /convertir 500 eur solana o /convertir 1 eth btc"
 

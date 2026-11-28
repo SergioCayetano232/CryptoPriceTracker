@@ -6,9 +6,9 @@ from html import escape
 from urllib.parse import parse_qs, quote, urlencode, urlsplit
 
 from .. import miedo, version
+from ..avisos.recordar import DIAS
 from ..hacienda import impuestos
 from ..mensajes.base import SIMBOLOS, _num, describir
-from ..recordar import DIAS
 from .mes import MESES
 from .panel import (
     PUNTOS_GRAFICA,

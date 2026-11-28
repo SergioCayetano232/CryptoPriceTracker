@@ -3,7 +3,7 @@
 import logging
 from datetime import date, datetime, timezone
 
-from .. import alerts
+from ..avisos import alerts
 from ..informes import exportar
 from ..nucleo import (
     backup,

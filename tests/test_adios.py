@@ -3,7 +3,7 @@
 from datetime import date
 
 from crypto_tracker.adios import Adios
-from crypto_tracker.alerts import formatear_adios
+from crypto_tracker.avisos.alerts import formatear_adios
 
 
 def test_hoy():

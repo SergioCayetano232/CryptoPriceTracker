@@ -4,8 +4,9 @@ from datetime import date, datetime
 from typing import TYPE_CHECKING
 
 from ..altseason import ALTCOINS, BITCOIN, CUANTAS, DIAS, Moneda, Temporada
-from ..avisados import Ultimo
-from ..aviso_tendencias import Nueva
+from ..avisos.avisados import Ultimo
+from ..avisos.aviso_tendencias import Nueva
+from ..avisos.recordar import DIAS as NOMBRES_DIAS
 from ..cartera import Valor
 from ..comisionred import TAMAÑO as TAMAÑO_ENVIO
 from ..comisionred import ComisionRed, en_dinero, media_hora
@@ -30,7 +31,6 @@ from ..nucleo.copia import numero as numero_env
 from ..nucleo.periodo import nombre as nombre_periodo
 from ..nucleo.telegram import escape
 from ..quieta import Quieta
-from ..recordar import DIAS as NOMBRES_DIAS
 from ..sectores import Sector
 from ..sesgo import MINIMO as MINIMO_SESGO
 from ..sesgo import Lado, Sesgo
@@ -55,8 +55,8 @@ from .base import (
 
 # Solo para el tipo: esos módulos importan de alerts y se haría un círculo.
 if TYPE_CHECKING:
-    from ..ruido import Ruido
-    from ..voto import Votos
+    from ..avisos.ruido import Ruido
+    from ..avisos.voto import Votos
 
 
 def formatear_precio(

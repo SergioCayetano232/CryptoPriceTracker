@@ -3,8 +3,8 @@
 import re
 from dataclasses import dataclass
 
+from .avisos.puntuales import numero
 from .nucleo.simbolos import a_id
-from .puntuales import numero
 
 EJEMPLO = "/apy eth 4%"
 

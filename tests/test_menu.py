@@ -1,6 +1,6 @@
 """Tests de /menu."""
 
-from crypto_tracker.alerts import formatear_menu
+from crypto_tracker.avisos.alerts import formatear_menu
 from crypto_tracker.menu import Menu
 
 

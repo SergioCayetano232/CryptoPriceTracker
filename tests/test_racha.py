@@ -4,7 +4,7 @@ from datetime import date, timedelta
 
 import pytest
 
-from crypto_tracker.alerts import formatear_racha
+from crypto_tracker.avisos.alerts import formatear_racha
 from crypto_tracker.racha import Racha, calcular, mas_larga
 
 HOY = date(2026, 10, 12)

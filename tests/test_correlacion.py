@@ -4,7 +4,7 @@ from datetime import date, timedelta
 
 import pytest
 
-from crypto_tracker.alerts import formatear_correlacion
+from crypto_tracker.avisos.alerts import formatear_correlacion
 from crypto_tracker.correlacion import (
     MAX_TODAS,
     Correlacion,

@@ -2,7 +2,7 @@
 
 import pytest
 
-from crypto_tracker.alerts import formatear_mitad
+from crypto_tracker.avisos.alerts import formatear_mitad
 from crypto_tracker.cartera import Valor
 from crypto_tracker.mitad import Cartera, Mitad, calcular
 

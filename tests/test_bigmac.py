@@ -1,6 +1,6 @@
 """Tests de /bigmac."""
 
-from crypto_tracker.alerts import formatear_bigmac
+from crypto_tracker.avisos.alerts import formatear_bigmac
 from crypto_tracker.bigmac import BigMac
 
 

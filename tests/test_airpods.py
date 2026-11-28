@@ -3,7 +3,7 @@
 import pytest
 
 from crypto_tracker.airpods import Airpods
-from crypto_tracker.alerts import formatear_airpods
+from crypto_tracker.avisos.alerts import formatear_airpods
 
 
 def test_cuantos():

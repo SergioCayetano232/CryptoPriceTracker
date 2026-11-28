@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from crypto_tracker.alerts import formatear_hubiera
+from crypto_tracker.avisos.alerts import formatear_hubiera
 from crypto_tracker.hubiera import Pregunta, interpretar
 from crypto_tracker.nucleo.periodo import PeriodoError
 

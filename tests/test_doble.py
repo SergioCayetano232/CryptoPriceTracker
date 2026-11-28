@@ -2,7 +2,7 @@
 
 import pytest
 
-from crypto_tracker.alerts import formatear_doble
+from crypto_tracker.avisos.alerts import formatear_doble
 from crypto_tracker.cartera import Valor
 from crypto_tracker.doble import Cartera, Doble, calcular
 

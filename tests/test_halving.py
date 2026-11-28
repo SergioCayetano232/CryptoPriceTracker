@@ -4,7 +4,7 @@ from datetime import date
 
 import pytest
 
-from crypto_tracker.alerts import formatear_halving
+from crypto_tracker.avisos.alerts import formatear_halving
 from crypto_tracker.halving import calcular
 
 

@@ -4,7 +4,7 @@ from datetime import date, timedelta
 
 import pytest
 
-from crypto_tracker.alerts import formatear_macd
+from crypto_tracker.avisos.alerts import formatear_macd
 from crypto_tracker.macd import MINIMO, Macd, calcular
 
 INICIO = date(2026, 6, 1)

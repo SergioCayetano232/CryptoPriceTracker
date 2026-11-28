@@ -2,7 +2,7 @@
 
 import pytest
 
-from crypto_tracker.alerts import formatear_rebalanceo
+from crypto_tracker.avisos.alerts import formatear_rebalanceo
 from crypto_tracker.cartera import Valor
 from crypto_tracker.rebalanceo import (
     RebalanceoError,

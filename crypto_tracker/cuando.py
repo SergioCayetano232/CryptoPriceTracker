@@ -3,9 +3,9 @@
 from dataclasses import dataclass
 from datetime import datetime
 
+from .avisos.puntuales import numero
 from .nucleo.periodo import MAXIMO
 from .nucleo.simbolos import a_id
-from .puntuales import numero
 
 EJEMPLO = "/cuando bitcoin 60000"
 

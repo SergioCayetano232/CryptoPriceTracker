@@ -4,7 +4,7 @@ import random
 
 import pytest
 
-from crypto_tracker.alerts import formatear_ppt
+from crypto_tracker.avisos.alerts import formatear_ppt
 from crypto_tracker.ppt import PptError, interpretar, resultado, sacar
 
 

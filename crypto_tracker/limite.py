@@ -3,8 +3,8 @@
 from dataclasses import dataclass
 from datetime import date
 
+from .avisos.puntuales import numero
 from .movimientos import Movimiento
-from .puntuales import numero
 
 EJEMPLO = "/limite 300"
 

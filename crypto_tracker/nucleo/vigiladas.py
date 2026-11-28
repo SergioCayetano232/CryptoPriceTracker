@@ -2,7 +2,7 @@
 
 import logging
 
-from ..puntuales import numero
+from ..avisos.puntuales import numero
 from .config import ConfigError, Watch, parse_entrada
 from .simbolos import a_id
 

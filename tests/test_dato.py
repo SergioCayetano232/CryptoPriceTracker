@@ -2,7 +2,7 @@
 
 import random
 
-from crypto_tracker.alerts import formatear_dato
+from crypto_tracker.avisos.alerts import formatear_dato
 from crypto_tracker.dato import DATOS, elegir
 from crypto_tracker.nucleo.comandos import interpretar
 

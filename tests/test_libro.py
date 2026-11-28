@@ -1,6 +1,6 @@
 """Tests de /libro."""
 
-from crypto_tracker.alerts import formatear_libro
+from crypto_tracker.avisos.alerts import formatear_libro
 from crypto_tracker.libro import Libro
 
 

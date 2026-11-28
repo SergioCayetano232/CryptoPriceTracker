@@ -4,8 +4,8 @@ import json
 from dataclasses import dataclass
 
 from . import rebalanceo
+from .avisos.puntuales import numero
 from .cartera import Valor
-from .puntuales import numero
 
 EJEMPLO = "/ideal btc 60 eth 40"
 

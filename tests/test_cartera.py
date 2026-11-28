@@ -4,7 +4,7 @@ from datetime import timedelta
 
 import pytest
 
-from crypto_tracker.alerts import formatear_cartera
+from crypto_tracker.avisos.alerts import formatear_cartera
 from crypto_tracker.cartera import (
     Valor,
     de,

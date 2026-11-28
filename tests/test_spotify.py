@@ -1,6 +1,6 @@
 """Tests de /spotify."""
 
-from crypto_tracker.alerts import formatear_spotify
+from crypto_tracker.avisos.alerts import formatear_spotify
 from crypto_tracker.spotify import Spotify
 
 

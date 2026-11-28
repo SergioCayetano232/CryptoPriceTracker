@@ -1,6 +1,6 @@
 """Tests de /churros."""
 
-from crypto_tracker.alerts import formatear_churros
+from crypto_tracker.avisos.alerts import formatear_churros
 from crypto_tracker.churros import Churros
 
 

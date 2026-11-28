@@ -2,7 +2,7 @@
 
 import pytest
 
-from crypto_tracker.alerts import formatear_emoji
+from crypto_tracker.avisos.alerts import formatear_emoji
 from crypto_tracker.emoji import cambio, cara
 from crypto_tracker.nucleo.comandos import interpretar
 

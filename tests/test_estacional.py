@@ -6,7 +6,7 @@ import pytest
 import requests
 
 from crypto_tracker import estacional
-from crypto_tracker.alerts import formatear_estacional
+from crypto_tracker.avisos.alerts import formatear_estacional
 from crypto_tracker.estacional import Estacional, EstacionalError, Mes, calcular, leer
 
 AHORA = datetime(2026, 11, 15, tzinfo=timezone.utc)

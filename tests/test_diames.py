@@ -4,7 +4,7 @@ from datetime import date, timedelta
 
 import pytest
 
-from crypto_tracker.alerts import formatear_diames
+from crypto_tracker.avisos.alerts import formatear_diames
 from crypto_tracker.diames import POR_DEFECTO, VENTANA, calcular, interpretar
 from crypto_tracker.nucleo.periodo import PeriodoError
 

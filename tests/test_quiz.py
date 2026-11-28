@@ -4,7 +4,7 @@ import random
 
 import pytest
 
-from crypto_tracker.alerts import formatear_quiz, formatear_respuesta_quiz
+from crypto_tracker.avisos.alerts import formatear_quiz, formatear_respuesta_quiz
 from crypto_tracker.nucleo.comandos import interpretar as interpretar_comando
 from crypto_tracker.quiz import PREGUNTAS, interpretar, sacar
 

@@ -2,8 +2,8 @@
 
 import pytest
 
-from crypto_tracker.alerts import formatear_apodo
 from crypto_tracker.apodo import Perfil, elegir
+from crypto_tracker.avisos.alerts import formatear_apodo
 from crypto_tracker.nucleo.comandos import interpretar
 
 DOS = ["bitcoin", "ethereum"]

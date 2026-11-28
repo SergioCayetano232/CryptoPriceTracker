@@ -2,7 +2,7 @@
 
 import pytest
 
-from crypto_tracker.alerts import formatear_ballena
+from crypto_tracker.avisos.alerts import formatear_ballena
 from crypto_tracker.ballena import Ballena
 
 

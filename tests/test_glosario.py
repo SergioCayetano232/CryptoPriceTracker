@@ -1,6 +1,6 @@
 """Tests de /glosario."""
 
-from crypto_tracker.alerts import formatear_glosario
+from crypto_tracker.avisos.alerts import formatear_glosario
 from crypto_tracker.glosario import SINONIMOS, TERMINOS, buscar, parecido
 
 

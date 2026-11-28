@@ -2,7 +2,7 @@
 
 import pytest
 
-from crypto_tracker.alerts import formatear_super
+from crypto_tracker.avisos.alerts import formatear_super
 from crypto_tracker.supermercado import Super
 
 

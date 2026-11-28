@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from crypto_tracker import liga
-from crypto_tracker.alerts import formatear_liga
+from crypto_tracker.avisos.alerts import formatear_liga
 from crypto_tracker.liga import Jugador, LigaError, Puesto
 from crypto_tracker.prediccion import Prediccion
 

@@ -1,6 +1,6 @@
 """Tests de /concierto."""
 
-from crypto_tracker.alerts import formatear_concierto
+from crypto_tracker.avisos.alerts import formatear_concierto
 from crypto_tracker.concierto import Concierto
 
 

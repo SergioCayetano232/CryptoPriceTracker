@@ -2,9 +2,9 @@
 
 from dataclasses import dataclass
 
+from .avisos.puntuales import numero
 from .cartera import Valor
 from .nucleo.simbolos import a_id
-from .puntuales import numero
 
 EJEMPLO = "/promediar bitcoin 50000"
 

@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta, timezone
 import pytest
 
 from crypto_tracker import hodl, rentabilidad, vsbtc
-from crypto_tracker.alerts import formatear_impuestos, formatear_movimientos
+from crypto_tracker.avisos.alerts import formatear_impuestos, formatear_movimientos
 from crypto_tracker.compras import calcular as calcular_compras
 from crypto_tracker.hacienda.impuestos import Impuestos, recompensas_de
 from crypto_tracker.movimientos import (

@@ -2,7 +2,7 @@
 
 import pytest
 
-from crypto_tracker.alerts import formatear_boda
+from crypto_tracker.avisos.alerts import formatear_boda
 from crypto_tracker.boda import Boda
 from crypto_tracker.nucleo.comandos import interpretar
 

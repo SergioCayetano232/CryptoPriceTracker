@@ -1,6 +1,6 @@
 """La moneda que pides al final de /precio, si no quieres la del .env."""
 
-from ..alerts import SIMBOLOS
+from ..avisos.alerts import SIMBOLOS
 from ..convertir import NOMBRES
 
 # usd, $, dólares... todos a su código.

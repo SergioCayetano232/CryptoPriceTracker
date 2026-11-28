@@ -5,10 +5,10 @@ import math
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from ..condicion import Condicion
+from ..avisos.condicion import Condicion
+from ..avisos.puntuales import CARTERA
 from ..nucleo.config import Watch
 from ..nucleo.telegram import escape
-from ..puntuales import CARTERA
 from .base import (
     ALTO,
     BAJO,
@@ -23,7 +23,7 @@ from .base import (
 
 # Solo para el tipo: esos módulos importan de alerts y se haría un círculo.
 if TYPE_CHECKING:
-    from ..contexto import Contexto
+    from ..avisos.contexto import Contexto
 
 logger = logging.getLogger(__name__)
 

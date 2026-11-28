@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from crypto_tracker.alerts import formatear_dominancia
+from crypto_tracker.avisos.alerts import formatear_dominancia
 from crypto_tracker.dominancia import Dominancia, Foto, calcular, hace, toca_guardar
 from crypto_tracker.mercado import Mercado
 

@@ -2,7 +2,7 @@
 
 import pytest
 
-from crypto_tracker.alerts import formatear_futbol
+from crypto_tracker.avisos.alerts import formatear_futbol
 from crypto_tracker.futbol import Futbol
 
 

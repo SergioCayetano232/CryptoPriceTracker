@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import date, timedelta
 
-from .puntuales import numero
+from .avisos.puntuales import numero
 
 EJEMPLO = "/plan 10000 50 semanal"
 

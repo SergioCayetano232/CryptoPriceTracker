@@ -3,7 +3,7 @@
 import random
 
 from crypto_tracker.aleatoria import elegir, es_estable
-from crypto_tracker.alerts import formatear_aleatoria
+from crypto_tracker.avisos.alerts import formatear_aleatoria
 from crypto_tracker.top import Movida
 
 

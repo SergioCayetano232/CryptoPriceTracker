@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from crypto_tracker.alerts import formatear_rentabilidad
+from crypto_tracker.avisos.alerts import formatear_rentabilidad
 from crypto_tracker.movimientos import Movimiento
 from crypto_tracker.rentabilidad import Rentabilidad, calcular, contables, tir
 

@@ -4,19 +4,8 @@ import logging
 from dataclasses import replace
 from datetime import datetime, time
 
-from .. import (
-    alertaratio,
-    alerts,
-    cartera,
-    diario,
-    direccion,
-    juntas,
-    miedo,
-    movimientos,
-    puntuales,
-    rsi,
-    volatilidad,
-)
+from .. import cartera, miedo, movimientos, rsi, volatilidad
+from ..avisos import alertaratio, alerts, diario, direccion, juntas, puntuales
 from ..nucleo import coingecko, comandos, database, telegram, vigiladas
 from ..nucleo.config import Config, Posicion
 

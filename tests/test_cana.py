@@ -1,6 +1,6 @@
 """Tests de /cana."""
 
-from crypto_tracker.alerts import formatear_cana
+from crypto_tracker.avisos.alerts import formatear_cana
 from crypto_tracker.cana import Cana
 
 

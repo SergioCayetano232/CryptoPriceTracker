@@ -3,9 +3,9 @@
 from dataclasses import dataclass
 from datetime import datetime, time, timedelta
 
+from .avisos.puntuales import numero
+from .avisos.recordar import QUITAR
 from .nucleo.simbolos import a_id
-from .puntuales import numero
-from .recordar import QUITAR
 
 EJEMPLO = "/prediccion btc 70000"
 

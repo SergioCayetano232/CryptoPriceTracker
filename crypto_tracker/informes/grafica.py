@@ -3,8 +3,8 @@
 import io
 from datetime import datetime
 
-from ..alerts import SIMBOLOS, _num
 from ..arcoiris import FRANJAS, Arcoiris
+from ..avisos.alerts import SIMBOLOS, _num
 from ..calendario import Mes, semanas
 from ..correlacion import Matriz
 from ..mapa import Mapa, repartir

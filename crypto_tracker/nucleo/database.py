@@ -7,35 +7,35 @@ from dataclasses import replace
 from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
 
-from ..alertaratio import AlertaRatio
-from ..avisados import Aviso
-from ..aviso_tendencias import Estado as EstadoTendencias
-from ..aviso_tendencias import a_texto as texto_tendencias
-from ..aviso_tendencias import de_texto as leer_tendencias
-from ..cada import Programado
-from ..cada import a_texto as texto_cada
-from ..cada import de_texto as leer_cada
-from ..condicion import Condicion
-from ..condicion import leer as leer_condicion
+from ..avisos.alertaratio import AlertaRatio
+from ..avisos.avisados import Aviso
+from ..avisos.aviso_tendencias import Estado as EstadoTendencias
+from ..avisos.aviso_tendencias import a_texto as texto_tendencias
+from ..avisos.aviso_tendencias import de_texto as leer_tendencias
+from ..avisos.cada import Programado
+from ..avisos.cada import a_texto as texto_cada
+from ..avisos.cada import de_texto as leer_cada
+from ..avisos.condicion import Condicion
+from ..avisos.condicion import leer as leer_condicion
+from ..avisos.juntas import Pareja
+from ..avisos.puntuales import Puntual
+from ..avisos.recordar import Recordatorio, a_texto, de_texto
+from ..avisos.rezagada import Rezagada
+from ..avisos.voto import Voto
 from ..dominancia import Foto
 from ..fantasma import Fantasma
 from ..fantasma import a_texto as texto_fantasma
 from ..fantasma import de_texto as leer_fantasma
 from ..funding import Vigilado
-from ..juntas import Pareja
 from ..longshort import Vigilado as VigiladoLongShort
 from ..movimientos import Movimiento
 from ..pienso import Pienso
 from ..pienso import a_texto as texto_pienso
 from ..pienso import de_texto as leer_pienso
 from ..prediccion import Prediccion
-from ..puntuales import Puntual
-from ..recordar import Recordatorio, a_texto, de_texto
-from ..rezagada import Rezagada
 from ..tesis import Tesis
 from ..tesis import a_texto as texto_tesis
 from ..tesis import de_texto as leer_tesis
-from ..voto import Voto
 from .config import Posicion
 from .usuarios import Invitado
 

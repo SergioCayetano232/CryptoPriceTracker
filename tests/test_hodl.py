@@ -2,7 +2,7 @@
 
 from datetime import date, datetime, timezone
 
-from crypto_tracker.alerts import formatear_hodl
+from crypto_tracker.avisos.alerts import formatear_hodl
 from crypto_tracker.hodl import Hodl, calcular
 from crypto_tracker.movimientos import Movimiento
 from crypto_tracker.nucleo.config import Posicion

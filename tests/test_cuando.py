@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from crypto_tracker.alerts import formatear_cuando
+from crypto_tracker.avisos.alerts import formatear_cuando
 from crypto_tracker.cuando import Cuando, CuandoError, calcular, interpretar
 
 INICIO = datetime(2026, 9, 1, 12, tzinfo=timezone.utc)

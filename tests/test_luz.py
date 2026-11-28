@@ -1,6 +1,6 @@
 """Tests de /luz."""
 
-from crypto_tracker.alerts import formatear_luz
+from crypto_tracker.avisos.alerts import formatear_luz
 from crypto_tracker.luz import Luz
 
 

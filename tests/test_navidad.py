@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from crypto_tracker.alerts import formatear_navidad
+from crypto_tracker.avisos.alerts import formatear_navidad
 from crypto_tracker.navidad import Navidad, navidad
 
 NOVIEMBRE = date(2026, 11, 1)

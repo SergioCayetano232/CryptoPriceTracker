@@ -2,7 +2,7 @@
 
 import pytest
 
-from crypto_tracker.alerts import formatear_enletras
+from crypto_tracker.avisos.alerts import formatear_enletras
 from crypto_tracker.enletras import dinero, letras
 from crypto_tracker.nucleo.comandos import interpretar
 

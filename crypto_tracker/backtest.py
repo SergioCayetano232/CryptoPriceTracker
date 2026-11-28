@@ -3,9 +3,9 @@
 from dataclasses import dataclass
 from datetime import datetime
 
+from .avisos.puntuales import numero
 from .nucleo.periodo import PeriodoError, es_tramo, leer
 from .nucleo.simbolos import a_id
-from .puntuales import numero
 
 EJEMPLO = "/backtest btc 20% 90d"
 POR_DEFECTO = 20.0

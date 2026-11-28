@@ -4,7 +4,7 @@ from datetime import date, timedelta
 
 import pytest
 
-from crypto_tracker.alerts import formatear_rsi
+from crypto_tracker.avisos.alerts import formatear_rsi
 from crypto_tracker.rsi import Rsi, calcular, hasta_zona
 
 HOY = date(2026, 10, 12)

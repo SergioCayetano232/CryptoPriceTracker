@@ -1,6 +1,6 @@
 """Tests de /peluqueria."""
 
-from crypto_tracker.alerts import formatear_peluqueria
+from crypto_tracker.avisos.alerts import formatear_peluqueria
 from crypto_tracker.peluqueria import Peluqueria
 
 

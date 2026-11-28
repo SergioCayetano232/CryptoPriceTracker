@@ -1,7 +1,7 @@
 """Tests de los botones de debajo de los avisos."""
 
-from crypto_tracker import puntuales
-from crypto_tracker.alerts import ALTO, BAJO, Alert
+from crypto_tracker.avisos import puntuales
+from crypto_tracker.avisos.alerts import ALTO, BAJO, Alert
 from crypto_tracker.nucleo import comandos
 from crypto_tracker.nucleo.botones import (
     CALLAR,

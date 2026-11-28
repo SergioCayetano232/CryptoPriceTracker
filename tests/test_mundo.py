@@ -1,6 +1,6 @@
 """Tests de /mundo."""
 
-from crypto_tracker.alerts import formatear_mundo
+from crypto_tracker.avisos.alerts import formatear_mundo
 from crypto_tracker.mundo import Mundo
 
 

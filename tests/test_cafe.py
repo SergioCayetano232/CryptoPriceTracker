@@ -2,7 +2,7 @@
 
 import pytest
 
-from crypto_tracker.alerts import formatear_cafe
+from crypto_tracker.avisos.alerts import formatear_cafe
 from crypto_tracker.cafe import Cafe
 
 

@@ -2,7 +2,7 @@
 
 import pytest
 
-from crypto_tracker.alerts import formatear_coche
+from crypto_tracker.avisos.alerts import formatear_coche
 from crypto_tracker.coche import Coche
 from crypto_tracker.nucleo.comandos import interpretar
 

@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from crypto_tracker.alerts import formatear_deposito
+from crypto_tracker.avisos.alerts import formatear_deposito
 from crypto_tracker.deposito import (
     TIPO,
     Contra,

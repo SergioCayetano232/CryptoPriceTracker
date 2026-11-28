@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from crypto_tracker.alerts import formatear_record
+from crypto_tracker.avisos.alerts import formatear_record
 from crypto_tracker.record import SIN_LIMITE, Record, calcular, horas
 
 INICIO = datetime(2026, 8, 7, 10, tzinfo=timezone.utc)

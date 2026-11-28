@@ -6,7 +6,7 @@ import pytest
 import requests
 
 from crypto_tracker import inflacion
-from crypto_tracker.alerts import formatear_inflacion
+from crypto_tracker.avisos.alerts import formatear_inflacion
 from crypto_tracker.inflacion import Inflacion, InflacionError, calcular, indice, leer
 from crypto_tracker.movimientos import Movimiento
 

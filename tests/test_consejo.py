@@ -2,7 +2,7 @@
 
 import random
 
-from crypto_tracker.alerts import formatear_consejo
+from crypto_tracker.avisos.alerts import formatear_consejo
 from crypto_tracker.consejo import CONSEJOS, elegir
 
 

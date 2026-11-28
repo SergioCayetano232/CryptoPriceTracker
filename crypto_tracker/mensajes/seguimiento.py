@@ -2,24 +2,29 @@
 
 from datetime import date, datetime, time
 
-from ..alertaratio import AlertaRatio
-from ..cada import EJEMPLO as EJEMPLO_CADA
-from ..cada import Programado
-from ..calma import VENTANA as VENTANA_CALMA
-from ..calma import Calma
-from ..condicion import Condicion
+from ..avisos.alertaratio import AlertaRatio
+from ..avisos.cada import EJEMPLO as EJEMPLO_CADA
+from ..avisos.cada import Programado
+from ..avisos.calma import VENTANA as VENTANA_CALMA
+from ..avisos.calma import Calma
+from ..avisos.condicion import Condicion
+from ..avisos.escalera import Escalera, EscaleraCompra
+from ..avisos.juntas import CORTA as CORTA_JUNTAS
+from ..avisos.juntas import EJEMPLO as EJEMPLO_JUNTAS
+from ..avisos.juntas import Medida, Pareja
+from ..avisos.puntuales import CARTERA, Puntual, ejemplo, progreso
+from ..avisos.recordar import Recordatorio
+from ..avisos.rezagada import EJEMPLO as EJEMPLO_REZAGADA
+from ..avisos.rezagada import Rezagada
+from ..avisos.stop import Stop
 from ..emocion import EMOCIONES, Emociones, en_frase
 from ..emocion import Grupo as GrupoEmocion
 from ..encuesta import BANDA as BANDA_ENCUESTA
 from ..encuesta import Encuesta, limites, se_cierra
-from ..escalera import Escalera, EscaleraCompra
 from ..fantasma import BITCOIN as BITCOIN_FANTASMA
 from ..fantasma import EMPATE as EMPATE_FANTASMA
 from ..fantasma import Fantasma
 from ..herencia import Linea
-from ..juntas import CORTA as CORTA_JUNTAS
-from ..juntas import EJEMPLO as EJEMPLO_JUNTAS
-from ..juntas import Medida, Pareja
 from ..liga import Puesto, posiciones
 from ..maximo import hace
 from ..miedo import Indice
@@ -30,11 +35,6 @@ from ..nucleo.telegram import escape
 from ..pienso import IGUAL as IGUAL_PIENSO
 from ..pienso import SUBIDON, Pienso
 from ..prediccion import Marcador, Prediccion
-from ..puntuales import CARTERA, Puntual, ejemplo, progreso
-from ..recordar import Recordatorio
-from ..rezagada import EJEMPLO as EJEMPLO_REZAGADA
-from ..rezagada import Rezagada
-from ..stop import Stop
 from ..tesis import EJEMPLO as EJEMPLO_TESIS
 from ..tesis import Tesis, marcador, pendientes
 from .base import (

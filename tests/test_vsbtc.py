@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from crypto_tracker.alerts import formatear_vsbtc
+from crypto_tracker.avisos.alerts import formatear_vsbtc
 from crypto_tracker.movimientos import Movimiento
 from crypto_tracker.vsbtc import Contra, a_contar, calcular, cantidades, precio_en
 

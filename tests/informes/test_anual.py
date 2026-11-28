@@ -130,7 +130,7 @@ def test_con_un_solo_mes_no_hay_mejor_ni_peor():
 
 
 def _texto(a, hoy=date(2026, 1, 1)):
-    from crypto_tracker.alerts import formatear_anual
+    from crypto_tracker.avisos.alerts import formatear_anual
 
     return formatear_anual(a, "eur", hoy)
 

@@ -3,7 +3,7 @@
 import pytest
 
 from crypto_tracker import ideal
-from crypto_tracker.alerts import formatear_aviso_ideal, formatear_ideal
+from crypto_tracker.avisos.alerts import formatear_aviso_ideal, formatear_ideal
 from crypto_tracker.cartera import Valor
 from crypto_tracker.ideal import Ideal, IdealError, Parte
 

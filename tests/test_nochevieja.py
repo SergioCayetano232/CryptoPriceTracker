@@ -4,7 +4,7 @@ from datetime import date
 
 import pytest
 
-from crypto_tracker.alerts import formatear_nochevieja
+from crypto_tracker.avisos.alerts import formatear_nochevieja
 from crypto_tracker.nochevieja import Nochevieja
 from crypto_tracker.nucleo.comandos import interpretar
 

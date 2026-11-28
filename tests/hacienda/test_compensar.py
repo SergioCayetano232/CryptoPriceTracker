@@ -5,7 +5,7 @@ from datetime import date, datetime, time, timezone
 import pytest
 
 import main
-from crypto_tracker.alerts import formatear_compensar
+from crypto_tracker.avisos.alerts import formatear_compensar
 from crypto_tracker.hacienda import fifo
 from crypto_tracker.hacienda.compensar import Compensacion, Venta, calcular, toca_aviso
 from crypto_tracker.hacienda.fifo import Lote

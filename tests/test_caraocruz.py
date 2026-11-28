@@ -2,7 +2,7 @@
 
 import random
 
-from crypto_tracker.alerts import formatear_caraocruz
+from crypto_tracker.avisos.alerts import formatear_caraocruz
 from crypto_tracker.caraocruz import interpretar, lanzar
 
 

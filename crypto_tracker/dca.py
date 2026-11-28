@@ -3,10 +3,10 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-from .alerts import SIMBOLOS
+from .avisos.alerts import SIMBOLOS
+from .avisos.puntuales import numero
 from .nucleo.periodo import PeriodoError, es_tramo, leer
 from .nucleo.simbolos import a_id
-from .puntuales import numero
 
 POR_DEFECTO = 90 * 24
 

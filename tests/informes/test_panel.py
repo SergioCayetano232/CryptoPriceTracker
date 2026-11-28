@@ -4,9 +4,9 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
+from crypto_tracker.avisos.puntuales import Puntual
 from crypto_tracker.informes import panel
 from crypto_tracker.nucleo.config import Posicion
-from crypto_tracker.puntuales import Puntual
 
 AHORA = datetime(2026, 11, 20, 12, 0, tzinfo=timezone.utc)
 

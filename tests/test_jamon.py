@@ -2,7 +2,7 @@
 
 import pytest
 
-from crypto_tracker.alerts import formatear_jamon
+from crypto_tracker.avisos.alerts import formatear_jamon
 from crypto_tracker.jamon import Jamon
 from crypto_tracker.nucleo.comandos import interpretar
 

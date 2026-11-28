@@ -2,8 +2,8 @@
 
 from dataclasses import dataclass
 
+from .avisos.puntuales import numero
 from .nucleo.simbolos import a_id
-from .puntuales import numero
 
 EJEMPLO = "/posicion 1000 2% -10%"
 

@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from crypto_tracker.alerts import formatear_fibonacci
+from crypto_tracker.avisos.alerts import formatear_fibonacci
 from crypto_tracker.fibonacci import (
     POR_DEFECTO,
     calcular,

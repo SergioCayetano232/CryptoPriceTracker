@@ -2,7 +2,7 @@
 
 import pytest
 
-from crypto_tracker.alerts import formatear_reparto
+from crypto_tracker.avisos.alerts import formatear_reparto
 from crypto_tracker.cartera import Valor
 from crypto_tracker.informes.grafica import dibujar_reparto
 from crypto_tracker.reparto import OTRAS, Trozo, demasiado, trozos

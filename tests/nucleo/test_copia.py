@@ -4,7 +4,7 @@ from datetime import time
 
 import pytest
 
-from crypto_tracker.alerts import formatear_copia
+from crypto_tracker.avisos.alerts import formatear_copia
 from crypto_tracker.nucleo.config import (
     Posicion,
     Watch,

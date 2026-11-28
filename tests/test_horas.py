@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from crypto_tracker.alerts import formatear_horas
+from crypto_tracker.avisos.alerts import formatear_horas
 from crypto_tracker.horas import Horas, calcular, interpretar
 from crypto_tracker.nucleo.periodo import PeriodoError
 

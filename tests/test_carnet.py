@@ -2,7 +2,7 @@
 
 import pytest
 
-from crypto_tracker.alerts import formatear_carnet
+from crypto_tracker.avisos.alerts import formatear_carnet
 from crypto_tracker.carnet import Carnet
 from crypto_tracker.nucleo.comandos import interpretar
 

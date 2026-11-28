@@ -7,7 +7,7 @@ lo entendiera mal, te descuadraría la cartera.
 import re
 import unicodedata
 
-from ..condicion import CondicionError, separar
+from ..avisos.condicion import CondicionError, separar
 
 _CRIPTO = r"(?:(?:el|la|mi) )?(?P<cripto>[a-z0-9][a-z0-9-]*)"
 _NUMERO = r"(?P<numero>\d[\d.,]*(?: ?(?:k|mil))?)(?: ?(?:€|eur|euros|\$|dolares))?"

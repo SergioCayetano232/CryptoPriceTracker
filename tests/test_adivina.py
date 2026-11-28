@@ -3,7 +3,7 @@
 import pytest
 
 from crypto_tracker.adivina import AdivinaError, Intento, interpretar
-from crypto_tracker.alerts import formatear_adivina
+from crypto_tracker.avisos.alerts import formatear_adivina
 
 
 @pytest.mark.parametrize(

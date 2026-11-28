@@ -3,9 +3,9 @@
 from dataclasses import dataclass
 from datetime import datetime
 
+from .avisos.puntuales import numero
 from .nucleo.config import Posicion
 from .nucleo.simbolos import a_id
-from .puntuales import numero
 
 EJEMPLO_COMPRA = "/compra bitcoin 0.01 600"
 EJEMPLO_VENTA = "/venta bitcoin 0.005 350 o /venta bitcoin todo"

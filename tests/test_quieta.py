@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from crypto_tracker.alerts import formatear_quieta
+from crypto_tracker.avisos.alerts import formatear_quieta
 from crypto_tracker.quieta import Quieta, calcular
 
 T = datetime(2026, 11, 3, tzinfo=timezone.utc)

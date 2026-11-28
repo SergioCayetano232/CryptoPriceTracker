@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta
 
 import pytest
 
-from crypto_tracker.alerts import formatear_dia
+from crypto_tracker.avisos.alerts import formatear_dia
 from crypto_tracker.dia import Dia, DiaError, calcular, cercano, interpretar, leer_fecha
 
 HOY = date(2026, 10, 13)

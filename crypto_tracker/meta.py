@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from .puntuales import numero
+from .avisos.puntuales import numero
 
 EJEMPLO = "/meta 10000"
 

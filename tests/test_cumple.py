@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from crypto_tracker.alerts import formatear_cumple
+from crypto_tracker.avisos.alerts import formatear_cumple
 from crypto_tracker.cumple import Cumple
 
 

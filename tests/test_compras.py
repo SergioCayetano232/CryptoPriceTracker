@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from crypto_tracker.alerts import formatear_compras
+from crypto_tracker.avisos.alerts import formatear_compras
 from crypto_tracker.compras import calcular
 from crypto_tracker.movimientos import Movimiento
 
