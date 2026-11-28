@@ -18,7 +18,7 @@ LARGO = 8
 
 # Los que tiran de tus claves o de tu servidor, o mandan sobre los demás.
 SOLO_DUEÑO = frozenset(
-    {"invitar", "usuarios", "expulsar", "binance", "consultas", "panel"}
+    {"invitar", "usuarios", "expulsar", "binance", "consultas", "panel", "enlace"}
 )
 
 SOLO_TUYO = "Eso solo lo puede usar quien lleva el bot."

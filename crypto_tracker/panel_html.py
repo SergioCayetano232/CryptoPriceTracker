@@ -1949,3 +1949,109 @@ body {
 </body>
 </html>
 """
+
+
+# --- La página de /enlace: para enseñar, solo con porcentajes ---
+
+
+def _fila_compartida(f: Fila) -> str:
+    return f"""
+<li class="fila">
+  <div class="fila__nombre"><strong>{_enlace(f.coin_id)}</strong></div>
+  {_mini(f.linea, _tono(f.cambio_24h))}
+  <span class="num num--{_tono(f.cambio_24h)}">{_pct(f.cambio_24h)}
+    <small>24 h</small></span>
+  <span class="num num--{_tono(f.porcentaje)} ganancia">{_pct(f.porcentaje)}
+    <small>desde la compra</small></span>
+  <div class="peso">
+    <div class="peso__barra"><span style="width:{f.peso:.1f}%"></span></div>
+    <small>{_pct(f.peso, signo=False)} del total</small>
+  </div>
+</li>"""
+
+
+def _grafica_compartida(p: Panel) -> str:
+    if len(p.serie) < 2:
+        return ""
+    puntos = muestrear(p.serie, PUNTOS_GRAFICA)
+    valores = [v for _, v in puntos]
+    # Sin cifras en el eje ni puntos con valor: la forma no dice cuánto tienes.
+    linea = trazo(valores, ANCHO, ALTO)
+    area = f"{linea} L{ANCHO},{ALTO} L0,{ALTO} Z"
+    desde, hasta = puntos[0][0].astimezone(), puntos[-1][0].astimezone()
+    semana = cambio(valores[-1], valores[0])
+    cuerpo = f"""
+<div class="grafica grafica--{_tono(semana)}">
+  <div class="grafica__zona">
+  <svg viewBox="0 0 {ANCHO} {ALTO}" preserveAspectRatio="none" role="img"
+       aria-label="Cómo ha ido la cartera en los últimos días">
+    <defs>
+      <linearGradient id="relleno" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" class="grafica__luz"/>
+        <stop offset="1" class="grafica__sombra"/>
+      </linearGradient>
+    </defs>
+    <path class="grafica__area" d="{area}"/>
+    <path class="grafica__linea" d="{linea}" vector-effect="non-scaling-stroke"/>
+  </svg>
+  </div>
+  <div class="grafica__fechas">
+    <span>{desde:%d/%m %H:%M}</span><span>{hasta:%d/%m %H:%M}</span>
+  </div>
+</div>"""
+    titulo = (
+        "Los últimos 7 días · "
+        f'<span class="h2__cambio num--{_tono(semana)}">{_pct(semana)}</span>'
+    )
+    return _tarjeta(titulo, cuerpo, 1, "grafica")
+
+
+def pagina_compartida(p: Panel, caduca: datetime) -> str:
+    """Lo que ve quien abre tu enlace: cómo te va, pero ni una cifra de dinero."""
+    grande, nota, dia = p.porcentaje, "desde que compró", ""
+    if grande is None:
+        grande, nota = p.cambio_24h, "en 24 h"
+    elif p.cambio_24h is not None:
+        dia = (
+            f'<span class="pastilla pastilla--{_tono(p.cambio_24h)}">'
+            f'{_pct(p.cambio_24h)}</span><span class="detalle__nota">en 24 h</span>'
+        )
+    cabecera = f"""
+<header class="cabecera seccion" style="--i:0">
+  <div class="cabecera__fila"><span class="marca">CryptoPriceTracker</span></div>
+  <p class="etiqueta">Una cartera, en porcentajes</p>
+  <p class="total num--{_tono(grande)}">{_pct(grande)}</p>
+  <p class="detalle"><span class="detalle__nota">{nota}</span>{dia}</p>
+  {_animo(p)}
+</header>"""
+    filas = "".join(_fila_compartida(f) for f in p.filas)
+    reparto = (
+        _tarjeta(
+            f"Lo que lleva{_cuenta(len(p.filas))}",
+            f'<ul class="lista lista--cartera">{filas}</ul>',
+            2,
+            "ancha",
+        )
+        if p.filas
+        else ""
+    )
+    hasta = caduca.astimezone()
+    return f"""<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<title>Una cartera · CryptoPriceTracker</title>
+<style>{CSS}</style>
+</head>
+<body{_fondo(p)}>
+<main class="panel">{cabecera}{_grafica_compartida(p)}{reparto}</main>
+<footer class="pie">
+  Solo porcentajes: ni cantidades ni dinero. Este enlace caduca el
+  {hasta:%d/%m} a las {hasta:%H:%M}.
+</footer>
+</body>
+</html>"""

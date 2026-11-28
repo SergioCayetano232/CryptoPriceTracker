@@ -202,6 +202,7 @@ Mientras está en modo `--loop` puedes escribirle al bot desde el móvil:
 | `/semana` | El resumen de tu semana sin esperar al domingo. No gasta consultas |
 | `/semana bitcoin` | La semana de una sola: lo mismo que `/historico bitcoin 7d` |
 | `/panel` | Un botón que abre el panel web dentro de Telegram, solo para ti. Necesita `PANEL_URL` en el `.env` (ver «Dentro de Telegram», más abajo) |
+| `/enlace` | Un enlace para enseñar tu cartera a quien quieras: solo porcentajes, sin cantidades ni dinero, y caduca en 24 h. Necesita `PANEL_URL` y el panel en marcha |
 | `/resumenia` | Tu semana contada en cuatro frases por Claude: cuánto ha cambiado, qué cripto la ha movido más y algo que llame la atención del reparto. Necesita `ANTHROPIC_API_KEY` en el `.env` (cada resumen cuesta céntimos). Solo le manda a Claude el valor de tu cartera, los cambios de la semana y el peso de cada cripto |
 | `/mes` | Cómo va tu cartera desde el día 1 del mes, con gráfica, no en los últimos 30 días como `/cartera 30d`. No gasta consultas. También `/mensual` |
 | `/anual` | Lo mismo desde el 1 de enero, para compararlo con la bolsa. Con `HISTORY_DAYS=90`, que es lo que viene, a partir de abril no tiene el año entero y te lo dice: pon `366`. También `/año` y `/ytd` |
@@ -847,6 +848,10 @@ Pon la dirección que te dé en el `.env` como `PANEL_URL` y reinicia el bot y e
 panel. Telegram firma quién abre el botón con el token del bot: si no es la
 cuenta de `TELEGRAM_CHAT_ID`, no entra. Con `PANEL_URL` puesta, `/` y
 `/api.json` piden `?clave=` aunque lleguen por el túnel.
+
+Con eso puesto, `/enlace` te da una dirección para enseñar tu cartera: cómo te
+va en %, el reparto y la gráfica de la semana sin cifras. Va firmada con el
+token del bot y deja de valer a las 24 h; si cambias el token, caducan todas.
 
 ---
 

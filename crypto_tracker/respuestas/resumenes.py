@@ -2,6 +2,7 @@
 
 import logging
 import math
+import time
 from datetime import date, datetime, timedelta, timezone
 
 from .. import (
@@ -613,6 +614,17 @@ def _panel(config: Config) -> Respuesta:
     if not url.startswith("https://"):
         return alerts.PANEL_SIN_URL
     return comandos.ConBotones(alerts.PANEL_ABRIR, [[("Abrir el panel", url + "/app")]])
+
+
+def _enlace(config: Config) -> Respuesta:
+    url = panel.url_app()
+    if not url.startswith("https://"):
+        return alerts.PANEL_SIN_URL
+    ahora = time.time()
+    return alerts.formatear_enlace(
+        panel.enlace(url, config.telegram_token, ahora),
+        datetime.fromtimestamp(ahora + panel.VIDA_ENLACE, timezone.utc),
+    )
 
 
 def _mes(config: Config) -> str | comandos.Foto:

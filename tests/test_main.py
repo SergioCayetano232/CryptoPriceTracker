@@ -12896,6 +12896,39 @@ def test_el_panel_pide_el_miedo_como_mucho_cada_hora(monkeypatch):
     assert pedidos == [1, 1]
 
 
+def test_enlace_sin_url_explica_como(config, enviados, monkeypatch):
+    monkeypatch.delenv("PANEL_URL", raising=False)
+
+    main.atender(config, _mensaje("/enlace"))
+
+    assert "PANEL_URL=https://" in enviados[0]
+
+
+def test_enlace_se_abre_sin_clave_y_caduca(config, enviados, monkeypatch):
+    import re
+    import urllib.error
+    import urllib.request
+
+    monkeypatch.setenv("PANEL_URL", "https://mi-panel.example")
+    monkeypatch.delenv("PANEL_CLAVE", raising=False)
+    main.atender(config, _mensaje("/enlace"))
+    ruta = re.search(r"https://mi-panel\.example(/ver\?pase=\S+)", enviados[0])[1]
+    assert "solo porcentajes" in enviados[0].lower()
+
+    servidor, hilo = _panel_en_marcha(monkeypatch, config, False)
+    base = f"http://127.0.0.1:{servidor['este'].server_address[1]}"
+    try:
+        with urllib.request.urlopen(base + ruta) as r:
+            assert "Una cartera, en porcentajes" in r.read().decode()
+        for mala in ("/ver", "/ver?pase=1.mal", ruta.replace("pase=1", "pase=2")):
+            with pytest.raises(urllib.error.HTTPError) as e:
+                urllib.request.urlopen(base + mala)
+            assert e.value.code == 403
+    finally:
+        servidor["este"].shutdown()
+        hilo.join()
+
+
 # --- /impuestos csv ---
 
 

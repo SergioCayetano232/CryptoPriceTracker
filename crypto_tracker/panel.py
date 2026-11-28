@@ -23,6 +23,8 @@ MIN_CLAVE = 16
 # Desde Telegram: lo que vale su firma y lo que dura la sesión que da.
 VIDA_FIRMA = 24 * 3600
 VIDA_SESION = 12 * 3600
+# Lo que dura un enlace de /enlace para enseñar la cartera.
+VIDA_ENLACE = 24 * 3600
 
 # Si en tres consultas seguidas no ha guardado nada, algo le pasa al bot.
 CICLOS_PARADO = 3
@@ -271,18 +273,35 @@ def usuario_telegram(init_data: str, token: str, ahora: float) -> int | None:
         return None
 
 
-def sesion(secreto: bytes, ahora: float) -> str:
+def sesion(secreto: bytes, ahora: float, vida: int = VIDA_SESION) -> str:
     """Un pase para no tener que firmar cada vez que se refresca: caduca solo."""
-    caduca = str(int(ahora) + VIDA_SESION)
+    caduca = str(int(ahora) + vida)
     return f"{caduca}.{_firma(secreto, caduca)}"
 
 
-def sesion_valida(ruta: str, secreto: bytes, ahora: float) -> bool:
-    dada = parse_qs(urlsplit(ruta).query).get("sesion", [""])[0]
+def sesion_valida(
+    ruta: str, secreto: bytes, ahora: float, nombre: str = "sesion"
+) -> bool:
+    dada = parse_qs(urlsplit(ruta).query).get(nombre, [""])[0]
     caduca, _, firma = dada.partition(".")
     if not hmac.compare_digest(firma.encode(), _firma(secreto, caduca).encode()):
         return False
     return caduca.isdigit() and int(caduca) > ahora
+
+
+def caducidad(ruta: str, nombre: str) -> int:
+    """Cuándo caduca el pase de la dirección. Compruébalo antes con sesion_valida."""
+    return int(parse_qs(urlsplit(ruta).query)[nombre][0].partition(".")[0])
+
+
+def secreto_enlaces(token: str) -> bytes:
+    """Sale del token del bot: así el bot firma y el panel comprueba sin
+    guardar nada. Cambiar el token anula todos los enlaces."""
+    return hmac.new(b"EnlaceCompartido", token.encode(), hashlib.sha256).digest()
+
+
+def enlace(url: str, token: str, ahora: float) -> str:
+    return f"{url}/ver?pase={sesion(secreto_enlaces(token), ahora, VIDA_ENLACE)}"
 
 
 def parado(actualizado: datetime | None, ahora: datetime, intervalo: int) -> bool:

@@ -111,6 +111,26 @@ def test_sin_miedo_el_fondo_de_siempre():
     assert 'class="animo"' not in html
 
 
+def test_la_pagina_compartida_no_lleva_dinero():
+    from crypto_tracker.panel_html import pagina_compartida
+
+    serie = [(AHORA - timedelta(days=1), 5800.0), (AHORA, 6000.0)]
+    html = pagina_compartida(
+        _panel(total_antes=5000.0, serie=serie), AHORA + timedelta(hours=24)
+    )
+
+    assert "€" not in html
+    # Ni el total, ni lo ganado, ni el precio, ni la cantidad (el CSS aparte).
+    cuerpo = html.split("<body", 1)[1]
+    for cifra in ("6.000", "1.000", "60.000", 'class="dinero"'):
+        assert cifra not in cuerpo
+    assert ">+20,00 %</p>" in html  # desde la compra
+    assert "+3,45 %" in html  # la semana
+    assert "caduca el" in html
+    assert '<meta name="robots" content="noindex">' in html
+    assert "<script" not in html
+
+
 def test_el_icono_va_en_rojo_si_baja_en_el_dia():
     assert "%23e0445a" in pagina(_panel(total_antes=7000.0), AHORA, parado=False)
 

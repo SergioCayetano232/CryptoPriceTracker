@@ -272,6 +272,7 @@ from crypto_tracker.respuestas.resumenes import (
     _anual,
     _comando_resumen,
     _comando_status,
+    _enlace,
     _envivo,
     _mes,
     _panel,
@@ -1664,6 +1665,7 @@ COMANDOS: dict[str, Callable[[Config, str], Respuesta]] = {
     "semana": _comando_semana,
     "resumenia": lambda c, a: _resumenia(c),
     "panel": lambda c, a: _panel(c),
+    "enlace": lambda c, a: _enlace(c),
     "cartera": _con_cartera(lambda c, a: _cartera(c, a)),
     "tarjeta": lambda c, a: _tarjeta(c, a),
     "reparto": _con_cartera(lambda c, a: _reparto(c)),
@@ -2303,6 +2305,12 @@ def pagina_panel(config: Config) -> str:
     )
 
 
+def pagina_enlace(config: Config, caduca: int) -> str:
+    return panel_html.pagina_compartida(
+        datos_panel(config), datetime.fromtimestamp(caduca, timezone.utc)
+    )
+
+
 def json_panel(config: Config) -> str:
     datos = datos_panel(config)
     ahora = datetime.now(timezone.utc)
@@ -2357,6 +2365,7 @@ def servir_panel(config: Config, puerto: int, red: bool = False) -> int:
     cerrado = red or bool(app)
     # Nuevo en cada arranque: reiniciar el panel cierra las sesiones abiertas.
     secreto = secrets.token_bytes(32)
+    enlaces = panel.secreto_enlaces(config.telegram_token)
 
     class Atender(BaseHTTPRequestHandler):
         def do_GET(self) -> None:
@@ -2374,6 +2383,9 @@ def servir_panel(config: Config, puerto: int, red: bool = False) -> int:
                     self.send_error(403, "La sesión ha caducado: vuelve a /panel")
                     return
                 self._pagina("/")
+                return
+            if ruta == "/ver":
+                self._enlace()
                 return
             if ruta not in ("/", "/api.json"):
                 self.send_error(404)
@@ -2402,6 +2414,19 @@ def servir_panel(config: Config, puerto: int, red: bool = False) -> int:
                 return
             pase = json.dumps({"sesion": panel.sesion(secreto, time.time())})
             self._mandar(pase.encode(), "application/json")
+
+        def _enlace(self) -> None:
+            # Lo firma el bot con /enlace: no hace falta ni clave ni Telegram.
+            if not panel.sesion_valida(self.path, enlaces, time.time(), "pase"):
+                self.send_error(403, "Este enlace ha caducado o no vale")
+                return
+            try:
+                cuerpo = pagina_enlace(config, panel.caducidad(self.path, "pase"))
+            except database.DatabaseError as e:
+                logger.error("No se pudo montar el enlace: %s", e)
+                self.send_error(500, "No se pudo leer la base de datos")
+                return
+            self._mandar(cuerpo.encode(), "text/html; charset=utf-8")
 
         def _pagina(self, ruta: str) -> None:
             try:

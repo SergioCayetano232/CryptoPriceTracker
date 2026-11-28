@@ -47,6 +47,7 @@ TEMAS = [
             "semana",
             "resumenia",
             "panel",
+            "enlace",
             "mes",
             "anual",
             "record",

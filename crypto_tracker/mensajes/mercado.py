@@ -1056,6 +1056,16 @@ PANEL_SIN_URL = (
 )
 
 
+def formatear_enlace(url: str, caduca: datetime) -> str:
+    hasta = caduca.astimezone()
+    return (
+        "🔗 <b>Un enlace para enseñar tu cartera</b>\n"
+        "Solo porcentajes: ni cantidades ni dinero. Quien lo tenga lo ve hasta el "
+        f"{hasta:%d/%m} a las {hasta:%H:%M}, mientras el panel esté en marcha.\n\n"
+        f"{escape(url)}"
+    )
+
+
 def formatear_no_encuentro(coin_ids: list[str]) -> str:
     nombres = ", ".join(f"<b>{escape(c)}</b>" for c in coin_ids)
     return (

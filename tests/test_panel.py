@@ -326,3 +326,16 @@ def test_url_app_sin_barra_final(monkeypatch):
     monkeypatch.setenv("PANEL_URL", " https://mi-panel.example/ ")
 
     assert panel.url_app() == "https://mi-panel.example"
+
+
+def test_enlace_firmado_con_el_token_y_de_24_h():
+    url = panel.enlace("https://mi-panel.example", "token", 1000)
+    ruta = url.removeprefix("https://mi-panel.example")
+    secreto = panel.secreto_enlaces("token")
+
+    assert ruta.startswith("/ver?pase=")
+    assert panel.sesion_valida(ruta, secreto, 1000 + 60, "pase")
+    assert panel.caducidad(ruta, "pase") == 1000 + panel.VIDA_ENLACE
+    assert not panel.sesion_valida(ruta, secreto, 1000 + panel.VIDA_ENLACE, "pase")
+    # Con otro bot, o sea otro token, no vale.
+    assert not panel.sesion_valida(ruta, panel.secreto_enlaces("otro"), 1000, "pase")
