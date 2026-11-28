@@ -116,15 +116,9 @@ def test_veredicto(valores, esperado):
 # --- el comando ---
 
 import main  # noqa: E402
-from crypto_tracker import (  # noqa: E402
-    arcoiris,
-    database,
-    hashribbons,
-    mayer,
-    mvrv,
-    telegram,
-)
-from crypto_tracker.config import Config, Watch  # noqa: E402
+from crypto_tracker import arcoiris, hashribbons, mayer, mvrv  # noqa: E402
+from crypto_tracker.nucleo import database, telegram  # noqa: E402
+from crypto_tracker.nucleo.config import Config, Watch  # noqa: E402
 
 DIA = 86_400_000
 INICIO = 1_500_000_000_000

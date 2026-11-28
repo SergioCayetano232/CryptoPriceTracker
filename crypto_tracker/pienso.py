@@ -3,9 +3,9 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
+from .nucleo.simbolos import a_id
 from .puntuales import numero
 from .recordar import QUITAR
-from .simbolos import a_id
 
 EJEMPLO = "/pienso btc 500"
 PLAZO = timedelta(hours=24)

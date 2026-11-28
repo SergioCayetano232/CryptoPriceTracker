@@ -2,7 +2,7 @@
 
 import random
 
-from .simbolos import a_id
+from .nucleo.simbolos import a_id
 
 QUE_HACER = {"cara": "compra", "cruz": "vende"}
 

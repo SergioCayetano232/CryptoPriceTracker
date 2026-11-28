@@ -104,8 +104,8 @@ import time  # noqa: E402
 from dataclasses import replace  # noqa: E402
 
 import main  # noqa: E402
-from crypto_tracker import binance, coingecko, database, telegram  # noqa: E402
-from crypto_tracker.config import Config, Watch, parse_cartera  # noqa: E402
+from crypto_tracker.nucleo import binance, coingecko, database, telegram  # noqa: E402
+from crypto_tracker.nucleo.config import Config, Watch, parse_cartera  # noqa: E402
 
 
 @pytest.fixture

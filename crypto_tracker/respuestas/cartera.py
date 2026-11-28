@@ -9,16 +9,12 @@ from .. import (
     apodo,
     apy,
     arrepentido,
-    botones,
     cartera,
-    coingecko,
-    comandos,
     comision,
     comisiones,
     compras,
     corregir,
     cuenta_binance,
-    database,
     deposito,
     doble,
     emocion,
@@ -33,12 +29,10 @@ from .. import (
     meta,
     miedo,
     mitad,
-    moneda,
     movimientos,
     nota,
     objetivo,
     pelotazo,
-    periodo,
     plan,
     posicion,
     primera,
@@ -49,14 +43,11 @@ from .. import (
     reparto,
     riesgo,
     sesgo,
-    simbolos,
-    telegram,
     timing,
     volatilidad,
     vsbolsa,
     vsbtc,
 )
-from ..config import Config
 from ..hacienda import (
     compensar,
     fifo,
@@ -69,6 +60,17 @@ from ..hacienda import (
     sivendo,
 )
 from ..informes import grafica, tarjeta
+from ..nucleo import (
+    botones,
+    coingecko,
+    comandos,
+    database,
+    moneda,
+    periodo,
+    simbolos,
+    telegram,
+)
+from ..nucleo.config import Config
 from .base import (
     SIN_CARTERA,
     _con_cambios,

@@ -3,8 +3,8 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-from .periodo import PeriodoError, es_tramo, leer
-from .simbolos import a_id
+from .nucleo.periodo import PeriodoError, es_tramo, leer
+from .nucleo.simbolos import a_id
 
 POR_DEFECTO = 30 * 24
 

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import date, datetime
 
 from ..cartera import Valor, total
-from ..periodo import PeriodoError, es_tramo, leer
+from ..nucleo.periodo import PeriodoError, es_tramo, leer
 from ..reparto import Trozo, trozos
 
 EJEMPLO = "/tarjeta o /tarjeta 90d"

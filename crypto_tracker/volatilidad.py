@@ -4,9 +4,9 @@ from dataclasses import dataclass
 from datetime import date, datetime
 
 from .alerts import _revisar_porcentaje
-from .config import Watch
-from .periodo import PeriodoError, es_tramo, leer
-from .simbolos import a_id
+from .nucleo.config import Watch
+from .nucleo.periodo import PeriodoError, es_tramo, leer
+from .nucleo.simbolos import a_id
 
 POR_DEFECTO = 30 * 24
 

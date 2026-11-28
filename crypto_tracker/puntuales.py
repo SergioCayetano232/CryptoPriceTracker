@@ -6,8 +6,8 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from .condicion import Condicion
-from .periodo import PeriodoError, es_tramo, leer
-from .simbolos import a_id
+from .nucleo.periodo import PeriodoError, es_tramo, leer
+from .nucleo.simbolos import a_id
 
 # 70.000 es setenta mil, que es como lo escribe uno aqui. 0.5 sigue siendo medio.
 _MILES = re.compile(r"[1-9]\d{0,2}(\.\d{3})+")

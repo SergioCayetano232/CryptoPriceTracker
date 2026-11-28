@@ -3,8 +3,8 @@
 import pytest
 
 from crypto_tracker.alerts import formatear_jamon
-from crypto_tracker.comandos import interpretar
 from crypto_tracker.jamon import Jamon
+from crypto_tracker.nucleo.comandos import interpretar
 
 
 def test_cuantos():

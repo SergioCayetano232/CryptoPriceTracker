@@ -4,7 +4,7 @@ import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-from .simbolos import a_id
+from .nucleo.simbolos import a_id
 
 EJEMPLO = "/tesis sol el ETF lo va a subir"
 DIAS = 30

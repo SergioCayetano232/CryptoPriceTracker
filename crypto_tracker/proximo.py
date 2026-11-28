@@ -1,7 +1,7 @@
 """A que precio saltaria el siguiente aviso de cada cripto."""
 
 from .alerts import _a_float, _es_ref_pct
-from .config import Watch
+from .nucleo.config import Watch
 
 
 def objetivos(

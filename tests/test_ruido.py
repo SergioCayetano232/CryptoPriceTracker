@@ -4,8 +4,8 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from crypto_tracker.config import Watch
-from crypto_tracker.periodo import PeriodoError
+from crypto_tracker.nucleo.config import Watch
+from crypto_tracker.nucleo.periodo import PeriodoError
 from crypto_tracker.ruido import (
     Cuenta,
     analizar,

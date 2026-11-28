@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from crypto_tracker.backtest import calcular, interpretar
-from crypto_tracker.periodo import PeriodoError
+from crypto_tracker.nucleo.periodo import PeriodoError
 
 INICIO = datetime(2026, 9, 1, tzinfo=timezone.utc)
 

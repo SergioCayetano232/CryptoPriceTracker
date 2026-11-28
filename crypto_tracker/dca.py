@@ -4,9 +4,9 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from .alerts import SIMBOLOS
-from .periodo import PeriodoError, es_tramo, leer
+from .nucleo.periodo import PeriodoError, es_tramo, leer
+from .nucleo.simbolos import a_id
 from .puntuales import numero
-from .simbolos import a_id
 
 POR_DEFECTO = 90 * 24
 

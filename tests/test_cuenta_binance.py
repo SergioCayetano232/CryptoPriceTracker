@@ -6,8 +6,8 @@ import pytest
 import requests
 
 from crypto_tracker import cuenta_binance
-from crypto_tracker.config import Posicion
 from crypto_tracker.cuenta_binance import CuentaError, comparar, firmar, leer
+from crypto_tracker.nucleo.config import Posicion
 
 # El ejemplo de la documentación de Binance, con su firma.
 SECRETO_EJEMPLO = "NhqPtmdSJYdKjVHjA7PZj4Mge3R5YNiP1e3UZjInClVN65XAbvqqM6A7H5fATj0j"

@@ -2,9 +2,10 @@
 
 from dataclasses import dataclass
 
-from . import binance, estables
+from . import estables
 from .mensajes.base import SIMBOLOS, _nombre, _num
-from .simbolos import MAX_VARIAS, varias
+from .nucleo import binance
+from .nucleo.simbolos import MAX_VARIAS, varias
 
 EJEMPLO = "/spread btc eth"
 

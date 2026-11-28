@@ -3,7 +3,7 @@
 import pytest
 
 from crypto_tracker.alerts import formatear_paella
-from crypto_tracker.comandos import interpretar
+from crypto_tracker.nucleo.comandos import interpretar
 from crypto_tracker.paella import Paella
 
 

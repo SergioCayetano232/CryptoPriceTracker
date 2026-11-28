@@ -3,10 +3,10 @@
 import pytest
 
 from crypto_tracker.comision import ComisionError
-from crypto_tracker.config import Posicion
 from crypto_tracker.hacienda.impuestos import Impuestos
 from crypto_tracker.hacienda.permuta import calcular, interpretar
 from crypto_tracker.movimientos import MovimientoError
+from crypto_tracker.nucleo.config import Posicion
 
 BTC = Posicion("bitcoin", 0.02, 1000)
 

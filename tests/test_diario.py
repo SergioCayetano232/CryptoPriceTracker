@@ -4,8 +4,8 @@ from datetime import date, datetime, time
 
 import pytest
 
-from crypto_tracker.config import ConfigError
 from crypto_tracker.diario import es_hora_tranquila, leer_hora, toca_resumen
+from crypto_tracker.nucleo.config import ConfigError
 
 NUEVE = time(9, 0)
 HOY = date(2026, 9, 29)

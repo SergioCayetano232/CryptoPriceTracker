@@ -2,7 +2,7 @@
 
 from datetime import date, datetime, time, timedelta
 
-from .config import ConfigError, parse_hora
+from .nucleo.config import ConfigError, parse_hora
 
 # Si a la hora el bot estaba apagado, lo manda al volver, pero no mas tarde
 # de esto. Un "buenos dias" a las once de la noche no pinta nada.

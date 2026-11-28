@@ -4,7 +4,7 @@ import pytest
 
 from crypto_tracker.alerts import formatear_millonario
 from crypto_tracker.millonario import Millonario, cantidad
-from crypto_tracker.simbolos import de_id
+from crypto_tracker.nucleo.simbolos import de_id
 
 
 def test_cuentas():

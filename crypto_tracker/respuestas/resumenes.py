@@ -5,23 +5,7 @@ import math
 import time
 from datetime import date, datetime, timedelta, timezone
 
-from .. import (
-    alerts,
-    backup,
-    botones,
-    cartera,
-    comandos,
-    database,
-    diario,
-    envivo,
-    miedo,
-    movimientos,
-    periodo,
-    proximo,
-    puntuales,
-    telegram,
-)
-from ..config import Config
+from .. import alerts, cartera, diario, envivo, miedo, movimientos, proximo, puntuales
 from ..hacienda import aviso_renta, compensar, impuestos
 from ..informes import (
     aniversario,
@@ -34,6 +18,8 @@ from ..informes import (
     semanal,
     tarjeta_anual,
 )
+from ..nucleo import backup, botones, comandos, database, periodo, telegram
+from ..nucleo.config import Config
 from .base import (
     SIN_CARTERA,
     Respuesta,

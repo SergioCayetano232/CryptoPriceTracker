@@ -3,8 +3,8 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-from .periodo import PeriodoError, es_tramo, falta_principio, leer
-from .simbolos import MAX_VARIAS, varias
+from .nucleo.periodo import PeriodoError, es_tramo, falta_principio, leer
+from .nucleo.simbolos import MAX_VARIAS, varias
 
 POR_DEFECTO = 7 * 24
 

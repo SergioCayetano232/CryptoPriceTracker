@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 import pytest
 
 from crypto_tracker.alerts import formatear_compra, formatear_movimientos
-from crypto_tracker.config import Posicion
 from crypto_tracker.movimientos import (
     Movimiento,
     MovimientoError,
@@ -22,6 +21,7 @@ from crypto_tracker.movimientos import (
     totales,
     vender,
 )
+from crypto_tracker.nucleo.config import Posicion
 
 # --- leer lo que escribes ---
 

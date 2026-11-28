@@ -86,8 +86,9 @@ def test_lo_de_hace_el_plazo_mas_largo():
 # --- el comando ---
 
 import main  # noqa: E402
-from crypto_tracker import database, mayer, telegram  # noqa: E402
-from crypto_tracker.config import Config, Watch  # noqa: E402
+from crypto_tracker import mayer  # noqa: E402
+from crypto_tracker.nucleo import database, telegram  # noqa: E402
+from crypto_tracker.nucleo.config import Config, Watch  # noqa: E402
 
 
 @pytest.fixture

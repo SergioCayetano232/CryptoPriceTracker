@@ -3,8 +3,8 @@
 import pytest
 
 from crypto_tracker.alerts import formatear_emoji
-from crypto_tracker.comandos import interpretar
 from crypto_tracker.emoji import cambio, cara
+from crypto_tracker.nucleo.comandos import interpretar
 
 
 def test_cambio_de_una():

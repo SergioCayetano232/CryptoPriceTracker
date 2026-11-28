@@ -3,8 +3,8 @@
 from dataclasses import dataclass
 
 from .cartera import Valor, total
+from .nucleo.simbolos import a_id
 from .puntuales import numero
-from .simbolos import a_id
 
 EJEMPLO = "/objetivo bitcoin 100000"
 

@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
-from .simbolos import a_id
+from .nucleo.simbolos import a_id
 
 SI, NO = "si", "no"
 

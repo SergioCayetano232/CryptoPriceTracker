@@ -19,11 +19,9 @@ from .. import (
     buzon,
     calma,
     cartera,
-    coingecko,
     comisionred,
     concentracion,
     cruce,
-    database,
     direccion,
     equilibrio,
     estables,
@@ -36,12 +34,12 @@ from .. import (
     rezagada,
     rsi,
     salvo,
-    telegram,
     volatilidad,
     volumen,
 )
-from ..config import Config
 from ..hacienda import modelo721
+from ..nucleo import coingecko, database, telegram
+from ..nucleo.config import Config
 from .base import (
     _alertas_ratio,
     _direcciones_guardadas,

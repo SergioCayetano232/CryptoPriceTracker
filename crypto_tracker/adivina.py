@@ -2,8 +2,8 @@
 
 from dataclasses import dataclass
 
+from .nucleo.simbolos import a_id
 from .puntuales import numero
-from .simbolos import a_id
 
 EJEMPLO = "/adivina 70000 o /adivina eth 2500"
 

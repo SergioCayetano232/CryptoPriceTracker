@@ -7,6 +7,7 @@ from ..informes.mes import MESES
 from ..limite import Limite
 from ..meta import Meta
 from ..movimientos import texto_cantidad
+from ..nucleo.telegram import escape
 from ..objetivo import Escenario
 from ..plan import MAX_AÑOS as MAX_AÑOS_PLAN
 from ..plan import TEXTO as TEXTO_PLAN
@@ -15,7 +16,6 @@ from ..plan import cuanto as cuanto_plan
 from ..posicion import Entrada
 from ..promediar import Promedio
 from ..rango import barra
-from ..telegram import escape
 from .base import SIMBOLOS, _barra_progreso, _es, _flecha, _ganancia, _hace, _num
 
 

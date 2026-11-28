@@ -5,10 +5,10 @@ from datetime import date, datetime, time
 
 from ..compras import Resumen
 from ..compras import calcular as calcular_compras
-from ..config import Posicion
 from ..diario import toca_resumen
 from ..ganancias import calcular as calcular_ganancias
 from ..movimientos import Movimiento
+from ..nucleo.config import Posicion
 from .semanal import Semana, semana
 
 

@@ -177,8 +177,8 @@ def test_pedir_falla(monkeypatch, respuesta, error):
 # --- el comando ---
 
 import main  # noqa: E402
-from crypto_tracker import database, telegram  # noqa: E402
-from crypto_tracker.config import Config, Watch  # noqa: E402
+from crypto_tracker.nucleo import database, telegram  # noqa: E402
+from crypto_tracker.nucleo.config import Config, Watch  # noqa: E402
 
 
 @pytest.fixture

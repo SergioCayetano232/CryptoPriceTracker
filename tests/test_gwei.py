@@ -128,8 +128,8 @@ def test_pedir_con_un_error_del_nodo_da_vacio(monkeypatch):
 # --- el comando ---
 
 import main  # noqa: E402
-from crypto_tracker import coingecko, database, telegram  # noqa: E402
-from crypto_tracker.config import Config, Watch  # noqa: E402
+from crypto_tracker.nucleo import coingecko, database, telegram  # noqa: E402
+from crypto_tracker.nucleo.config import Config, Watch  # noqa: E402
 
 
 @pytest.fixture

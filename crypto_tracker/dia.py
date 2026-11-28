@@ -4,8 +4,8 @@ import re
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 
-from .periodo import MAXIMO
-from .simbolos import a_id
+from .nucleo.periodo import MAXIMO
+from .nucleo.simbolos import a_id
 
 EJEMPLO = "/dia bitcoin 01/09"
 

@@ -3,8 +3,8 @@
 from dataclasses import dataclass
 
 from .cartera import Valor
+from .nucleo.simbolos import a_id
 from .puntuales import numero
-from .simbolos import a_id
 
 EJEMPLO = "/rebalanceo btc 60 eth 40"
 

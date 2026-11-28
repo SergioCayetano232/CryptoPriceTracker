@@ -3,8 +3,8 @@
 from dataclasses import dataclass
 from datetime import date, datetime, time
 
-from .config import ConfigError, parse_hora
 from .diario import toca_resumen
+from .nucleo.config import ConfigError, parse_hora
 from .recordar import DIAS, _dia
 
 EJEMPLO = "/cada viernes 20:00 /cartera"

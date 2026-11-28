@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from crypto_tracker.alerts import formatear_rango
-from crypto_tracker.periodo import PeriodoError
+from crypto_tracker.nucleo.periodo import PeriodoError
 from crypto_tracker.rango import Rango, barra, calcular, interpretar
 
 INICIO = datetime(2026, 10, 1, 12, tzinfo=timezone.utc)

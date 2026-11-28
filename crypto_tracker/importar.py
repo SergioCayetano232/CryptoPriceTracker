@@ -6,7 +6,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
-from . import simbolos
+from .nucleo import simbolos
 
 COLUMNAS = ("Date(UTC)", "Pair", "Side", "Price", "Executed", "Amount", "Fee")
 COLUMNAS_KRAKEN = ("txid", "pair", "time", "type", "price", "cost", "fee", "vol")

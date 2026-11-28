@@ -2,7 +2,6 @@
 
 import pytest
 
-from crypto_tracker.config import Posicion
 from crypto_tracker.herencia import (
     HerenciaError,
     Linea,
@@ -10,6 +9,7 @@ from crypto_tracker.herencia import (
     lineas,
     parece_clave,
 )
+from crypto_tracker.nucleo.config import Posicion
 
 # Una frase de prueba con la forma de las de verdad (no es de ninguna cartera).
 SEMILLA = (

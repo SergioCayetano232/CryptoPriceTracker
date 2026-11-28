@@ -3,8 +3,8 @@
 from dataclasses import dataclass
 from datetime import date
 
-from .periodo import PeriodoError, es_tramo, leer
-from .simbolos import a_id
+from .nucleo.periodo import PeriodoError, es_tramo, leer
+from .nucleo.simbolos import a_id
 
 # Con 90 días serían tres veces cada día: casi azar. Un año ya dice algo.
 POR_DEFECTO = 365 * 24

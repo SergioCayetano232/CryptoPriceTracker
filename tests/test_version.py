@@ -4,7 +4,7 @@ import subprocess
 
 from crypto_tracker import version
 from crypto_tracker.alerts import formatear_version
-from crypto_tracker.comandos import interpretar
+from crypto_tracker.nucleo.comandos import interpretar
 from crypto_tracker.version import Version
 
 

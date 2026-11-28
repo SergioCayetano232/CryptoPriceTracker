@@ -5,7 +5,6 @@ from datetime import date
 import pytest
 
 from crypto_tracker.alerts import formatear_horoscopo
-from crypto_tracker.comandos import interpretar as comando
 from crypto_tracker.horoscopo import (
     PREDICCIONES,
     SIGNOS,
@@ -14,6 +13,7 @@ from crypto_tracker.horoscopo import (
     interpretar,
     leer,
 )
+from crypto_tracker.nucleo.comandos import interpretar as comando
 
 HOY = date(2026, 11, 3)
 

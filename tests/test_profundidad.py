@@ -75,8 +75,9 @@ def test_ignora_ordenes_rotas():
 import time  # noqa: E402
 
 import main  # noqa: E402
-from crypto_tracker import database, profundidad, telegram  # noqa: E402
-from crypto_tracker.config import Config, Watch  # noqa: E402
+from crypto_tracker import profundidad  # noqa: E402
+from crypto_tracker.nucleo import database, telegram  # noqa: E402
+from crypto_tracker.nucleo.config import Config, Watch  # noqa: E402
 from crypto_tracker.profundidad import ProfundidadError  # noqa: E402
 
 

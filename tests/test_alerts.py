@@ -20,8 +20,8 @@ from crypto_tracker.alerts import (
     formatear_venta,
     revisar,
 )
-from crypto_tracker.config import Watch
 from crypto_tracker.maximo import Maximo
+from crypto_tracker.nucleo.config import Watch
 from crypto_tracker.puntuales import Puntual
 
 # --- clasificar ---
@@ -357,7 +357,7 @@ def test_varios_se_juntan_con_cabecera():
 
 def test_varios_no_pasan_del_limite_de_telegram():
     from crypto_tracker.alerts import Alert, formatear_varios
-    from crypto_tracker.telegram import MAX_LENGTH
+    from crypto_tracker.nucleo.telegram import MAX_LENGTH
 
     muchos = [Alert(f"cripto-{i}", 1234.56, 1200.0, ALTO) for i in range(40)]
 

@@ -3,7 +3,7 @@
 import random
 
 from crypto_tracker.alerts import formatear_refran
-from crypto_tracker.comandos import interpretar
+from crypto_tracker.nucleo.comandos import interpretar
 from crypto_tracker.refran import REFRANES, elegir
 
 

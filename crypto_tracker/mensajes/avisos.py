@@ -6,9 +6,9 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from ..condicion import Condicion
-from ..config import Watch
+from ..nucleo.config import Watch
+from ..nucleo.telegram import escape
 from ..puntuales import CARTERA
-from ..telegram import escape
 from .base import (
     ALTO,
     BAJO,

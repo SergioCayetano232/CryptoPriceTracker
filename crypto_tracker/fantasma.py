@@ -4,8 +4,8 @@ import json
 from dataclasses import dataclass, field, replace
 from datetime import datetime
 
+from .nucleo.simbolos import a_id
 from .puntuales import numero
-from .simbolos import a_id
 
 INICIAL = 1000.0
 BITCOIN = "bitcoin"

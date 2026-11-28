@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta, timezone
 
 import pytest
 
-from crypto_tracker.periodo import PeriodoError
+from crypto_tracker.nucleo.periodo import PeriodoError
 from crypto_tracker.volatilidad import (
     Volatilidad,
     avisos,

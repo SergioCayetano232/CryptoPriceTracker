@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from itertools import groupby
 
-from .config import Posicion
+from .nucleo.config import Posicion
 
 # Si de una cripto no hay precio en este rato, ese punto no se dibuja: tirar de
 # un precio de hace dias pintaria un valor que nunca tuviste.

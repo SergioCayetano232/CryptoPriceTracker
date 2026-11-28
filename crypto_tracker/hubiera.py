@@ -3,9 +3,9 @@
 from dataclasses import dataclass
 
 from .alerts import SIMBOLOS
-from .periodo import PeriodoError, leer
+from .nucleo.periodo import PeriodoError, leer
+from .nucleo.simbolos import a_id
 from .puntuales import numero
-from .simbolos import a_id
 
 POR_DEFECTO = 30 * 24
 

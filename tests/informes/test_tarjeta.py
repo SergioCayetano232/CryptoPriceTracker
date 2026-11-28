@@ -6,7 +6,7 @@ import pytest
 
 from crypto_tracker.cartera import Valor
 from crypto_tracker.informes.tarjeta import calcular, interpretar, reducir
-from crypto_tracker.periodo import PeriodoError
+from crypto_tracker.nucleo.periodo import PeriodoError
 
 HOY = date(2026, 11, 16)
 INICIO = datetime(2026, 10, 17, tzinfo=timezone.utc)

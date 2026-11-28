@@ -6,7 +6,7 @@ import pytest
 
 from crypto_tracker.alerts import formatear_diasemana
 from crypto_tracker.diasemana import Dia, DiasSemana, calcular, interpretar
-from crypto_tracker.periodo import PeriodoError
+from crypto_tracker.nucleo.periodo import PeriodoError
 
 LUNES = date(2026, 10, 5)
 

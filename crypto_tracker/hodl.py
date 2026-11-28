@@ -3,8 +3,8 @@
 from dataclasses import dataclass
 from datetime import date, datetime
 
-from .config import Posicion
 from .movimientos import RESTO, Movimiento
+from .nucleo.config import Posicion
 
 
 @dataclass(frozen=True)

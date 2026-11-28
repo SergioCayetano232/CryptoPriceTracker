@@ -98,9 +98,10 @@ def test_pedir_sin_futuros_es_la_lista_vacia(monkeypatch):
 import time  # noqa: E402
 
 import main  # noqa: E402
-from crypto_tracker import database, oi, telegram  # noqa: E402
-from crypto_tracker.config import Config, Watch  # noqa: E402
+from crypto_tracker import oi  # noqa: E402
 from crypto_tracker.funding import FundingError  # noqa: E402
+from crypto_tracker.nucleo import database, telegram  # noqa: E402
+from crypto_tracker.nucleo.config import Config, Watch  # noqa: E402
 
 
 @pytest.fixture

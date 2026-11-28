@@ -5,9 +5,9 @@ from dataclasses import dataclass, replace
 from datetime import datetime, timedelta
 
 from .alerts import ALTO, revisar
-from .config import Watch
-from .periodo import PeriodoError, es_tramo, leer
-from .simbolos import a_id
+from .nucleo.config import Watch
+from .nucleo.periodo import PeriodoError, es_tramo, leer
+from .nucleo.simbolos import a_id
 from .voto import SIN_VOTOS, Votos
 
 POR_DEFECTO = 30 * 24

@@ -59,8 +59,8 @@ from dataclasses import replace  # noqa: E402
 from datetime import timedelta, timezone  # noqa: E402
 
 import main  # noqa: E402
-from crypto_tracker import database, telegram  # noqa: E402
-from crypto_tracker.config import Config, Posicion, Watch  # noqa: E402
+from crypto_tracker.nucleo import database, telegram  # noqa: E402
+from crypto_tracker.nucleo.config import Config, Posicion, Watch  # noqa: E402
 
 AÑO = date.today().year
 EL_AÑO_PASADO = datetime(AÑO - 1, 6, 1, 12, tzinfo=timezone.utc)

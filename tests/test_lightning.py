@@ -6,9 +6,10 @@ import pytest
 import requests
 
 import main
-from crypto_tracker import database, lightning, telegram
-from crypto_tracker.config import Config, Watch
+from crypto_tracker import lightning
 from crypto_tracker.lightning import LightningError, leer
+from crypto_tracker.nucleo import database, telegram
+from crypto_tracker.nucleo.config import Config, Watch
 
 DATOS = {
     "numberofnodes": 5098,

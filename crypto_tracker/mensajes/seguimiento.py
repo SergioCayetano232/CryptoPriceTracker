@@ -8,7 +8,6 @@ from ..cada import Programado
 from ..calma import VENTANA as VENTANA_CALMA
 from ..calma import Calma
 from ..condicion import Condicion
-from ..config import Watch
 from ..emocion import EMOCIONES, Emociones, en_frase
 from ..emocion import Grupo as GrupoEmocion
 from ..encuesta import BANDA as BANDA_ENCUESTA
@@ -26,6 +25,8 @@ from ..maximo import hace
 from ..miedo import Indice
 from ..miedo import nombre as nombre_miedo
 from ..movimientos import texto_cantidad
+from ..nucleo.config import Watch
+from ..nucleo.telegram import escape
 from ..pienso import IGUAL as IGUAL_PIENSO
 from ..pienso import SUBIDON, Pienso
 from ..prediccion import Marcador, Prediccion
@@ -34,7 +35,6 @@ from ..recordar import Recordatorio
 from ..rezagada import EJEMPLO as EJEMPLO_REZAGADA
 from ..rezagada import Rezagada
 from ..stop import Stop
-from ..telegram import escape
 from ..tesis import EJEMPLO as EJEMPLO_TESIS
 from ..tesis import Tesis, marcador, pendientes
 from .base import (

@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 import pytest
 
 from crypto_tracker.alerts import formatear_impuestos
-from crypto_tracker.config import Posicion
 from crypto_tracker.hacienda.impuestos import (
     Impuestos,
     ImpuestosError,
@@ -14,6 +13,7 @@ from crypto_tracker.hacienda.impuestos import (
     por_tramos,
 )
 from crypto_tracker.movimientos import Movimiento
+from crypto_tracker.nucleo.config import Posicion
 
 
 def _venta(cobrado, antes, año=2026):

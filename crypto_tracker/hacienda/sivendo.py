@@ -2,8 +2,8 @@
 
 from dataclasses import dataclass
 
-from ..config import Posicion
 from ..movimientos import Movimiento, MovimientoError, cobrado, interpretar_venta
+from ..nucleo.config import Posicion
 from . import fifo
 from .impuestos import Impuestos, cuota
 

@@ -3,8 +3,8 @@
 import html
 from datetime import datetime
 
-from .config import ConfigError, minutos_mute
-from .simbolos import IDS, a_id
+from .nucleo.config import ConfigError, minutos_mute
+from .nucleo.simbolos import IDS, a_id
 
 
 def interpretar(argumento: str, ahora: datetime) -> tuple[str | None, int]:

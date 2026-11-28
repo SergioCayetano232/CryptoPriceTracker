@@ -3,7 +3,7 @@
 import pytest
 
 from crypto_tracker.alerts import formatear_pan
-from crypto_tracker.comandos import interpretar
+from crypto_tracker.nucleo.comandos import interpretar
 from crypto_tracker.pan import Pan
 
 

@@ -2,8 +2,8 @@
 
 from dataclasses import dataclass
 
+from .nucleo.simbolos import a_id
 from .puntuales import numero
-from .simbolos import a_id
 
 EJEMPLO = "/rezagada eth btc 10"
 HORAS = 7 * 24

@@ -5,8 +5,8 @@ from datetime import date
 import pytest
 
 from crypto_tracker.alerts import formatear_nochevieja
-from crypto_tracker.comandos import interpretar
 from crypto_tracker.nochevieja import Nochevieja
+from crypto_tracker.nucleo.comandos import interpretar
 
 NOVIEMBRE = date(2026, 11, 2)
 

@@ -4,8 +4,9 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from crypto_tracker import comandos, voto
+from crypto_tracker import voto
 from crypto_tracker.alerts import formatear_voto
+from crypto_tracker.nucleo import comandos
 from crypto_tracker.voto import Voto, VotoError, Votos
 
 AVISO = datetime(2026, 11, 22, 10, 30, tzinfo=timezone.utc)

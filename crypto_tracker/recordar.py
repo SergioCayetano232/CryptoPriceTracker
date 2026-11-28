@@ -5,8 +5,8 @@ from dataclasses import dataclass
 from datetime import date, datetime, time
 
 from .diario import toca_resumen
+from .nucleo.simbolos import a_id
 from .puntuales import numero
-from .simbolos import a_id
 
 EJEMPLO = "/recordar lunes 50 btc"
 

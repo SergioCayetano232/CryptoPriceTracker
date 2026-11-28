@@ -4,9 +4,9 @@ from datetime import datetime, timezone
 
 import pytest
 
-from crypto_tracker import database
 from crypto_tracker.alerts import formatear_ultimo
 from crypto_tracker.avisados import Aviso, Ultimo, juntar
+from crypto_tracker.nucleo import database
 
 AHORA = datetime(2026, 10, 25, 12, tzinfo=timezone.utc)
 

@@ -9,7 +9,6 @@ from ..cartera import Valor, mejor_y_peor, peso
 from ..comisiones import Comisiones
 from ..compras import Compra, Resumen
 from ..concentracion import Concentracion
-from ..config import Posicion
 from ..corregir import CANTIDAD, Correccion
 from ..cruce import ARRIBA, CORTA, LARGA, Cruce
 from ..cuenta_binance import Comparacion
@@ -43,17 +42,18 @@ from ..movimientos import (
     texto_cantidad,
     totales,
 )
+from ..nucleo.config import Posicion
+from ..nucleo.periodo import nombre as nombre_periodo
+from ..nucleo.rellenar import Relleno
+from ..nucleo.telegram import escape
 from ..pelotazo import Jugada, Pelotazo
-from ..periodo import nombre as nombre_periodo
 from ..primera import Primera
 from ..record import Record
-from ..rellenar import Relleno
 from ..rentabilidad import MIN_DIAS as MIN_DIAS_RENTABILIDAD
 from ..rentabilidad import Rentabilidad
 from ..riesgo import CAIDA as CAIDA_RIESGO
 from ..riesgo import Riesgo
 from ..rsi import PERIODO, SOBRECOMPRA, Rsi
-from ..telegram import escape
 from ..volumen import Volumen
 from ..vsbolsa import Contra as ContraBolsa
 from ..vsbtc import Contra

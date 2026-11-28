@@ -3,9 +3,9 @@
 import math
 
 from ..condicion import Condicion
-from ..config import Watch
+from ..nucleo.config import Watch
+from ..nucleo.telegram import escape
 from ..puntuales import Puntual, cumplidas
-from ..telegram import escape
 
 # Estados en los que puede estar una cripto respecto a sus umbrales.
 BAJO = "bajo"  # por debajo del minimo

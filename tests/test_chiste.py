@@ -4,7 +4,7 @@ import random
 
 from crypto_tracker.alerts import formatear_chiste
 from crypto_tracker.chiste import CHISTES, elegir
-from crypto_tracker.comandos import interpretar
+from crypto_tracker.nucleo.comandos import interpretar
 
 
 def test_salen_todos():

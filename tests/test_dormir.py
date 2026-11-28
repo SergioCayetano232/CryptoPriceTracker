@@ -7,9 +7,9 @@ from datetime import datetime, time, timedelta
 import pytest
 
 import main
-from crypto_tracker import coingecko, database, telegram
-from crypto_tracker.config import Config, ConfigError, Watch
 from crypto_tracker.diario import leer_dormir
+from crypto_tracker.nucleo import coingecko, database, telegram
+from crypto_tracker.nucleo.config import Config, ConfigError, Watch
 
 
 @pytest.mark.parametrize(

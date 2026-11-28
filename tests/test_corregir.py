@@ -4,10 +4,10 @@ from datetime import datetime, timezone
 
 import pytest
 
-from crypto_tracker.config import Posicion
 from crypto_tracker.corregir import CANTIDAD, IMPORTE, calcular, interpretar
 from crypto_tracker.ganancias import de_venta
 from crypto_tracker.movimientos import Movimiento, MovimientoError
+from crypto_tracker.nucleo.config import Posicion
 
 CUANDO = datetime(2026, 3, 1, 12, tzinfo=timezone.utc)
 C = "bitcoin"

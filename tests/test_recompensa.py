@@ -7,7 +7,6 @@ import pytest
 from crypto_tracker import hodl, rentabilidad, vsbtc
 from crypto_tracker.alerts import formatear_impuestos, formatear_movimientos
 from crypto_tracker.compras import calcular as calcular_compras
-from crypto_tracker.config import Posicion
 from crypto_tracker.hacienda.impuestos import Impuestos, recompensas_de
 from crypto_tracker.movimientos import (
     Movimiento,
@@ -16,6 +15,7 @@ from crypto_tracker.movimientos import (
     recibido,
     totales,
 )
+from crypto_tracker.nucleo.config import Posicion
 
 T0 = datetime(2026, 3, 1, 12, tzinfo=timezone.utc)
 SERIE = [(T0 + timedelta(days=d), 50000.0) for d in range(40)]

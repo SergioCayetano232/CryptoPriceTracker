@@ -3,7 +3,7 @@
 from datetime import datetime, timedelta
 
 from .alerts import ALTO, BAJO, Alert
-from .periodo import falta_principio
+from .nucleo.periodo import falta_principio
 
 # En plena subida cada ciclo es un maximo nuevo. Uno al dia ya dice bastante.
 ESPERA = timedelta(hours=24)

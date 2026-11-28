@@ -6,7 +6,7 @@ import pytest
 
 from crypto_tracker.alerts import formatear_dca
 from crypto_tracker.dca import Plan, calcular, interpretar
-from crypto_tracker.periodo import PeriodoError
+from crypto_tracker.nucleo.periodo import PeriodoError
 
 
 @pytest.mark.parametrize(

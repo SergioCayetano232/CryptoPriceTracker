@@ -3,7 +3,7 @@
 import pytest
 
 from crypto_tracker.alerts import revisar
-from crypto_tracker.config import Watch
+from crypto_tracker.nucleo.config import Watch
 from crypto_tracker.proximo import objetivos
 
 PCT = Watch("bitcoin", percent=5)

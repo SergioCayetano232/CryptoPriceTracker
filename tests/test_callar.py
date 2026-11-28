@@ -5,7 +5,7 @@ from datetime import datetime
 import pytest
 
 from crypto_tracker.callar import a_secas, interpretar
-from crypto_tracker.config import ConfigError
+from crypto_tracker.nucleo.config import ConfigError
 
 AHORA = datetime(2026, 10, 11, 22, 0).astimezone()
 

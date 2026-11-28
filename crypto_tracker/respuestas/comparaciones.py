@@ -14,7 +14,6 @@ from .. import (
     bici,
     bigmac,
     boda,
-    botones,
     cafe,
     cana,
     carnet,
@@ -22,7 +21,6 @@ from .. import (
     churros,
     cine,
     coche,
-    comandos,
     concierto,
     croquetas,
     emoji,
@@ -55,21 +53,20 @@ from .. import (
     ps5,
     rolex,
     sat,
-    simbolos,
     sofa,
     spotify,
     sueldo,
     supermercado,
     switch,
     taxi,
-    telegram,
     tesla,
     tortilla,
     videojuego,
     vuelo,
     zapatillas,
 )
-from ..config import Config
+from ..nucleo import botones, comandos, simbolos, telegram
+from ..nucleo.config import Config
 from .base import (
     SIN_CARTERA,
     Respuesta,

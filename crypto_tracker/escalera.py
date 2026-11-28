@@ -2,12 +2,12 @@
 
 from dataclasses import dataclass
 
-from .config import Posicion
 from .hacienda import fifo
 from .hacienda.impuestos import cuota
 from .movimientos import Movimiento
+from .nucleo.config import Posicion
+from .nucleo.simbolos import a_id
 from .puntuales import numero
-from .simbolos import a_id
 
 EJEMPLO = "/escalera btc 80000 90000 100000"
 EJEMPLO_COMPRA = "/escalera compra btc 60k 55k 50k con 900"

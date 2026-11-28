@@ -4,7 +4,6 @@ from datetime import date, datetime, time, timedelta
 
 import pytest
 
-from crypto_tracker.config import Posicion
 from crypto_tracker.informes.anual import (
     AnualError,
     calcular,
@@ -14,6 +13,7 @@ from crypto_tracker.informes.anual import (
     tramo,
 )
 from crypto_tracker.movimientos import Movimiento
+from crypto_tracker.nucleo.config import Posicion
 
 POSICIONES = [Posicion("bitcoin", 0.1, 5000), Posicion("solana", 10, 1000)]
 

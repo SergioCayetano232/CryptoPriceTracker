@@ -66,6 +66,7 @@ from ..netflix import PRECIO as PRECIO_NETFLIX
 from ..netflix import Netflix
 from ..nochevieja import PRECIO as PRECIO_CAVA
 from ..nochevieja import Nochevieja
+from ..nucleo.telegram import escape
 from ..oro import Oro
 from ..paella import PRECIO as PRECIO_PAELLA
 from ..paella import Paella
@@ -92,7 +93,6 @@ from ..switch import PRECIO as PRECIO_SWITCH
 from ..switch import Switch
 from ..taxi import PRECIO as PRECIO_TAXI
 from ..taxi import Taxi
-from ..telegram import escape
 from ..tesla import PRECIO as PRECIO_TESLA
 from ..tesla import Tesla
 from ..tiempo import parte as parte_tiempo

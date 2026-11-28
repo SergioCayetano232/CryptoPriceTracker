@@ -3,7 +3,7 @@
 import pytest
 
 from crypto_tracker.cartera import Valor
-from crypto_tracker.config import Posicion
+from crypto_tracker.nucleo.config import Posicion
 from crypto_tracker.stop import (
     Stop,
     StopError,

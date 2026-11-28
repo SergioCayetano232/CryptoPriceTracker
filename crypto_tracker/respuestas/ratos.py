@@ -2,17 +2,9 @@
 
 from datetime import date
 
-from .. import (
-    adivina,
-    alerts,
-    bola,
-    comandos,
-    horoscopo,
-    ppt,
-    quiz,
-    telegram,
-)
-from ..config import Config
+from .. import adivina, alerts, bola, horoscopo, ppt, quiz
+from ..nucleo import comandos, telegram
+from ..nucleo.config import Config
 from .base import (
     Respuesta,
     _precio_o_pedirlo,

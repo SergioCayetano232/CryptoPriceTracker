@@ -3,10 +3,10 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-from .periodo import PeriodoError, es_tramo, leer
+from .nucleo.periodo import PeriodoError, es_tramo, leer
+from .nucleo.simbolos import a_id
 from .rango import Rango
 from .rango import calcular as calcular_rango
-from .simbolos import a_id
 
 POR_DEFECTO = 90 * 24
 EJEMPLO = "/fibonacci bitcoin 90d"

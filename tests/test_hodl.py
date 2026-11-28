@@ -3,9 +3,9 @@
 from datetime import date, datetime, timezone
 
 from crypto_tracker.alerts import formatear_hodl
-from crypto_tracker.config import Posicion
 from crypto_tracker.hodl import Hodl, calcular
 from crypto_tracker.movimientos import Movimiento
+from crypto_tracker.nucleo.config import Posicion
 
 HOY = date(2026, 11, 5)
 

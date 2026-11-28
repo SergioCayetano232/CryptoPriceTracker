@@ -2,7 +2,7 @@
 
 import pytest
 
-from crypto_tracker.simbolos import MAX_VARIAS
+from crypto_tracker.nucleo.simbolos import MAX_VARIAS
 from crypto_tracker.spread import (
     Fila,
     SpreadError,

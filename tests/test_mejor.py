@@ -6,7 +6,7 @@ import pytest
 
 from crypto_tracker.alerts import formatear_extremo
 from crypto_tracker.mejor import Dia, Extremo, calcular, interpretar
-from crypto_tracker.periodo import PeriodoError
+from crypto_tracker.nucleo.periodo import PeriodoError
 
 HOY = date(2026, 10, 14)
 

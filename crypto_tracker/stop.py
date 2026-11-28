@@ -3,9 +3,9 @@
 from dataclasses import dataclass
 
 from .cartera import Valor
-from .config import Posicion
+from .nucleo.config import Posicion
+from .nucleo.simbolos import a_id
 from .puntuales import CARTERA, numero
-from .simbolos import a_id
 
 EJEMPLO = "/stop eth -15%"
 EJEMPLO_MOVIL = "/stop eth -10% movil"

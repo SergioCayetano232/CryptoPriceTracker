@@ -3,7 +3,7 @@
 import pytest
 import requests
 
-from crypto_tracker import database, direccion
+from crypto_tracker import direccion
 from crypto_tracker.alerts import (
     formatear_direccion_nueva,
     formatear_direcciones,
@@ -19,6 +19,7 @@ from crypto_tracker.direccion import (
     leer,
     movida,
 )
+from crypto_tracker.nucleo import database
 
 BC1 = "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
 LEGACY = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"

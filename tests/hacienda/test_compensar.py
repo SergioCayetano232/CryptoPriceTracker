@@ -5,14 +5,14 @@ from datetime import date, datetime, time, timezone
 import pytest
 
 import main
-from crypto_tracker import coingecko, database, telegram
 from crypto_tracker.alerts import formatear_compensar
-from crypto_tracker.config import Config, Posicion, Watch
 from crypto_tracker.hacienda import fifo
 from crypto_tracker.hacienda.compensar import Compensacion, Venta, calcular, toca_aviso
 from crypto_tracker.hacienda.fifo import Lote
 from crypto_tracker.hacienda.impuestos import Impuestos, por_tramos
 from crypto_tracker.movimientos import Movimiento
+from crypto_tracker.nucleo import coingecko, database, telegram
+from crypto_tracker.nucleo.config import Config, Posicion, Watch
 
 HOY = date(2026, 11, 9)
 

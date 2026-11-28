@@ -22,6 +22,7 @@ from ..mercado import grande
 from ..merge import Merge
 from ..millonario import Millonario, cantidad
 from ..mundo import PERSONAS, Mundo
+from ..nucleo.telegram import escape
 from ..pizza import BTC, Pizza
 from ..ppt import EMOJIS as EMOJIS_PPT
 from ..ppt import QUE_HACER as QUE_HACER_PPT
@@ -31,7 +32,6 @@ from ..redondo import Redondo
 from ..sat import CANTIDADES as CANTIDADES_SAT
 from ..sat import SATS_POR_BTC, Sat
 from ..tarot import Carta
-from ..telegram import escape
 from ..version import Version
 from ..whitepaper import Whitepaper
 from .base import SIMBOLOS, _es, _flecha, _num

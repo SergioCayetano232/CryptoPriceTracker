@@ -14,8 +14,8 @@ from urllib.parse import urlencode
 
 import requests
 
-from . import simbolos
-from .config import Posicion
+from .nucleo import simbolos
+from .nucleo.config import Posicion
 
 URL = "https://api.binance.com/api/v3/account"
 TIMEOUT = 15

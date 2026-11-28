@@ -6,7 +6,7 @@ from statistics import mean
 
 import requests
 
-from .simbolos import de_id
+from .nucleo.simbolos import de_id
 
 AHORA_URL = "https://fapi.binance.com/fapi/v1/premiumIndex"
 ANTES_URL = "https://fapi.binance.com/fapi/v1/fundingRate"

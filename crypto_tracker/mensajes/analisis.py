@@ -48,10 +48,11 @@ from ..mejor import Extremo
 from ..mercado import grande
 from ..mitad import Cartera as CarteraMitad
 from ..movimientos import texto_cantidad
+from ..nucleo.periodo import nombre as nombre_periodo
+from ..nucleo.telegram import escape
 from ..oi import Interes, lectura
 from ..paciencia import Paciencia
 from ..perdido import Perdido
-from ..periodo import nombre as nombre_periodo
 from ..picycle import PiCycle
 from ..premium import Premium
 from ..profundidad import Profundidad
@@ -69,7 +70,6 @@ from ..sharpe import Sharpe
 from ..soporte import Nivel, Soportes
 from ..sube import Subida
 from ..suelo import Suelo
-from ..telegram import escape
 from ..verdes import Verdes
 from .base import (
     BARRAS_MOVIL,

@@ -4,8 +4,8 @@ import re
 from dataclasses import dataclass
 from datetime import date
 
+from .nucleo.simbolos import a_id
 from .recordar import QUITAR
-from .simbolos import a_id
 
 EJEMPLO = "/herencia btc Ledger en el cajón del escritorio"
 EJEMPLO_NOTA = "/herencia nota Pregunta a mi hermana, sabe dónde está todo"

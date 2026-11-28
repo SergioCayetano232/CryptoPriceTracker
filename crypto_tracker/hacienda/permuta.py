@@ -3,9 +3,9 @@
 from dataclasses import dataclass
 
 from .. import comision
-from ..config import Posicion
 from ..movimientos import Movimiento, MovimientoError, interpretar_venta
-from ..simbolos import a_id
+from ..nucleo.config import Posicion
+from ..nucleo.simbolos import a_id
 from . import sivendo
 from .impuestos import Impuestos
 from .sivendo import Simulacion

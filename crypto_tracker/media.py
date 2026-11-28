@@ -2,8 +2,8 @@
 
 from datetime import date, timedelta
 
-from .periodo import PeriodoError, es_tramo, leer
-from .simbolos import a_id
+from .nucleo.periodo import PeriodoError, es_tramo, leer
+from .nucleo.simbolos import a_id
 
 # Las de siempre: la semana, el mes y el trimestre.
 VENTANAS = (7, 30, 90)

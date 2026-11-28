@@ -2,7 +2,6 @@
 
 import pytest
 
-from crypto_tracker import database
 from crypto_tracker.alertaratio import (
     AlertaRatio,
     AlertaRatioError,
@@ -20,6 +19,7 @@ from crypto_tracker.alerts import (
     formatear_aviso_ratio,
     formatear_ratio_ahora,
 )
+from crypto_tracker.nucleo import database
 
 
 @pytest.mark.parametrize(

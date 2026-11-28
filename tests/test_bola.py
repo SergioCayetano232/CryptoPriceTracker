@@ -6,7 +6,7 @@ import pytest
 
 from crypto_tracker.alerts import formatear_bola
 from crypto_tracker.bola import RESPUESTAS, BolaError, agitar, interpretar
-from crypto_tracker.comandos import interpretar as interpretar_comando
+from crypto_tracker.nucleo.comandos import interpretar as interpretar_comando
 
 
 def test_salen_todas():

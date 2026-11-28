@@ -3,8 +3,8 @@
 import pytest
 
 from crypto_tracker.alerts import formatear_enletras
-from crypto_tracker.comandos import interpretar
 from crypto_tracker.enletras import dinero, letras
+from crypto_tracker.nucleo.comandos import interpretar
 
 
 @pytest.mark.parametrize(

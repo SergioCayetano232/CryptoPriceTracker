@@ -3,8 +3,8 @@
 import random
 
 from crypto_tracker.alerts import formatear_dato
-from crypto_tracker.comandos import interpretar
 from crypto_tracker.dato import DATOS, elegir
+from crypto_tracker.nucleo.comandos import interpretar
 
 
 def test_salen_todos():

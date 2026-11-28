@@ -98,8 +98,8 @@ def test_pedir_sin_el_par(monkeypatch):
 import time  # noqa: E402
 
 import main  # noqa: E402
-from crypto_tracker import database, telegram  # noqa: E402
-from crypto_tracker.config import Config, Watch  # noqa: E402
+from crypto_tracker.nucleo import database, telegram  # noqa: E402
+from crypto_tracker.nucleo.config import Config, Watch  # noqa: E402
 
 
 @pytest.fixture

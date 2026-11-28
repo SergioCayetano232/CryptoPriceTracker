@@ -8,9 +8,9 @@ from ..arcoiris import FRANJAS, Arcoiris
 from ..calendario import Mes, semanas
 from ..correlacion import Matriz
 from ..mapa import Mapa, repartir
-from ..periodo import nombre as nombre_periodo
+from ..nucleo.periodo import nombre as nombre_periodo
+from ..nucleo.simbolos import de_id
 from ..reparto import OTRAS, Trozo
-from ..simbolos import de_id
 from ..velas import Vela
 from .mes import MESES
 from .tarjeta import Tarjeta

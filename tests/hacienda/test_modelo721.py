@@ -4,7 +4,6 @@ from datetime import date, datetime, timedelta, timezone
 
 import pytest
 
-from crypto_tracker.config import Posicion
 from crypto_tracker.hacienda.modelo721 import (
     calcular,
     cartera_en,
@@ -14,6 +13,7 @@ from crypto_tracker.hacienda.modelo721 import (
     toca_avisar,
 )
 from crypto_tracker.movimientos import Movimiento
+from crypto_tracker.nucleo.config import Posicion
 
 FIN = cierre(2025)
 

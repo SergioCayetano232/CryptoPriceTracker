@@ -3,8 +3,8 @@
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 
-from ..config import Posicion
 from ..movimientos import Movimiento
+from ..nucleo.config import Posicion
 
 LIMITE = 50_000
 # Ya presentado, solo vuelve a tocar si sube más que esto desde lo declarado.

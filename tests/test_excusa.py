@@ -3,8 +3,8 @@
 import random
 
 from crypto_tracker.alerts import formatear_excusa
-from crypto_tracker.comandos import interpretar
 from crypto_tracker.excusa import EXCUSAS, elegir
+from crypto_tracker.nucleo.comandos import interpretar
 
 
 def test_salen_todas():

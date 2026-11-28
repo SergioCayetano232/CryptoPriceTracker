@@ -9,17 +9,14 @@ from .. import (
     arcoiris,
     backtest,
     bollinger,
-    botones,
     caida,
     calendario,
     cartera,
     ciclo,
     cme,
-    comandos,
     comparar,
     correlacion,
     cuando,
-    database,
     dca,
     diames,
     diasemana,
@@ -40,7 +37,6 @@ from .. import (
     miedo,
     mvrv,
     paciencia,
-    periodo,
     picycle,
     puntuales,
     quieta,
@@ -51,17 +47,16 @@ from .. import (
     ruido,
     semaforo,
     sharpe,
-    simbolos,
     soporte,
     sube,
     suelo,
-    telegram,
     verdes,
     volatilidad,
     voto,
 )
-from ..config import Config
 from ..informes import grafica
+from ..nucleo import botones, comandos, database, periodo, simbolos, telegram
+from ..nucleo.config import Config
 from .base import (
     SIN_CARTERA,
     _con_cambios,

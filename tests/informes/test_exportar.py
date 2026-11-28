@@ -4,7 +4,6 @@ from datetime import date, datetime, timezone
 
 import pytest
 
-from crypto_tracker.config import Posicion
 from crypto_tracker.informes.exportar import (
     a_csv,
     interpretar,
@@ -14,7 +13,8 @@ from crypto_tracker.informes.exportar import (
     pide_movimientos,
 )
 from crypto_tracker.movimientos import Movimiento
-from crypto_tracker.periodo import PeriodoError
+from crypto_tracker.nucleo.config import Posicion
+from crypto_tracker.nucleo.periodo import PeriodoError
 
 _CUANDO = datetime(2026, 10, 3, 10, 0, tzinfo=timezone.utc)
 

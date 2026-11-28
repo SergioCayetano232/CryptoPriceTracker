@@ -133,8 +133,8 @@ def test_pedir_con_algo_raro_da_vacio(monkeypatch):
 # --- el comando ---
 
 import main  # noqa: E402
-from crypto_tracker import database, telegram  # noqa: E402
-from crypto_tracker.config import Config, Watch  # noqa: E402
+from crypto_tracker.nucleo import database, telegram  # noqa: E402
+from crypto_tracker.nucleo.config import Config, Watch  # noqa: E402
 
 
 @pytest.fixture

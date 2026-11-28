@@ -2,9 +2,9 @@
 
 from datetime import datetime, timedelta, timezone
 
-from crypto_tracker.config import Posicion, Watch
 from crypto_tracker.informes import panel
 from crypto_tracker.informes.panel_html import pagina
+from crypto_tracker.nucleo.config import Posicion, Watch
 from crypto_tracker.puntuales import Puntual
 
 AHORA = datetime(2026, 11, 20, 12, 0, tzinfo=timezone.utc)

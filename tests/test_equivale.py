@@ -2,8 +2,8 @@
 
 import pytest
 
-from crypto_tracker.comandos import COMANDOS
 from crypto_tracker.equivale import COSAS, OTROS_NOMBRES, elegir
+from crypto_tracker.nucleo.comandos import COMANDOS
 
 
 @pytest.mark.parametrize(

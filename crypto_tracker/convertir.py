@@ -3,8 +3,8 @@
 from dataclasses import dataclass
 
 from .alerts import POR_BTC, SIMBOLOS
+from .nucleo.simbolos import a_id
 from .puntuales import numero
-from .simbolos import a_id
 
 EJEMPLOS = "/convertir 0.05 bitcoin, /convertir 500 eur solana o /convertir 1 eth btc"
 

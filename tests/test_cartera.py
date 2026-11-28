@@ -15,7 +15,7 @@ from crypto_tracker.cartera import (
     valor_total,
     valorar,
 )
-from crypto_tracker.config import ConfigError, Posicion, parse_cartera
+from crypto_tracker.nucleo.config import ConfigError, Posicion, parse_cartera
 
 # --- leer PORTFOLIO ---
 

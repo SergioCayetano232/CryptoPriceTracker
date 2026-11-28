@@ -4,7 +4,7 @@ import pytest
 
 from crypto_tracker.alerts import formatear_carnet
 from crypto_tracker.carnet import Carnet
-from crypto_tracker.comandos import interpretar
+from crypto_tracker.nucleo.comandos import interpretar
 
 
 def test_cuantos():

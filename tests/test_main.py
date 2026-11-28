@@ -8,16 +8,12 @@ import pytest
 
 import main
 from crypto_tracker import (
-    binance,
     bola,
     caraocruz,
-    coingecko,
-    comandos,
     comisionred,
     condicion,
     consejo,
     dado,
-    database,
     direccion,
     estacional,
     excusa,
@@ -27,11 +23,11 @@ from crypto_tracker import (
     miedo,
     refran,
     tarot,
-    telegram,
     vsbolsa,
 )
-from crypto_tracker.config import Config, Posicion, Watch
 from crypto_tracker.informes import grafica
+from crypto_tracker.nucleo import binance, coingecko, comandos, database, telegram
+from crypto_tracker.nucleo.config import Config, Posicion, Watch
 from crypto_tracker.precio import Precio
 from crypto_tracker.respuestas import cartera as respuestas_cartera
 from crypto_tracker.respuestas import resumenes, revisiones
@@ -324,7 +320,7 @@ def test_los_ejemplos_de_la_ayuda_se_entienden(
 
     import requests
 
-    from crypto_tracker.config import parse_cartera
+    from crypto_tracker.nucleo.config import parse_cartera
 
     def sin_red(*a, **k):
         raise requests.ConnectionError("sin red en los tests")
@@ -618,7 +614,7 @@ def test_resumen_diario_sale_aunque_falle_el_miedo(con_resumen, enviados, monkey
 def _compra_de(config, cuando, coin_id="bitcoin"):
     import sqlite3
 
-    from crypto_tracker.config import Posicion
+    from crypto_tracker.nucleo.config import Posicion
 
     database.init_db(config.database_path)
     numero = database.apuntar_movimiento(
@@ -1086,7 +1082,7 @@ def test_estable_avisa_una_vez_y_al_volver(config, enviados, monkeypatch):
 def test_estable_llega_en_el_ciclo(config, enviados, monkeypatch):
     from dataclasses import replace
 
-    from crypto_tracker.config import parse_cartera
+    from crypto_tracker.nucleo.config import parse_cartera
 
     def precios(ids, cur):
         coingecko._usd["usd-coin"] = 0.95
@@ -1244,7 +1240,7 @@ def test_las_respuestas_a_comandos_siempre_suenan(ahora_tranquilo, sonidos):
 def test_resumen_con_cartera(config, monkeypatch):
     from dataclasses import replace
 
-    from crypto_tracker.config import parse_cartera
+    from crypto_tracker.nucleo.config import parse_cartera
 
     pedidas = []
 
@@ -1357,7 +1353,7 @@ def test_ayuda_y_estado_no_llevan_la_cita(config, enviados):
 def con_cartera(config):
     from dataclasses import replace
 
-    from crypto_tracker.config import parse_cartera
+    from crypto_tracker.nucleo.config import parse_cartera
 
     return replace(config, cartera=parse_cartera("bitcoin:0.016:1000,solana:7:1000"))
 
@@ -1393,7 +1389,7 @@ def test_cartera_con_el_total_en_sats(con_cartera, enviados, monkeypatch):
 def test_cartera_sin_bitcoin_lo_pide_para_los_sats(config, enviados, monkeypatch):
     from dataclasses import replace
 
-    from crypto_tracker.config import parse_cartera
+    from crypto_tracker.nucleo.config import parse_cartera
 
     config = replace(config, cartera=parse_cartera("solana:7:1000"))
     pedidas = _precio(monkeypatch, {"solana": 150.0, "bitcoin": 70000.0})
@@ -1408,7 +1404,7 @@ def test_cartera_sin_bitcoin_lo_pide_para_los_sats(config, enviados, monkeypatch
 def test_cartera_solo_de_bitcoin_sin_sats(config, enviados, monkeypatch):
     from dataclasses import replace
 
-    from crypto_tracker.config import parse_cartera
+    from crypto_tracker.nucleo.config import parse_cartera
 
     config = replace(config, cartera=parse_cartera("bitcoin:0.016:1000"))
     _precio(monkeypatch, {"bitcoin": 70000.0})
@@ -3419,7 +3415,7 @@ def test_bot_fuera_del_bucle(config, enviados, monkeypatch):
 def test_bot_con_el_bucle_en_marcha(config, enviados, monkeypatch):
     from datetime import datetime, timedelta, timezone
 
-    from crypto_tracker import salud
+    from crypto_tracker.nucleo import salud
 
     ahora = datetime.now(timezone.utc)
     pulso = salud.Pulso(ahora=ahora - timedelta(hours=2))
@@ -3437,7 +3433,7 @@ def test_bot_con_el_bucle_en_marcha(config, enviados, monkeypatch):
 def test_bot_dice_los_precios_guardados(config, enviados, monkeypatch):
     from datetime import datetime, timezone
 
-    from crypto_tracker import salud
+    from crypto_tracker.nucleo import salud
 
     monkeypatch.setattr(main, "_pulso", salud.Pulso(ahora=datetime.now(timezone.utc)))
     database.save_prices(config.database_path, {"bitcoin": 63000.0}, "eur")
@@ -3450,7 +3446,7 @@ def test_bot_dice_los_precios_guardados(config, enviados, monkeypatch):
 def test_bot_cuenta_las_consultas_del_mes(config, enviados, monkeypatch):
     from datetime import datetime, timezone
 
-    from crypto_tracker import cuota, salud
+    from crypto_tracker.nucleo import cuota, salud
 
     ahora = datetime.now(timezone.utc)
     database.sumar_consultas(config.database_path, cuota.mes(ahora), 812)
@@ -6024,7 +6020,7 @@ def con_semana(config):
     from dataclasses import replace
     from datetime import time as hora
 
-    from crypto_tracker.config import parse_cartera
+    from crypto_tracker.nucleo.config import parse_cartera
 
     return replace(
         config,
@@ -6650,7 +6646,7 @@ def test_apy_sin_tenerla(config, enviados, monkeypatch):
 
 
 def test_staking_sigue_siendo_recompensa():
-    from crypto_tracker import comandos
+    from crypto_tracker.nucleo import comandos
 
     assert comandos.interpretar("/staking eth 0.02") == ("recompensa", "eth 0.02")
 
@@ -9368,7 +9364,7 @@ PRECIOS_REBALANCEO = {"bitcoin": 60000.0, "ethereum": 3000.0, "solana": 150.0}
 def para_rebalanceo(config, monkeypatch):
     from dataclasses import replace
 
-    from crypto_tracker.config import parse_cartera
+    from crypto_tracker.nucleo.config import parse_cartera
 
     monkeypatch.setattr(
         coingecko,
@@ -9840,7 +9836,7 @@ def test_stop_de_una_que_no_tienes(con_semana, enviados, monkeypatch):
 def test_stop_sin_lo_que_te_costo(config, enviados, monkeypatch):
     from dataclasses import replace
 
-    from crypto_tracker.config import parse_cartera
+    from crypto_tracker.nucleo.config import parse_cartera
 
     sin_coste = replace(config, cartera=parse_cartera("bitcoin:0.1"))
     _precio(monkeypatch, {"bitcoin": 66000.0})
@@ -11194,7 +11190,7 @@ def test_tarjeta_sin_cartera(config, enviados):
 
 
 def test_tarjeta_sin_nada_que_enseñar(config, enviados, monkeypatch):
-    from crypto_tracker.config import parse_cartera
+    from crypto_tracker.nucleo.config import parse_cartera
 
     config = _con_cartera(config, *parse_cartera("bitcoin:0.1"))
     _precio(monkeypatch, {"bitcoin": 66000.0})
@@ -12677,7 +12673,7 @@ def test_avisos_sueltos_van_con_el_de_precio(concentrada, enviados, monkeypatch)
 def test_panel_con_lo_guardado(config, monkeypatch):
     from dataclasses import replace
 
-    from crypto_tracker.config import parse_cartera
+    from crypto_tracker.nucleo.config import parse_cartera
 
     def sin_red(*a, **k):
         raise AssertionError("el panel no debe consultar CoinGecko")
@@ -13364,7 +13360,7 @@ def test_usuarios_y_expulsar(config, a_quien, monkeypatch):
 
 
 def test_lleno_no_gasta_el_codigo(config, a_quien, monkeypatch):
-    from crypto_tracker import usuarios
+    from crypto_tracker.nucleo import usuarios
 
     codigo = _invitar(config, a_quien)
     monkeypatch.setattr(usuarios, "MAX_INVITADOS", 0)
@@ -13378,7 +13374,7 @@ def test_lleno_no_gasta_el_codigo(config, a_quien, monkeypatch):
 
 
 def test_invitar_lleno(config, a_quien, monkeypatch):
-    from crypto_tracker import usuarios
+    from crypto_tracker.nucleo import usuarios
 
     monkeypatch.setattr(usuarios, "MAX_INVITADOS", 0)
     main.atender(config, _mensaje("/invitar"))
@@ -13477,7 +13473,7 @@ def test_un_id_que_no_existe_no_se_pide_aparte(config, enviados, monkeypatch):
 
 
 def test_inline_del_invitado_con_lo_suyo(config, a_quien, monkeypatch):
-    from crypto_tracker import usuarios
+    from crypto_tracker.nucleo import usuarios
 
     _precio(monkeypatch, {"solana": 150.0})
     _con_invitado(config, a_quien)
@@ -13515,8 +13511,8 @@ def test_la_ayuda_del_invitado_sin_lo_tuyo(config, a_quien):
 
 
 def test_dominancia_del_invitado_con_tu_historico(config, a_quien, monkeypatch):
-    from crypto_tracker import usuarios
     from crypto_tracker.dominancia import Foto
+    from crypto_tracker.nucleo import usuarios
 
     _con_invitado(config, a_quien)
     hace_semana = datetime.now(timezone.utc) - timedelta(days=7)
@@ -13712,7 +13708,7 @@ def test_envivo_si_no_deja_fijar_te_lo_dice(config, enviados, fijo, monkeypatch)
 
 
 def _latidos(monkeypatch):
-    from crypto_tracker import latido
+    from crypto_tracker.nucleo import latido
 
     dados = []
     monkeypatch.setattr(latido, "mandar", lambda url: dados.append(url) or True)
@@ -14178,7 +14174,7 @@ def _cerrada(ruta, predicho, real, hace_dias=0):
 
 
 def _archivo_de(config, chat):
-    from crypto_tracker import usuarios
+    from crypto_tracker.nucleo import usuarios
 
     return usuarios.archivo(config, str(chat))
 

@@ -9,7 +9,7 @@ from datetime import date, timedelta
 
 from . import correlacion
 from .correlacion import Correlacion
-from .simbolos import a_id
+from .nucleo.simbolos import a_id
 
 EJEMPLO = "/juntas btc eth"
 

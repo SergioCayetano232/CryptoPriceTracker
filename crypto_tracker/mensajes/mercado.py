@@ -11,7 +11,6 @@ from ..comisionred import TAMAÑO as TAMAÑO_ENVIO
 from ..comisionred import ComisionRed, en_dinero, media_hora
 from ..comparar import Resultado
 from ..comparar import media as media_comparar
-from ..copia import numero as numero_env
 from ..dificultad import BLOQUES, MINUTOS, Dificultad, falta
 from ..gwei import OPERACIONES, Gas
 from ..hashribbons import Ribbons
@@ -27,13 +26,14 @@ from ..miedo import hace as dia_miedo
 from ..miedo import nombre as nombre_miedo
 from ..movimientos import texto_cantidad
 from ..mvrv import Mvrv
-from ..periodo import nombre as nombre_periodo
+from ..nucleo.copia import numero as numero_env
+from ..nucleo.periodo import nombre as nombre_periodo
+from ..nucleo.telegram import escape
 from ..quieta import Quieta
 from ..recordar import DIAS as NOMBRES_DIAS
 from ..sectores import Sector
 from ..sesgo import MINIMO as MINIMO_SESGO
 from ..sesgo import Lado, Sesgo
-from ..telegram import escape
 from ..tendencias import Tendencia
 from ..top import ENTRE, Movida
 from .base import (

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 
 from .informes.mes import MESES
-from .simbolos import a_id
+from .nucleo.simbolos import a_id
 
 EJEMPLO = "/calendario bitcoin octubre"
 

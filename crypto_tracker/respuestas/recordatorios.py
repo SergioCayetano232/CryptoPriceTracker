@@ -5,22 +5,9 @@ import math
 from dataclasses import replace
 from datetime import datetime, timezone
 
-from .. import (
-    alerts,
-    botones,
-    coingecko,
-    database,
-    encuesta,
-    liga,
-    miedo,
-    pienso,
-    prediccion,
-    recordar,
-    telegram,
-    tesis,
-    usuarios,
-)
-from ..config import Config
+from .. import alerts, encuesta, liga, miedo, pienso, prediccion, recordar, tesis
+from ..nucleo import botones, coingecko, database, telegram, usuarios
+from ..nucleo.config import Config
 from .base import (
     _con_cambios,
     _indicador,

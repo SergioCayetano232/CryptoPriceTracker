@@ -2,8 +2,8 @@
 
 from dataclasses import dataclass, field
 
-from .config import Posicion
 from .movimientos import Movimiento
+from .nucleo.config import Posicion
 
 
 @dataclass(frozen=True)

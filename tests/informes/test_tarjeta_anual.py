@@ -4,10 +4,10 @@ from datetime import date, datetime
 
 import pytest
 
-from crypto_tracker.config import Posicion
 from crypto_tracker.informes.anual import calcular as calcular_año
 from crypto_tracker.informes.tarjeta_anual import calcular, pedida
 from crypto_tracker.movimientos import Movimiento
+from crypto_tracker.nucleo.config import Posicion
 
 POSICIONES = [Posicion("bitcoin", 0.1, 5000), Posicion("solana", 10, 1000)]
 

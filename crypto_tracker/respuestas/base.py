@@ -8,9 +8,6 @@ from .. import (
     alertaratio,
     alerts,
     cartera,
-    coingecko,
-    comandos,
-    database,
     diario,
     direccion,
     juntas,
@@ -18,11 +15,10 @@ from .. import (
     movimientos,
     puntuales,
     rsi,
-    telegram,
-    vigiladas,
     volatilidad,
 )
-from ..config import Config, Posicion
+from ..nucleo import coingecko, comandos, database, telegram, vigiladas
+from ..nucleo.config import Config, Posicion
 
 logger = logging.getLogger("crypto_tracker")
 

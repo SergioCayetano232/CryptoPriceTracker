@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from crypto_tracker.config import ConfigError
+from crypto_tracker.nucleo.config import ConfigError
 from crypto_tracker.salvo import interpretar, texto, toca
 
 AHORA = datetime(2026, 11, 21, 12, 0, tzinfo=timezone.utc)

@@ -11,7 +11,7 @@ from crypto_tracker.comparar import (
     interpretar,
     media,
 )
-from crypto_tracker.periodo import PeriodoError
+from crypto_tracker.nucleo.periodo import PeriodoError
 
 AHORA = datetime(2026, 10, 8, 12, 0, tzinfo=timezone.utc)
 

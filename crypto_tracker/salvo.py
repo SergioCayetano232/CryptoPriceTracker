@@ -3,8 +3,8 @@
 import re
 from datetime import datetime, timedelta
 
-from .config import ConfigError
 from .mensajes.base import SIMBOLOS, _flecha, _nombre, _num
+from .nucleo.config import ConfigError
 from .puntuales import numero
 
 # Una vez al día por cripto: si se queda un -15% toda la semana, no quiero
