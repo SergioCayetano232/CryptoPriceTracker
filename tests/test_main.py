@@ -12778,6 +12778,12 @@ def test_panel_en_la_red_pide_la_clave(config, monkeypatch):
             assert "criptos" in json.loads(r.read())
         with urllib.request.urlopen(f"{base}/?clave={clave}") as r:
             assert "CryptoPriceTracker" in r.read().decode()
+        # Para instalarlo como app: no dicen nada de tu cartera, van sin clave.
+        with urllib.request.urlopen(base + "/manifest.webmanifest") as r:
+            assert r.headers["Content-Type"] == "application/manifest+json"
+            assert json.loads(r.read())["short_name"] == "Cartera"
+        with urllib.request.urlopen(base + "/icono-512.png") as r:
+            assert r.read().startswith(b"\x89PNG")
     finally:
         servidor["este"].shutdown()
         hilo.join()
@@ -12839,6 +12845,9 @@ def test_panel_desde_telegram_solo_para_ti(config, monkeypatch):
             pase = json.loads(r.read())["sesion"]
         with urllib.request.urlopen(f"{base}/app/panel?sesion={pase}") as r:
             assert "CryptoPriceTracker" in r.read().decode()
+        # Desde /app/panel los enlaces relativos piden /app/...
+        with urllib.request.urlopen(base + "/app/icono-180.png") as r:
+            assert r.headers["Content-Type"] == "image/png"
     finally:
         servidor["este"].shutdown()
         hilo.join()

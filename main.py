@@ -58,6 +58,7 @@ from crypto_tracker import (
     galleta,
     grafica,
     halving,
+    icono_app,
     importar,
     inline,
     latido,
@@ -2298,6 +2299,21 @@ def ip_local() -> str:
             return "IP-DE-ESTE-ORDENADOR"
 
 
+# Lo que hace falta para instalar el panel como app en el móvil.
+ESTATICOS: dict[str, Callable[[str], tuple[bytes, str]]] = {
+    "manifest.webmanifest": lambda ruta: (
+        json.dumps(panel_html.manifiesto(ruta), ensure_ascii=False).encode(),
+        "application/manifest+json",
+    ),
+    **{
+        f"icono-{lado}.png": (
+            lambda ruta, lado=lado: (icono_app.png(lado), "image/png")
+        )
+        for lado in (180, 192, 512)
+    },
+}
+
+
 def servir_panel(config: Config, puerto: int, red: bool = False) -> int:
     """El panel en http://127.0.0.1:puerto hasta que lo pares con Ctrl+C.
 
@@ -2323,6 +2339,11 @@ def servir_panel(config: Config, puerto: int, red: bool = False) -> int:
     class Atender(BaseHTTPRequestHandler):
         def do_GET(self) -> None:
             ruta = self.path.split("?")[0]
+            # El manifiesto y los iconos, sin clave: no dicen nada de tu cartera.
+            nombre = ruta.removeprefix("/app").lstrip("/")
+            if nombre in ESTATICOS:
+                self._mandar(*ESTATICOS[nombre](self.path))
+                return
             if app and ruta == "/app":
                 self._mandar(panel_html.APP.encode(), "text/html; charset=utf-8")
                 return

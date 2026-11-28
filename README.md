@@ -831,6 +831,11 @@ JSON. Para el widget del iPhone, instala [Scriptable](https://scriptable.app),
 pega `widgets/scriptable.js`, cambia la `URL` del principio y añade un widget
 de Scriptable a la pantalla de inicio. Solo llega con el móvil en la misma wifi.
 
+**Como una app:** abre el panel en el móvil (con su `?clave=`) y, en Safari,
+Compartir → «Añadir a pantalla de inicio»; en Chrome, menú → «Añadir a
+pantalla de inicio». Queda con su icono y se abre a pantalla completa, sin la
+barra del navegador.
+
 **Dentro de Telegram:** `/panel` manda un botón que abre el panel sin salir del
 chat. Telegram solo abre direcciones `https` públicas, así que hay que sacar el
 panel a internet, por ejemplo con un túnel de Cloudflare:

@@ -3,7 +3,7 @@
 import json
 from datetime import date, datetime
 from html import escape
-from urllib.parse import quote
+from urllib.parse import parse_qs, quote, urlencode, urlsplit
 
 from . import impuestos, version
 from .mensajes.base import SIMBOLOS, _num, describir
@@ -735,6 +735,11 @@ def pagina(p: Panel, ahora: datetime, parado: bool) -> str:
 <meta name="theme-color" content="#0d0b16" media="(prefers-color-scheme: dark)">
 <title>{_titulo(p)}</title>
 <link rel="icon" href="{_icono(p, parado)}">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icono-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cartera">
 <script>{ANTES}</script>
 <style>{CSS}</style>
 </head>
@@ -1458,6 +1463,9 @@ CLAVE = "panel-oculto"
 ANTES = (
     f"if (localStorage.getItem('{CLAVE}') === '1') "
     "document.documentElement.classList.add('oculto');"
+    # La clave va también al manifiesto, para que la app instalada abra con ella.
+    "if (location.search) document.querySelector('link[rel=manifest]').href = "
+    "'manifest.webmanifest' + location.search;"
 )
 
 JS = f"""
@@ -1818,6 +1826,34 @@ JS = f"""
   }});
 }})();
 """
+
+# Para instalarlo como app en el móvil.
+MANIFIESTO = {
+    "name": "CryptoPriceTracker",
+    "short_name": "Cartera",
+    "lang": "es",
+    "display": "standalone",
+    "background_color": "#0d0b16",
+    "theme_color": "#0d0b16",
+    "icons": [
+        {
+            "src": f"icono-{lado}.png",
+            "sizes": f"{lado}x{lado}",
+            "type": "image/png",
+            "purpose": "any maskable",
+        }
+        for lado in (192, 512)
+    ],
+}
+
+
+def manifiesto(ruta: str) -> dict:
+    """El de arriba, abriendo donde lo instalaste: con la clave, si la llevaba.
+    Del resto de la dirección no copia nada."""
+    clave = parse_qs(urlsplit(ruta).query).get("clave", [""])[0]
+    inicio = "./?" + urlencode({"clave": clave}) if clave else "./"
+    return {**MANIFIESTO, "start_url": inicio}
+
 
 # Lo que abre el botón de /panel: Telegram firma quién eres y con eso entra.
 APP = """<!doctype html>

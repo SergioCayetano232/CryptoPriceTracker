@@ -70,6 +70,27 @@ def test_el_icono_va_en_verde_si_sube_en_el_dia():
     assert "%230f9f6e" in html
 
 
+def test_se_puede_instalar_como_app():
+    from crypto_tracker.panel_html import MANIFIESTO
+
+    html = pagina(_panel(), AHORA, parado=False)
+
+    assert '<link rel="manifest" href="manifest.webmanifest">' in html
+    assert '<link rel="apple-touch-icon" href="icono-180.png">' in html
+    assert MANIFIESTO["display"] == "standalone"
+    assert [i["src"] for i in MANIFIESTO["icons"]] == ["icono-192.png", "icono-512.png"]
+
+
+def test_la_app_instalada_abre_con_la_clave():
+    from crypto_tracker.panel_html import ANTES, manifiesto
+
+    assert manifiesto("/manifest.webmanifest")["start_url"] == "./"
+    assert manifiesto("/manifest.webmanifest?clave=a b&otro=1")["start_url"] == (
+        "./?clave=a+b"
+    )
+    assert "'manifest.webmanifest' + location.search" in ANTES
+
+
 def test_el_icono_va_en_rojo_si_baja_en_el_dia():
     assert "%23e0445a" in pagina(_panel(total_antes=7000.0), AHORA, parado=False)
 
