@@ -4,7 +4,7 @@ import difflib
 import html
 from dataclasses import dataclass
 
-from .. import equivale
+from ..equivalencias import equivale
 from . import lenguaje, simbolos, temas
 
 # Lo que sale en el menu de Telegram al escribir "/".

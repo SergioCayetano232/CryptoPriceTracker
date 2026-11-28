@@ -9,7 +9,9 @@ from ..caraocruz import QUE_HACER
 from ..cumple import Cumple
 from ..dado import CARAS
 from ..dado import QUE_HACER as QUE_HACER_DADO
-from ..enletras import dinero as dinero_en_letras
+from ..equivalencias.enletras import dinero as dinero_en_letras
+from ..equivalencias.mundo import PERSONAS, Mundo
+from ..equivalencias.pizza import BTC, Pizza
 from ..ethereum import Ethereum
 from ..frase import Frase
 from ..galleta import Galleta
@@ -25,9 +27,7 @@ from ..indicadores.redondo import Redondo
 from ..indicadores.sat import CANTIDADES as CANTIDADES_SAT
 from ..indicadores.sat import SATS_POR_BTC, Sat
 from ..merge import Merge
-from ..mundo import PERSONAS, Mundo
 from ..nucleo.telegram import escape
-from ..pizza import BTC, Pizza
 from ..ppt import EMOJIS as EMOJIS_PPT
 from ..ppt import QUE_HACER as QUE_HACER_PPT
 from ..quiz import PREGUNTAS as PREGUNTAS_QUIZ

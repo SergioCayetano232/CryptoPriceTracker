@@ -2,7 +2,7 @@
 
 from collections import Counter
 
-from crypto_tracker.equivale import COSAS
+from crypto_tracker.equivalencias.equivale import COSAS
 from crypto_tracker.nucleo.comandos import ALIAS, COMANDOS
 from crypto_tracker.nucleo.temas import TEMAS, TODO, botones, buscar, visibles
 from crypto_tracker.nucleo.usuarios import SOLO_DUEÑO

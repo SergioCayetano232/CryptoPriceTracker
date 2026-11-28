@@ -2,7 +2,7 @@
 
 import pytest
 
-from crypto_tracker.equivale import COSAS
+from crypto_tracker.equivalencias.equivale import COSAS
 from crypto_tracker.nucleo.comandos import (
     AYUDA,
     COMANDOS,

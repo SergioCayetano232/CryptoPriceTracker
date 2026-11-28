@@ -1,109 +1,109 @@
 """Cuánto de cada cosa te compras con lo que tienes."""
 
-from ..aceite import PRECIO as PRECIO_ACEITE
-from ..aceite import Aceite
-from ..airpods import PRECIO as PRECIO_AIRPODS
-from ..airpods import Airpods
-from ..alquiler import PRECIO as PRECIO_ALQUILER
-from ..alquiler import Alquiler
-from ..ave import PRECIO as PRECIO_AVE
-from ..ave import Ave
-from ..bici import PRECIO as PRECIO_BICI
-from ..bici import Bici
-from ..bigmac import PRECIO as PRECIO_BIGMAC
-from ..bigmac import BigMac
-from ..boda import PRECIO as PRECIO_BODA
-from ..boda import Boda
-from ..cafe import PRECIO as PRECIO_CAFE
-from ..cafe import Cafe
-from ..cana import PRECIO as PRECIO_CANA
-from ..cana import Cana
-from ..carnet import PRECIO as PRECIO_CARNET
-from ..carnet import Carnet
-from ..churros import PRECIO as PRECIO_CHURROS
-from ..churros import Churros
-from ..cine import PRECIO as PRECIO_CINE
-from ..cine import Cine
-from ..coche import PRECIO as PRECIO_COCHE
-from ..coche import Coche
-from ..concierto import PRECIO as PRECIO_CONCIERTO
-from ..concierto import Concierto
-from ..croquetas import PRECIO as PRECIO_CROQUETAS
-from ..croquetas import Croquetas
 from ..emoji import cara as cara_emoji
-from ..equivale import COSAS as COSAS_EQUIVALE
-from ..futbol import PRECIO as PRECIO_FUTBOL
-from ..futbol import Futbol
-from ..gasolina import DEPOSITO, Gasolina
-from ..gasolina import PRECIO as PRECIO_GASOLINA
-from ..gimnasio import PRECIO as PRECIO_GIMNASIO
-from ..gimnasio import Gimnasio
-from ..hotel import PRECIO as PRECIO_HOTEL
-from ..hotel import Hotel
-from ..iphone import PRECIO as PRECIO_IPHONE
-from ..iphone import Iphone
-from ..jamon import PRECIO as PRECIO_JAMON
-from ..jamon import Jamon
-from ..kebab import PRECIO as PRECIO_KEBAB
-from ..kebab import Kebab
-from ..lambo import PRECIO as PRECIO_LAMBO
-from ..lambo import Lambo
-from ..libro import PRECIO as PRECIO_LIBRO
-from ..libro import Libro
-from ..loteria import PRECIO as PRECIO_LOTERIA
-from ..loteria import Loteria
-from ..luz import PRECIO as PRECIO_LUZ
-from ..luz import Luz
-from ..macbook import PRECIO as PRECIO_MACBOOK
-from ..macbook import Macbook
-from ..menu import PRECIO as PRECIO_MENU
-from ..menu import Menu
-from ..metro import PRECIO as PRECIO_METRO
-from ..metro import Metro
-from ..navidad import PRECIO as PRECIO_NAVIDAD
-from ..navidad import Navidad
-from ..netflix import PRECIO as PRECIO_NETFLIX
-from ..netflix import Netflix
-from ..nochevieja import PRECIO as PRECIO_CAVA
-from ..nochevieja import Nochevieja
+from ..equivalencias.aceite import PRECIO as PRECIO_ACEITE
+from ..equivalencias.aceite import Aceite
+from ..equivalencias.airpods import PRECIO as PRECIO_AIRPODS
+from ..equivalencias.airpods import Airpods
+from ..equivalencias.alquiler import PRECIO as PRECIO_ALQUILER
+from ..equivalencias.alquiler import Alquiler
+from ..equivalencias.ave import PRECIO as PRECIO_AVE
+from ..equivalencias.ave import Ave
+from ..equivalencias.bici import PRECIO as PRECIO_BICI
+from ..equivalencias.bici import Bici
+from ..equivalencias.bigmac import PRECIO as PRECIO_BIGMAC
+from ..equivalencias.bigmac import BigMac
+from ..equivalencias.boda import PRECIO as PRECIO_BODA
+from ..equivalencias.boda import Boda
+from ..equivalencias.cafe import PRECIO as PRECIO_CAFE
+from ..equivalencias.cafe import Cafe
+from ..equivalencias.cana import PRECIO as PRECIO_CANA
+from ..equivalencias.cana import Cana
+from ..equivalencias.carnet import PRECIO as PRECIO_CARNET
+from ..equivalencias.carnet import Carnet
+from ..equivalencias.churros import PRECIO as PRECIO_CHURROS
+from ..equivalencias.churros import Churros
+from ..equivalencias.cine import PRECIO as PRECIO_CINE
+from ..equivalencias.cine import Cine
+from ..equivalencias.coche import PRECIO as PRECIO_COCHE
+from ..equivalencias.coche import Coche
+from ..equivalencias.concierto import PRECIO as PRECIO_CONCIERTO
+from ..equivalencias.concierto import Concierto
+from ..equivalencias.croquetas import PRECIO as PRECIO_CROQUETAS
+from ..equivalencias.croquetas import Croquetas
+from ..equivalencias.equivale import COSAS as COSAS_EQUIVALE
+from ..equivalencias.futbol import PRECIO as PRECIO_FUTBOL
+from ..equivalencias.futbol import Futbol
+from ..equivalencias.gasolina import DEPOSITO, Gasolina
+from ..equivalencias.gasolina import PRECIO as PRECIO_GASOLINA
+from ..equivalencias.gimnasio import PRECIO as PRECIO_GIMNASIO
+from ..equivalencias.gimnasio import Gimnasio
+from ..equivalencias.hotel import PRECIO as PRECIO_HOTEL
+from ..equivalencias.hotel import Hotel
+from ..equivalencias.iphone import PRECIO as PRECIO_IPHONE
+from ..equivalencias.iphone import Iphone
+from ..equivalencias.jamon import PRECIO as PRECIO_JAMON
+from ..equivalencias.jamon import Jamon
+from ..equivalencias.kebab import PRECIO as PRECIO_KEBAB
+from ..equivalencias.kebab import Kebab
+from ..equivalencias.lambo import PRECIO as PRECIO_LAMBO
+from ..equivalencias.lambo import Lambo
+from ..equivalencias.libro import PRECIO as PRECIO_LIBRO
+from ..equivalencias.libro import Libro
+from ..equivalencias.loteria import PRECIO as PRECIO_LOTERIA
+from ..equivalencias.loteria import Loteria
+from ..equivalencias.luz import PRECIO as PRECIO_LUZ
+from ..equivalencias.luz import Luz
+from ..equivalencias.macbook import PRECIO as PRECIO_MACBOOK
+from ..equivalencias.macbook import Macbook
+from ..equivalencias.menu import PRECIO as PRECIO_MENU
+from ..equivalencias.menu import Menu
+from ..equivalencias.metro import PRECIO as PRECIO_METRO
+from ..equivalencias.metro import Metro
+from ..equivalencias.navidad import PRECIO as PRECIO_NAVIDAD
+from ..equivalencias.navidad import Navidad
+from ..equivalencias.netflix import PRECIO as PRECIO_NETFLIX
+from ..equivalencias.netflix import Netflix
+from ..equivalencias.nochevieja import PRECIO as PRECIO_CAVA
+from ..equivalencias.nochevieja import Nochevieja
+from ..equivalencias.oro import Oro
+from ..equivalencias.paella import PRECIO as PRECIO_PAELLA
+from ..equivalencias.paella import Paella
+from ..equivalencias.pan import PRECIO as PRECIO_PAN
+from ..equivalencias.pan import Pan
+from ..equivalencias.peluqueria import PRECIO as PRECIO_PELUQUERIA
+from ..equivalencias.peluqueria import Peluqueria
+from ..equivalencias.piso import METROS as METROS_PISO
+from ..equivalencias.piso import PRECIO as PRECIO_PISO
+from ..equivalencias.piso import Piso
+from ..equivalencias.ps5 import PRECIO as PRECIO_PS5
+from ..equivalencias.ps5 import Ps5
+from ..equivalencias.rolex import PRECIO as PRECIO_ROLEX
+from ..equivalencias.rolex import Rolex
+from ..equivalencias.sofa import PRECIO as PRECIO_SOFA
+from ..equivalencias.sofa import Sofa
+from ..equivalencias.spotify import PRECIO as PRECIO_SPOTIFY
+from ..equivalencias.spotify import Spotify
+from ..equivalencias.sueldo import PAGA as PAGA_SMI
+from ..equivalencias.sueldo import Sueldo
+from ..equivalencias.supermercado import PRECIO as PRECIO_SUPER
+from ..equivalencias.supermercado import Super
+from ..equivalencias.switch import PRECIO as PRECIO_SWITCH
+from ..equivalencias.switch import Switch
+from ..equivalencias.taxi import PRECIO as PRECIO_TAXI
+from ..equivalencias.taxi import Taxi
+from ..equivalencias.tesla import PRECIO as PRECIO_TESLA
+from ..equivalencias.tesla import Tesla
+from ..equivalencias.tortilla import PRECIO as PRECIO_TORTILLA
+from ..equivalencias.tortilla import Tortilla
+from ..equivalencias.videojuego import PRECIO as PRECIO_VIDEOJUEGO
+from ..equivalencias.videojuego import Videojuego
+from ..equivalencias.vuelo import PRECIO as PRECIO_VUELO
+from ..equivalencias.vuelo import Vuelo
+from ..equivalencias.zapatillas import PRECIO as PRECIO_ZAPATILLAS
+from ..equivalencias.zapatillas import Zapatillas
 from ..nucleo.telegram import escape
-from ..oro import Oro
-from ..paella import PRECIO as PRECIO_PAELLA
-from ..paella import Paella
-from ..pan import PRECIO as PRECIO_PAN
-from ..pan import Pan
-from ..peluqueria import PRECIO as PRECIO_PELUQUERIA
-from ..peluqueria import Peluqueria
-from ..piso import METROS as METROS_PISO
-from ..piso import PRECIO as PRECIO_PISO
-from ..piso import Piso
-from ..ps5 import PRECIO as PRECIO_PS5
-from ..ps5 import Ps5
-from ..rolex import PRECIO as PRECIO_ROLEX
-from ..rolex import Rolex
-from ..sofa import PRECIO as PRECIO_SOFA
-from ..sofa import Sofa
-from ..spotify import PRECIO as PRECIO_SPOTIFY
-from ..spotify import Spotify
-from ..sueldo import PAGA as PAGA_SMI
-from ..sueldo import Sueldo
-from ..supermercado import PRECIO as PRECIO_SUPER
-from ..supermercado import Super
-from ..switch import PRECIO as PRECIO_SWITCH
-from ..switch import Switch
-from ..taxi import PRECIO as PRECIO_TAXI
-from ..taxi import Taxi
-from ..tesla import PRECIO as PRECIO_TESLA
-from ..tesla import Tesla
 from ..tiempo import parte as parte_tiempo
-from ..tortilla import PRECIO as PRECIO_TORTILLA
-from ..tortilla import Tortilla
-from ..videojuego import PRECIO as PRECIO_VIDEOJUEGO
-from ..videojuego import Videojuego
-from ..vuelo import PRECIO as PRECIO_VUELO
-from ..vuelo import Vuelo
-from ..zapatillas import PRECIO as PRECIO_ZAPATILLAS
-from ..zapatillas import Zapatillas
 from .base import SIMBOLOS, _es, _num
 
 
