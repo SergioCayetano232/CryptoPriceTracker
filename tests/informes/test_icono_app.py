@@ -2,7 +2,7 @@ import io
 
 from PIL import Image
 
-from crypto_tracker import icono_app
+from crypto_tracker.informes import icono_app
 
 
 def test_png_del_tamano_pedido_y_sin_transparencia():

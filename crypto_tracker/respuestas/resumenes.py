@@ -7,8 +7,6 @@ from datetime import date, datetime, timedelta, timezone
 
 from .. import (
     alerts,
-    aniversario,
-    anual,
     backup,
     botones,
     cartera,
@@ -16,22 +14,26 @@ from .. import (
     database,
     diario,
     envivo,
-    grafica,
-    mensual,
-    mes,
     miedo,
     movimientos,
-    panel,
     periodo,
     proximo,
     puntuales,
-    resumenia,
-    semanal,
-    tarjeta_anual,
     telegram,
 )
 from ..config import Config
 from ..hacienda import aviso_renta, compensar, impuestos
+from ..informes import (
+    aniversario,
+    anual,
+    grafica,
+    mensual,
+    mes,
+    panel,
+    resumenia,
+    semanal,
+    tarjeta_anual,
+)
 from .base import (
     SIN_CARTERA,
     Respuesta,

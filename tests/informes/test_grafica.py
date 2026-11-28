@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from crypto_tracker.grafica import (
+from crypto_tracker.informes.grafica import (
     GraficaError,
     _eje,
     _formato_eje,
@@ -107,27 +107,27 @@ def test_lo_invertido_lejos_de_la_serie_no_peta():
 def _tarjeta(total=66.7, tramo=12.5, linea=(0, 6, 12.5)):
     from datetime import date
 
+    from crypto_tracker.informes.tarjeta import Tarjeta
     from crypto_tracker.reparto import Trozo
-    from crypto_tracker.tarjeta import Tarjeta
 
     reparto = [Trozo("bitcoin", 0, 75, 0), Trozo("otras", 0, 25, None)]
     return Tarjeta(total, tramo, 720, list(linea), reparto, date(2026, 11, 16))
 
 
 def test_tarjeta_sale_un_png():
-    from crypto_tracker.grafica import dibujar_tarjeta
+    from crypto_tracker.informes.grafica import dibujar_tarjeta
 
     assert dibujar_tarjeta(_tarjeta()).startswith(b"\x89PNG")
 
 
 def test_tarjeta_sin_lo_invertido_ni_linea():
-    from crypto_tracker.grafica import dibujar_tarjeta
+    from crypto_tracker.informes.grafica import dibujar_tarjeta
 
     assert dibujar_tarjeta(_tarjeta(total=None, linea=())).startswith(b"\x89PNG")
 
 
 def test_tarjeta_sin_ningun_porcentaje():
-    from crypto_tracker.grafica import GraficaError, dibujar_tarjeta
+    from crypto_tracker.informes.grafica import GraficaError, dibujar_tarjeta
 
     with pytest.raises(GraficaError):
         dibujar_tarjeta(_tarjeta(total=None, tramo=None, linea=()))
@@ -142,13 +142,13 @@ def test_tarjeta_sin_ningun_porcentaje():
     ],
 )
 def test_en_el_tramo(horas, sale):
-    from crypto_tracker.grafica import _en_el_tramo
+    from crypto_tracker.informes.grafica import _en_el_tramo
 
     assert _en_el_tramo(horas) == sale
 
 
 def test_comparar_nombres_cortos_y_el_cero_sin_signo():
-    from crypto_tracker.grafica import _corto, _pct_eje
+    from crypto_tracker.informes.grafica import _corto, _pct_eje
 
     assert _corto("avalanche-2") == "AVAX"
     assert _corto("pepe") == "Pepe"
@@ -162,7 +162,7 @@ def test_comparar_nombres_cortos_y_el_cero_sin_signo():
 def test_comparar_dibuja_y_rechaza_demasiadas():
     from datetime import datetime, timedelta, timezone
 
-    from crypto_tracker.grafica import GraficaError, dibujar_comparar
+    from crypto_tracker.informes.grafica import GraficaError, dibujar_comparar
 
     ahora = datetime.now(timezone.utc)
     serie = [(ahora - timedelta(hours=1), 100.0), (ahora, 105.0)]
@@ -179,7 +179,7 @@ def test_comparar_dibuja_y_rechaza_demasiadas():
     [(0.0, "left"), (0.11, "left"), (0.5, "center"), (0.89, "right"), (1.0, "right")],
 )
 def test_alineacion_de_las_etiquetas_en_los_bordes(donde, sale):
-    from crypto_tracker.grafica import _alineacion
+    from crypto_tracker.informes.grafica import _alineacion
 
     assert _alineacion(donde) == sale
 
@@ -188,7 +188,7 @@ def test_las_etiquetas_de_los_bordes_van_hacia_dentro(monkeypatch):
     # El mínimo al principio y el máximo al final, como en una subida.
     from matplotlib.axes import Axes
 
-    from crypto_tracker.grafica import dibujar
+    from crypto_tracker.informes.grafica import dibujar
 
     puestas = []
     original = Axes.annotate
@@ -208,7 +208,7 @@ def test_las_etiquetas_de_los_bordes_van_hacia_dentro(monkeypatch):
 
 
 def test_mapa_sale_un_png_con_una_o_con_treinta():
-    from crypto_tracker.grafica import dibujar_mapa
+    from crypto_tracker.informes.grafica import dibujar_mapa
     from crypto_tracker.mapa import Casilla, Mapa
 
     una = Mapa([Casilla("bitcoin", "BTC", 1.0, 0.0)])
@@ -225,13 +225,13 @@ def test_mapa_sale_un_png_con_una_o_con_treinta():
     [(0, "#334155"), (8, "#15803d"), (-20, "#b91c1c")],
 )
 def test_color_del_mapa(variacion, sale):
-    from crypto_tracker.grafica import _color_mapa
+    from crypto_tracker.informes.grafica import _color_mapa
 
     assert _color_mapa(variacion) == sale
 
 
 def test_en_el_mapa_lo_que_se_mueve_poco_sale_flojo():
-    from crypto_tracker.grafica import _color_mapa
+    from crypto_tracker.informes.grafica import _color_mapa
 
     assert _color_mapa(0.5) not in {"#334155", "#15803d"}
     assert _color_mapa(0.5) != _color_mapa(4)

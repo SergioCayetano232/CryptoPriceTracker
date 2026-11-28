@@ -3,9 +3,6 @@
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from ..aniversario import MAX as MAX_ANIVERSARIOS
-from ..aniversario import Aniversario
-from ..anual import Año
 from ..arrepentido import Arrepentido
 from ..calendario import Mes
 from ..cartera import Valor, mejor_y_peor, peso
@@ -33,8 +30,11 @@ from ..ideal import Ideal, Parte, fuera
 from ..ideal import comando as comando_ideal
 from ..importar import Operacion
 from ..inflacion import Inflacion
+from ..informes.aniversario import MAX as MAX_ANIVERSARIOS
+from ..informes.aniversario import Aniversario
+from ..informes.anual import Año
+from ..informes.mes import MESES
 from ..mercado import grande
-from ..mes import MESES
 from ..movimientos import (
     Movimiento,
     descuadre,

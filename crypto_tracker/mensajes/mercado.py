@@ -15,11 +15,12 @@ from ..copia import numero as numero_env
 from ..dificultad import BLOQUES, MINUTOS, Dificultad, falta
 from ..gwei import OPERACIONES, Gas
 from ..hashribbons import Ribbons
+from ..informes.mes import MESES as NOMBRES_MESES
+from ..informes.semanal import Semana
 from ..lightning import Lightning
 from ..mapa import Mapa
 from ..maximo import Maximo, hace
 from ..mercado import Mercado, grande
-from ..mes import MESES as NOMBRES_MESES
 from ..miedo import NOMBRES as NOMBRES_MIEDO
 from ..miedo import Indice
 from ..miedo import hace as dia_miedo
@@ -30,7 +31,6 @@ from ..periodo import nombre as nombre_periodo
 from ..quieta import Quieta
 from ..recordar import DIAS as NOMBRES_DIAS
 from ..sectores import Sector
-from ..semanal import Semana
 from ..sesgo import MINIMO as MINIMO_SESGO
 from ..sesgo import Lado, Sesgo
 from ..telegram import escape

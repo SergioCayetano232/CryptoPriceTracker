@@ -25,7 +25,6 @@ from .. import (
     equilibrio,
     fantasma,
     ganancias,
-    grafica,
     herencia,
     hodl,
     ideal,
@@ -51,7 +50,6 @@ from .. import (
     riesgo,
     sesgo,
     simbolos,
-    tarjeta,
     telegram,
     timing,
     volatilidad,
@@ -70,6 +68,7 @@ from ..hacienda import (
     renta,
     sivendo,
 )
+from ..informes import grafica, tarjeta
 from .base import (
     SIN_CARTERA,
     _con_cambios,

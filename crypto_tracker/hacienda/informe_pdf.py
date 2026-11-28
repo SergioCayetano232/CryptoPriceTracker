@@ -4,8 +4,17 @@ import io
 from datetime import date
 
 from ..alerts import SIMBOLOS
-from ..grafica import FONDO, REJILLA, ROJO, SUAVE, TEXTO, VERDE, GraficaError, _eje
-from ..mes import MESES
+from ..informes.grafica import (
+    FONDO,
+    REJILLA,
+    ROJO,
+    SUAVE,
+    TEXTO,
+    VERDE,
+    GraficaError,
+    _eje,
+)
+from ..informes.mes import MESES
 from ..movimientos import texto_cantidad
 from .informe import Informe, hojas
 from .renta import Venta

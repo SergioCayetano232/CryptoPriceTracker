@@ -4,10 +4,10 @@ import csv
 from datetime import date, datetime
 from io import StringIO
 
-from .ganancias import de_venta
-from .movimientos import Movimiento
-from .periodo import PeriodoError, leer
-from .simbolos import a_id
+from ..ganancias import de_venta
+from ..movimientos import Movimiento
+from ..periodo import PeriodoError, leer
+from ..simbolos import a_id
 
 POR_DEFECTO = 30 * 24
 

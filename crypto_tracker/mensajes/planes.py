@@ -3,8 +3,8 @@
 from datetime import date, datetime
 
 from ..apy import Tramo
+from ..informes.mes import MESES
 from ..limite import Limite
-from ..mes import MESES
 from ..meta import Meta
 from ..movimientos import texto_cantidad
 from ..objetivo import Escenario

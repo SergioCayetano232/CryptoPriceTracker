@@ -7,8 +7,8 @@ import anthropic
 import httpx2
 import pytest
 
-from crypto_tracker import resumenia
-from crypto_tracker.semanal import Semana
+from crypto_tracker.informes import resumenia
+from crypto_tracker.informes.semanal import Semana
 
 AHORA = datetime(2026, 11, 27, 12, tzinfo=timezone.utc)
 

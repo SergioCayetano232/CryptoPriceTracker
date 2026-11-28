@@ -23,7 +23,6 @@ from crypto_tracker import (
     excusa,
     frase,
     funding,
-    grafica,
     inflacion,
     miedo,
     refran,
@@ -32,6 +31,7 @@ from crypto_tracker import (
     vsbolsa,
 )
 from crypto_tracker.config import Config, Posicion, Watch
+from crypto_tracker.informes import grafica
 from crypto_tracker.precio import Precio
 from crypto_tracker.respuestas import cartera as respuestas_cartera
 from crypto_tracker.respuestas import resumenes, revisiones
@@ -6193,7 +6193,7 @@ def _mes_pasado_guardado(config):
 def _nombre_mes_pasado():
     from datetime import timedelta
 
-    from crypto_tracker import mes
+    from crypto_tracker.informes import mes
 
     return mes.nombre(_dia_1() - timedelta(days=1))
 
@@ -6305,7 +6305,7 @@ def test_semana_a_mano_no_quita_la_del_domingo(con_semana, sin_fotos_de_verdad):
 
 
 def test_resumenia_manda_lo_que_escribe_claude(con_semana, enviados, monkeypatch):
-    from crypto_tracker import resumenia
+    from crypto_tracker.informes import resumenia
 
     _semana_guardada(con_semana)
     pedidos = []
@@ -6325,7 +6325,7 @@ def test_resumenia_manda_lo_que_escribe_claude(con_semana, enviados, monkeypatch
 
 
 def test_resumenia_sin_clave_lo_explica(con_semana, enviados, monkeypatch):
-    from crypto_tracker import resumenia
+    from crypto_tracker.informes import resumenia
 
     _semana_guardada(con_semana)
 
@@ -9032,7 +9032,7 @@ def test_meta_sin_cartera(config, enviados):
 def test_mes(con_semana, enviados, sin_fotos_de_verdad, monkeypatch):
     from datetime import datetime
 
-    from crypto_tracker import mes
+    from crypto_tracker.informes import mes
 
     monkeypatch.setattr(mes, "horas", lambda ahora: 48)
     # Del mes pasado: no tiene que contar.
@@ -9068,7 +9068,7 @@ def test_mes_sin_cartera(config, enviados):
 def test_anual(con_semana, enviados, sin_fotos_de_verdad, monkeypatch):
     from datetime import datetime
 
-    from crypto_tracker import mes
+    from crypto_tracker.informes import mes
 
     monkeypatch.setattr(mes, "horas_del_ano", lambda ahora: 48)
     _guardar(con_semana, "bitcoin", 10000.0, 60)
@@ -9089,7 +9089,7 @@ def test_anual_avisa_si_borra_los_precios_antes(
 ):
     from dataclasses import replace
 
-    from crypto_tracker import mes
+    from crypto_tracker.informes import mes
 
     monkeypatch.setattr(mes, "horas_del_ano", lambda ahora: 200 * 24)
     dibujadas = []
@@ -9616,7 +9616,7 @@ def test_rentabilidad_sin_conexion(config, enviados, monkeypatch):
 def test_calendario(config, enviados, sin_fotos_de_verdad):
     from datetime import datetime
 
-    from crypto_tracker import mes
+    from crypto_tracker.informes import mes
 
     # ayer a 60.000 y hoy a 63.000: hoy sale +5%
     _precio_de(config, "bitcoin", 60000.0, 24 * 60)
@@ -12819,7 +12819,7 @@ def test_panel_desde_telegram_solo_para_ti(config, monkeypatch):
     import urllib.error
     import urllib.request
 
-    from test_panel import firmado
+    from informes.test_panel import firmado
 
     monkeypatch.setenv("PANEL_URL", "https://mi-panel.example")
     monkeypatch.delenv("PANEL_CLAVE", raising=False)

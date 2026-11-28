@@ -6,7 +6,7 @@ import pytest
 
 from crypto_tracker.alerts import formatear_semana
 from crypto_tracker.config import Posicion
-from crypto_tracker.semanal import Semana, semana, toca
+from crypto_tracker.informes.semanal import Semana, semana, toca
 
 INICIO = datetime(2026, 9, 27, 9, 0, tzinfo=timezone.utc)
 

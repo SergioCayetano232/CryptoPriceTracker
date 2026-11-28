@@ -2,9 +2,9 @@
 
 from datetime import datetime, timedelta, timezone
 
-from crypto_tracker import panel
 from crypto_tracker.config import Posicion, Watch
-from crypto_tracker.panel_html import pagina
+from crypto_tracker.informes import panel
+from crypto_tracker.informes.panel_html import pagina
 from crypto_tracker.puntuales import Puntual
 
 AHORA = datetime(2026, 11, 20, 12, 0, tzinfo=timezone.utc)
@@ -71,7 +71,7 @@ def test_el_icono_va_en_verde_si_sube_en_el_dia():
 
 
 def test_se_puede_instalar_como_app():
-    from crypto_tracker.panel_html import MANIFIESTO
+    from crypto_tracker.informes.panel_html import MANIFIESTO
 
     html = pagina(_panel(), AHORA, parado=False)
 
@@ -82,7 +82,7 @@ def test_se_puede_instalar_como_app():
 
 
 def test_la_app_instalada_abre_con_la_clave():
-    from crypto_tracker.panel_html import ANTES, manifiesto
+    from crypto_tracker.informes.panel_html import ANTES, manifiesto
 
     assert manifiesto("/manifest.webmanifest")["start_url"] == "./"
     assert manifiesto("/manifest.webmanifest?clave=a b&otro=1")["start_url"] == (
@@ -94,8 +94,8 @@ def test_la_app_instalada_abre_con_la_clave():
 def test_el_fondo_se_tine_con_el_miedo_del_mercado():
     from datetime import date
 
+    from crypto_tracker.informes.panel_html import matiz
     from crypto_tracker.miedo import Indice
-    from crypto_tracker.panel_html import matiz
 
     html = pagina(_panel(miedo=Indice(20, "Fear", date(2026, 11, 28))), AHORA, False)
 
@@ -112,7 +112,7 @@ def test_sin_miedo_el_fondo_de_siempre():
 
 
 def test_la_pagina_compartida_no_lleva_dinero():
-    from crypto_tracker.panel_html import pagina_compartida
+    from crypto_tracker.informes.panel_html import pagina_compartida
 
     serie = [(AHORA - timedelta(days=1), 5800.0), (AHORA, 6000.0)]
     html = pagina_compartida(
@@ -275,7 +275,7 @@ def test_con_una_sola_alerta_no_resalta_nada():
 
 
 def test_el_resumen_para_copiar():
-    from crypto_tracker.panel_html import resumen
+    from crypto_tracker.informes.panel_html import resumen
 
     texto = resumen(_panel(total_antes=5000.0), AHORA, oculto=False)
 
@@ -289,7 +289,7 @@ def test_el_resumen_para_copiar():
 
 
 def test_el_resumen_con_las_cifras_tapadas_no_lleva_dinero():
-    from crypto_tracker.panel_html import resumen
+    from crypto_tracker.informes.panel_html import resumen
 
     texto = resumen(_panel(total_antes=5000.0), AHORA, oculto=True)
 
@@ -303,7 +303,7 @@ def test_sin_cartera_no_hay_boton_de_copiar():
 
 
 def test_los_puntos_para_el_cursor_de_la_grafica():
-    from crypto_tracker.panel_html import puntos_cursor
+    from crypto_tracker.informes.panel_html import puntos_cursor
 
     puntos = [(AHORA, 100.0), (AHORA + timedelta(hours=1), 200.0)]
 
@@ -316,7 +316,7 @@ def test_los_puntos_para_el_cursor_de_la_grafica():
 
 
 def test_grafica_plana_deja_el_cursor_a_media_altura():
-    from crypto_tracker.panel_html import puntos_cursor
+    from crypto_tracker.informes.panel_html import puntos_cursor
 
     datos = puntos_cursor([(AHORA, 5.0), (AHORA, 5.0)], "eur")
 
@@ -325,7 +325,7 @@ def test_grafica_plana_deja_el_cursor_a_media_altura():
 
 def test_los_avisos_del_bot_van_en_la_pagina_para_el_navegador():
     from crypto_tracker.avisados import Aviso
-    from crypto_tracker.panel_html import avisos_navegador
+    from crypto_tracker.informes.panel_html import avisos_navegador
 
     cuando = AHORA - timedelta(minutes=5)
     p = _panel(avisos={"bitcoin": Aviso(cuando, 63000.0, True)})
@@ -350,7 +350,7 @@ def test_la_campana_sale_oculta_hasta_que_el_js_ve_que_hay_avisos():
 
 
 def test_el_simulador_lleva_lo_que_necesita_el_js():
-    from crypto_tracker.panel_html import datos_simulador
+    from crypto_tracker.informes.panel_html import datos_simulador
 
     datos = datos_simulador(_panel())
 
@@ -363,7 +363,7 @@ def test_el_simulador_lleva_lo_que_necesita_el_js():
 
 
 def test_el_simulador_no_cuenta_hacienda_en_otra_moneda():
-    from crypto_tracker.panel_html import datos_simulador
+    from crypto_tracker.informes.panel_html import datos_simulador
 
     html = pagina(_panel(moneda="usd"), AHORA, parado=False)
 
@@ -404,7 +404,7 @@ def test_si_solo_tienes_bitcoin_no_hay_segunda_linea():
 
 
 def test_nivel_de_cada_casilla():
-    from crypto_tracker.panel_html import nivel
+    from crypto_tracker.informes.panel_html import nivel
 
     assert nivel(None) == "vacia"
     assert nivel(0.01) == "igual"

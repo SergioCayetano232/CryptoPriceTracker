@@ -56,9 +56,7 @@ from crypto_tracker import (
     extremos,
     frase,
     galleta,
-    grafica,
     halving,
-    icono_app,
     importar,
     inline,
     latido,
@@ -66,8 +64,6 @@ from crypto_tracker import (
     merge,
     miedo,
     movimientos,
-    panel,
-    panel_html,
     perdido,
     periodo,
     puntuales,
@@ -89,6 +85,7 @@ from crypto_tracker.config import (
     load_config,
     minutos_mute,
 )
+from crypto_tracker.informes import grafica, icono_app, panel, panel_html
 from crypto_tracker.respuestas import comparaciones
 from crypto_tracker.respuestas.alertas import (
     _alertas,

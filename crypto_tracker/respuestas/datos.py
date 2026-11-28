@@ -9,13 +9,13 @@ from .. import (
     coingecko,
     comandos,
     database,
-    exportar,
     periodo,
     rellenar,
     simbolos,
     telegram,
 )
 from ..config import Config
+from ..informes import exportar
 from .base import _con_cambios
 
 logger = logging.getLogger("crypto_tracker")

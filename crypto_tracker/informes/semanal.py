@@ -3,9 +3,9 @@
 from dataclasses import dataclass
 from datetime import date, datetime, time
 
-from .cartera import serie_valor
-from .config import Posicion
-from .diario import toca_resumen
+from ..cartera import serie_valor
+from ..config import Posicion
+from ..diario import toca_resumen
 
 DOMINGO = 6
 HORAS = 7 * 24

@@ -2,7 +2,7 @@
 
 from datetime import date, datetime, time
 
-from crypto_tracker.mensual import toca, tramo
+from crypto_tracker.informes.mensual import toca, tramo
 
 
 def _aqui(*args):

@@ -85,7 +85,7 @@ def test_ignora_velas_rotas():
 
 
 def test_dibuja_un_png():
-    from crypto_tracker.grafica import dibujar_arcoiris
+    from crypto_tracker.informes.grafica import dibujar_arcoiris
 
     assert dibujar_arcoiris(calcular(_velas(MINIMO, _onda))).startswith(b"\x89PNG")
 
@@ -95,8 +95,9 @@ def test_dibuja_un_png():
 import time  # noqa: E402
 
 import main  # noqa: E402
-from crypto_tracker import database, grafica, mayer, telegram  # noqa: E402
+from crypto_tracker import database, mayer, telegram  # noqa: E402
 from crypto_tracker.config import Config, Watch  # noqa: E402
+from crypto_tracker.informes import grafica  # noqa: E402
 
 
 @pytest.fixture

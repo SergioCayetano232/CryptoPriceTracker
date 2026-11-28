@@ -3,18 +3,18 @@
 import io
 from datetime import datetime
 
-from .alerts import SIMBOLOS, _num
-from .arcoiris import FRANJAS, Arcoiris
-from .calendario import Mes, semanas
-from .correlacion import Matriz
-from .mapa import Mapa, repartir
+from ..alerts import SIMBOLOS, _num
+from ..arcoiris import FRANJAS, Arcoiris
+from ..calendario import Mes, semanas
+from ..correlacion import Matriz
+from ..mapa import Mapa, repartir
+from ..periodo import nombre as nombre_periodo
+from ..reparto import OTRAS, Trozo
+from ..simbolos import de_id
+from ..velas import Vela
 from .mes import MESES
-from .periodo import nombre as nombre_periodo
-from .reparto import OTRAS, Trozo
-from .simbolos import de_id
 from .tarjeta import Tarjeta
 from .tarjeta_anual import TarjetaAnual
-from .velas import Vela
 
 VERDE = "#16a34a"
 ROJO = "#dc2626"

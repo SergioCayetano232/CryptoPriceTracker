@@ -5,7 +5,7 @@ from datetime import date, datetime
 import pytest
 
 from crypto_tracker.alerts import formatear_aniversarios
-from crypto_tracker.aniversario import Aniversario, calcular, de_hoy
+from crypto_tracker.informes.aniversario import Aniversario, calcular, de_hoy
 from crypto_tracker.movimientos import Movimiento
 
 

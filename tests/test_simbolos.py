@@ -2,14 +2,8 @@
 
 import pytest
 
-from crypto_tracker import (
-    convertir,
-    exportar,
-    movimientos,
-    periodo,
-    puntuales,
-    vigiladas,
-)
+from crypto_tracker import convertir, movimientos, periodo, puntuales, vigiladas
+from crypto_tracker.informes import exportar
 from crypto_tracker.simbolos import IDS, a_id, varias
 
 

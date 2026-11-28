@@ -8,10 +8,10 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from urllib.parse import parse_qs, parse_qsl, urlsplit
 
-from .avisados import Aviso
-from .config import Posicion, Watch
-from .miedo import Indice
-from .puntuales import CARTERA, Puntual
+from ..avisados import Aviso
+from ..config import Posicion, Watch
+from ..miedo import Indice
+from ..puntuales import CARTERA, Puntual
 
 # Más puntos que esto no se ven en pantalla y solo engordan la página.
 PUNTOS_GRAFICA = 160

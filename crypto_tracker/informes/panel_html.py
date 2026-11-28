@@ -5,9 +5,10 @@ from datetime import date, datetime
 from html import escape
 from urllib.parse import parse_qs, quote, urlencode, urlsplit
 
-from . import miedo, version
-from .hacienda import impuestos
-from .mensajes.base import SIMBOLOS, _num, describir
+from .. import miedo, version
+from ..hacienda import impuestos
+from ..mensajes.base import SIMBOLOS, _num, describir
+from ..recordar import DIAS
 from .mes import MESES
 from .panel import (
     PUNTOS_GRAFICA,
@@ -22,7 +23,6 @@ from .panel import (
     muestrear,
     trazo,
 )
-from .recordar import DIAS
 
 # Cada cuánto se refresca sola, en segundos. Los precios no cambian más rápido.
 REFRESCO = 60

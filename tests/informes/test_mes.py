@@ -2,10 +2,10 @@
 
 from datetime import datetime, timedelta
 
-from crypto_tracker import mes
 from crypto_tracker.alerts import formatear_semana
 from crypto_tracker.config import parse_cartera
-from crypto_tracker.semanal import semana
+from crypto_tracker.informes import mes
+from crypto_tracker.informes.semanal import semana
 
 
 def _aqui(*args):

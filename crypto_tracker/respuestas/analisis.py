@@ -29,7 +29,6 @@ from .. import (
     fibonacci,
     funding,
     futuro,
-    grafica,
     hashribbons,
     horas,
     hubiera,
@@ -62,6 +61,7 @@ from .. import (
     voto,
 )
 from ..config import Config
+from ..informes import grafica
 from .base import (
     SIN_CARTERA,
     _con_cambios,

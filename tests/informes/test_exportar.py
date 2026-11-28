@@ -5,7 +5,7 @@ from datetime import date, datetime, timezone
 import pytest
 
 from crypto_tracker.config import Posicion
-from crypto_tracker.exportar import (
+from crypto_tracker.informes.exportar import (
     a_csv,
     interpretar,
     movimientos_a_csv,

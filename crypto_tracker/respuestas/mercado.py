@@ -21,7 +21,6 @@ from .. import (
     direccion,
     dominancia,
     funding,
-    grafica,
     gwei,
     hashribbons,
     hoy,
@@ -41,6 +40,7 @@ from .. import (
     top,
 )
 from ..config import Config
+from ..informes import grafica
 from ..mercado import Mercado
 from ..precio import en_sats
 from .base import (
